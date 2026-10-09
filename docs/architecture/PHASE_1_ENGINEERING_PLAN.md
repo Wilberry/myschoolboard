@@ -6,7 +6,38 @@ This document records the proposed engineering foundation for MySchoolBoard. It 
 
 The recommended default is a small-team, production-minded stack centered on a modular monolith: TypeScript on a modern web framework for the application, PostgreSQL as the primary relational database, and server-side authorization with explicit tenant scoping. This choice preserves strong consistency, clear workflows, easier onboarding, and a lower operational burden than a distributed architecture for a small team.
 
-The project should not begin application implementation until the product owner approves the blocking decisions identified in this plan and in the decision register. This document separates proposed defaults from decisions that genuinely require approval.
+The project should not begin application implementation until the product owner approves the relevant blocking decisions identified in this plan and in the product decision register. This document separates proposed defaults from decisions that genuinely require approval and also distinguishes between decisions that block the Phase 1 scaffold and decisions that can wait until the relevant domain is implemented.
+
+## Decision gating by phase
+
+### Phase 1 blockers
+
+The following should be resolved or explicitly approved as a risk-driven exception before the engineering scaffold starts:
+
+- initial technology stack and hosting model
+- authentication provider and tenant membership model
+- support-access and exceptional admin override policy
+- database isolation strategy and migration workflow
+- CI and dev-environment-quality baseline
+
+### Important but deferrable
+
+These matter to later feature work and should be tracked, but they do not necessarily block the initial engineering scaffold if their boundary is documented:
+
+- parent-first report-card visibility semantics
+- payment provider and reconciliation model
+- QR verification disclosure policy
+
+## Official source references
+
+The proposed defaults below are informed by current official documentation from the relevant ecosystems. These references are not implementation proof and remain proposals until the product owner approves them.
+
+- Next.js: https://nextjs.org/docs
+- PostgreSQL: https://www.postgresql.org/docs/current/ddl-rowsecurity.html
+- Prisma: https://www.prisma.io/docs
+- Auth.js: https://authjs.dev/docs
+- OpenID Connect: https://openid.net/specs/openid-connect-core-1_0.html
+- GitHub Actions: https://docs.github.com/actions
 
 ## Proposed technology stack
 
@@ -43,9 +74,9 @@ Trade-offs:
 Recommended default:
 
 - Language: TypeScript
-- Framework: Next.js App Router for application routes and API handlers, or a thin Node.js service if a separate API becomes necessary
+- Framework: Next.js App Router for application routes and API handlers, or a thin Node.js service only if a separate API is justified by measured complexity
 - API design: REST or typed route handlers; no premature microservices
-- Request validation: schema validation at the edge of the application before business logic
+- Request validation: schema validation at the edge of the system before business logic
 - Authorization: server-side permission checks using tenant-aware role policies
 - Background jobs: queue-based worker with explicit job metadata and tenant context
 - Error handling: structured application errors with correlation IDs, audit events, and safe user-facing errors
@@ -75,7 +106,7 @@ Recommended default:
 - ORM/query layer: Prisma or Drizzle
 - Schema management: migration-based schema changes with review and CI validation
 - Transactions: explicit database transactions for academic approvals, payment evidence, and state transitions
-- Tenant isolation: tenant-scoped queries, unique constraints, and row-level enforcement in application logic and database constraints where appropriate
+- Tenant isolation: application-enforced tenant scope as the default, with Postgres Row-Level Security evaluated as an optional defense-in-depth layer only where it materially reduces risk
 - Backups: automated scheduled backups and restore testing
 
 Why this fits:
@@ -217,6 +248,22 @@ These boundaries must be enforced in the authorization layer and not only in the
 - UI routes and APIs should pass tenant context through a server-side request context object.
 - All background jobs must include the owning tenant ID and execute with tenant-scoped access checks.
 
+### Database enforcement options
+
+#### Option A: Application-enforced isolation (recommended default)
+
+- All queries and business logic are tenant-scoped explicitly in the application layer.
+- This keeps the model straightforward for a small team and limits the need for database-specific security features early.
+- The main cost is disciplined code review and strong repository-level tests.
+- This is the default recommendation for Phase 1 because it is easier to reason about during the early architecture stage.
+
+#### Option B: PostgreSQL Row-Level Security (RLS)
+
+- Database-level policy enforcement can strengthen the last line of defence for tenant-scoped access.
+- RLS can reduce accidental leaks if the application layer is bypassed, but it adds complexity in migration review, session setup, connection pooling, and policy testing.
+- It is not a substitute for authorization design, and it requires careful handling for background jobs and service-to-service access.
+- The project should treat RLS as an optional defense-in-depth mechanism after the application model is stable, rather than as the only tenant-isolation strategy.
+
 ### Insecure patterns to block
 
 - Client-provided tenant IDs or school IDs accepted without server validation
@@ -236,6 +283,7 @@ The system must include acceptance tests for:
 - cross-tenant export or file download paths
 - stale permission recovery after role changes
 - platform admin access into school data without explicit school context
+- a database-level or ORM-level bypass attempt in a service or job context
 
 ## Infrastructure and environment strategy
 
@@ -299,6 +347,7 @@ The system must include acceptance tests for:
 - Missing auth/provider decisions can force rework.
 - Overly broad module implementation before tenant boundaries are proven will increase risk.
 - Unclear support-access policy can create privilege-escalation risk.
+- Database isolation design may be under-specified if the team treats application filtering as complete without explicit review.
 
 ## Acceptance criteria for the scaffold
 

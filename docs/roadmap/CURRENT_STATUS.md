@@ -7,7 +7,8 @@ The project is currently in a documentation-ready baseline state and has not mov
 ## Current evidence
 
 - Branch: main
-- Latest verified commit: 7146bfc — docs: correct repository status and add Phase 1 audit
+- Baseline documentation commit: 84fb14b — docs: add initial MySchoolBoard specification baseline
+- Latest verified commit: c1f4b5b9b6e170ab04e3fbed0cd2a01dffab3129 — docs: add Phase 1 engineering plan and approval register
 - Remote: origin/main exists and is tracking the local main branch
 - Documentation package: present and treated as the source of truth
 - Application implementation: not present

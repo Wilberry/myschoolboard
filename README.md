@@ -27,8 +27,9 @@ As of the latest repository inspection:
 
 - Repository: documentation-only baseline on GitHub, no application code implementation
 - Current branch: main
-- Latest verified commit: 7146bfc — docs: correct repository status and add Phase 1 audit
-- Working tree: clean after the documentation commit
+- Baseline documentation commit: 84fb14b — docs: add initial MySchoolBoard specification baseline
+- Latest verified commit: c1f4b5b9b6e170ab04e3fbed0cd2a01dffab3129 — docs: add Phase 1 engineering plan and approval register
+- Working tree: clean after the latest documentation commit
 - Application stack: not yet selected for implementation
 - Database: not yet selected or implemented
 - CI/CD: not configured in the repository
