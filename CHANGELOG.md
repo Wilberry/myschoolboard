@@ -1,15 +1,23 @@
 # Changelog
 
-## Initial documentation baseline
+## 2026-10-09 — Initial documentation baseline
 
-- Added the initial documentation structure required for a multi-tenant school management SaaS.
-- Documented the verified repository state as empty except for Git metadata.
-- Established the engineering and product governance structure for future implementation.
-- Created the requirement, authorization, architecture, security, testing, and roadmap baseline.
+- Added the initial documentation set for the multi-tenant school management SaaS specification.
+- Established the canonical project documentation structure and governance model.
+- Recorded the repository baseline as a documentation-first specification project.
+- Added functional, security, architecture, roadmap, and requirements traceability documentation.
+
+## 2026-10-09 — Repository status correction
+
+- Corrected stale statements that referred to an empty repository with no Git history.
+- Updated the documentation to reflect the live Git state: the repository contains a documentation baseline commit on main.
+- Clarified that the repository is documentation-only and not an application implementation.
 
 ## Current status
 
-- Repository state: empty baseline, no application code, no tests, no migrations.
-- Implementation status: documentation-only project bootstrap.
-- Commit status: no commits have been created in this workspace.
-- Push status: not performed.
+- Repository state: documentation-only baseline committed to main
+- Latest verified commit: 84fb14b — docs: add initial MySchoolBoard specification baseline
+- Application implementation: not present in repository
+- Tests: not implemented yet
+- Migrations and deployment configuration: not present yet
+- Push status: successfully pushed to origin/main

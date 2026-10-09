@@ -3,8 +3,8 @@
 ## D-001: Documentation-first baseline
 
 - Status: Accepted
-- Decision: The repository will be treated as a documentation-first product baseline before implementation.
-- Rationale: The repository is empty and contains no verified stack or application code.
+- Decision: The repository is being treated as a documentation-first product baseline before implementation.
+- Rationale: The repository contains a specification-first documentation baseline and no application implementation evidence.
 
 ## D-002: Multi-tenant architecture model
 
@@ -30,6 +30,12 @@
 - Decision: School Trash retention is 30 days; platform Trash retention is 90 days.
 - Rationale: Explicitly required by the business specification.
 
+## D-006: Documentation baseline commit on main
+
+- Status: Verified
+- Decision: The repository now contains an initial documentation baseline commit on main.
+- Rationale: Repository inspection confirmed the live Git state and the branch was updated accordingly.
+
 ## Unresolved decisions
 
 - Whether support access uses a controlled, temporary override mechanism
@@ -37,5 +43,6 @@
 - Final stack choice and hosting model
 - Approved payment integrations and currency policy
 - Final public QR verification and school disclosure fields
+- Final authentication vendor and environment strategy
 
-These unresolved items must be routed to the product owner before implementation.
+These unresolved items must be routed to the product owner before implementation work proceeds beyond the documentation and engineering-foundation stage.

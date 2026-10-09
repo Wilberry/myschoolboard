@@ -2,15 +2,45 @@
 
 ## Status summary
 
-The project is currently in the documentation foundation phase and has not moved into application development.
+The project is currently in a documentation-ready baseline state and has not moved into application implementation. The repository contains a committed documentation set on the main branch, but no application code, migrations, or deployment configuration.
 
 ## Current evidence
 
-- Repository is empty except for Git metadata.
-- No app code or tests are present.
-- No stack has been selected by repository evidence.
-- Documentation package is in place and being treated as the source of truth.
+- Branch: main
+- Latest verified commit: 84fb14b — docs: add initial MySchoolBoard specification baseline
+- Remote: origin/main exists and is tracking the local main branch
+- Documentation package: present and treated as the source of truth
+- Application implementation: not present
+- Tests: not implemented yet
+- Deployment configuration: not present
+- CI configuration: not present
 
-## Immediate next milestone
+## Current roadmap phase
 
-Phase 1 — Architecture and engineering foundation, pending explicit product-owner approval on the final stack and environment model.
+Phase 0 is complete as the repository baseline and specification foundation.
+
+Phase 1 is not yet started. It is conditionally ready only after the required architecture and environment decisions are approved or explicitly assigned to a technical evaluation spike.
+
+## Phase 1 entry conditions
+
+Phase 1 entry requires:
+
+- approved technology stack or a documented evaluation spike
+- selected hosting and deployment approach, or a documented unresolved decision that is explicitly non-blocking
+- baseline engineering standards and local tooling defined
+- architecture and module boundaries approved at a sufficiently detailed level for scaffolding
+- database strategy and migration approach approved or intentionally deferred with a clear risk note
+- security baseline, logging, and secret-management standards established
+
+## Outstanding decisions and blockers
+
+- final technology stack and hosting model
+- authentication strategy
+- payment provider and currency model
+- parent-first report-card acknowledgment semantics
+- exceptional support-access policy
+- final QR verification disclosure policy
+
+## Next approved action
+
+The safest next action is to complete the Phase 1 architecture and engineering foundation review and approve the minimum set of blockers required to begin scaffolding, without turning the specification into a product implementation.

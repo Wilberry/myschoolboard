@@ -2,16 +2,27 @@
 
 ## Phase 0 — Repository baseline and documentation foundation
 
-- Objective: establish documentation and source-of-truth baseline.
+- Objective: establish the documentation source of truth and capture the specification baseline.
 - Requirements covered: PLAT-REQ-001, SEC-REQ-001, OPS-REQ-001
 - Dependencies: none
-- Exit criteria: docs are navigable and unresolved decisions are visible
+- Exit criteria: documentation is navigable, unresolved decisions are explicit, and repository state is correctly documented
+- Status: complete for the documentation baseline
 
 ## Phase 1 — Architecture and engineering foundation
 
-- Objective: approve stack and engineering standards.
+- Objective: approve the initial technical stack, environment model, and engineering standards before implementation begins.
 - Requirements covered: OPS-REQ-001, SEC-REQ-001
 - Dependencies: Phase 0
+- Must not begin until the following entry criteria are satisfied or deliberately marked as deferred with a risk note:
+  1. technology stack and hosting model approved or evaluated in a technical spike
+  2. local dev environment and tooling baseline defined
+  3. database and migration approach approved or explicitly deferred
+  4. security and secret-handling baseline established
+  5. CI and quality gates defined
+  6. tenant-scoping model and authorization architecture reviewed
+- Deliverables: application skeleton, environment template, quality tooling, smoke tests, security baseline, ADRs
+- Acceptance criteria: scaffold works locally, CI is configured, migrations are defined if required, and the architecture passes a documented review
+- Status: not started; entry condition pending product-owner approval or explicit technical spike
 
 ## Phase 2 — Identity, tenancy, and authorization
 
@@ -84,3 +95,4 @@
 - Separate MVP from future enhancements.
 - Deferred requirements remain visible and traceable.
 - Do not claim delivery estimates without approved team capacity.
+- Do not mark future phases as complete because documentation exists; completion requires implementation evidence and validation.

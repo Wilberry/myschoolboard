@@ -1,10 +1,10 @@
 # MySchoolBoard Documentation Package
 
-This repository currently contains no application code, migration files, test suite, or deployment configuration. It is a documentation-first baseline for a future multi-tenant school management SaaS. The project is intentionally being specified before implementation begins.
+This repository contains a committed documentation-only baseline for a multi-tenant school management SaaS. It is not a completed application implementation. The project is intentionally specification-first and has reached a verified documentation milestone on the main branch.
 
 ## Purpose
 
-This repository is being prepared as the canonical engineering and product source of truth for MySchoolBoard. It captures:
+This repository is the canonical engineering and product source of truth for MySchoolBoard. It captures:
 
 - Product vision and scope
 - Requirements and acceptance criteria
@@ -13,31 +13,32 @@ This repository is being prepared as the canonical engineering and product sourc
 - Security, privacy, quality, and testing strategy
 - Roadmap and implementation checkpoints
 
-## Documentation index
+## Documentation entry point
 
-- [docs/README.md](docs/README.md) — navigation for the full package
+- [docs/README.md](docs/README.md) — full documentation navigation
 - [AGENTS.md](AGENTS.md) — required workflow for future agents
-- [CHANGELOG.md](CHANGELOG.md) — document history
+- [CHANGELOG.md](CHANGELOG.md) — history of documentation milestones
+- [docs/roadmap/CURRENT_STATUS.md](docs/roadmap/CURRENT_STATUS.md) — current project status
+- [docs/roadmap/IMPLEMENTATION_ROADMAP.md](docs/roadmap/IMPLEMENTATION_ROADMAP.md) — roadmap and Phase 1 entry criteria
 
 ## Current verified repository state
 
-The repository has been inspected and the current state is:
+As of the latest repository inspection:
 
-- Repository: empty except for Git metadata
+- Repository: documentation-only baseline on GitHub, no application code implementation
 - Current branch: main
-- Working tree: clean, no tracked files
-- Commits: none yet
-- Application stack: not yet established
-- Database: not yet selected
-- Package manager: not yet initialized
-- Tests: none present
-- Frameworks: not yet selected
+- Latest verified commit: 84fb14b — docs: add initial MySchoolBoard specification baseline
+- Working tree: clean after the documentation commit
+- Application stack: not yet selected for implementation
+- Database: not yet selected or implemented
+- CI/CD: not configured in the repository
+- Tests: no implementation tests present yet
+- Deployment configuration: none present
+- Product identity: provisional; public branding remains configurable
 
-This is a blank documentation baseline, not an implemented SaaS product.
+## Current status
 
-## Status
-
-This package is intentionally documentation-only and does not implement product features.
+The repository is currently in the documentation foundation phase. The project has not moved into application implementation, and no feature implementation is considered complete without evidence of code and validation.
 
 ## Canonical rule
 
@@ -45,8 +46,20 @@ All future implementation work must read and follow:
 
 - [AGENTS.md](AGENTS.md)
 - [docs/README.md](docs/README.md)
-- applicable roadmap and requirement documents
+- the current roadmap phase and relevant requirement documents
+- the approved decision records and authorization rules
+
+## Important unresolved decisions
+
+The following remain open and required before Phase 1 implementation can proceed safely:
+
+- final technology stack and hosting model
+- authentication and identity provider strategy
+- payment provider and currency model
+- parent-first report-card acknowledgment semantics
+- exceptional support-access policy
+- final QR verification and public disclosure rules
 
 ## Note on branding
 
-The provisional product name MySchoolBoard is documented as a working label only. Public branding must remain configurable and not hard-coded into architectural decisions.
+The provisional product name MySchoolBoard is a working label only. Public branding must remain configurable and should not be treated as a fixed product identity in architecture or implementation decisions.

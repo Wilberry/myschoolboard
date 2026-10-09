@@ -96,6 +96,7 @@ This folder is the canonical documentation set for the MySchoolBoard project.
 - [quality/PERFORMANCE_AND_LOAD_TESTING.md](quality/PERFORMANCE_AND_LOAD_TESTING.md)
 - [quality/DEFINITION_OF_DONE.md](quality/DEFINITION_OF_DONE.md)
 - [quality/RELEASE_CHECKLIST.md](quality/RELEASE_CHECKLIST.md)
+- [quality/DOCUMENTATION_AND_REQUIREMENTS_AUDIT.md](quality/DOCUMENTATION_AND_REQUIREMENTS_AUDIT.md)
 
 ### Engineering and roadmap
 

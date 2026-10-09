@@ -27,6 +27,10 @@ This repository is a specification-first project. Before making any code change,
 - Never delete tests or weaken acceptance criteria simply to get green results.
 - Never make destructive repository changes without explicit authorization.
 - Never claim a commit, push, deployment, or external operation occurred unless the tool confirms it.
+- Never infer approval, completion, or deployment from documentation alone; the repository state and actual command output are the source of truth.
+- Preserve the distinction between specified, proposed, implemented, tested, and deployed statuses.
+- Avoid expanding scope without explicit authorization.
+- Update traceability when requirements or behavior change.
 
 ## Required checkpoint format
 
