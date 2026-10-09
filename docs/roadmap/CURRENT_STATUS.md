@@ -7,7 +7,7 @@ The project is currently in a documentation-ready baseline state and has not mov
 ## Current evidence
 
 - Branch: main
-- Latest verified commit: 84fb14b — docs: add initial MySchoolBoard specification baseline
+- Latest verified commit: 7146bfc — docs: correct repository status and add Phase 1 audit
 - Remote: origin/main exists and is tracking the local main branch
 - Documentation package: present and treated as the source of truth
 - Application implementation: not present
@@ -20,6 +20,8 @@ The project is currently in a documentation-ready baseline state and has not mov
 Phase 0 is complete as the repository baseline and specification foundation.
 
 Phase 1 is not yet started. It is conditionally ready only after the required architecture and environment decisions are approved or explicitly assigned to a technical evaluation spike.
+
+The current repository state remains documentation-only. No application implementation is authorized or in progress.
 
 ## Phase 1 entry conditions
 
@@ -43,4 +45,4 @@ Phase 1 entry requires:
 
 ## Next approved action
 
-The safest next action is to complete the Phase 1 architecture and engineering foundation review and approve the minimum set of blockers required to begin scaffolding, without turning the specification into a product implementation.
+The safest next action is for the product owner to review and approve the blocking product decisions listed in [../project/PRODUCT_DECISIONS_FOR_APPROVAL.md](../project/PRODUCT_DECISIONS_FOR_APPROVAL.md) and the architecture proposal in [../architecture/PHASE_1_ENGINEERING_PLAN.md](../architecture/PHASE_1_ENGINEERING_PLAN.md). Only after that approval should the project move from documentation planning into the Phase 1 engineering scaffold.

@@ -16,7 +16,7 @@
 ## Current status
 
 - Repository state: documentation-only baseline committed to main
-- Latest verified commit: 84fb14b — docs: add initial MySchoolBoard specification baseline
+- Latest verified commit: 7146bfc — docs: correct repository status and add Phase 1 audit
 - Application implementation: not present in repository
 - Tests: not implemented yet
 - Migrations and deployment configuration: not present yet

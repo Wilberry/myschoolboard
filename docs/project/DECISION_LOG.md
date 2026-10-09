@@ -33,8 +33,14 @@
 ## D-006: Documentation baseline commit on main
 
 - Status: Verified
-- Decision: The repository now contains an initial documentation baseline commit on main.
+- Decision: The repository now contains a documentation baseline commit on main.
 - Rationale: Repository inspection confirmed the live Git state and the branch was updated accordingly.
+
+## D-007: Phase 1 implementation remains gated
+
+- Status: Authoritative
+- Decision: Phase 1 implementation is not authorized until product-owner approval of the required architecture and policy decisions is recorded in the decision log.
+- Rationale: The codebase remains documentation-only and the product requirements still require key implementation decisions.
 
 ## Unresolved decisions
 

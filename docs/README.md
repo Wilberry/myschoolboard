@@ -12,6 +12,7 @@ This folder is the canonical documentation set for the MySchoolBoard project.
 - [project/GLOSSARY.md](project/GLOSSARY.md) — common terminology
 - [project/ASSUMPTIONS_AND_CONSTRAINTS.md](project/ASSUMPTIONS_AND_CONSTRAINTS.md) — assumptions, constraints, and explicit decisions
 - [project/DECISION_LOG.md](project/DECISION_LOG.md) — material decisions and unresolved matters
+- [project/PRODUCT_DECISIONS_FOR_APPROVAL.md](project/PRODUCT_DECISIONS_FOR_APPROVAL.md) — product-owner approval register for Phase 1 decisions
 - [project/RISK_REGISTER.md](project/RISK_REGISTER.md) — product, technical, security, and delivery risks
 
 ### Requirements and quality
@@ -43,6 +44,7 @@ This folder is the canonical documentation set for the MySchoolBoard project.
 
 - [architecture/SYSTEM_OVERVIEW.md](architecture/SYSTEM_OVERVIEW.md) — system context and module layout
 - [architecture/ARCHITECTURE_DECISION_RECORDS.md](architecture/ARCHITECTURE_DECISION_RECORDS.md) — architecture decisions and unresolved choices
+- [architecture/PHASE_1_ENGINEERING_PLAN.md](architecture/PHASE_1_ENGINEERING_PLAN.md) — proposed engineering foundation for Phase 1
 - [architecture/MULTI_TENANCY.md](architecture/MULTI_TENANCY.md) — tenant boundary model and isolation controls
 - [architecture/MODULE_BOUNDARIES.md](architecture/MODULE_BOUNDARIES.md) — module boundaries and responsibilities
 - [architecture/DATA_FLOW_DIAGRAMS.md](architecture/DATA_FLOW_DIAGRAMS.md) — key flow diagrams
