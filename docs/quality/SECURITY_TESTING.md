@@ -20,6 +20,10 @@
 
 The existing school-details read handler must send `Cache-Control: private, no-store` on both successful and denied/error responses. Its error logger is best-effort only: throwing from `console.error` must not prevent a generic HTTP `500` response or disclose school identifiers. The follow-up tests exercise unauthenticated, authorized, concealed cross-tenant, persistence-failure, and logger-failure cases against the disposable test database. The new tests have been authored but not yet executed against PostgreSQL; see the owner's postponed local CI verification.
 
+## Final school-read membership recheck (authored, not yet verified)
+
+The school metadata GET must include a second active-membership and exact-role predicate in its final school query, even after an earlier server-side principal resolution. New database-backed tests assert the predicate, school deactivation denial, and role-change denial, and preserve existing cross-tenant and no-cache regression coverage. The tests are awaiting the owner's isolated local verification run. This does not resolve all tenant-isolation race risks or complete TEN-REQ-001 / SEC-REQ-001.
+
 ## Requirement
 
 Security tests must be executed before release and must continue as part of regression checks.

@@ -26,6 +26,10 @@ On the separate `feature/local-verification-and-health` development branch, a de
 
 On the separate `feature/school-read-response-hardening` branch, the existing authenticated school-details endpoint is hardened with explicit private/no-store responses and exception-safe error logging. Its integration assertions and security-testing documentation are extended. These changes are not yet locally database-tested and do **not** complete TEN-REQ-001 or SEC-REQ-001. No permission, tenant-isolation, or database schema semantics are relaxed.
 
+## Phase 2 school-read tenant hardening awaiting verification
+
+The `feature/recheck-school-membership-on-read` follow-up adds a final database-query filter on authenticated user, active membership, current membership role, and active school to the existing school read helper. Three integration cases were added for inactive schools, removed academic-reader role, and required final-query ownership predicates. This is a defensive improvement against a revoke/role-change window between authorization and the school lookup; it does not establish full transaction-wide read linearizability. **No database-backed tests or full CI-equivalent checks have been executed for this commit.** D-020 assignment-reader policy remains unresolved; no new read routes were introduced.
+
 ## Current roadmap phase
 
 Phase 0 documentation baseline is complete.

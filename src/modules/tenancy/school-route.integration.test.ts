@@ -117,6 +117,10 @@ describe("school API route authorization", () => {
   beforeEach(async () => {
     await prisma.membership.updateMany({
       where: { userId: userAId, schoolId: schoolA },
+      data: { isActive: true, role: "SCHOOL_ADMIN" },
+    });
+    await prisma.school.updateMany({
+      where: { id: schoolA },
       data: { isActive: true },
     });
   });
@@ -292,6 +296,58 @@ describe("school API route authorization", () => {
     expect(await response.text()).not.toContain("Synthetic Authorized School");
   });
 
+  it("denies an inactive school despite an active school membership", async () => {
+    const cookie = await signIn(userAEmail);
+    await prisma.school.update({
+      where: { id: schoolA },
+      data: { isActive: false },
+    });
+
+    const response = await getSchool(schoolA, cookie);
+    expect(response.status).toBe(404);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(await response.json()).toEqual({ error: "Not found" });
+  });
+
+  it("denies access after a school administrator loses their reader role", async () => {
+    const cookie = await signIn(userAEmail);
+    await prisma.membership.updateMany({
+      where: { userId: userAId, schoolId: schoolA },
+      data: { role: "PARENT" },
+    });
+
+    const response = await getSchool(schoolA, cookie);
+    expect(response.status).toBe(404);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(await response.json()).toEqual({ error: "Not found" });
+  });
+
+  it("rechecks the authenticated membership and role in its final school query", async () => {
+    const cookie = await signIn(userAEmail);
+    const findSchool = vi.spyOn(prisma.school, "findFirst");
+
+    try {
+      const response = await getSchool(schoolA, cookie);
+      expect(response.status).toBe(200);
+      expect(findSchool).toHaveBeenCalledWith({
+        where: {
+          id: schoolA,
+          isActive: true,
+          memberships: {
+            some: {
+              userId: userAId,
+              isActive: true,
+              role: "SCHOOL_ADMIN",
+            },
+          },
+        },
+        select: { id: true, name: true, slug: true },
+      });
+    } finally {
+      findSchool.mockRestore();
+    }
+  });
+
   it("uses the path school ID and ignores a substituted query ID", async () => {
     const cookie = await signIn(userAEmail);
     setCookie(cookie);
@@ -326,6 +382,7 @@ describe("school API route authorization", () => {
       errorLog.mockRestore();
     }
   });
+
   it("keeps a generic error when logging throws", async () => {
     const cookie = await signIn(userAEmail);
     const lookup = vi

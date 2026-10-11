@@ -28,8 +28,21 @@ export async function requireSchoolAccess(
     return null;
   }
 
+  // Recheck the active membership and role in the final data-fetch query.
+  // This closes the gap between resolving the principal and loading school
+  // metadata if a membership is revoked or its role changes in between.
   const school = await prisma.school.findFirst({
-    where: { id: schoolId, isActive: true },
+    where: {
+      id: schoolId,
+      isActive: true,
+      memberships: {
+        some: {
+          userId,
+          isActive: true,
+          role: principal.membership.role,
+        },
+      },
+    },
     select: { id: true, name: true, slug: true },
   });
 
