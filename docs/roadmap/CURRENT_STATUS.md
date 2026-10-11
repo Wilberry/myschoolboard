@@ -46,6 +46,10 @@ The `feature/safe-school-read-denial-logs` follow-up adds a best-effort, minimal
 
 On `feature/resilient-auth-ui`, sign-in and sign-out buttons now handle explicit provider failure and rejected network requests without getting stuck or falsely refreshing on failed sign-out. A small shared async result helper and four focused unit cases were added. Sign-out displays generic error feedback and disables the button while pending. This is not a replacement for server-side session security, rate limiting, email verification, or browser E2E tests. **The new unit tests and full CI-equivalent checks have not been run.** External identity and production auth posture remain unresolved.
 
+## Phase 2 session-revocation regression coverage (pending local verification)
+
+The `feature/session-revocation-tenant-regressions` follow-up adds four DB-backed integration cases without modifying production code: reusing a cookie after deleting the corresponding Better Auth session must deny school metadata reads and all four teacher-assignment mutations; platform-wide admin status cannot bypass another school's membership; and role demotion must immediately block assignment creation even when the login session is still active. The cases exercise existing server-side checks with real Better Auth sessions and synthetic database fixtures. **They have not been run for this follow-up.** Session durability, global sign-out behavior, cross-deployment cache invalidation, login abuse rate limiting, MFA, and verification policies remain unresolved.
+
 ## Current roadmap phase
 
 Phase 0 documentation baseline is complete.

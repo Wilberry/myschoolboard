@@ -32,6 +32,10 @@ The shared mutation handler must attach `Cache-Control: private, no-store` to ev
 
 Authenticated school metadata requests that resolve to a concealed `404` (including missing, other-school, or insufficient-role resources) must emit a **best-effort operational security event** with only `school_read_denied` and a generated random request identifier. Never log school IDs, user IDs, email addresses, cookies, query data, session tokens, or raw database error messages. Logger failure must not change the generic `404` response or the `Cache-Control: private, no-store` header. Two new database-backed integration cases check the event's minimal fields, identical missing/cross-school outcomes, and logger failure. They remain **unexecuted** until the owner's local verification checkpoint. These diagnostic events are **not** immutable audit records and do not complete SEC-REQ-001.
 
+## Session invalidation and principal revalidation (authored, pending local tests)
+
+Protected school metadata GET and all four teacher-assignment mutation POST handlers must not authorize a previously valid session after its **exact database session record is deleted**. New integration tests sign in using Better Auth, resolve that session ID, delete only the disposable test session, and replay its cookie. The GET must return a non-caching `401`; every assignment mutation must return non-caching `401` without creating an event or altering an existing assignment. Additional tests assert that elevating an unrelated school's user to Platform Super Admin never supplies another-school access, and demoting an administrator while their session remains active revokes assignment-create permission. All four cases are *authored, not executed* against the disposable PostgreSQL database. They do not establish browser sign-out, real-world session revocation propagation across deployments, or full SEC-REQ-001 / TEN-REQ-001 acceptance.
+
 ## Requirement
 
 Security tests must be executed before release and must continue as part of regression checks.
