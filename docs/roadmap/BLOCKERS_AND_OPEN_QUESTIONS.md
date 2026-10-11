@@ -1,15 +1,17 @@
 # Blockers and Open Questions
 
-## Blocking decisions for Phase 1
+## Approved and deferred decisions
 
-| Decision ID | Question | Why it matters | Recommended default | Latest point in roadmap |
-| --- | --- | --- | --- | --- |
-| B-001 | Which stack will be used for the initial implementation? | Determines the engineering foundation and scaffolding | Use a modular monolith with approved language/framework choices after product review | Phase 1 start |
-| B-002 | What hosting and deployment model will be used? | Drives runtime, backups, CI, and operational strategy | Use a single documented environment model with clear dev/staging/prod separation | Phase 1 start |
-| B-003 | Which auth and identity model will be used? | Affects tenant membership, sessions, and security assumptions | Use server-validated auth with explicit tenant scope enforcement | Phase 2 start |
-| B-004 | Which payment provider and currencies are approved? | Determines financial workflows and risk exposure | Keep payment provider selection as an explicit approval item | Phase 9 start |
-| B-005 | What is the final parent-first report-card acknowledgment policy? | Affects student visibility and business logic | Default to explicit parent acknowledgment record while awaiting approval | Phase 8 start |
-| B-006 | What support-access exception model is allowed, if any? | Affects security and support operations | Require explicit approval, limited scope, timebox, and audit record | Phase 3 or support operations |
+| Decision                                          | Status                                                                                                                                | Scope / remaining work                                                     |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| TypeScript, Next.js, PostgreSQL, modular monolith | Approved for local foundation; implemented                                                                                            | Does not select hosting or establish production readiness                  |
+| Better Auth                                       | Implemented locally                                                                                                                   | External identity-provider strategy remains open                           |
+| Server-side tenant authorization                  | Implemented for current paths and locally tested                                                                                      | RLS is not enabled; all future operations need equivalent checks and tests |
+| Hosting provider and domain                       | Deferred until local development and testing are complete                                                                             | No provider/domain selected and no deployment exists                       |
+| Support access                                    | Default approved: no unrestricted routine access; exceptional access must be authorized, scoped, time-limited, justified, and audited | Exact approval, enforcement, expiry, and audit mechanism is unimplemented  |
+| Payment provider and currencies                   | Deferred                                                                                                                              | Resolve in Phase 9                                                         |
+| Parent-first report visibility                    | Deferred                                                                                                                              | Resolve in Phase 8                                                         |
+| QR disclosure                                     | Deferred                                                                                                                              | Resolve in the QR verification implementation phase                        |
 
 ## Open product and legal questions
 
@@ -22,4 +24,4 @@
 
 ## Decision status
 
-These remain unresolved and must be approved before implementation proceeds beyond the documentation foundation. Documentation may continue to describe them as specified, proposed, or unresolved, but the implementation work must not assume a final answer without approval.
+These remain unresolved for their owning phases. They do not invalidate the local foundation, but they must not be treated as implemented or decided before the relevant work begins.

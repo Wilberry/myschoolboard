@@ -2,27 +2,29 @@
 
 ## Executive summary
 
-This document records the proposed engineering foundation for MySchoolBoard. It is a proposal, not an approved implementation decision. The repository remains a documentation-first baseline, and Phase 1 should be treated as a controlled engineering foundation stage rather than a production build.
+This document records the approved local engineering direction and the verified extent of its implementation. The local foundation uses a TypeScript modular monolith, Next.js, and PostgreSQL. It is a development and testing foundation, not a production build.
 
-The recommended default is a small-team, production-minded stack centered on a modular monolith: TypeScript on a modern web framework for the application, PostgreSQL as the primary relational database, and server-side authorization with explicit tenant scoping. This choice preserves strong consistency, clear workflows, easier onboarding, and a lower operational burden than a distributed architecture for a small team.
+The approved local direction is a modular monolith using TypeScript, Next.js, and PostgreSQL, with Prisma migrations and server-side tenant authorization. Better Auth currently handles local email/password sessions; selecting an external identity provider remains open.
 
-The project should not begin application implementation until the product owner approves the relevant blocking decisions identified in this plan and in the product decision register. This document separates proposed defaults from decisions that genuinely require approval and also distinguishes between decisions that block the Phase 1 scaffold and decisions that can wait until the relevant domain is implemented.
+The implementation and its verified limits are recorded here alongside decisions that remain open. Hosting provider and domain selection are deferred until local development and testing are complete. PostgreSQL RLS is not enabled. Later-phase product policies remain deferred to their owning phases.
 
 ## Decision gating by phase
 
-### Phase 1 blockers
+### Approved local foundation decisions
 
-The following should be resolved or explicitly approved as a risk-driven exception before the engineering scaffold starts:
+The following defaults are approved for local development and testing:
 
-- initial technology stack and hosting model
-- authentication provider and tenant membership model
-- support-access and exceptional admin override policy
-- database isolation strategy and migration workflow
-- CI and dev-environment-quality baseline
+- TypeScript modular monolith, Next.js, and PostgreSQL
+- Better Auth for the current local email/password implementation; external identity-provider selection remains open
+- active school membership and server-side application authorization for implemented paths
+- Prisma migration workflow and local PostgreSQL development environment
+- no unrestricted routine support access; exceptional access requires authorization, scope, time limit, justification, and audit
+
+The support-access approval, enforcement, expiry, and audit mechanism is not implemented and remains a requirement before support access is enabled.
 
 ### Important but deferrable
 
-These matter to later feature work and should be tracked, but they do not necessarily block the initial engineering scaffold if their boundary is documented:
+These remain deferred to their owning phases:
 
 - parent-first report-card visibility semantics
 - payment provider and reconciliation model
@@ -30,7 +32,7 @@ These matter to later feature work and should be tracked, but they do not necess
 
 ## Official source references
 
-The proposed defaults below are informed by current official documentation from the relevant ecosystems. These references are not implementation proof and remain proposals until the product owner approves them.
+These ecosystem references informed the original technical evaluation; they are not proof of implementation or production readiness.
 
 - Next.js: https://nextjs.org/docs
 - PostgreSQL: https://www.postgresql.org/docs/current/ddl-rowsecurity.html
@@ -39,11 +41,11 @@ The proposed defaults below are informed by current official documentation from 
 - OpenID Connect: https://openid.net/specs/openid-connect-core-1_0.html
 - GitHub Actions: https://docs.github.com/actions
 
-## Proposed technology stack
+## Approved local technology baseline
 
 ### 1. Frontend
 
-Recommended default:
+Implemented locally:
 
 - Framework: Next.js with React and TypeScript
 - Styling: Tailwind CSS or a structured design system
@@ -71,7 +73,7 @@ Trade-offs:
 
 ### 2. Backend
 
-Recommended default:
+Implemented locally:
 
 - Language: TypeScript
 - Framework: Next.js App Router for application routes and API handlers, or a thin Node.js service only if a separate API is justified by measured complexity
@@ -100,7 +102,7 @@ Trade-offs:
 
 ### 3. Database
 
-Recommended default:
+Implemented locally:
 
 - Relational database: PostgreSQL
 - ORM/query layer: Prisma or Drizzle
@@ -365,13 +367,13 @@ Before Phase 1 can be considered complete, the repository should show evidence t
 
 ## Definition of done
 
-Phase 1 is done only when:
+The broader scaffold definition of done still requires all of the following; the current local checkpoint does not claim every item is met:
 
 - all mandatory product decisions are resolved or explicitly deferred with risk acknowledgment
-- the core architecture is approved as a proposal
+- the core local architecture direction is approved
 - the scaffold is reproducible from a fresh clone
 - all required checks pass in CI
 - tenant-boundary and auth tests have actual evidence
 - the engineering plan is linked from the canonical documentation index
 
-This plan remains a proposal pending product-owner approval.
+The local foundation checks provide evidence for the current scaffold, but no health endpoint exists and full HTTP/session, CI-run, production logging, and support-access mechanism coverage remain outstanding. Do not mark SEC-REQ-001 or TEN-REQ-001 complete based on this checkpoint.

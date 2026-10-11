@@ -20,6 +20,9 @@ When two rules conflict, the safe default is the more restrictive rule. The conf
 - All mutations must check active state, record permissions, and workflow state.
 - All exports and file downloads must check the same conditions as read access.
 - Background jobs and scheduled tasks must use the same authorization policy context as user requests.
+- Teacher academic read, edit, and submit actions for a class and subject require an active assignment matching the exact school, membership, class, and subject tuple.
+- Independent class and subject `ScopeGrant` records must never be combined to infer a teacher assignment. The policy helper enforces the assignment check, but protected academic routes must still load the principal through the assignment-aware resolver and pass the requested class and subject.
+- Assignment lifecycle mutations use `school:configure`, currently limited by the policy to active School Administrator and School Super Admin memberships. The four implemented assignment mutation routes authenticate with Better Auth, check the school principal at the route boundary, and call the internal service, which repeats authorization transactionally. Platform Super Admin status does not independently grant school mutation authority. Client-supplied actor identifiers are not accepted. Future academic routes must use the same server-side tenant and service checks; assignment reads remain unresolved under D-020.
 
 ## Required distinctions
 

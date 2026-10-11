@@ -44,7 +44,7 @@ This folder is the canonical documentation set for the MySchoolBoard project.
 
 - [architecture/SYSTEM_OVERVIEW.md](architecture/SYSTEM_OVERVIEW.md) — system context and module layout
 - [architecture/ARCHITECTURE_DECISION_RECORDS.md](architecture/ARCHITECTURE_DECISION_RECORDS.md) — architecture decisions and unresolved choices
-- [architecture/PHASE_1_ENGINEERING_PLAN.md](architecture/PHASE_1_ENGINEERING_PLAN.md) — proposed engineering foundation for Phase 1
+- [architecture/PHASE_1_ENGINEERING_PLAN.md](architecture/PHASE_1_ENGINEERING_PLAN.md) — approved local foundation, implementation evidence, and remaining Phase 1 gates
 - [architecture/MULTI_TENANCY.md](architecture/MULTI_TENANCY.md) — tenant boundary model and isolation controls
 - [architecture/MODULE_BOUNDARIES.md](architecture/MODULE_BOUNDARIES.md) — module boundaries and responsibilities
 - [architecture/DATA_FLOW_DIAGRAMS.md](architecture/DATA_FLOW_DIAGRAMS.md) — key flow diagrams
@@ -83,6 +83,7 @@ This folder is the canonical documentation set for the MySchoolBoard project.
 
 ### Security and quality
 
+- [security/DEPENDENCY_ADVISORY_ASSESSMENT.md](security/DEPENDENCY_ADVISORY_ASSESSMENT.md) — current dependency advisory evidence, exposure assessment, and remediation decision
 - [security/SECURITY_REQUIREMENTS.md](security/SECURITY_REQUIREMENTS.md)
 - [security/THREAT_MODEL.md](security/THREAT_MODEL.md)
 - [security/PRIVACY_AND_DATA_PROTECTION.md](security/PRIVACY_AND_DATA_PROTECTION.md)

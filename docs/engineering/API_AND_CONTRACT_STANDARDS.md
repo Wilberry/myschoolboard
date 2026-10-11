@@ -15,4 +15,4 @@
 
 ## Current status
 
-No API contracts exist; this is a future standard.
+The teacher-assignment module records the four implemented mutation contracts and the unresolved list/detail read proposal. Other API contracts remain future work and must follow these standards.
