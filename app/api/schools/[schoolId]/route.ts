@@ -2,32 +2,41 @@ import { headers } from "next/headers";
 import { auth } from "@/src/lib/auth";
 import { requireSchoolAccess } from "@/src/modules/tenancy/school-access";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ schoolId: string }> },
-) {
+function schoolResponse(body: unknown, status = 200): Response {
+  return Response.json(body, {
+    status,
+    headers: { "Cache-Control": "private, no-store" },
+  });
+}
+
+function logSchoolReadFailure(error: unknown): void {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session)
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-
-    const { schoolId } = await params;
-    const access = await requireSchoolAccess(session.user.id, schoolId);
-    if (!access) {
-      return Response.json({ error: "Not found" }, { status: 404 });
-    }
-
-    return Response.json({ school: access.school });
-  } catch (error) {
     console.error(
       JSON.stringify({
         event: "school_read_failed",
         errorType: error instanceof Error ? error.name : "unknown",
       }),
     );
-    return Response.json(
-      { error: "Request could not be completed" },
-      { status: 500 },
-    );
+  } catch {
+    // Log transport failures must not disclose details or prevent a safe denial.
+  }
+}
+
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ schoolId: string }> },
+) {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) return schoolResponse({ error: "Unauthorized" }, 401);
+
+    const { schoolId } = await params;
+    const access = await requireSchoolAccess(session.user.id, schoolId);
+    if (!access) return schoolResponse({ error: "Not found" }, 404);
+
+    return schoolResponse({ school: access.school });
+  } catch (error) {
+    logSchoolReadFailure(error);
+    return schoolResponse({ error: "Request could not be completed" }, 500);
   }
 }
