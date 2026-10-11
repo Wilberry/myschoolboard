@@ -41,8 +41,13 @@ export function assertLocalVerificationTarget(environment) {
       "Local CI may only access localhost:5434/myschoolboard_test",
     );
   }
-  if (!environment.BETTER_AUTH_SECRET || environment.BETTER_AUTH_SECRET.length < 32) {
-    throw new Error("Local CI requires a test-only Better Auth secret of at least 32 characters");
+  if (
+    !environment.BETTER_AUTH_SECRET ||
+    environment.BETTER_AUTH_SECRET.length < 32
+  ) {
+    throw new Error(
+      "Local CI requires a test-only Better Auth secret of at least 32 characters",
+    );
   }
   let authOrigin;
   try {
@@ -50,7 +55,10 @@ export function assertLocalVerificationTarget(environment) {
   } catch {
     throw new Error("BETTER_AUTH_URL must be a local test URL");
   }
-  if (authOrigin.protocol !== "http:" || !allowedHosts.has(authOrigin.hostname)) {
+  if (
+    authOrigin.protocol !== "http:" ||
+    !allowedHosts.has(authOrigin.hostname)
+  ) {
     throw new Error("BETTER_AUTH_URL must use a loopback-only HTTP origin");
   }
   if (
@@ -100,7 +108,10 @@ export function runLocalVerification(environment = process.env) {
   console.info("Local CI: all workflow steps passed");
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
   try {
     const args = process.argv.slice(2);
     if (args.length === 1 && args[0] === "--help") {

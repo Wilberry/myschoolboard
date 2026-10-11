@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { GET } from "../../app/api/health/live/route";
 
 describe("public liveness endpoint", () => {
-  it("responds without requesting an identity, tenant, or database", async () => {
+  it("responds without identity, tenant, or database", async () => {
     const response = GET();
 
     expect(response.status).toBe(200);

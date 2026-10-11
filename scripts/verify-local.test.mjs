@@ -56,7 +56,10 @@ for (const [name, changes] of [
     },
   ],
   ["short Better Auth secret", { BETTER_AUTH_SECRET: "short" }],
-  ["remote Better Auth origin", { BETTER_AUTH_URL: "https://auth.example.com" }],
+  [
+    "remote Better Auth origin",
+    { BETTER_AUTH_URL: "https://auth.example.com" },
+  ],
   ["non-synthetic seed email", { DEV_ADMIN_EMAIL: "owner@example.com" }],
 ]) {
   test(`refuses ${name}`, () => {
