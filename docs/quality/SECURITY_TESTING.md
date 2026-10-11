@@ -16,6 +16,10 @@
 - For mutation routes, verify handlers reject client-supplied actor and tenant IDs and always call the transactional service. Assert exactly one audit event for each successful mutation and no event or partial state change after failed authorization, validation, concurrency, or audit persistence. The current integration suite also verifies logger failure cannot turn a denial into an allowed response.
 - Denied cross-tenant access must remain denied even if security logging fails. Log only the event type, fixed mutation label, generated request ID, and an error type where relevant; never log tenant/resource identifiers, cookies, tokens, credentials, request bodies, or personal data. Logging failure must not change the denial response or expose resource existence; exercise this with a simulated logger failure.
 
+## School-details read response regression coverage (pending local run)
+
+The existing school-details read handler must send `Cache-Control: private, no-store` on both successful and denied/error responses. Its error logger is best-effort only: throwing from `console.error` must not prevent a generic HTTP `500` response or disclose school identifiers. The follow-up tests exercise unauthenticated, authorized, concealed cross-tenant, persistence-failure, and logger-failure cases against the disposable test database. The new tests have been authored but not yet executed against PostgreSQL; see the owner's postponed local CI verification.
+
 ## Requirement
 
 Security tests must be executed before release and must continue as part of regression checks.

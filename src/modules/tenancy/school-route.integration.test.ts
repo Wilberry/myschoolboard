@@ -197,6 +197,7 @@ describe("school API route authorization", () => {
     const response = await getSchool(schoolA);
 
     expect(response.status).toBe(401);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(await response.json()).toEqual({ error: "Unauthorized" });
   });
 
@@ -207,6 +208,7 @@ describe("school API route authorization", () => {
     );
 
     expect(response.status).toBe(401);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(await response.json()).toEqual({ error: "Unauthorized" });
   });
 
@@ -227,6 +229,7 @@ describe("school API route authorization", () => {
     const response = await getSchool(schoolA, cookie);
 
     expect(response.status).toBe(401);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(await response.json()).toEqual({ error: "Unauthorized" });
   });
 
@@ -235,6 +238,7 @@ describe("school API route authorization", () => {
     const response = await getSchool(schoolA, cookie);
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(await response.json()).toEqual({
       school: {
         id: schoolA,
@@ -250,6 +254,7 @@ describe("school API route authorization", () => {
     const body = await response.text();
 
     expect(response.status).toBe(404);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(body).not.toContain("Synthetic Other School");
     expect(body).not.toContain(`${schoolB}-slug`);
   });
@@ -312,6 +317,28 @@ describe("school API route authorization", () => {
       const response = await getSchool(schoolA, cookie);
 
       expect(response.status).toBe(500);
+      expect(response.headers.get("cache-control")).toBe("private, no-store");
+      expect(await response.json()).toEqual({
+        error: "Request could not be completed",
+      });
+    } finally {
+      lookup.mockRestore();
+      errorLog.mockRestore();
+    }
+  });
+  it("keeps a generic error when logging throws", async () => {
+    const cookie = await signIn(userAEmail);
+    const lookup = vi
+      .spyOn(prisma.membership, "findFirst")
+      .mockRejectedValueOnce(new Error("synthetic lookup failure"));
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {
+      throw new Error("synthetic logging failure");
+    });
+
+    try {
+      const response = await getSchool(schoolA, cookie);
+      expect(response.status).toBe(500);
+      expect(response.headers.get("cache-control")).toBe("private, no-store");
       expect(await response.json()).toEqual({
         error: "Request could not be completed",
       });

@@ -22,6 +22,10 @@ The project is no longer documentation-only. A verified local Phase 1 foundation
 
 On the separate `feature/local-verification-and-health` development branch, a dependency-free liveness endpoint and its focused tests have been added, together with a guarded script to run the unchanged GitHub Actions command sequence locally against the disposable test database. GitHub Actions runners remain unavailable because of an owner-reported billing restriction. **These changes have not yet passed the full local application CI sequence**, so they are not evidence of a completed Phase 1 exit gate. The eight previously identified high-severity dependency findings remain open; no merge, production release, or deployment is permitted by D-022. See [Local CI Verification Runbook](../quality/LOCAL_CI_RUNBOOK.md).
 
+## Additional security follow-up awaiting local verification
+
+On the separate `feature/school-read-response-hardening` branch, the existing authenticated school-details endpoint is hardened with explicit private/no-store responses and exception-safe error logging. Its integration assertions and security-testing documentation are extended. These changes are not yet locally database-tested and do **not** complete TEN-REQ-001 or SEC-REQ-001. No permission, tenant-isolation, or database schema semantics are relaxed.
+
 ## Current roadmap phase
 
 Phase 0 documentation baseline is complete.
