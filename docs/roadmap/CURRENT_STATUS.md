@@ -18,6 +18,10 @@ The project is no longer documentation-only. A verified local Phase 1 foundation
 - Academic assignment foundation: school-scoped models, active normalized-name indexes, Better Auth-backed management service, assignment-aware policy helper, transactional row-lock revalidation, and database-enforced audit association are implemented in the current working tree. Four school-scoped mutation routes (create, deactivate, revoke, reactivate) call the transactional service and pass route-level integration coverage. No assignment UI, list/detail route, or academic read route exists; assignment read authorization remains unresolved under D-020. TCH-REQ-001, TEN-REQ-001, and SEC-REQ-001 remain specified and incomplete; Phase 4/5 remain incomplete.
 - Dependency audit: full audit reports 8 high package entries from two advisories; production-only audit reports 3 entries from the Prisma/deepmerge-ts advisory. D-022 Option C is approved through 2026-10-18 only for the scoped development feature branch and draft PR, with disclosure and the unchanged CI audit gate; it is not production risk acceptance and does not authorize push. D-015 Option A remains active outside this narrow exception. The checkpoint push and draft PR were separately authorized and completed; no merge, deployment, release, or dependency override is approved. See [assessment](../security/DEPENDENCY_ADVISORY_ASSESSMENT.md).
 
+## Additional security follow-up awaiting local verification
+
+On the separate `feature/school-read-response-hardening` branch, the existing authenticated school-details endpoint is hardened with explicit private/no-store responses and exception-safe error logging. Its integration assertions and security-testing documentation are extended. These changes are not yet locally database-tested and do **not** complete TEN-REQ-001 or SEC-REQ-001. No permission, tenant-isolation, or database schema semantics are relaxed.
+
 ## Current roadmap phase
 
 Phase 0 documentation baseline is complete.
