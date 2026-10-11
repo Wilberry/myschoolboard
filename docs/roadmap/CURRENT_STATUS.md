@@ -34,6 +34,10 @@ The `feature/recheck-school-membership-on-read` follow-up adds a final database-
 
 The `feature/no-store-assignment-mutations` follow-up adds an explicit private/no-store header to all four school-scoped assignment mutation routes through their shared HTTP handler. Status codes, authorization, database transactions and append-only audit logic are unchanged. Route-level regression assertions are written, not executed. No new assignment read routes were added; D-020 remains unresolved.
 
+## Policy-aligned school navigation awaiting verification
+
+On `feature/policy-aligned-school-navigation`, the home workspace retains active membership cards but only displays a school-detail link for memberships eligible under the existing school-level `academic:read` policy. Other roles see a non-clickable restricted label instead of a link to a predictable 404. No new permission is granted; the destination remains server-authoritative. Focused role matrix tests were added but not yet executed in the owner's final local verification batch.
+
 ## Current roadmap phase
 
 Phase 0 documentation baseline is complete.

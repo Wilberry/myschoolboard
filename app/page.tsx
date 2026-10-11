@@ -5,6 +5,7 @@ import { SignInForm } from "@/src/components/sign-in-form";
 import { SignOutButton } from "@/src/components/sign-out-button";
 import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
+import { canShowSchoolDetailLink } from "@/src/modules/tenancy/school-navigation";
 
 export default async function Home() {
   return (
@@ -100,9 +101,15 @@ async function HomeContent() {
                 </div>
                 <div className="school-meta">
                   <span className="school-slug">{school.slug}</span>
-                  <Link href={`/schools/${school.id}`} className="school-link">
-                    View details
-                  </Link>
+                  {canShowSchoolDetailLink(session.user.id, school.id, role) ? (
+                    <Link href={`/schools/${school.id}`} className="school-link">
+                      View details
+                    </Link>
+                  ) : (
+                    <span className="school-detail-unavailable">
+                      Details restricted
+                    </span>
+                  )}
                 </div>
               </li>
             ))}
