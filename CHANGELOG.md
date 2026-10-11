@@ -19,12 +19,28 @@
 - Added the product-owner approval register for Phase 1 decisions.
 - Clarified the distinction between the original baseline commit and the current live documentation state.
 
+## 2026-10-09 — Local Phase 1 foundation and verification
+
+- Added a local Next.js/TypeScript application foundation using Better Auth, Prisma, and PostgreSQL.
+- Added the initial Prisma schema and migration, local PostgreSQL configuration, and synthetic development seed.
+- Added server-side authorization and tenant-context checks and focused tests.
+- Added a protected school-details path and CI quality workflow.
+- Recorded the approved local stack separately from unresolved external identity, hosting/domain, RLS, and later-phase product decisions.
+- Verified database generation/deployment and seed, 17 tests, lint, typecheck, formatting, and production build locally.
+- This checkpoint does not claim production readiness or complete all SEC-REQ-001 / TEN-REQ-001 acceptance criteria.
+- Final review found 8 high-severity dependency audit findings (3 remain with production-only audit); the configured CI audit gate is not passing.
+
+## 2026-10-11 — Reduced checkpoint reconciliation
+
+- Excluded the local private-storage prototype from the proposed first GitHub checkpoint; the prototype remains in the working tree and is not required by the application.
+- Excluded unused Next.js starter assets from the candidate manifest: the app favicon and unused page CSS module, plus the unreferenced public SVG assets.
+- Removed the unused `PRIVATE_STORAGE_ROOT` setting from the environment example, runtime schema, and CI workflow.
+- Reconstructed the exact candidate from HEAD plus the selected manifest: 28 modified tracked files and 53 selected new files, with 58 unchanged HEAD paths retained. In that isolated tree, all 6 migrations and guarded demo seed succeeded, 78 tests across 7 files passed, and formatting, lint, typecheck, and production build passed. The known dependency audit blocker remains.
+- D-015 Option A remains active and D-022 risk-owner approval remains pending; this reconciliation does not authorize branch creation, staging, commit, push, merge, or release.
+
 ## Current status
 
-- Repository state: documentation-only baseline committed to main
-- Baseline documentation commit: 84fb14b — docs: add initial MySchoolBoard specification baseline
-- Latest verified commit: c1f4b5b9b6e170ab04e3fbed0cd2a01dffab3129 — docs: add Phase 1 engineering plan and approval register
-- Application implementation: not present in repository
-- Tests: not implemented yet
-- Migrations and deployment configuration: not present yet
-- Push status: successfully pushed to origin/main
+- Repository state: local Phase 1 foundation and documentation are being checkpointed; consult live Git history/status for commit and push state.
+- Local app, migration, seed, CI workflow, and tests: present and locally verified to the extent described above.
+- Hosting provider, domain, external identity provider, and production deployment: deferred or unresolved.
+- PostgreSQL RLS: not enabled.

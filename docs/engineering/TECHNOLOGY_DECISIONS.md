@@ -2,9 +2,9 @@
 
 ## Decision ID: TECH-001
 
-- Context: No code exists in the repository.
+- Context: The local Phase 1 foundation uses this architecture.
 - Options considered: Monolith, modular monolith, microservices.
-- Selected choice: Modular monolith is the default recommendation for the early stage.
+- Selected choice: TypeScript modular monolith with Next.js for local development and testing.
 - Rationale: It reduces unnecessary complexity while preserving explicit module boundaries.
 - Trade-offs: Less independent scaling than microservices but simpler coordination for a small team.
 - Security implications: Easier to enforce consistent tenant and authorization checks.
@@ -12,8 +12,8 @@
 
 ## Decision ID: TECH-002
 
-- Context: Need a durable, strongly consistent store for academic and financial records.
-- Proposed choice: Relational database with explicit integrity constraints.
+- Context: The local foundation requires durable relational persistence.
+- Selected choice: PostgreSQL with Prisma schema and reviewed migrations for local development and testing.
 - Rationale: Required for historical, versioned, transactional academic records.
 
 ## Decision ID: TECH-003
@@ -30,4 +30,4 @@
 
 ## Current status
 
-All technology choices are proposed or unresolved because the repository contains no implementation evidence. No final stack decision may be treated as approved until documentation and product-owner review confirm it.
+TypeScript, Next.js, PostgreSQL, and the modular-monolith direction are approved for the local foundation and have implementation evidence. Better Auth is currently implemented locally; the external identity-provider strategy remains open. Hosting provider and domain are deferred until local development and testing are complete. File storage and background job choices remain proposed for future implementation.

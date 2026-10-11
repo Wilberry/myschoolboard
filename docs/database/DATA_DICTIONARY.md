@@ -23,14 +23,42 @@
 - status: active, transferred, promoted, withdrawn, graduated
 - effective_from, effective_to
 
-## TeacherSubjectClassAssignment
+## SchoolClass
 
-- assignment_id
-- teacher_id
-- subject_id
-- class_id
-- tenant_id
-- status: active, archived, invalid
+- id: school-scoped class identifier
+- schoolId: owning school
+- name: display name; active normalized names are unique per school using lower-case and surrounding ASCII-space trimming
+- isActive, createdAt, updatedAt
+
+## Subject
+
+- id: school-scoped subject identifier
+- schoolId: owning school
+- name: display name; active normalized names are unique per school using lower-case and surrounding ASCII-space trimming
+- isActive, createdAt, updatedAt
+
+## TeacherClassSubjectAssignment
+
+- id
+- schoolId
+- membershipId: must identify a membership in the same school
+- classId: must identify a class in the same school
+- subjectId: must identify a subject in the same school
+- status: ACTIVE, INACTIVE, or REVOKED; transitions reuse the unique tuple row
+- createdAt, updatedAt: timestamps, not a complete actor-level audit trail
+
+## TeacherClassSubjectAssignmentEvent
+
+- id
+- schoolId
+- actorUserId, actorMembershipId
+- teacherMembershipId: target teacher membership
+- assignmentId
+- eventType: CREATED, DEACTIVATED, REVOKED, REACTIVATED
+- previousStatus, newStatus
+- reason: optional except service-required deactivate/revoke reason
+- createdAt: database-generated event timestamp
+- PostgreSQL rejects direct UPDATE and DELETE; school tenant cascade cleanup may remove events
 
 ## ResultSheet
 

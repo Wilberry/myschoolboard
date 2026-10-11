@@ -1,0 +1,407 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
+:root {
+  --ink: #18251f;
+  --muted: #65736d;
+  --line: #dce4df;
+  --paper: #f5f7f3;
+  --white: #fff;
+  --green: #246a4d;
+  --green-dark: #174b37;
+  --lime: #d9e8a4;
+  --font-body: "DM Sans", sans-serif;
+  --font-display: "Manrope", sans-serif;
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+body {
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--font-body);
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button,
+input {
+  font: inherit;
+}
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(390px, 0.9fr) 1.1fr;
+  background: var(--paper);
+}
+.login-panel {
+  width: min(100%, 510px);
+  align-self: center;
+  justify-self: center;
+  padding: 64px 56px;
+}
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  background: var(--green);
+  color: white;
+  font: 800 19px var(--font-display);
+  border-radius: 4px;
+}
+.eyebrow {
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+}
+.login-panel .eyebrow {
+  margin: 38px 0 16px;
+}
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+h1 {
+  font: 700 38px/1.16 var(--font-display);
+  letter-spacing: 0;
+}
+.login-panel h1 {
+  max-width: 400px;
+  margin-bottom: 14px;
+}
+.lede {
+  margin-bottom: 32px;
+  color: var(--muted);
+  font-size: 15px;
+}
+.sign-in-form {
+  display: grid;
+  gap: 17px;
+}
+.sign-in-form label {
+  display: grid;
+  gap: 7px;
+  color: #39483f;
+  font-size: 13px;
+  font-weight: 600;
+}
+.sign-in-form input {
+  width: 100%;
+  height: 46px;
+  padding: 0 13px;
+  border: 1px solid #cbd6cf;
+  border-radius: 3px;
+  background: white;
+  color: var(--ink);
+  outline: none;
+}
+.sign-in-form input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px #246a4d20;
+}
+.sign-in-form button {
+  height: 46px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 3px;
+  color: white;
+  background: var(--green);
+  font-weight: 700;
+  cursor: pointer;
+}
+.sign-in-form button:hover {
+  background: var(--green-dark);
+}
+.form-error {
+  margin: 0;
+  color: #a34330;
+  font-size: 13px;
+}
+.login-footnote {
+  margin: 25px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.login-aside {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 11%;
+  overflow: hidden;
+  color: white;
+  background: var(--green-dark);
+}
+.login-aside::before {
+  position: absolute;
+  top: -16%;
+  right: -11%;
+  width: min(44vw, 560px);
+  aspect-ratio: 1;
+  border: 1px solid #ffffff25;
+  border-radius: 50%;
+  content: "";
+}
+.login-aside::after {
+  position: absolute;
+  top: -5%;
+  right: 0;
+  width: min(35vw, 450px);
+  aspect-ratio: 1;
+  border: 1px solid #ffffff20;
+  border-radius: 50%;
+  content: "";
+}
+.aside-rule {
+  width: 46px;
+  height: 3px;
+  margin-bottom: 25px;
+  background: var(--lime);
+}
+.aside-kicker {
+  margin-bottom: 16px;
+  color: var(--lime);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+.aside-copy {
+  max-width: 520px;
+  margin: 0;
+  font: 600 clamp(26px, 3vw, 42px)/1.22 var(--font-display);
+}
+.aside-index {
+  position: absolute;
+  right: 11%;
+  bottom: 9%;
+  color: #ffffff90;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+.workspace {
+  min-height: 100vh;
+}
+.topbar {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(22px, 6vw, 90px);
+  border-bottom: 1px solid var(--line);
+  background: var(--white);
+}
+.brand,
+.account-menu {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand {
+  font: 700 15px var(--font-display);
+}
+.brand .brand-mark {
+  width: 34px;
+  height: 34px;
+  font-size: 15px;
+}
+.account-name {
+  color: #47574e;
+  font-size: 13px;
+}
+.sign-out-button {
+  border: 0;
+  padding: 8px 0 8px 12px;
+  color: var(--green);
+  background: none;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.workspace-content {
+  width: min(100% - 44px, 980px);
+  margin: 68px auto;
+}
+.workspace-heading-row {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 34px;
+  border-bottom: 1px solid var(--line);
+}
+.workspace-heading-row .eyebrow {
+  margin-bottom: 12px;
+}
+.workspace-heading-row h1 {
+  margin-bottom: 0;
+  font-size: 32px;
+}
+.environment-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #d4dfd6;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+}
+.environment-tag span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6c9a55;
+}
+.section-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 38px 0 14px;
+}
+.section-heading h2 {
+  margin: 0;
+  font: 700 17px var(--font-display);
+}
+.section-heading span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.school-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+.school-list li {
+  min-height: 82px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 14px 10px;
+  border-bottom: 1px solid var(--line);
+  background: #ffffff70;
+}
+.school-monogram {
+  flex: 0 0 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #c4d6c9;
+  color: var(--green);
+  background: #e8f0e8;
+  font: 700 16px var(--font-display);
+}
+.school-details {
+  flex: 1;
+}
+.school-details h3 {
+  margin: 0 0 5px;
+  font: 700 14px var(--font-display);
+}
+.school-details p,
+.school-slug {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.school-slug {
+  padding-right: 8px;
+}
+.empty-state {
+  padding: 40px 20px;
+  border: 1px dashed #cbd6cf;
+  text-align: center;
+}
+.empty-mark {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 13px;
+  border-radius: 50%;
+  color: var(--green);
+  background: #e4ede4;
+  font-size: 20px;
+}
+.empty-state h3 {
+  margin-bottom: 6px;
+  font: 700 14px var(--font-display);
+}
+.empty-state p,
+.workspace-note {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.workspace-note {
+  margin-top: 18px;
+}
+@media (max-width: 760px) {
+  .login-page {
+    grid-template-columns: 1fr;
+  }
+  .login-panel {
+    width: 100%;
+    max-width: 530px;
+    padding: 48px 28px 42px;
+  }
+  .login-panel .eyebrow {
+    margin-top: 31px;
+  }
+  .login-aside {
+    min-height: 270px;
+    padding: 42px 28px;
+  }
+  .login-aside::before {
+    width: 320px;
+    right: -95px;
+  }
+  .login-aside::after {
+    width: 260px;
+    right: -40px;
+  }
+  .aside-copy {
+    max-width: 430px;
+    font-size: 27px;
+  }
+  .aside-index {
+    right: 28px;
+    bottom: 24px;
+  }
+  .workspace-content {
+    margin-top: 42px;
+  }
+}
+@media (max-width: 520px) {
+  .workspace-heading-row {
+    align-items: start;
+    flex-direction: column;
+  }
+  .workspace-heading-row h1 {
+    font-size: 28px;
+  }
+  .topbar {
+    height: 64px;
+    padding: 0 18px;
+  }
+  .account-name {
+    display: none;
+  }
+  .school-list li {
+    gap: 11px;
+  }
+  .school-slug {
+    display: none;
+  }
+}

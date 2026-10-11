@@ -10,19 +10,19 @@
 
 ## Phase 1 — Architecture and engineering foundation
 
-- Objective: approve the initial technical stack, environment model, and engineering standards before implementation begins.
-- Requirements covered: OPS-REQ-001, SEC-REQ-001
+- Objective: establish and verify the approved local technical stack, environment, and engineering foundation.
+- Requirements touched: OPS-REQ-001 (local tooling/migration subset), SEC-REQ-001 (local session and tenant-boundary subset); neither requirement is fully complete.
 - Dependencies: Phase 0
-- Must not begin until the following entry criteria are satisfied or deliberately marked as deferred with a risk note:
-  1. technology stack and hosting model approved or evaluated in a technical spike
+- Entry criteria satisfied for the local foundation, with production items deferred:
+  1. local technology stack approved; hosting provider and domain deferred
   2. local dev environment and tooling baseline defined
   3. database and migration approach approved or explicitly deferred
   4. security and secret-handling baseline established
   5. CI and quality gates defined
   6. tenant-scoping model and authorization architecture reviewed
 - Deliverables: application skeleton, environment template, quality tooling, smoke tests, security baseline, ADRs
-- Acceptance criteria: scaffold works locally, CI is configured, migrations are defined if required, and the architecture passes a documented review
-- Status: not started; entry condition pending product-owner approval or explicit technical spike
+- Local acceptance evidence: app builds, CI is configured, Prisma migration and seed run locally, and implemented tenant checks have focused tests. This is not proof that every SEC-REQ-001 or TEN-REQ-001 acceptance criterion is met.
+- Status: local foundation implemented and validated for its stated scope; broader Phase 1 definition of done remains incomplete (see CURRENT_STATUS.md)
 
 ## Phase 2 — Identity, tenancy, and authorization
 

@@ -1,49 +1,49 @@
-# MySchoolBoard Documentation Package
+# MySchoolBoard Local Phase 1 Foundation
 
-This repository contains a committed documentation-only baseline for a multi-tenant school management SaaS. It is not a completed application implementation. The project is intentionally specification-first and has reached a verified documentation milestone on the main branch.
+This repository now includes a verified local Phase 1 foundation for a multi-tenant school system. The implementation is intentionally local-first and is not a production deployment. It is designed to prove the architecture, tenant scoping, session handling, database migration flow, and security boundaries before any production or hosting decisions are made.
 
 ## Purpose
 
-This repository is the canonical engineering and product source of truth for MySchoolBoard. It captures:
+The repository remains the canonical product and engineering source of truth for MySchoolBoard. It captures:
 
-- Product vision and scope
-- Requirements and acceptance criteria
+- Product and security requirements
 - Authorization and tenant-isolation rules
-- Architecture and data model
-- Security, privacy, quality, and testing strategy
-- Roadmap and implementation checkpoints
+- Architecture decisions and implementation notes
+- Local environment setup and database workflow
+- Verified local validation results for the Phase 1 foundation
 
 ## Documentation entry point
 
 - [docs/README.md](docs/README.md) — full documentation navigation
 - [AGENTS.md](AGENTS.md) — required workflow for future agents
-- [CHANGELOG.md](CHANGELOG.md) — history of documentation milestones
-- [docs/roadmap/CURRENT_STATUS.md](docs/roadmap/CURRENT_STATUS.md) — current project status
-- [docs/roadmap/IMPLEMENTATION_ROADMAP.md](docs/roadmap/IMPLEMENTATION_ROADMAP.md) — roadmap and Phase 1 entry criteria
+- [CHANGELOG.md](CHANGELOG.md) — project history and verification notes
+- [docs/roadmap/CURRENT_STATUS.md](docs/roadmap/CURRENT_STATUS.md) — current implementation status
+- [docs/roadmap/IMPLEMENTATION_ROADMAP.md](docs/roadmap/IMPLEMENTATION_ROADMAP.md) — roadmap and Phase 1 status
 
 ## Current verified repository state
 
-As of the latest repository inspection:
+As of the latest verification pass:
 
-- Repository: documentation-only baseline on GitHub, no application code implementation
-- Current branch: main
-- Baseline documentation commit: 84fb14b — docs: add initial MySchoolBoard specification baseline
-- Latest verified commit: c1f4b5b9b6e170ab04e3fbed0cd2a01dffab3129 — docs: add Phase 1 engineering plan and approval register
-- Working tree: clean after the latest documentation commit
-- Application stack: not yet selected for implementation
-- Database: not yet selected or implemented
-- CI/CD: not configured in the repository
-- Tests: no implementation tests present yet
-- Deployment configuration: none present
-- Product identity: provisional; public branding remains configurable
+- Repository branch: main
+- Working tree: local implementation present; uncommitted edits remain until a safe commit is created
+- Application stack: Next.js 16, React 19, TypeScript, Better Auth, Prisma, PostgreSQL
+- Approved local architecture direction: TypeScript modular monolith, Next.js, PostgreSQL
+- Database: PostgreSQL local dev database on port 5433
+- Auth: Better Auth is implemented locally; external identity-provider strategy remains open
+- Tenant model: active school membership is required for any authorized school access
+- Local app: sign-in flow, workspace view, and protected school detail page implemented
+- Tests: the full working-tree validation on 2026-10-11 passed 83 tests across 8 files, including the private-storage prototype. The exact reduced candidate reconstructed from HEAD and the selected manifest passed 78 tests across 7 files against a tmpfs-backed disposable test database.
+- Build: production build passes
+- Local workflow: Prisma generation, all 6 migrations, guarded seed, tests, lint, typecheck, formatting, schema validation, and production build passed in the recorded local validation
+- Dependency audit: `npm audit --audit-level=high` fails with 8 high findings; `npm audit --omit=dev --audit-level=high` still reports 3 high Prisma-config/deepmerge findings
 
 ## Current status
 
-The repository is currently in the documentation foundation phase. The project has not moved into application implementation, and no feature implementation is considered complete without evidence of code and validation.
+The project has moved beyond the documentation-only baseline and has a local Phase 1 foundation with the listed local checks verified. The broader Phase 1 engineering-plan definition of done is not fully met, and this is not a production deployment. External identity selection, PostgreSQL RLS, and hosting configuration remain open or deferred.
 
 ## Canonical rule
 
-All future implementation work must read and follow:
+All implementation work must continue to read and follow:
 
 - [AGENTS.md](AGENTS.md)
 - [docs/README.md](docs/README.md)
@@ -52,15 +52,34 @@ All future implementation work must read and follow:
 
 ## Important unresolved decisions
 
-The following remain open and required before Phase 1 implementation can proceed safely:
+The following remain explicitly unresolved or intentionally deferred:
 
-- final technology stack and hosting model
-- authentication and identity provider strategy
-- payment provider and currency model
-- parent-first report-card acknowledgment semantics
-- exceptional support-access policy
-- final QR verification and public disclosure rules
+- external identity-provider selection
+- PostgreSQL RLS implementation
+- high-severity dependency advisories in the Prisma config and Next.js lint dependency chains; compatible fixes were not available from the current dependency metadata
+- hosting provider, domain, and deployment model until local development/testing is complete
+- exceptional support-access approval mechanism; unrestricted routine access is not allowed
+- payment-provider selection, parent-first report visibility, and QR disclosure in their relevant phases
+
+## Local validation summary
+
+The verified local workflow includes:
+
+- Postgres startup via Docker Compose
+- Prisma generate and migrate deploy
+- seed script execution
+- Vitest suite execution
+- ESLint, TypeScript, Prettier checks
+- Next.js production build
+
+This is a local-development ready state, not a production host-ready state.
+
+## Local database safety
+
+Demo seeding is limited to the local development database or the explicitly disposable test database. Set `ALLOW_DEMO_SEED=1` only when intentionally running `npm run db:seed`. The test target additionally requires `NODE_ENV=test`, matching `DATABASE_URL` and `TEST_DATABASE_URL`, and `TEST_DATABASE_DISPOSABLE=1`.
+
+`npm run db:reset` is restricted to the local development database and requires `ALLOW_LOCAL_DB_RESET=1`. Never point it at a shared or production database. Docker Compose binds its PostgreSQL ports to loopback.
 
 ## Note on branding
 
-The provisional product name MySchoolBoard is a working label only. Public branding must remain configurable and should not be treated as a fixed product identity in architecture or implementation decisions.
+The provisional product name MySchoolBoard remains a working project label. Public branding should remain configurable and should not be treated as a fixed product identity until product-owner approval is recorded.

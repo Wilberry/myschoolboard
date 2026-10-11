@@ -1,0 +1,218 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PlatformRole {
+  NONE
+  SUPER_ADMIN
+}
+
+enum MembershipRole {
+  SCHOOL_SUPER_ADMIN
+  SCHOOL_ADMIN
+  HEAD_OF_SECTION
+  PRINCIPAL
+  TEACHER
+  FORM_TEACHER
+  PARENT
+  STUDENT
+}
+
+enum ScopeType {
+  SECTION
+  CLASS
+  SUBJECT
+  CHILD
+}
+
+model User {
+  id            String       @id
+  name          String
+  email         String       @unique
+  emailVerified Boolean      @default(false)
+  image         String?
+  platformRole  PlatformRole @default(NONE)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  memberships   Membership[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+model School {
+  id                                  String                               @id @default(cuid())
+  name                                String
+  slug                                String                               @unique
+  isActive                            Boolean                              @default(true)
+  createdAt                           DateTime                             @default(now())
+  updatedAt                           DateTime                             @updatedAt
+  memberships                         Membership[]
+  classes                             SchoolClass[]
+  subjects                            Subject[]
+  teacherClassSubjectAssignments      TeacherClassSubjectAssignment[]
+  teacherClassSubjectAssignmentEvents TeacherClassSubjectAssignmentEvent[]
+}
+
+model Membership {
+  id                             String                          @id @default(cuid())
+  userId                         String
+  schoolId                       String
+  role                           MembershipRole
+  isActive                       Boolean                         @default(true)
+  createdAt                      DateTime                        @default(now())
+  updatedAt                      DateTime                        @updatedAt
+  user                           User                            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  school                         School                          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  scopes                         ScopeGrant[]
+  teacherClassSubjectAssignments TeacherClassSubjectAssignment[]
+
+  @@unique([schoolId, userId])
+  @@unique([schoolId, id])
+  @@index([userId, isActive])
+}
+
+model ScopeGrant {
+  id           String     @id @default(cuid())
+  membershipId String
+  type         ScopeType
+  scopeId      String
+  verified     Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  membership   Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@unique([membershipId, type, scopeId])
+  @@index([type, scopeId])
+}
+
+enum TeacherClassSubjectAssignmentStatus {
+  ACTIVE
+  INACTIVE
+  REVOKED
+}
+
+enum TeacherClassSubjectAssignmentEventType {
+  CREATED
+  DEACTIVATED
+  REVOKED
+  REACTIVATED
+}
+
+model SchoolClass {
+  id                             String                          @id @default(cuid())
+  schoolId                       String
+  name                           String
+  isActive                       Boolean                         @default(true)
+  createdAt                      DateTime                        @default(now())
+  updatedAt                      DateTime                        @updatedAt
+  school                         School                          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teacherClassSubjectAssignments TeacherClassSubjectAssignment[]
+
+  @@unique([schoolId, id])
+  @@index([schoolId])
+}
+
+model Subject {
+  id                             String                          @id @default(cuid())
+  schoolId                       String
+  name                           String
+  isActive                       Boolean                         @default(true)
+  createdAt                      DateTime                        @default(now())
+  updatedAt                      DateTime                        @updatedAt
+  school                         School                          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teacherClassSubjectAssignments TeacherClassSubjectAssignment[]
+
+  @@unique([schoolId, id])
+  @@index([schoolId])
+}
+
+model TeacherClassSubjectAssignment {
+  id           String                              @id @default(cuid())
+  schoolId     String
+  membershipId String
+  classId      String
+  subjectId    String
+  status       TeacherClassSubjectAssignmentStatus @default(ACTIVE)
+  createdAt    DateTime                            @default(now())
+  updatedAt    DateTime                            @updatedAt
+  school       School                              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  membership   Membership                          @relation(fields: [schoolId, membershipId], references: [schoolId, id], onDelete: NoAction)
+  schoolClass  SchoolClass                         @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
+  subject      Subject                             @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction)
+  events       TeacherClassSubjectAssignmentEvent[]
+
+  @@unique([schoolId, membershipId, classId, subjectId])
+  @@unique([schoolId, id, membershipId])
+  @@unique([schoolId, id])
+  @@index([schoolId, membershipId, status])
+  @@index([schoolId, classId, subjectId, status])
+}
+
+model TeacherClassSubjectAssignmentEvent {
+  id                  String                                 @id @default(cuid())
+  schoolId            String
+  actorUserId         String
+  actorMembershipId   String
+  teacherMembershipId String
+  assignmentId        String
+  eventType           TeacherClassSubjectAssignmentEventType
+  previousStatus      TeacherClassSubjectAssignmentStatus?
+  newStatus           TeacherClassSubjectAssignmentStatus
+  reason              String?
+  createdAt           DateTime                               @default(now())
+  school              School                                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  assignment          TeacherClassSubjectAssignment         @relation(fields: [schoolId, assignmentId, teacherMembershipId], references: [schoolId, id, membershipId], onDelete: NoAction)
+
+  @@index([schoolId, createdAt])
+  @@index([schoolId, assignmentId, createdAt])
+  @@index([schoolId, actorUserId, createdAt])
+  @@index([schoolId, teacherMembershipId, createdAt])
+}
