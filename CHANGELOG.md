@@ -45,6 +45,12 @@
 - The first GitHub Actions run completed with failure. The audit gate remains enabled, and its 8 high findings (3 production-only) remain unresolved; the failed step(s) must be confirmed separately.
 - The historical local reduced-candidate validation remains 78 passing tests across 7 files and 6 applied migrations. No CI or production-readiness claim follows from these historical results.
 
+## 2026-10-11 — Local verification and liveness follow-up (unverified)
+
+- Prepared an independent feature branch with a public, dependency-free liveness probe and two focused tests.
+- Prepared a guarded local execution script for the unchanged GitHub CI npm command sequence, separate preflight/guard tests, and a disposable-database runbook. Hosted GitHub Actions remain unavailable under the owner-reported billing restriction.
+- The full application verification has **not** run for this follow-up. The dependency findings, D-022 expiry, and merge/deployment restrictions remain unchanged.
+
 ## Current status
 
 - Repository state: local Phase 1 foundation and documentation are being checkpointed; consult live Git history/status for commit and push state.

@@ -17,7 +17,10 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "tsx scripts/db-reset.ts"
+    "db:reset": "tsx scripts/db-reset.ts",
+    "verify:local": "node scripts/verify-local.mjs",
+    "verify:local:preflight": "node scripts/verify-local.mjs --preflight",
+    "verify:local:guards": "node --test scripts/verify-local.test.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
