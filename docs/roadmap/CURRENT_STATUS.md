@@ -50,6 +50,10 @@ On `feature/resilient-auth-ui`, sign-in and sign-out buttons now handle explicit
 
 The `feature/session-revocation-tenant-regressions` follow-up adds four DB-backed integration cases without modifying production code: reusing a cookie after deleting the corresponding Better Auth session must deny school metadata reads and all four teacher-assignment mutations; platform-wide admin status cannot bypass another school's membership; and role demotion must immediately block assignment creation even when the login session is still active. The cases exercise existing server-side checks with real Better Auth sessions and synthetic database fixtures. **They have not been run for this follow-up.** Session durability, global sign-out behavior, cross-deployment cache invalidation, login abuse rate limiting, MFA, and verification policies remain unresolved.
 
+## Phase 2 verified scope authorization (awaiting local verification)
+
+The `feature/require-verified-scope-grants` branch tightens the shared policy so section, class, and subject grants require `verified: true` rather than granting access merely because a matching `ScopeGrant` exists. Four focused regression cases verify rejection of unverified grants, acceptance of exact verified grants, and denial of a verified grant for the wrong resource. Existing child relationship validation and subject-teacher exact active assignment requirements remain unchanged. This permission tightening may affect any future or existing workflow storing an unverified grant; audit such consumers before merge. **Tests have been authored but not executed.** TEN-REQ-001, USR-REQ-001, SEC-REQ-001 remain open.
+
 ## Current roadmap phase
 
 Phase 0 documentation baseline is complete.

@@ -88,6 +88,12 @@
 - Added two teacher-assignment route integration tests covering revoked authenticated sessions on all four mutations and demotion of an administrator with an otherwise active session, with no audit-event or assignment-state changes after denial.
 - Existing session handling, production code, Prisma migrations, permission rules, and CI audit gate are unchanged. All four new tests remain pending the owner-requested disposable PostgreSQL verification checkpoint.
 
+## 2026-10-11 — Require verified scoped academic grants (unverified)
+
+- Updated the shared authorization policy to reject section/class/subject `ScopeGrant` records whose `verified` flag is false. Matching an identifier alone no longer establishes that scoped permission.
+- Added a table-driven policy regression for all three scope types with verified/unverified variants, plus a wrong-resource verification case. Existing teacher assignment and child verification constraints remain intact.
+- No database migration, new grant-management route, expanded privileges, or change to the CI security audit. All new tests remain pending final local verification; any legacy reliance on unverified grants needs review before merge.
+
 ## Current status
 
 - Repository state: local Phase 1 foundation and documentation are being checkpointed; consult live Git history/status for commit and push state.

@@ -36,6 +36,10 @@ Authenticated school metadata requests that resolve to a concealed `404` (includ
 
 Protected school metadata GET and all four teacher-assignment mutation POST handlers must not authorize a previously valid session after its **exact database session record is deleted**. New integration tests sign in using Better Auth, resolve that session ID, delete only the disposable test session, and replay its cookie. The GET must return a non-caching `401`; every assignment mutation must return non-caching `401` without creating an event or altering an existing assignment. Additional tests assert that elevating an unrelated school's user to Platform Super Admin never supplies another-school access, and demoting an administrator while their session remains active revokes assignment-create permission. All four cases are *authored, not executed* against the disposable PostgreSQL database. They do not establish browser sign-out, real-world session revocation propagation across deployments, or full SEC-REQ-001 / TEN-REQ-001 acceptance.
 
+## Unverified scope grant denial (new, pending local verification)
+
+The server policy must treat a section, class, or subject `ScopeGrant` with `verified: false` as untrusted and **deny** the corresponding resource-specific academic read. Unit regression cases cover all three scope types with both unverified and verified grants; an otherwise verified grant for another resource also remains denied. Parent-child verification checks and the exact teacher class-subject assignment rule remain unchanged. These cases are authored but not executed on the cumulative branch. The rule is a tightening of least-privilege behavior, not authorization to add scope-grant management routes or broaden school access. Review existing data before migration/release to identify any workflows relying on unverified grants.
+
 ## Requirement
 
 Security tests must be executed before release and must continue as part of regression checks.
