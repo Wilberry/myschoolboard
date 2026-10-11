@@ -82,6 +82,12 @@
 - Added four helper unit tests and updated sign-out error/loading styling. All new tests remain deferred to the owner's local verification checkpoint.
 - No Better Auth server policy, session schema, tenant authorization, database migration, or CI audit gate changes.
 
+## 2026-10-11 — Session revocation and tenant-boundary tests (awaiting verification)
+
+- Added two school-route integration tests for replaying a revoked Better Auth cookie and confirming that an elevated platform role alone cannot access another school's metadata.
+- Added two teacher-assignment route integration tests covering revoked authenticated sessions on all four mutations and demotion of an administrator with an otherwise active session, with no audit-event or assignment-state changes after denial.
+- Existing session handling, production code, Prisma migrations, permission rules, and CI audit gate are unchanged. All four new tests remain pending the owner-requested disposable PostgreSQL verification checkpoint.
+
 ## Current status
 
 - Repository state: local Phase 1 foundation and documentation are being checkpointed; consult live Git history/status for commit and push state.

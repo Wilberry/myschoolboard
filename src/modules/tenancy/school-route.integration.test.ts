@@ -237,6 +237,52 @@ describe("school API route authorization", () => {
     expect(await response.json()).toEqual({ error: "Unauthorized" });
   });
 
+  it("rejects the same cookie after session revocation", async () => {
+    const cookie = await signIn(userAEmail);
+    const initiallyAuthorized = await getSchool(schoolA, cookie);
+    expect(initiallyAuthorized.status).toBe(200);
+
+    const liveSession = await auth.api.getSession({
+      headers: new Headers({ cookie }),
+    });
+    if (!liveSession) {
+      throw new Error("Expected a valid session before revocation");
+    }
+
+    await prisma.session.delete({
+      where: { id: liveSession.session.id },
+    });
+
+    const revoked = await getSchool(schoolA, cookie);
+    expect(revoked.status).toBe(401);
+    expect(revoked.headers.get("cache-control")).toBe("private, no-store");
+    expect(await revoked.json()).toEqual({ error: "Unauthorized" });
+  });
+
+  it("does not grant school access from platform status alone", async () => {
+    const cookie = await signIn(userBEmail);
+    if (!userBId) throw new Error("Missing synthetic second user");
+
+    await prisma.user.update({
+      where: { id: userBId },
+      data: { platformRole: "SUPER_ADMIN" },
+    });
+
+    try {
+      const otherSchool = await getSchool(schoolA, cookie);
+      expect(otherSchool.status).toBe(404);
+      expect(otherSchool.headers.get("cache-control")).toBe(
+        "private, no-store",
+      );
+      expect(await otherSchool.json()).toEqual({ error: "Not found" });
+    } finally {
+      await prisma.user.update({
+        where: { id: userBId },
+        data: { platformRole: "NONE" },
+      });
+    }
+  });
+
   it("returns only minimal school details to a valid active member", async () => {
     const cookie = await signIn(userAEmail);
     const response = await getSchool(schoolA, cookie);

@@ -320,6 +320,76 @@ describe("teacher assignment mutation routes", () => {
     expect(await events()).toHaveLength(1);
   });
 
+  it("denies every mutation after session revocation", async () => {
+    const assignment = await createValidAssignment();
+    const cookie = await signIn(adminEmail);
+    const liveSession = await auth.api.getSession({
+      headers: new Headers({ cookie }),
+    });
+    if (!liveSession) {
+      throw new Error("Expected a valid session before revocation");
+    }
+
+    await prisma.session.delete({
+      where: { id: liveSession.session.id },
+    });
+
+    const body = { teacherMembershipId, classId: classA, subjectId: subjectA };
+    const attempts = [
+      () => create(body, cookie),
+      () =>
+        lifecycle(
+          deactivateRoute.POST,
+          assignment.id,
+          { reason: "Synthetic expired session" },
+          cookie,
+        ),
+      () =>
+        lifecycle(
+          revokeRoute.POST,
+          assignment.id,
+          { reason: "Synthetic expired session" },
+          cookie,
+        ),
+      () => lifecycle(reactivateRoute.POST, assignment.id, {}, cookie),
+    ];
+
+    for (const attempt of attempts) {
+      const response = await attempt();
+      expect(response.status).toBe(401);
+      expect(response.headers.get("cache-control")).toBe("private, no-store");
+      expect(await response.json()).toEqual({ error: "Unauthorized" });
+    }
+    expect(await events()).toHaveLength(1);
+    expect(
+      await prisma.teacherClassSubjectAssignment.findUniqueOrThrow({
+        where: { id: assignment.id },
+      }),
+    ).toMatchObject({ status: "ACTIVE" });
+  });
+
+  it("rechecks demoted membership with an active session", async () => {
+    const cookie = await signIn(adminEmail);
+    await prisma.membership.update({
+      where: { id: adminMembershipId },
+      data: { role: "PRINCIPAL" },
+    });
+
+    const response = await create(
+      { teacherMembershipId, classId: classA, subjectId: subjectA },
+      cookie,
+    );
+    expect(response.status).toBe(404);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(await response.json()).toEqual({ error: "Not found" });
+    expect(await events()).toHaveLength(0);
+    expect(
+      await prisma.teacherClassSubjectAssignment.count({
+        where: { schoolId: schoolA },
+      }),
+    ).toBe(0);
+  });
+
   it("creates an assignment and exactly one event using the authenticated actor", async () => {
     const assignment = await createValidAssignment();
     expect(assignment).toMatchObject({
