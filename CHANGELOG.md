@@ -75,6 +75,13 @@
 - Added two database-backed regression cases covering a missing versus cross-school request and thrown diagnostic logger behavior.
 - No schema migration, new permissions, changes to HTTP response bodies/status, CI audit gate, or merge/deployment authorization; these tests are still pending local verification.
 
+## 2026-10-11 — Authentication UI request resilience (unverified)
+
+- Added shared client auth request handling to distinguish successful fulfilled calls from error responses and rejected network/transport requests.
+- Updated sign-in to restore the pending state and show generic failure feedback; updated sign-out to prevent repeated requests, display failures, and refresh only after successful logout.
+- Added four helper unit tests and updated sign-out error/loading styling. All new tests remain deferred to the owner's local verification checkpoint.
+- No Better Auth server policy, session schema, tenant authorization, database migration, or CI audit gate changes.
+
 ## Current status
 
 - Repository state: local Phase 1 foundation and documentation are being checkpointed; consult live Git history/status for commit and push state.

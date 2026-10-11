@@ -226,6 +226,15 @@ h1 {
   font-weight: 700;
   cursor: pointer;
 }
+.sign-out-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+.sign-out-error {
+  max-width: 220px;
+  color: #a34330;
+  font-size: 12px;
+}
 .workspace-content {
   width: min(100% - 44px, 980px);
   margin: 68px auto;

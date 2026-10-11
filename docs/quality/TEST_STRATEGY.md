@@ -16,6 +16,10 @@
 
 The school workspace must not provide a functional school-details link to a membership that fails the existing school-level `academic:read` policy. The presentation predicate delegates to the same policy helper, and focused unit tests enumerate allowed/disallowed role cases. Real authorization remains mandatory in the destination route; a navigation hint cannot be treated as an access-control decision.
 
+## Authentication client request failure tests (authored, not yet run)
+
+The shared `authRequestSucceeded` helper is covered by unit cases for success, explicit provider errors, missing response bodies on fulfilled requests, and rejected transport calls. Sign-in and sign-out UI now use this result to avoid permanent loading states and to show generic, non-disclosing error messages; the sign-out UI only refreshes after a successful request. Unit tests await local CI, and **real browser event/keyboard/accessibility tests remain outstanding** before the authentication UI is treated as fully verified.
+
 ## Required negative tests
 
 - Cross-tenant access
