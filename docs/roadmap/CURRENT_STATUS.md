@@ -6,17 +6,17 @@ The project is no longer documentation-only. A verified local Phase 1 foundation
 
 ## Current evidence
 
-- Branch: main
-- Checkpoint state: use the live Git status and commit history; this document does not infer commit or push state
+- Published development checkpoint: `checkpoint/phase1-tenant-safe-foundation`; `main` remains unchanged
+- Remote review: commit `2c7c6b9a905272ac5f9cc70d06b67367b2c1c791` was verified on [draft PR #1](https://github.com/Wilberry/myschoolboard/pull/1) on 2026-10-11; consult live Git history for subsequent changes
 - Application stack: Next.js 16, React 19, TypeScript, Better Auth, Prisma, PostgreSQL
 - Database: local PostgreSQL running on port 5433
-- CI workflow: present in [.github/workflows/ci.yml](../../.github/workflows/ci.yml)
+- CI workflow: present in [.github/workflows/ci.yml](../../.github/workflows/ci.yml). The first draft-PR GitHub Actions run completed with failure; individual failure steps have not yet been confirmed, and the high-severity audit gate remains enabled
 - Application implementation: Better Auth local session integration and server-side tenant checks exist for implemented paths
 - Fresh validation on 2026-10-11: the full working-tree suite passed 83 tests across 8 files, including the private-storage prototype. A separate exact candidate reconstructed from HEAD plus the selected publication manifest passed 78 tests across 7 files. Prisma Client generation succeeded; all 6 migrations and guarded demo seed succeeded against a tmpfs-backed disposable PostgreSQL service, which was removed afterward. Formatting, lint, typecheck, Prisma validation, and production build passed for the reduced candidate. Route tests invoke handlers directly with real Better Auth sessions and PostgreSQL; Next request context is stubbed. This is not full server/browser E2E.
 - Deployment configuration: not implemented; hosting remains explicitly deferred
 - Security model: server-side authorization and tenant membership checks enforced; RLS is not enabled
 - Academic assignment foundation: school-scoped models, active normalized-name indexes, Better Auth-backed management service, assignment-aware policy helper, transactional row-lock revalidation, and database-enforced audit association are implemented in the current working tree. Four school-scoped mutation routes (create, deactivate, revoke, reactivate) call the transactional service and pass route-level integration coverage. No assignment UI, list/detail route, or academic read route exists; assignment read authorization remains unresolved under D-020. TCH-REQ-001, TEN-REQ-001, and SEC-REQ-001 remain specified and incomplete; Phase 4/5 remain incomplete.
-- Dependency audit: full audit reports 8 high package entries from two advisories; production-only audit reports 3 entries from the Prisma/deepmerge-ts advisory. D-022 Option C is approved through 2026-10-18 only for the scoped development feature branch and draft PR, with disclosure and the unchanged CI audit gate; it is not production risk acceptance and does not authorize push. D-015 Option A remains active outside this narrow exception. No dependency override is approved. See [assessment](../security/DEPENDENCY_ADVISORY_ASSESSMENT.md).
+- Dependency audit: full audit reports 8 high package entries from two advisories; production-only audit reports 3 entries from the Prisma/deepmerge-ts advisory. D-022 Option C is approved through 2026-10-18 only for the scoped development feature branch and draft PR, with disclosure and the unchanged CI audit gate; it is not production risk acceptance and does not authorize push. D-015 Option A remains active outside this narrow exception. The checkpoint push and draft PR were separately authorized and completed; no merge, deployment, release, or dependency override is approved. See [assessment](../security/DEPENDENCY_ADVISORY_ASSESSMENT.md).
 
 ## Current roadmap phase
 
@@ -41,7 +41,7 @@ The local repository checkpoint is ready for review within the implemented scope
 - payment-provider selection (Phase 9), parent-first report visibility (Phase 8), and QR disclosure (QR verification phase)
 - remaining SEC-REQ-001 and TEN-REQ-001 acceptance criteria; these are not marked complete
 - high-severity dependency findings must be resolved or explicitly risk-accepted before the configured CI gate can pass
-- project owner selected Option A on 2026-10-10: keep the checkpoint blocked until a compatible fix or another verified remediation is available
+- D-015 Option A still blocks merge, deployment, and release outside the approved D-022 development-only branch/draft-PR exception; the dependency findings require remediation or a separate explicit risk decision
 
 ## Next approved action
 

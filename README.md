@@ -24,8 +24,8 @@ The repository remains the canonical product and engineering source of truth for
 
 As of the latest verification pass:
 
-- Repository branch: main
-- Working tree: local implementation present; uncommitted edits remain until a safe commit is created
+- Repository branch: `checkpoint/phase1-tenant-safe-foundation` (development review branch); `main` remains unchanged
+- GitHub checkpoint: commit `2c7c6b9a905272ac5f9cc70d06b67367b2c1c791` is published in [draft PR #1](https://github.com/Wilberry/myschoolboard/pull/1); the excluded prototype and starter assets remain untracked on the original local workspace
 - Application stack: Next.js 16, React 19, TypeScript, Better Auth, Prisma, PostgreSQL
 - Approved local architecture direction: TypeScript modular monolith, Next.js, PostgreSQL
 - Database: PostgreSQL local dev database on port 5433
@@ -33,9 +33,9 @@ As of the latest verification pass:
 - Tenant model: active school membership is required for any authorized school access
 - Local app: sign-in flow, workspace view, and protected school detail page implemented
 - Tests: the full working-tree validation on 2026-10-11 passed 83 tests across 8 files, including the private-storage prototype. The exact reduced candidate reconstructed from HEAD and the selected manifest passed 78 tests across 7 files against a tmpfs-backed disposable test database.
-- Build: production build passes
+- Build: production build passed in recorded isolated local validation; no production deployment exists
 - Local workflow: Prisma generation, all 6 migrations, guarded seed, tests, lint, typecheck, formatting, schema validation, and production build passed in the recorded local validation
-- Dependency audit: `npm audit --audit-level=high` fails with 8 high findings; `npm audit --omit=dev --audit-level=high` still reports 3 high Prisma-config/deepmerge findings
+- Dependency audit: `npm audit --audit-level=high` fails with 8 high findings; `npm audit --omit=dev --audit-level=high` still reports 3 high Prisma-config/deepmerge findings. The first GitHub draft-PR CI run failed; its individual failing steps must be verified rather than assuming audit was the only failure
 
 ## Current status
 

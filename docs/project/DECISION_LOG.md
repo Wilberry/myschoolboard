@@ -104,6 +104,7 @@
 - Restrictions: No merge to `main`, production deployment, release, or claim of production readiness under this exception. TCH-REQ-001, TEN-REQ-001, and SEC-REQ-001 remain open. The exception expires or must be reviewed by 2026-10-18.
 - Separate authorization: This risk approval does not authorize push, merge, deployment, or release. Push authorization remains separate. The current checkpoint preparation request separately authorizes creating the named local branch, staging the exact manifest, and making one local commit.
 - Decision record: The approval identity, scope, expiry, controls, and advisory exposure are also recorded in the [Dependency Advisory Assessment](../security/DEPENDENCY_ADVISORY_ASSESSMENT.md).
+- Publication evidence (2026-10-11): The exact 81-file checkpoint commit `2c7c6b9a905272ac5f9cc70d06b67367b2c1c791` was separately authorized and pushed to `checkpoint/phase1-tenant-safe-foundation`; [draft PR #1](https://github.com/Wilberry/myschoolboard/pull/1) was created. This records completion of those specific actions, not permission for merge, deployment, or release.
 
 ## D-016: Canonical teacher assignment persistence
 

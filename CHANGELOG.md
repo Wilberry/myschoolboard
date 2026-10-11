@@ -36,7 +36,14 @@
 - Excluded unused Next.js starter assets from the candidate manifest: the app favicon and unused page CSS module, plus the unreferenced public SVG assets.
 - Removed the unused `PRIVATE_STORAGE_ROOT` setting from the environment example, runtime schema, and CI workflow.
 - Reconstructed the exact candidate from HEAD plus the selected manifest: 28 modified tracked files and 53 selected new files, with 58 unchanged HEAD paths retained. In that isolated tree, all 6 migrations and guarded demo seed succeeded, 78 tests across 7 files passed, and formatting, lint, typecheck, and production build passed. The known dependency audit blocker remains.
-- D-015 Option A remains active and D-022 risk-owner approval remains pending; this reconciliation does not authorize branch creation, staging, commit, push, merge, or release.
+- D-022 Option C was subsequently approved for 2026-10-11 through 2026-10-18, strictly for a development branch and draft PR. D-015 Option A remains active outside that narrow exception; merge, deployment, and release remain prohibited.
+
+## 2026-10-11 — Development checkpoint published for draft review
+
+- Published the exact 81-path checkpoint (53 added, 28 modified) to `checkpoint/phase1-tenant-safe-foundation` at commit `2c7c6b9a905272ac5f9cc70d06b67367b2c1c791`; `main` was not changed.
+- Opened [draft PR #1](https://github.com/Wilberry/myschoolboard/pull/1) with D-022 risk disclosure and no merge or deployment.
+- The first GitHub Actions run completed with failure. The audit gate remains enabled, and its 8 high findings (3 production-only) remain unresolved; the failed step(s) must be confirmed separately.
+- The historical local reduced-candidate validation remains 78 passing tests across 7 files and 6 applied migrations. No CI or production-readiness claim follows from these historical results.
 
 ## Current status
 
