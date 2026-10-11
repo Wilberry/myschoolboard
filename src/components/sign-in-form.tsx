@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/src/lib/auth-client";
+import { authRequestSucceeded } from "@/src/lib/auth-action";
 
 export function SignInForm() {
   const router = useRouter();
@@ -10,16 +11,22 @@ export function SignInForm() {
   const [pending, setPending] = useState(false);
 
   async function submit(formData: FormData) {
+    if (pending) return;
     setPending(true);
     setError(null);
-    const result = await authClient.signIn.email({
-      email: String(formData.get("email")),
-      password: String(formData.get("password")),
-    });
+
+    const success = await authRequestSucceeded(() =>
+      authClient.signIn.email({
+        email: String(formData.get("email")),
+        password: String(formData.get("password")),
+      }),
+    );
     setPending(false);
 
-    if (result.error) {
-      setError("Sign-in failed. Check your credentials and try again.");
+    if (!success) {
+      setError(
+        "Sign-in failed. Check your credentials or connection and try again.",
+      );
       return;
     }
 
@@ -50,7 +57,7 @@ export function SignInForm() {
           {error}
         </p>
       )}
-      <button type="submit" disabled={pending}>
+      <button type="submit" disabled={pending} aria-busy={pending}>
         {pending ? "Signing in..." : "Sign in"}
       </button>
     </form>

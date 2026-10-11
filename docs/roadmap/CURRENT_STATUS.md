@@ -42,6 +42,10 @@ On `feature/policy-aligned-school-navigation`, the home workspace retains active
 
 The `feature/safe-school-read-denial-logs` follow-up adds a best-effort, minimal `school_read_denied` operational event for concealed school metadata `404` responses, with randomized request ID only. Two database-backed tests were authored for cross-school/missing-resource parity and logger failure. No tenant or user identifiers are logged, and the denial response remains unchanged if logging fails. **Tests have not been executed for this follow-up.** This is diagnostic logging rather than a protected immutable security audit trail; full SEC-REQ-001 remains open.
 
+## Phase 2 client-session reliability awaiting verification
+
+On `feature/resilient-auth-ui`, sign-in and sign-out buttons now handle explicit provider failure and rejected network requests without getting stuck or falsely refreshing on failed sign-out. A small shared async result helper and four focused unit cases were added. Sign-out displays generic error feedback and disables the button while pending. This is not a replacement for server-side session security, rate limiting, email verification, or browser E2E tests. **The new unit tests and full CI-equivalent checks have not been run.** External identity and production auth posture remain unresolved.
+
 ## Current roadmap phase
 
 Phase 0 documentation baseline is complete.
