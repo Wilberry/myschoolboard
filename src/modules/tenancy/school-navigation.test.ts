@@ -24,11 +24,7 @@ describe("school detail navigation hint", () => {
   );
 
   it("does not offer a link without authenticated user or school identity", () => {
-    expect(
-      canShowSchoolDetailLink("", "school-a", "SCHOOL_ADMIN"),
-    ).toBe(false);
-    expect(
-      canShowSchoolDetailLink("user-a", "", "SCHOOL_ADMIN"),
-    ).toBe(false);
+    expect(canShowSchoolDetailLink("", "school-a", "SCHOOL_ADMIN")).toBe(false);
+    expect(canShowSchoolDetailLink("user-a", "", "SCHOOL_ADMIN")).toBe(false);
   });
 });
