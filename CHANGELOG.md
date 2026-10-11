@@ -51,6 +51,12 @@
 - Prepared a guarded local execution script for the unchanged GitHub CI npm command sequence, separate preflight/guard tests, and a disposable-database runbook. Hosted GitHub Actions remain unavailable under the owner-reported billing restriction.
 - The full application verification has **not** run for this follow-up. The dependency findings, D-022 expiry, and merge/deployment restrictions remain unchanged.
 
+## 2026-10-11 — School-read membership recheck (awaiting verification)
+
+- Hardened the protected school metadata lookup to recheck the authenticated membership's active state and precise role in the same final database fetch, rather than relying only on an earlier resolved principal.
+- Added three database-backed integration cases for school deactivation, loss of reader role, and required final-query membership constraints.
+- No Prisma migration or academic-read policy change; all tests remain pending the owner's eventual disposable-database local verification checkpoint.
+
 ## Current status
 
 - Repository state: local Phase 1 foundation and documentation are being checkpointed; consult live Git history/status for commit and push state.
