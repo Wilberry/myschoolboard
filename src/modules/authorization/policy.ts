@@ -131,7 +131,9 @@ export function authorize(
     resource.sectionId &&
     !membership.scopes.some(
       (scope) =>
-        scope.type === "SECTION" && scope.scopeId === resource.sectionId,
+        scope.type === "SECTION" &&
+        scope.scopeId === resource.sectionId &&
+        scope.verified,
     )
   ) {
     return { allowed: false, reason: "forbidden" };
@@ -141,7 +143,10 @@ export function authorize(
     resource.classId &&
     !requiresTeacherAssignment &&
     !membership.scopes.some(
-      (scope) => scope.type === "CLASS" && scope.scopeId === resource.classId,
+      (scope) =>
+        scope.type === "CLASS" &&
+        scope.scopeId === resource.classId &&
+        scope.verified,
     )
   ) {
     return { allowed: false, reason: "forbidden" };
@@ -152,7 +157,9 @@ export function authorize(
     !requiresTeacherAssignment &&
     !membership.scopes.some(
       (scope) =>
-        scope.type === "SUBJECT" && scope.scopeId === resource.subjectId,
+        scope.type === "SUBJECT" &&
+        scope.scopeId === resource.subjectId &&
+        scope.verified,
     )
   ) {
     return { allowed: false, reason: "forbidden" };
