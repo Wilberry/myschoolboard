@@ -13,4 +13,4 @@ Before release, the team must verify:
 
 ## Current status
 
-The repository has no release candidate or implementation; therefore no release validation has occurred.
+The repository contains a local Phase 1 implementation foundation and draft development PRs, but **no release candidate or deployment**. Local test results do not replace missing production security, operations, and release checks. The full CI-equivalent sequence must be run locally while GitHub Actions is unavailable, including the existing failing `npm audit --audit-level=high` gate; no merge or deployment is approved.

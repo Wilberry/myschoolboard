@@ -18,6 +18,7 @@
 - [x] Database strategy and migration approach validated locally and recorded
 - [x] Local app skeleton and protected school access path implemented; focused authorization and DB tenant-context tests pass
 - [ ] Complete authentication/session integration coverage for HTTP routes and broader tenant operations (remains in Phase 2/security work)
+- [ ] Validate the new public liveness route, local CI safety tests, and entire original CI sequence on an explicitly disposable test database; the endpoint/runner are added but the full verification is still outstanding
 
 ## Phase 2 — Pending implementation work
 

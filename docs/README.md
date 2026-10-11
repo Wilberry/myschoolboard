@@ -93,6 +93,7 @@ This folder is the canonical documentation set for the MySchoolBoard project.
 - [security/SECRETS_AND_CONFIGURATION.md](security/SECRETS_AND_CONFIGURATION.md)
 - [security/INCIDENT_RESPONSE.md](security/INCIDENT_RESPONSE.md)
 
+- [quality/LOCAL_CI_RUNBOOK.md](quality/LOCAL_CI_RUNBOOK.md) — locally execute the unchanged GitHub CI workflow using the disposable test database when hosted runners are unavailable
 - [quality/TEST_STRATEGY.md](quality/TEST_STRATEGY.md)
 - [quality/TEST_CASE_CATALOG.md](quality/TEST_CASE_CATALOG.md)
 - [quality/SECURITY_TESTING.md](quality/SECURITY_TESTING.md)

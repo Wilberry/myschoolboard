@@ -22,4 +22,4 @@
 
 ## Automation status
 
-No automated tests exist yet. This is a specified strategy for future implementation.
+The Phase 1 foundation has automated policy, route, database, and teacher-assignment tests. The exact reduced checkpoint historically passed 78 tests across 7 files; these do not establish full end-to-end or production readiness. The follow-up liveness tests and local verification-guard tests are authored but await the next complete locally executed CI pass. See [Local CI Verification Runbook](LOCAL_CI_RUNBOOK.md).
