@@ -263,6 +263,55 @@ describe("school API route authorization", () => {
     expect(body).not.toContain(`${schoolB}-slug`);
   });
 
+  it("logs a sanitized denial event for cross-school and missing resources", async () => {
+    const cookie = await signIn(userAEmail);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    try {
+      const crossSchool = await getSchool(schoolB, cookie);
+      const missing = await getSchool("not-a-real-school-id", cookie);
+
+      for (const response of [crossSchool, missing]) {
+        expect(response.status).toBe(404);
+        expect(response.headers.get("cache-control")).toBe("private, no-store");
+        expect(await response.json()).toEqual({ error: "Not found" });
+      }
+      expect(warn).toHaveBeenCalledTimes(2);
+      const entries = warn.mock.calls.map(([entry]) =>
+        JSON.parse(String(entry)) as Record<string, string>,
+      );
+      for (const entry of entries) {
+        expect(Object.keys(entry).sort()).toEqual(["event", "requestId"]);
+        expect(entry.event).toBe("school_read_denied");
+        expect(entry.requestId).toMatch(/^[0-9a-f-]{36}$/i);
+        expect(JSON.stringify(entry)).not.toContain(schoolA);
+        expect(JSON.stringify(entry)).not.toContain(schoolB);
+        expect(JSON.stringify(entry)).not.toContain(userAEmail);
+      }
+      expect(entries[0].requestId).not.toBe(entries[1].requestId);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("preserves concealed denials when the security logger throws", async () => {
+    const cookie = await signIn(userAEmail);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {
+      throw new Error("synthetic security logging failure");
+    });
+
+    try {
+      const response = await getSchool(schoolB, cookie);
+
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(response.status).toBe(404);
+      expect(response.headers.get("cache-control")).toBe("private, no-store");
+      expect(await response.json()).toEqual({ error: "Not found" });
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
   it("safely rejects missing and unknown school IDs", async () => {
     const cookie = await signIn(userAEmail);
 

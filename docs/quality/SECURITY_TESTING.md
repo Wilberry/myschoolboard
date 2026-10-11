@@ -28,6 +28,10 @@ The school metadata GET must include a second active-membership and exact-role p
 
 The shared mutation handler must attach `Cache-Control: private, no-store` to every status, including authorized create/lifecycle responses, unauthenticated or forbidden requests, malformed input, duplicate transitions, and internal persistence failures. Route integration tests cover response header behavior without changing existing mutation or audit expectations. Database-backed coverage awaits the owner's local verification run.
 
+## Sanitized school-read denials (authored, pending local verification)
+
+Authenticated school metadata requests that resolve to a concealed `404` (including missing, other-school, or insufficient-role resources) must emit a **best-effort operational security event** with only `school_read_denied` and a generated random request identifier. Never log school IDs, user IDs, email addresses, cookies, query data, session tokens, or raw database error messages. Logger failure must not change the generic `404` response or the `Cache-Control: private, no-store` header. Two new database-backed integration cases check the event's minimal fields, identical missing/cross-school outcomes, and logger failure. They remain **unexecuted** until the owner's local verification checkpoint. These diagnostic events are **not** immutable audit records and do not complete SEC-REQ-001.
+
 ## Requirement
 
 Security tests must be executed before release and must continue as part of regression checks.
