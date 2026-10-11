@@ -38,6 +38,10 @@ The `feature/no-store-assignment-mutations` follow-up adds an explicit private/n
 
 On `feature/policy-aligned-school-navigation`, the home workspace retains active membership cards but only displays a school-detail link for memberships eligible under the existing school-level `academic:read` policy. Other roles see a non-clickable restricted label instead of a link to a predictable 404. No new permission is granted; the destination remains server-authoritative. Focused role matrix tests were added but not yet executed in the owner's final local verification batch.
 
+## Sanitized school-read denial monitoring awaiting verification
+
+The `feature/safe-school-read-denial-logs` follow-up adds a best-effort, minimal `school_read_denied` operational event for concealed school metadata `404` responses, with randomized request ID only. Two database-backed tests were authored for cross-school/missing-resource parity and logger failure. No tenant or user identifiers are logged, and the denial response remains unchanged if logging fails. **Tests have not been executed for this follow-up.** This is diagnostic logging rather than a protected immutable security audit trail; full SEC-REQ-001 remains open.
+
 ## Current roadmap phase
 
 Phase 0 documentation baseline is complete.

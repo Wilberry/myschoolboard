@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import { auth } from "@/src/lib/auth";
 import { requireSchoolAccess } from "@/src/modules/tenancy/school-access";
@@ -7,6 +8,21 @@ function schoolResponse(body: unknown, status = 200): Response {
     status,
     headers: { "Cache-Control": "private, no-store" },
   });
+}
+
+function logSchoolReadDenied(): void {
+  try {
+    // Do not log tenant, user, cookie, or requested school identifiers.
+    // Missing and cross-school resources deliberately share this event.
+    console.warn(
+      JSON.stringify({
+        event: "school_read_denied",
+        requestId: randomUUID(),
+      }),
+    );
+  } catch {
+    // A failing logger must not change a tenant-isolation denial.
+  }
 }
 
 function logSchoolReadFailure(error: unknown): void {
@@ -32,7 +48,10 @@ export async function GET(
 
     const { schoolId } = await params;
     const access = await requireSchoolAccess(session.user.id, schoolId);
-    if (!access) return schoolResponse({ error: "Not found" }, 404);
+    if (!access) {
+      logSchoolReadDenied();
+      return schoolResponse({ error: "Not found" }, 404);
+    }
 
     return schoolResponse({ school: access.school });
   } catch (error) {

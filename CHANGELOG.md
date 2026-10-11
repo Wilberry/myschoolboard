@@ -69,6 +69,12 @@
 - Added a presentation-only policy-based helper and role-matrix unit tests; the protected school details route remains authoritative.
 - No academic permissions, tenant visibility, or database models were expanded. Local verification is deferred per the owner's instruction.
 
+## 2026-10-11 — Sanitized school read denial logging (unverified)
+
+- Added a best-effort `school_read_denied` operational event for authenticated, concealed school metadata denials with a generated request ID and no sensitive school, user, or cookie fields.
+- Added two database-backed regression cases covering a missing versus cross-school request and thrown diagnostic logger behavior.
+- No schema migration, new permissions, changes to HTTP response bodies/status, CI audit gate, or merge/deployment authorization; these tests are still pending local verification.
+
 ## Current status
 
 - Repository state: local Phase 1 foundation and documentation are being checkpointed; consult live Git history/status for commit and push state.
