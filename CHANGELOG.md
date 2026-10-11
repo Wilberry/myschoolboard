@@ -63,6 +63,12 @@
 - Added database-backed response cache assertions across `201`, `200`, `400`, `401`, `404`, `409`, and `500` outcomes, pending the owner's local verification run.
 - No changed permissions, routes, migrations, audit triggers, or dependency/CI gates.
 
+## 2026-10-11 — School workspace navigation alignment (unverified)
+
+- Replaced misleading school-details links for membership roles denied by the existing school-level `academic:read` policy with a non-clickable restricted label.
+- Added a presentation-only policy-based helper and role-matrix unit tests; the protected school details route remains authoritative.
+- No academic permissions, tenant visibility, or database models were expanded. Local verification is deferred per the owner's instruction.
+
 ## Current status
 
 - Repository state: local Phase 1 foundation and documentation are being checkpointed; consult live Git history/status for commit and push state.

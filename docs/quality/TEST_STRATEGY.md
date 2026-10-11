@@ -12,6 +12,10 @@
 - Integration tests: database constraints, workflow validation, teacher assignments, and attendance.
 - End-to-end tests: school onboarding, publication, portal access, QR verification, fees, and trash flows.
 
+## Permission-aligned navigation tests (new, pending local verification)
+
+The school workspace must not provide a functional school-details link to a membership that fails the existing school-level `academic:read` policy. The presentation predicate delegates to the same policy helper, and focused unit tests enumerate allowed/disallowed role cases. Real authorization remains mandatory in the destination route; a navigation hint cannot be treated as an access-control decision.
+
 ## Required negative tests
 
 - Cross-tenant access

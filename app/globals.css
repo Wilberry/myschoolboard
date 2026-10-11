@@ -318,6 +318,10 @@ h1 {
 .school-slug {
   padding-right: 8px;
 }
+.school-detail-unavailable {
+  color: var(--muted);
+  font-size: 12px;
+}
 .empty-state {
   padding: 40px 20px;
   border: 1px dashed #cbd6cf;
