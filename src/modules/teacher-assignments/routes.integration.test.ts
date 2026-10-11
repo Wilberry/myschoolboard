@@ -344,6 +344,37 @@ describe("teacher assignment mutation routes", () => {
     });
   });
 
+  it("marks all mutation response types private and no-store", async () => {
+    const body = { teacherMembershipId, classId: classA, subjectId: subjectA };
+    const created = await create(body);
+    expect(created.status).toBe(201);
+    const result = (await created.json()) as { assignment: { id: string } };
+
+    const duplicate = await create(body);
+    expect(duplicate.status).toBe(409);
+    const unauthorized = await create(body, "");
+    expect(unauthorized.status).toBe(401);
+    const forbidden = await create(body, otherAdminCookie);
+    expect(forbidden.status).toBe(404);
+    const invalid = await create({ teacherMembershipId, classId: classA });
+    expect(invalid.status).toBe(400);
+    const revoked = await lifecycle(revokeRoute.POST, result.assignment.id, {
+      reason: "Synthetic cache regression test",
+    });
+    expect(revoked.status).toBe(200);
+
+    for (const response of [
+      created,
+      duplicate,
+      unauthorized,
+      forbidden,
+      invalid,
+      revoked,
+    ]) {
+      expect(response.headers.get("cache-control")).toBe("private, no-store");
+    }
+  });
+
   it("rejects forged actor and tenant fields in the request body", async () => {
     const response = await create({
       schoolId: schoolB,
@@ -711,6 +742,9 @@ describe("teacher assignment mutation routes", () => {
         subjectId: subjectA,
       });
       expect(createFailure.status).toBe(500);
+      expect(createFailure.headers.get("cache-control")).toBe(
+        "private, no-store",
+      );
       expect(
         await prisma.teacherClassSubjectAssignment.count({
           where: { schoolId: schoolA },
@@ -746,6 +780,9 @@ describe("teacher assignment mutation routes", () => {
         { reason: "force route audit failure" },
       );
       expect(transitionFailure.status).toBe(500);
+      expect(transitionFailure.headers.get("cache-control")).toBe(
+        "private, no-store",
+      );
       expect(
         await prisma.teacherClassSubjectAssignment.findUniqueOrThrow({
           where: { id: assignment.id },

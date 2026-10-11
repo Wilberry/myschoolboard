@@ -17,6 +17,10 @@
 
 `GET /api/health/live` is a public, dependency-free process liveness probe returning only HTTP `200`, `{"status":"ok"}`, and `Cache-Control: no-store`. It does **not** assert database connectivity, tenant availability, authentication readiness, or production operational readiness. It must not return environment configuration, version information, secrets, tenant identifiers, or detailed exceptions. The handler and focused tests are added in the local-CI follow-up, pending full local verification.
 
+## Authenticated school-scoped response caching
+
+The school-details GET and all teacher-assignment mutation responses are required to send `Cache-Control: private, no-store`, including authorization denials and errors. This prevents shared HTTP intermediaries and browsers from persisting school-scoped details or authorization-dependent mutation results. The teacher-assignment response change is authored on a separate development branch and awaits local verification. The policy does not replace server-side authentication, tenant scoping, or transactional authorization.
+
 ## Current status
 
 The teacher-assignment module records the four implemented mutation contracts and the unresolved list/detail read proposal. Other API contracts remain future work and must follow these standards.
