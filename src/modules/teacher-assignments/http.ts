@@ -65,6 +65,13 @@ function safeLog(
   }
 }
 
+function assignmentResponse(body: unknown, status = 200): Response {
+  return Response.json(body, {
+    status,
+    headers: { "Cache-Control": "private, no-store" },
+  });
+}
+
 function errorResponse(
   error: unknown,
   requestId: string,
@@ -73,22 +80,19 @@ function errorResponse(
   if (error instanceof AssignmentServiceError) {
     switch (error.code) {
       case "UNAUTHENTICATED":
-        return Response.json({ error: "Unauthorized" }, { status: 401 });
+        return assignmentResponse({ error: "Unauthorized" }, 401);
       case "FORBIDDEN":
       case "NOT_FOUND":
         safeLog("teacher_assignment_mutation_denied", requestId, context);
-        return Response.json({ error: "Not found" }, { status: 404 });
+        return assignmentResponse({ error: "Not found" }, 404);
       case "INVALID_INPUT":
-        return Response.json({ error: "Invalid request" }, { status: 400 });
+        return assignmentResponse({ error: "Invalid request" }, 400);
       case "CONFLICT":
       case "INVALID_STATE":
-        return Response.json({ error: "Conflict" }, { status: 409 });
+        return assignmentResponse({ error: "Conflict" }, 409);
       case "INTERNAL":
         safeLog("teacher_assignment_mutation_failed", requestId, context);
-        return Response.json(
-          { error: "Request could not be completed" },
-          { status: 500 },
-        );
+        return assignmentResponse({ error: "Request could not be completed" }, 500);
     }
   }
 
@@ -96,10 +100,7 @@ function errorResponse(
     ...context,
     errorType: error instanceof Error ? error.name : "unknown",
   });
-  return Response.json(
-    { error: "Request could not be completed" },
-    { status: 500 },
-  );
+  return assignmentResponse({ error: "Request could not be completed" }, 500);
 }
 
 export async function handleTeacherAssignmentMutation<
@@ -117,7 +118,7 @@ export async function handleTeacherAssignmentMutation<
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      return assignmentResponse({ error: "Unauthorized" }, 401);
     }
 
     const routeParams = await params;
@@ -128,7 +129,7 @@ export async function handleTeacherAssignmentMutation<
       })
       .safeParse(routeParams);
     if (!validParams.success) {
-      return Response.json({ error: "Invalid request" }, { status: 400 });
+      return assignmentResponse({ error: "Invalid request" }, 400);
     }
     const principal = await resolveSchoolPrincipal(
       session.user.id,
@@ -139,26 +140,26 @@ export async function handleTeacherAssignmentMutation<
     });
     if (!decision.allowed) {
       safeLog("teacher_assignment_mutation_denied", requestId, logContext);
-      return Response.json({ error: "Not found" }, { status: 404 });
+      return assignmentResponse({ error: "Not found" }, 404);
     }
 
     let body: unknown;
     try {
       body = await request.json();
     } catch {
-      return Response.json({ error: "Invalid request" }, { status: 400 });
+      return assignmentResponse({ error: "Invalid request" }, 400);
     }
 
     const parsedBody = schema.safeParse(body);
     if (!parsedBody.success) {
-      return Response.json({ error: "Invalid request" }, { status: 400 });
+      return assignmentResponse({ error: "Invalid request" }, 400);
     }
 
     const assignment = await mutate({
       ...parsedBody.data,
       ...validParams.data,
     });
-    return Response.json({ assignment }, { status });
+    return assignmentResponse({ assignment }, status);
   } catch (error) {
     return errorResponse(error, requestId, logContext);
   }

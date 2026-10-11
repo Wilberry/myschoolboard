@@ -24,6 +24,10 @@ The existing school-details read handler must send `Cache-Control: private, no-s
 
 The school metadata GET must include a second active-membership and exact-role predicate in its final school query, even after an earlier server-side principal resolution. New database-backed tests assert the predicate, school deactivation denial, and role-change denial, and preserve existing cross-tenant and no-cache regression coverage. The tests are awaiting the owner's isolated local verification run. This does not resolve all tenant-isolation race risks or complete TEN-REQ-001 / SEC-REQ-001.
 
+## Teacher-assignment mutation caching (authored, not yet verified)
+
+The shared mutation handler must attach `Cache-Control: private, no-store` to every status, including authorized create/lifecycle responses, unauthenticated or forbidden requests, malformed input, duplicate transitions, and internal persistence failures. Route integration tests cover response header behavior without changing existing mutation or audit expectations. Database-backed coverage awaits the owner's local verification run.
+
 ## Requirement
 
 Security tests must be executed before release and must continue as part of regression checks.

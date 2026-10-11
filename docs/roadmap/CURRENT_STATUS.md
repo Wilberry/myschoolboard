@@ -30,6 +30,10 @@ On the separate `feature/school-read-response-hardening` branch, the existing au
 
 The `feature/recheck-school-membership-on-read` follow-up adds a final database-query filter on authenticated user, active membership, current membership role, and active school to the existing school read helper. Three integration cases were added for inactive schools, removed academic-reader role, and required final-query ownership predicates. This is a defensive improvement against a revoke/role-change window between authorization and the school lookup; it does not establish full transaction-wide read linearizability. **No database-backed tests or full CI-equivalent checks have been executed for this commit.** D-020 assignment-reader policy remains unresolved; no new read routes were introduced.
 
+## Teacher-assignment mutation cache safety awaiting verification
+
+The `feature/no-store-assignment-mutations` follow-up adds an explicit private/no-store header to all four school-scoped assignment mutation routes through their shared HTTP handler. Status codes, authorization, database transactions and append-only audit logic are unchanged. Route-level regression assertions are written, not executed. No new assignment read routes were added; D-020 remains unresolved.
+
 ## Current roadmap phase
 
 Phase 0 documentation baseline is complete.

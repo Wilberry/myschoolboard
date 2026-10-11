@@ -57,6 +57,12 @@
 - Added three database-backed integration cases for school deactivation, loss of reader role, and required final-query membership constraints.
 - No Prisma migration or academic-read policy change; all tests remain pending the owner's eventual disposable-database local verification checkpoint.
 
+## 2026-10-11 — Assignment mutation response cache hardening (unverified)
+
+- Added `Cache-Control: private, no-store` to successful and error responses from all four teacher-assignment lifecycle and create mutation routes.
+- Added database-backed response cache assertions across `201`, `200`, `400`, `401`, `404`, `409`, and `500` outcomes, pending the owner's local verification run.
+- No changed permissions, routes, migrations, audit triggers, or dependency/CI gates.
+
 ## Current status
 
 - Repository state: local Phase 1 foundation and documentation are being checkpointed; consult live Git history/status for commit and push state.
