@@ -97,6 +97,11 @@ export async function createAssessmentDraft(schoolId: string, input: unknown) {
           position: i + 1, points: question.points,
         })),
       });
+      // A separate immutable seal makes direct SQL additions impossible once
+      // the committed draft is complete. Staff lists include only sealed rows.
+      await tx.assessmentDraftSeal.create({
+        data: { schoolId, draftId: draft.id },
+      });
       return {
         ...draft, questionCount: value.questions.length,
         maxScore: value.questions.reduce((sum, q) => sum + q.points, 0),
@@ -141,6 +146,8 @@ export async function listOwnAssessmentDrafts(schoolId: string) {
       COUNT(item."id")::int AS "questionCount",
       COALESCE(SUM(item."points"),0)::int AS "maxScore"
     FROM "AssessmentDraft" draft
+    JOIN "AssessmentDraftSeal" seal ON seal."schoolId"=draft."schoolId"
+      AND seal."draftId"=draft."id"
     JOIN "School" school ON school."id"=draft."schoolId"
       AND school."isActive"=true
     JOIN "Membership" author ON author."schoolId"=draft."schoolId"
