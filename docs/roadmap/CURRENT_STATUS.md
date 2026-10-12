@@ -54,6 +54,10 @@ The `feature/session-revocation-tenant-regressions` follow-up adds four DB-backe
 
 The `feature/require-verified-scope-grants` branch tightens the shared policy so section, class, and subject grants require `verified: true` rather than granting access merely because a matching `ScopeGrant` exists. Four focused regression cases verify rejection of unverified grants, acceptance of exact verified grants, and denial of a verified grant for the wrong resource. Existing child relationship validation and subject-teacher exact active assignment requirements remain unchanged. This permission tightening may affect any future or existing workflow storing an unverified grant; audit such consumers before merge. **Tests have been authored but not executed.** TEN-REQ-001, USR-REQ-001, SEC-REQ-001 remain open.
 
+## Phase 2 school-owned class/subject grant resolution (pending local verification)
+
+The `feature/bind-grants-to-active-school-resources` follow-up prevents verified class or subject scope IDs from granting permission when they belong to another school or refer to inactive resources. Its principal resolver queries the requested school's active class/subject records and filters resolved `ScopeGrant` data accordingly. Two database-backed cases add cross-school and deactivated-resource negative coverage. The [Phase 2 acceptance matrix](../quality/PHASE2_ACCEPTANCE_MATRIX.md) lists complete release gates and local-verification evidence requirements. **The new integration cases and complete application CI sequence have not been run.** SECTION/CHILD model integrity, full HTTP/browser coverage, prod identity #17, immutable general security audit, and dependency risk remain unaddressed; Phase 2 is incomplete.
+
 ## Current roadmap phase
 
 Phase 0 documentation baseline is complete.

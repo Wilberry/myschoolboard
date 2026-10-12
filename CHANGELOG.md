@@ -94,6 +94,12 @@
 - Added a table-driven policy regression for all three scope types with verified/unverified variants, plus a wrong-resource verification case. Existing teacher assignment and child verification constraints remain intact.
 - No database migration, new grant-management route, expanded privileges, or change to the CI security audit. All new tests remain pending final local verification; any legacy reliance on unverified grants needs review before merge.
 
+## 2026-10-12 — Tenant-owned class and subject grant resolution (unverified)
+
+- Hardened the school-principal resolver so verified CLASS/SUBJECT scope IDs must identify active classes/subjects in the requested school; grants pointing to another tenant or inactive resources are excluded from the policy principal.
+- Added disposable-PostgreSQL regression cases for forged cross-school scope IDs and deactivated school-owned resources. No migrations, new academic routes, permission expansion, or production auth settings.
+- Added a Phase 2 acceptance matrix recording local CI, HTTP/browser, identity and dependency blockers. These new tests and the full local pipeline are **not yet executed**; D-015/D-022 restrictions remain active.
+
 ## Current status
 
 - Repository state: local Phase 1 foundation and documentation are being checkpointed; consult live Git history/status for commit and push state.

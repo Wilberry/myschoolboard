@@ -17,6 +17,8 @@ This folder is the canonical documentation set for the MySchoolBoard project.
 
 ### Requirements and quality
 
+- [quality/PHASE2_ACCEPTANCE_MATRIX.md](quality/PHASE2_ACCEPTANCE_MATRIX.md) — Phase 2 tenant, identity, and session security acceptance gates and evidence plan
+
 - [requirements/FUNCTIONAL_REQUIREMENTS.md](requirements/FUNCTIONAL_REQUIREMENTS.md) — functional requirement catalog
 - [requirements/NON_FUNCTIONAL_REQUIREMENTS.md](requirements/NON_FUNCTIONAL_REQUIREMENTS.md) — measurable quality and platform targets
 - [requirements/REQUIREMENTS_TRACEABILITY_MATRIX.md](requirements/REQUIREMENTS_TRACEABILITY_MATRIX.md) — requirement-to-implementation traceability

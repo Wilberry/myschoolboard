@@ -22,6 +22,10 @@
 
 ## Phase 2 — Pending implementation work
 
+- [ ] Verify [Phase 2 acceptance matrix](../quality/PHASE2_ACCEPTANCE_MATRIX.md) on the exact cumulative commit using a disposable PostgreSQL test database and real HTTP/browser checks as applicable; current follow-up tests are authored but unexecuted.
+- [ ] Validate school-owned active class/subject scope resolution and assess stored unverified/cross-school grants before any merge.
+- [ ] Obtain production identity/session policy decisions under P-007 ([issue #17](https://github.com/Wilberry/myschoolboard/issues/17)); leave optional section/child resource reads unavailable until tenant ownership is proven.
+
 - [ ] Auth and role model
 - [ ] Tenant isolation controls
 - [ ] Authorization audit tests

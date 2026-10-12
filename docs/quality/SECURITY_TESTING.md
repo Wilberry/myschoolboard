@@ -1,5 +1,9 @@
 # Security Testing
 
+## Active school-owned scope grants (authored, pending local verification)
+
+The `resolveSchoolPrincipal` loader must not trust a CLASS or SUBJECT `ScopeGrant.scopeId` as proof of school ownership merely because its grant is verified. Only identifiers resolving to **active** classes or subjects in the requested school can enter the resolved principal. New disposable-DB integration cases deliberately create verified school-A grants for school-B class/subject IDs, verify that the invalid grants are filtered, and then deactivate the valid school-A resources to confirm those grants cease to authorize reads. These cases have **not** been executed on the cumulative branch. SECTION/CHILD resource binding, concurrency guarantees across multiple queries, and production read routes remain separate unverified responsibilities; do not infer them from these tests.
+
 ## Required areas
 
 - Tenant isolation tests
