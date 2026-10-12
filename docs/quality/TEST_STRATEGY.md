@@ -72,6 +72,10 @@ Execute seven new disposable DB reviewer-route tests to verify HEAD_OF_SECTION P
 
 Four synthetic/disposable PostgreSQL regression cases verify the review link is available only for active verified same-school PRIMARY HEAD_OF_SECTION or SECONDARY PRINCIPAL grants; other teachers/foreign schools have no link, revoking verified status hides it, and the final navigation query rechecks actual active school membership/section stage. The browser acceptance pass must test direct forbidden URL access, safe signed-in navigation, viewing a submitted note's complete revision history, required reasons, confirmation before approval/return, stale submissions, no publication UI and accessible keyboard focus/labels. These are **authored**, not run; existing reviewer endpoint DB tests remain unverified.
 
+## Student registration and enrollment integrity (pending DB)
+
+Execute six authored real-session/disposable-PostgreSQL integration cases: reject anonymous, teacher and foreign school actor writes; normalize duplicate admission number only within a school; reject unclassified/foreign/inactive class or PLANNED/foreign session, client actor/tenant forgery and cross-school student ID; enforce exactly one ACTIVE enrollment per school/student/session with database partial index and composite FK; write an audited withdrawal preserving original class/session and ending timestamp; prevent SQL event tampering or forged actor insertion. Add high-contention concurrent registrations/enrollments, inactive school/member races, full admission lifecycle, promotion/re-enrollment and history preservation separately. **None of the six new tests has been run.**
+
 ## Required negative tests
 
 - Cross-tenant access

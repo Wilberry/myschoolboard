@@ -64,6 +64,10 @@ The cumulative `feature/section-scoped-lesson-review` branch implements HEAD_OF_
 
 The cumulative `feature/lesson-reviewer-workspace` branch extends section-scoped lesson-review APIs with a restricted Next server reviewer page, guarded school-detail navigation and a client queue/detail UI for reasoned `APPROVE` or `RETURN` using exact revision numbers. Four new synthetic DB-backed navigation tests are authored; prior seven review API tests remain authored but unexecuted. **No new DB test, migration, browser, typecheck, build, format/lint or full local CI audit has run**. Both approval and return preserve immutable history; APPROVED content stays non-public. Enrollment and student release, class-specific attendance, HM/Principal timetable control and production readiness remain out of scope.
 
+## Student enrollment ledger foundation for attendance (unverified)
+
+The cumulative `feature/student-enrollment-ledger-foundation` branch adds school-owned `StudentRecord`, `StudentEnrollment` and immutable `StudentEvent` models plus an additive migration; three private `school:configure` admin-only routes register a distinct student, place them into an ACTIVE session and explicitly section-classified class, and withdraw while preserving historical class/session. No legacy/student User link or historic mapping is inferred; no student/guardian/teacher record list or attendance endpoint exists. PostgreSQL composite tenant FKs and one-ACTIVE-per-student/session partial uniqueness guard accidental cross-school or duplicate enrollments. Six new disposable DB integration scenarios are authored; **migration, tests, concurrent checks, typecheck/lint/format, Next build/browser and full unchanged CI-equivalent audit have not run**. ADM-REQ-001, ATT-REQ-001, TEN-REQ-001 and SEC-REQ-001 remain partial/unverified. A school-owned enrollment history is a prerequisite, not full admission, attendance or release authorization.
+
 ## Current evidence
 
 - Published development checkpoint: `checkpoint/phase1-tenant-safe-foundation`; `main` remains unchanged

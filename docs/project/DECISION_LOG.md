@@ -160,6 +160,12 @@
 - Decision: `HEAD_OF_SECTION` reviews only notes in a verified active same-school PRIMARY section, while `PRINCIPAL` reviews only notes in a verified active same-school SECONDARY section, as identified by the note's stored class.sectionId. All decisions require an auditable reason and current revision; only SUBMITTED notes can be reviewed. A RETURNED note requires a new immutable author revision before re-submission; APPROVED does not make notes visible to students.
 - Rationale: This preserves the documented school roles and section isolation without fabricating missing historical class mappings or broadening sensitive school-data access. See ADR-010. Review and event migration tests remain outstanding; school-configurable reviewer delegation, cross-section staffing and student release must be separately designed.
 
+## D-025: Additive, school-owned student enrollment default (unverified)
+
+- Status: Routine D-023 development default; source authored, migration/tests not executed, no live or production approval.
+- Decision: Keep student registration separate from `User` login records, use normalized school-owned admission codes and explicit ACTIVE same-school academic-session/class/Section enrollment rather than inferred historic records, and preserve class history by reasoned withdrawal to ENDED state. Enforce school admin-only registration and lifecycle writes with actor-audited immutable events and a PostgreSQL one-active-student/session partial unique index. No pupil/student/guardian reads or attendance writes are enabled by this initial schema.
+- Rationale: Establishes an auditable, tenant-safe prerequisite for attendance without fabricating child relationships or exposing sensitive student data. School-specific admissions acceptance, promotion, re-enrollment, transfer and graduation workflows remain future requirements. See ADR-011; complete local verification required before any release.
+
 ## Unresolved decisions
 
 - Exact support-access escalation, enforcement, expiry, and audit mechanism

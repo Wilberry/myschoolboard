@@ -85,6 +85,23 @@ enum SchoolSectionStage {
   SECONDARY
 }
 
+enum StudentLifecycleStatus {
+  REGISTERED
+  ENROLLED
+  WITHDRAWN
+}
+
+enum StudentEnrollmentStatus {
+  ACTIVE
+  ENDED
+}
+
+enum StudentEventType {
+  REGISTERED
+  ENROLLED
+  WITHDRAWN
+}
+
 enum LessonNoteStatus {
   DRAFT
   SUBMITTED
@@ -200,6 +217,9 @@ model School {
   lessonNoteRevisions                 LessonNoteRevision[]
   lessonNoteEvents                    LessonNoteEvent[]
   sections                            SchoolSection[]
+  studentRecords                      StudentRecord[]
+  studentEnrollments                  StudentEnrollment[]
+  studentEvents                       StudentEvent[]
 }
 
 model Membership {
@@ -263,6 +283,7 @@ model SchoolClass {
   formTeacherResponsibilities    FormTeacherResponsibility[]
   timetableSlots                 TimetableSlot[]
   lessonNotes                    LessonNote[]
+  studentEnrollments             StudentEnrollment[]
 
   @@unique([schoolId, id])
   @@index([schoolId])
@@ -366,6 +387,7 @@ model AcademicSession {
   formTeacherResponsibilities FormTeacherResponsibility[]
   timetableSlots TimetableSlot[]
   lessonNotes LessonNote[]
+  studentEnrollments StudentEnrollment[]
 
   @@unique([schoolId, id])
   @@unique([schoolId, name])
@@ -586,4 +608,63 @@ model SchoolSection {
   @@unique([schoolId, id])
   @@unique([schoolId, name])
   @@index([schoolId, stage, isActive])
+}
+
+model StudentRecord {
+  id              String                 @id @default(cuid())
+  schoolId        String
+  admissionNumber String
+  givenName       String
+  familyName      String
+  status          StudentLifecycleStatus @default(REGISTERED)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  school          School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  enrollments     StudentEnrollment[]
+  events          StudentEvent[]
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, admissionNumber])
+  @@index([schoolId, status])
+}
+
+model StudentEnrollment {
+  id         String                  @id @default(cuid())
+  schoolId   String
+  studentId  String
+  sessionId  String
+  classId    String
+  status     StudentEnrollmentStatus @default(ACTIVE)
+  startedAt  DateTime                @default(now())
+  endedAt    DateTime?
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+  school     School                  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student    StudentRecord           @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction)
+  session    AcademicSession         @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
+  schoolClass SchoolClass            @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
+  events     StudentEvent[]
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, id, studentId])
+  @@index([schoolId, studentId, sessionId, status])
+  @@index([schoolId, classId, sessionId, status])
+}
+
+model StudentEvent {
+  id                String           @id @default(cuid())
+  schoolId          String
+  studentId         String
+  enrollmentId      String?
+  actorUserId       String
+  actorMembershipId String
+  eventType         StudentEventType
+  reason            String
+  createdAt         DateTime         @default(now())
+  school            School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student           StudentRecord    @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction)
+  enrollment        StudentEnrollment? @relation(fields: [schoolId, enrollmentId, studentId], references: [schoolId, id, studentId], onDelete: NoAction)
+
+  @@index([schoolId, studentId, createdAt])
+  @@index([schoolId, actorUserId, createdAt])
 }

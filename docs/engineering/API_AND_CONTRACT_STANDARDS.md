@@ -63,6 +63,15 @@ All HTTP replies are `Cache-Control: private, no-store`; invalid request 400, ab
 
 Every response uses `Cache-Control: private, no-store`. Invalid request 400, anonymous 401, other school/role/stage/unclassified/missing note 404, stale version/workflow status 409, unexpected faults generic 500 with no lesson-content logging. Review actions require a reason and never release material to students. A RETURNED note can be revised by its exact original subject teacher; existing immutable revision/audit records are never overwritten. The migration and tests are authored but unexecuted.
 
+## Student registration and enrollment mutation contracts (draft, unverified)
+
+Only an active same-school School Administrator / School Super Admin with `school:configure` may POST:
+- `/api/schools/{schoolId}/students` with `{admissionNumber,givenName,familyName,reason}` to create a distinct REGISTERED student profile. Admission number is school-normalized uppercase and school-unique; response excludes student names.
+- `/api/schools/{schoolId}/students/{studentId}/enrollments` with `{sessionId,classId,reason}` to enroll REGISTERED student into one ACTIVE same-school session and active explicitly section-owned class; response contains minimum enrollment state, not pupil biography.
+- `/api/schools/{schoolId}/students/{studentId}/enrollments/{enrollmentId}/withdraw` with `{reason}` to end an exact ACTIVE student enrollment, retaining the immutable academic class/session history and moving student state to WITHDRAWN.
+
+All responses include `Cache-Control: private, no-store`; malformed body 400, missing session 401, denied/missing/foreign resource 404, duplicate school admission number or concurrent active enrollment 409, unexpected fault generic 500. Actor is Better Auth server-derived and transactionally rechecked; `StudentEvent` retains actor, reason and target with SQL validation and immutable audit triggers. This is a **write-only registration foundation**, not a class roster, attendance list, teacher/admin export, student account or guardian access API. Six disposable DB route tests are authored, not run; migration, browser and CI-equivalent verification remain open.
+
 ## Current status
 
 The teacher-assignment module records the four implemented mutation contracts plus newly authored, unverified D-020 administrative read handlers. Other API contracts remain future work and must follow these standards.

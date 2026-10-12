@@ -1,5 +1,9 @@
 # Attendance
 
+## Student/class/session eligibility foundation (draft, unverified)
+
+A new school-owned `StudentRecord` and `StudentEnrollment` ledger supplies a future authoritative roster relationship: student, ACTIVE school session, explicitly classified active class, and school-owned Section. Student registration, initial enrollment and withdrawal are restricted to the School Admin / School Super Admin in private POST endpoints with immutable actor/reason audit events. Duplicate ACTIVE enrollment for a school/student/session is disallowed by a PostgreSQL partial unique index, and no historical enrollment is inferred. This is a **prerequisite only**, not an attendance register: there are no Form Teacher entry, HM/Principal approval, attendance correction, public class roster or guardian/student attendance reads yet. Attendance services must later join an ACTIVE exact student/class/session enrollment and current teacher/Form Teacher/section authority before any attendance data is created, read or approved. Migration/tests remain unverified.
+
 ## Scope
 
 Daily attendance capturing, approval, correction, and historical preservation.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-12 — Student enrollment ledger foundation (unverified)
+
+- Authored school-owned StudentRecord/StudentEnrollment/StudentEvent schema with normalized school-unique admission number, explicit REGISTERED/ENROLLED/WITHDRAWN state, composite same-school student/session/class FKs, one ACTIVE enrollment per student/session, immutable events and no existing user/academic backfill.
+- Added three private school-admin-only Better Auth/serializable mutation routes: registration, active-session/class enrollment and reasoned withdrawal preserving history; intentionally **no GET/roster/guardian/student/attendance API**.
+- Added six synthetic disposable PostgreSQL DB scenarios for role/tenant denial, duplicate admission/enrollments, classified class/session requirements, historical withdrawal, actor audit and tamper rejection. **Not executed**; unchanged local CI/audit release gates remain pending.
+- No `main` merge, live student record processing, deployment, billing/security waiver or student publication.
+
 ## 2026-10-12 — Section-scoped lesson-note review workspace (unverified)
 
 - Added a server-authenticated reviewer page, actual section-grant-aware school navigation, and a client list/detail interface for reasoned, confirmed APPROVE/RETURN decisions through the existing section-bound API.
