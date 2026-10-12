@@ -224,7 +224,7 @@ export async function listManualCorrectionReviewQueue(schoolId: string) {
       AND mark."id"=request."proposalId"
     JOIN "AssessmentManualMarkDecision" initial
       ON initial."schoolId"=mark."schoolId"
-      AND initial."proposalId"=mark."id" AND initial."action"='APPROVED'
+      AND initial."proposalId"=mark."id"
     JOIN "AssessmentManualComponent" component
       ON component."schoolId"=mark."schoolId"
       AND component."id"=mark."componentId"
