@@ -180,6 +180,14 @@
 - Browser default: No attendance status is preselected; each pupil must be explicitly marked before submitting an immutable whole-class register. A review must include a reason; terminal review cannot edit submitted marks. All mutations recheck transactional authorization independently of UI navigation.
 - Consequences: Author these narrowly relationship-scoped readers and screens under D-023, with tests and documented sensitive projection. Complete disposable-DB, accessibility, browser, timezone and correction checks before marking ATT-REQ-001 complete or releasing. See ADR-013.
 
+## D-028: Immutable attendance correction requests and separate approvals (development default)
+
+- Status: Drafted implementation, **migration and tests not executed**.
+- Decision: An APPROVED attendance register is not reopened and its original pupil marks/events are never mutated. A currently active exact PRIMARY Form Teacher can append an immutable reasoned correction request for an exact existing register entry, even if the pupil's historical enrollment subsequently ended; school, class, Section, and session must currently be active. The request snapshots prior effective mark, proposed mark, original entry, actor, reason and revision. At most one pending request exists per entry; the next correction is allowed only after its predecessor has a separate immutable approval/return decision. The latest APPROVED proposal only (not pending or returned) determines corrected effective mark for future *authorized* read views.
+- Approval: a different active HM for PRIMARY or Principal for SECONDARY with a verified ScopeGrant to the actual stored class section decides with reason. No Form Teacher self-approval, general staff role, Platform Super Admin override or cross-school access.
+- Safety defaults: closed sessions are not corrected until a school-specific retrospective correction policy can be configured; no automatic past-enrollment reconstruction; no general pupil/correction GET/export is authorized by this initial mutation-only slice. Use composite school/entry/register keys and database actor/expected-mark/revision triggers in addition to service transactions.
+- Next: implement authorized effective-mark reader and pending correction queue; run disposable PostgreSQL migration/trigger/rollback and CI-equivalent tests. Existing release/security gates remain unchanged. See ADR-014.
+
 ## Unresolved decisions
 
 - Exact support-access escalation, enforcement, expiry, and audit mechanism
