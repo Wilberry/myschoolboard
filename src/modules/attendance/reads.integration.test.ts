@@ -11,6 +11,7 @@ import { GET as detailRoute } from "@/app/api/schools/[schoolId]/attendance-revi
 import { POST as submitRoute } from "@/app/api/schools/[schoolId]/attendance/route";
 import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
+import { readFormTeacherAttendanceOptions, readAttendanceReviewerOptions } from "./navigation";
 import { env } from "@/src/lib/env";
 
 const tag = randomUUID();
@@ -140,6 +141,23 @@ describe("Phase 6 private student roster and section-reviewed register reads", (
     await prisma.session.deleteMany({ where: { userId: { in: Object.values(userIds) } } });
     await prisma.user.deleteMany({ where: { id: { in: Object.values(userIds) } } });
     await prisma.$disconnect();
+  });
+
+  it("server-rendered navigation derives only exact active role relationships", async () => {
+    const teacherOptions = await readFormTeacherAttendanceOptions(userIds.form, school);
+    expect(teacherOptions?.classes.map(x => x.classId).sort()).toEqual([
+      primaryClass, secondaryClass,
+    ].sort());
+    expect(await readFormTeacherAttendanceOptions(userIds.teacher, school)).toBeNull();
+    expect(await readFormTeacherAttendanceOptions(userIds.admin, school)).toBeNull();
+    expect(await readFormTeacherAttendanceOptions(userIds.form, foreignSchool)).toBeNull();
+
+    const reviewerOptions = await readAttendanceReviewerOptions(userIds.head, school);
+    expect(reviewerOptions?.sectionNames).toEqual(["Primary"]);
+    expect((await readAttendanceReviewerOptions(userIds.principal, school))?.sectionNames)
+      .toEqual(["Secondary"]);
+    expect(await readAttendanceReviewerOptions(userIds.admin, school)).toBeNull();
+    expect(await readAttendanceReviewerOptions(userIds.foreign, school)).toBeNull();
   });
 
   it("allows exact active Form Teacher roster with only permitted minimum fields", async () => {
