@@ -88,12 +88,16 @@ enum SchoolSectionStage {
 enum LessonNoteStatus {
   DRAFT
   SUBMITTED
+  APPROVED
+  RETURNED
 }
 
 enum LessonNoteEventType {
   CREATED
   REVISED
   SUBMITTED
+  APPROVED
+  RETURNED
 }
 
 enum SchoolConfigurationEventType {
@@ -559,6 +563,7 @@ model LessonNoteEvent {
   actorMembershipId String
   eventType         LessonNoteEventType
   revisionNumber    Int
+  reason            String?
   createdAt         DateTime            @default(now())
   school            School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   note              LessonNote          @relation(fields: [schoolId, noteId], references: [schoolId, id], onDelete: NoAction)

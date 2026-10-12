@@ -64,6 +64,10 @@ Apply the additive section migration to only an explicitly disposable PostgreSQL
 
 Two new disposable-DB cases extend school setup reader coverage for exact school-owned PRIMARY/SECONDARY sections, class.sectionId, non-disclosure of foreign section records and active admin membership on the final Section query. The school setup browser must validate section creation, stage selection, class selection limited to unclassified active entries, generic conflict/error responses, reload and keyboard semantics. No new tests or end-to-end run has been executed.
 
+## Lesson-note reviewer permission and revision cycle (authored, not executed)
+
+Execute seven new disposable DB reviewer-route tests to verify HEAD_OF_SECTION PRIMARY-only and PRINCIPAL SECONDARY-only access, active verified same-school SECTION grant matched to the actual class.sectionId, denial of foreign/NULL/inactive sections and other actors, audited RETURN→new teacher revision→resubmission→APPROVAL, stale/duplicate review denial, direct SQL event tampering and role-stage forgery rejection, and term closure removing pending reads. Test concurrent contradictory review attempts against the same expected revision and the PostgreSQL unique partial index; verify reviewer UI/browser transport separately when available. These tests are **authored only** and are not production acceptance evidence.
+
 ## Required negative tests
 
 - Cross-tenant access

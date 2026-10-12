@@ -278,7 +278,10 @@ async function changeOwnDraft(
           select: { id: true, status: true, currentRevision: true },
         });
         if (!note) throw new LessonNoteError("NOT_FOUND");
-        if (note.status !== "DRAFT" || note.currentRevision !== data.expectedRevision) {
+        const canChange = action === "revise"
+          ? note.status === "DRAFT" || note.status === "RETURNED"
+          : note.status === "DRAFT";
+        if (!canChange || note.currentRevision !== data.expectedRevision) {
           throw new LessonNoteError("CONFLICT");
         }
 
@@ -307,7 +310,15 @@ async function changeOwnDraft(
         const nextRevision = note.currentRevision + 1;
         const result = await tx.lessonNote.update({
           where: { id: noteId },
-          data: { topic: data.topic, currentRevision: nextRevision },
+          // Editing a returned note starts the next draft cycle; the original
+          // submission timestamp and review reason remain in immutable events.
+          data: {
+            topic: data.topic,
+            currentRevision: nextRevision,
+            ...(note.status === "RETURNED"
+              ? { status: "DRAFT" as const, submittedAt: null }
+              : {}),
+          },
           select: noteProjection,
         });
         await tx.lessonNoteRevision.create({
@@ -413,6 +424,7 @@ export async function readOwnLessonNotes(schoolId: string, noteId?: string) {
         select: {
           eventType: true,
           revisionNumber: true,
+          reason: true,
           createdAt: true,
         },
         orderBy: { createdAt: "asc" },

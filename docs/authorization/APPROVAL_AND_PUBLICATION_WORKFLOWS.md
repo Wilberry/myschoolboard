@@ -7,6 +7,10 @@
 3. Approval or rejection occurs.
 4. Corrections retain original record and reason.
 
+## Lesson note reviewer development workflow (not yet validated)
+
+An exact active subject teacher creates numbered immutable drafts and submits a revision. Only the same-school HEAD_OF_SECTION with verified PRIMARY-section grant, or PRINCIPAL with verified SECONDARY-section grant, may see or decide the submitted note attached to that exact class.sectionId. The review decision must contain the revision number, actor, timestamp, and reason in an append-only `LessonNoteEvent`. Approval moves it to APPROVED (not RELEASED); return moves it to RETURNED and requires a **new** immutable author revision before another submission. The review API never exposes unsubmitted drafts or personal pupil records. No student notes may be released under this development checkpoint. Real DB tests and in-product review UX remain outstanding.
+
 ## Lesson note workflow
 
 1. Teacher drafts lesson notes.

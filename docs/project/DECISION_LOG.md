@@ -154,6 +154,12 @@
 - Security effect: **No waiver** of tenant isolation, active membership/resource authorization, verified relationships, immutable audit, CI-equivalent local verification, or `npm audit --audit-level=high`. The recorded high-severity dependencies remain unresolved and block release readiness. D-022 remains a historical, limited exception ending/requiring review 2026-10-18; **that date is not a deadline for ordinary engineering and D-023 is not a renewal of its risk acceptance**.
 - Authority and rationale: Explicit Project Owner instruction to remove unnecessary approval loops while following the canonical roadmap and requirements. The controlling operational rules are in [Standing Development Mandate](STANDING_DEVELOPMENT_MANDATE.md). This change does not assert that new features are implemented, tested, deployed, or production-ready.
 
+## D-024: Section-scoped lesson-note reviewer default (unverified implementation)
+
+- Status: Draft development default under D-023; **not** a product owner's final school-specific academic policy, migration validation or release approval.
+- Decision: `HEAD_OF_SECTION` reviews only notes in a verified active same-school PRIMARY section, while `PRINCIPAL` reviews only notes in a verified active same-school SECONDARY section, as identified by the note's stored class.sectionId. All decisions require an auditable reason and current revision; only SUBMITTED notes can be reviewed. A RETURNED note requires a new immutable author revision before re-submission; APPROVED does not make notes visible to students.
+- Rationale: This preserves the documented school roles and section isolation without fabricating missing historical class mappings or broadening sensitive school-data access. See ADR-010. Review and event migration tests remain outstanding; school-configurable reviewer delegation, cross-section staffing and student release must be separately designed.
+
 ## Unresolved decisions
 
 - Exact support-access escalation, enforcement, expiry, and audit mechanism
