@@ -225,6 +225,9 @@ describe("Phase 7 exact-assignment private question bank", () => {
     const payload = await list.json();
     expect(payload.drafts.map((d: { id: string }) => d.id)).toContain(created.id);
     expect(JSON.stringify(payload)).not.toContain("correctIndex");
+    expect(await prisma.assessmentDraftSeal.findUnique({
+      where: { draftId: created.id },
+    })).not.toBeNull();
     const selected = await prisma.assessmentDraftQuestion.findFirstOrThrow({
       where: { schoolId: schoolA, draftId: created.id },
     });
@@ -237,6 +240,16 @@ describe("Phase 7 exact-assignment private question bank", () => {
     await expect(prisma.assessmentDraftQuestion.update({
       where: { id: selected.id }, data: { points: 10 },
     })).rejects.toThrow();
+    await expect(prisma.assessmentDraftQuestion.create({
+      data: {
+        schoolId: schoolA, draftId: created.id, questionId: question.id,
+        position: 2, points: 5,
+      },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentDraftSeal.delete({
+      where: { draftId: created.id },
+    })).rejects.toThrow();
+
     await expect(prisma.assessmentDraftQuestion.delete({
       where: { id: selected.id },
     })).rejects.toThrow();
