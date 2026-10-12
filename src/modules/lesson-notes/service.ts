@@ -14,7 +14,18 @@ const noteText = z.object({
 const createInput = noteText.extend({
   termId: identifier,
   assignmentId: identifier,
-}).strict();
+  kind: z.enum(["LESSON_NOTE", "SCHEME_OF_WORK"]).default("LESSON_NOTE"),
+  weekStart: z.number().int().min(1).max(53).optional(),
+  weekEnd: z.number().int().min(1).max(53).optional(),
+}).strict().superRefine((value, context) => {
+  if (value.kind === "SCHEME_OF_WORK") {
+    if (!value.weekStart || !value.weekEnd || value.weekEnd < value.weekStart) {
+      context.addIssue({ code: "custom", message: "Scheme must have valid week range" });
+    }
+  } else if (value.weekStart !== undefined || value.weekEnd !== undefined) {
+    context.addIssue({ code: "custom", message: "Lesson notes do not have scheme weeks" });
+  }
+});
 const reviseInput = noteText.extend({
   expectedRevision: z.number().int().min(1),
 }).strict();
@@ -174,6 +185,9 @@ const noteProjection = {
   classId: true,
   subjectId: true,
   topic: true,
+  kind: true,
+  weekStart: true,
+  weekEnd: true,
   status: true,
   currentRevision: true,
   createdAt: true,
@@ -207,6 +221,9 @@ export async function createLessonNote(schoolId: string, input: unknown) {
             classId: assignment.classId,
             subjectId: assignment.subjectId,
             topic: parsed.data.topic,
+            kind: parsed.data.kind,
+            weekStart: parsed.data.weekStart ?? null,
+            weekEnd: parsed.data.weekEnd ?? null,
           },
           select: noteProjection,
         });

@@ -1,5 +1,18 @@
 # Decision Log
 
+## D-034: Administrator-attested, one-to-one student account ownership
+
+- Status: Conservative development implementation; identity evidence/business acceptance pending.
+- Decision: There is NO inferred student-user link. School admin explicitly attests an existing active STUDENT membership to the same-school ENROLLED StudentRecord with current ACTIVE enrollment and required explanation. Each student and each STUDENT membership may be linked at most once, with a terminal reasoned immutable revocation. The database validates school, role, enrollment, attestor and revocation. A membership, email, name, admission number, teacher/super-admin role or historic enrollment cannot independently grant a released lesson read.
+- Consequences: Existing student accounts require active per-student administrator verification. Revoked bindings never automatically relink; any reassignment requires a separately approved lifecycle design. The product must not release child data solely on weak name/email similarities. See ADR-020.
+
+## D-035: Typed schemes of work share the controlled lesson planning lifecycle
+
+- Status: Least-privilege Phase 6 development default; tests and CI outstanding.
+- Decision: Schemes of work are typed `SCHEME_OF_WORK` documents with immutable first/last teaching weeks (1–53) on the existing LessonNote / immutable revisions and review/release event architecture, not a new automatically published document store. Ordinary lesson notes retain `LESSON_NOTE` by default. Scheme content requires exact active teacher assignment, term/session, staged submission/return and HM PRIMARY / Principal SECONDARY approval; only a separate explicit RELEASED event and a verified pupil/class/term link permit learner reads. Publication withdrawal revokes visibility without deleting the history.
+- Consequences: School-specific week structure and future scheme template formats may be configurable later, but do not weaken versioning/approval/release/privacy. See ADR-021.
+
+
 ## D-033: Explicit lesson release distinct from approval (development default)
 
 - Status: Authored, not executed or released.

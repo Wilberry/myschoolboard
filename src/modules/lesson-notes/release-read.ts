@@ -7,6 +7,9 @@ import { LessonNoteError } from "./service";
 interface ReleaseRow {
   id: string;
   topic: string;
+  kind: "LESSON_NOTE" | "SCHEME_OF_WORK";
+  weekStart: number | null;
+  weekEnd: number | null;
   className: string;
   sectionName: string;
   termName: string;
@@ -26,7 +29,7 @@ export async function readLessonReleaseQueue(schoolId: string) {
   if (!login) throw new LessonNoteError("UNAUTHENTICATED");
   const actorUserId = login.user.id;
   const rows = await prisma.$queryRaw<ReleaseRow[]>(Prisma.sql`
-    SELECT n."id", n."topic", c."name" AS "className",
+    SELECT n."id", n."topic", n."kind", n."weekStart", n."weekEnd", c."name" AS "className",
       section."name" AS "sectionName", term."name" AS "termName",
       n."currentRevision",
       EXISTS (SELECT 1 FROM "LessonReleaseEvent" e

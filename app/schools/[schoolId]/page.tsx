@@ -74,6 +74,20 @@ async function SchoolDetailContent({
             </Link>
           </p>
         )}
+        {authorize(access.principal, "school:configure", { schoolId }).allowed && (
+          <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/student-links`} className="secondary-link">
+              Verify student account identity
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "STUDENT" && (
+          <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/my-lessons`} className="secondary-link">
+              My released lessons and schemes of work
+            </Link>
+          </p>
+        )}
         {(access.principal.membership?.role === "TEACHER" ||
           access.principal.membership?.role === "FORM_TEACHER") && (
           <p className="setup-navigation">
