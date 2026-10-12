@@ -128,6 +128,11 @@ enum LessonNoteStatus {
   RETURNED
 }
 
+enum StudentIdentityLinkEventType {
+  LINKED
+  REVOKED
+}
+
 enum LessonReleaseEventType {
   RELEASED
   WITHDRAWN
@@ -252,6 +257,7 @@ model School {
   attendancePolicyRevisions SchoolAttendancePolicyRevision[]
   attendanceDayRevisions SchoolAttendanceDayRevision[]
   lessonReleaseEvents LessonReleaseEvent[]
+  studentIdentityLinkEvents StudentIdentityLinkEvent[]
 }
 
 model Membership {
@@ -279,6 +285,8 @@ model Membership {
   attendancePolicyRevisions SchoolAttendancePolicyRevision[]
   attendanceDayRevisions SchoolAttendanceDayRevision[]
   lessonReleaseEvents LessonReleaseEvent[]
+  studentIdentitySubjectEvents StudentIdentityLinkEvent[] @relation("StudentIdentitySubject")
+  studentIdentityVerifierEvents StudentIdentityLinkEvent[] @relation("StudentIdentityVerifier")
 }
 
 model ScopeGrant {
@@ -669,6 +677,7 @@ model StudentRecord {
   @@unique([schoolId, id])
   @@unique([schoolId, admissionNumber])
   @@index([schoolId, status])
+  studentIdentityLinkEvents StudentIdentityLinkEvent[]
 }
 
 model StudentEnrollment {
@@ -883,4 +892,27 @@ model LessonReleaseEvent {
 
   @@unique([schoolId, noteId, revisionNumber, eventType])
   @@index([schoolId, createdAt])
+}
+
+/** Explicit school-administrator-verified student account linking events.
+ * Never auto-infer identity from email, name or an admission number.
+ * Latest sequence is authoritative, revocation is append-only. */
+model StudentIdentityLinkEvent {
+  id String @id @default(cuid())
+  schoolId String
+  membershipId String
+  studentId String
+  sequence Int
+  eventType StudentIdentityLinkEventType
+  reason String @db.VarChar(500)
+  actorUserId String
+  actorMembershipId String
+  createdAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  membership Membership @relation("StudentIdentitySubject", fields: [schoolId, membershipId], references: [schoolId, id], onDelete: NoAction, map: "StudentIdentityLinkEvent_subject_fkey")
+  student StudentRecord @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction, map: "StudentIdentityLinkEvent_student_fkey")
+  verifier Membership @relation("StudentIdentityVerifier", fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "StudentIdentityLinkEvent_verifier_fkey")
+
+  @@unique([schoolId, membershipId, sequence])
+  @@index([schoolId, studentId, createdAt])
 }
