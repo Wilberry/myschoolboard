@@ -28,8 +28,12 @@ export async function resolveSchoolPrincipal(
             schoolId: requestedSchoolId,
             schoolClass: { isActive: true },
             subject: { isActive: true },
+            OR: [
+              { sessionId: null },
+              { academicSession: { status: "ACTIVE" } },
+            ],
           },
-          select: { classId: true, subjectId: true },
+          select: { classId: true, subjectId: true, sessionId: true },
         },
       },
     }),

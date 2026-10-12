@@ -36,6 +36,10 @@ The `readSchoolSetup` server helper revalidates `school:configure`, active schoo
 
 Period status endpoints use `school:configure` and server-derived Better Auth identities; transitions require a reason and serializable audit-atomic writes. New pure policy tests cover valid and terminal-invalid transitions; database tests check unauthenticated/cross-school denial, activation ordering (session before term), rejection of closing a session while terms remain active/planned, and exact audit event type/actor/reason persistence. The database partial unique constraints prevent two ACTIVE sessions per school or two ACTIVE terms per session; verify concurrency behavior in the postponed local test run. These new unit/DB/HTTP/UI tests have **not** run.
 
+## Session-specific teacher-assignment access (authored, awaiting local verification)
+
+Existing assignment mutations retain legacy NULL-session behavior and permit an optional, same-school ACTIVE academic session ID. New policy regression checks confirm exact session/class/subject authorization with separate legacy behavior; route integration cases cover duplicate protection within the same period, legacy/period-bound coexistence, foreign/planned/closed session rejection, and revocation plus session-closure removing teaching authority. The new migration and tests are authored but not executed, and real HTTP/browser academic resources remain outside this checkpoint.
+
 ## Required negative tests
 
 - Cross-tenant access

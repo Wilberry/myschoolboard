@@ -219,6 +219,7 @@ model TeacherClassSubjectAssignment {
   membershipId String
   classId      String
   subjectId    String
+  sessionId    String?
   status       TeacherClassSubjectAssignmentStatus @default(ACTIVE)
   createdAt    DateTime                            @default(now())
   updatedAt    DateTime                            @updatedAt
@@ -226,13 +227,17 @@ model TeacherClassSubjectAssignment {
   membership   Membership                          @relation(fields: [schoolId, membershipId], references: [schoolId, id], onDelete: NoAction)
   schoolClass  SchoolClass                         @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
   subject      Subject                             @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction)
+  academicSession AcademicSession?                    @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
   events       TeacherClassSubjectAssignmentEvent[]
 
-  @@unique([schoolId, membershipId, classId, subjectId])
+  // Existing NULL-session assignments retain uniqueness via a SQL partial index.
+  // Non-null session assignments are unique per teacher, class, subject and session.
+  @@unique([schoolId, membershipId, classId, subjectId, sessionId], map: "TeacherAssignment_period_unique")
   @@unique([schoolId, id, membershipId])
   @@unique([schoolId, id])
   @@index([schoolId, membershipId, status])
   @@index([schoolId, classId, subjectId, status])
+  @@index([schoolId, sessionId, status])
 }
 
 model TeacherClassSubjectAssignmentEvent {
@@ -282,6 +287,7 @@ model AcademicSession {
   updatedAt DateTime             @updatedAt
   school    School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   terms     AcademicTerm[]
+  teacherAssignments TeacherClassSubjectAssignment[]
 
   @@unique([schoolId, id])
   @@unique([schoolId, name])

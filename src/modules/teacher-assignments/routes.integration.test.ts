@@ -24,6 +24,8 @@ import * as reactivateRoute from "@/app/api/schools/[schoolId]/teacher-assignmen
 import { auth } from "@/src/lib/auth";
 import { env } from "@/src/lib/env";
 import { prisma } from "@/src/lib/db";
+import { authorize } from "@/src/modules/authorization/policy";
+import { resolveSchoolPrincipal } from "@/src/modules/tenancy/context";
 
 const fixtureId = randomUUID();
 const password = "synthetic-assignment-route-test-password-42";
@@ -412,6 +414,117 @@ describe("teacher assignment mutation routes", () => {
       eventType: "CREATED",
       newStatus: "ACTIVE",
     });
+  });
+
+  it("keeps period-aware assignments distinct from legacy authorizations", async () => {
+    const sessionId = `assignment-session-a-${fixtureId}`;
+    await prisma.academicSession.create({
+      data: {
+        id: sessionId,
+        schoolId: schoolA,
+        name: "Session A",
+        status: "ACTIVE",
+        startsOn: new Date("2026-09-01T00:00:00.000Z"),
+        endsOn: new Date("2027-07-31T00:00:00.000Z"),
+      },
+    });
+    const input = {
+      teacherMembershipId,
+      classId: classA,
+      subjectId: subjectA,
+      sessionId,
+    };
+    const periodResponse = await create(input);
+    expect(periodResponse.status).toBe(201);
+    const periodAssignment = (await periodResponse.json()).assignment;
+    expect(periodAssignment.sessionId).toBe(sessionId);
+    expect((await create(input)).status).toBe(409);
+
+    const legacyResponse = await create({
+      teacherMembershipId,
+      classId: classA,
+      subjectId: subjectA,
+    });
+    expect(legacyResponse.status).toBe(201);
+    const legacyAssignment = (await legacyResponse.json()).assignment;
+    expect(legacyAssignment.sessionId).toBeNull();
+
+    const teacherPrincipal = await resolveSchoolPrincipal(
+      teacherUserId,
+      schoolA,
+    );
+    expect(authorize(teacherPrincipal, "academic:read", {
+      schoolId: schoolA,
+      classId: classA,
+      subjectId: subjectA,
+      sessionId,
+    }).allowed).toBe(true);
+    expect(authorize(teacherPrincipal, "academic:read", {
+      schoolId: schoolA,
+      classId: classA,
+      subjectId: subjectA,
+      sessionId: "another-session",
+    }).allowed).toBe(false);
+
+    const revokeLegacy = await lifecycle(
+      revokeRoute.POST,
+      legacyAssignment.id,
+      { reason: "Synthetic legacy access test" },
+    );
+    expect(revokeLegacy.status).toBe(200);
+    const after = await resolveSchoolPrincipal(teacherUserId, schoolA);
+    expect(authorize(after, "academic:read", {
+      schoolId: schoolA,
+      classId: classA,
+      subjectId: subjectA,
+    }).allowed).toBe(false);
+    expect(authorize(after, "academic:read", {
+      schoolId: schoolA,
+      classId: classA,
+      subjectId: subjectA,
+      sessionId,
+    }).allowed).toBe(true);
+
+    // Even an ACTIVE assignment no longer authorizes a CLOSED session.
+    await prisma.academicSession.update({
+      where: { id: sessionId },
+      data: { status: "CLOSED" },
+    });
+    const closed = await resolveSchoolPrincipal(teacherUserId, schoolA);
+    expect(authorize(closed, "academic:read", {
+      schoolId: schoolA,
+      classId: classA,
+      subjectId: subjectA,
+      sessionId,
+    }).allowed).toBe(false);
+  });
+
+  it("rejects planned, closed and other-school session assignments", async () => {
+    const plannedId = `assignment-planned-${fixtureId}`;
+    const closedId = `assignment-closed-${fixtureId}`;
+    const otherId = `assignment-other-${fixtureId}`;
+    const dates = {
+      startsOn: new Date("2026-09-01T00:00:00.000Z"),
+      endsOn: new Date("2027-07-31T00:00:00.000Z"),
+    };
+    await prisma.academicSession.createMany({
+      data: [
+        { id: plannedId, schoolId: schoolA, name: "Planned", ...dates },
+        { id: closedId, schoolId: schoolA, name: "Closed", status: "CLOSED", ...dates },
+        { id: otherId, schoolId: schoolB, name: "Other School", status: "ACTIVE", ...dates },
+      ],
+    });
+    for (const sessionId of [plannedId, closedId, otherId]) {
+      const response = await create({
+        teacherMembershipId,
+        classId: classA,
+        subjectId: subjectA,
+        sessionId,
+      });
+      expect(response.status).toBe(404);
+      expect(await response.json()).toEqual({ error: "Not found" });
+    }
+    expect(await events()).toHaveLength(0);
   });
 
   it("marks all mutation response types private and no-store", async () => {

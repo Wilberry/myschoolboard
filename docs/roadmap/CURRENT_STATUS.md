@@ -24,6 +24,10 @@ The cumulative `feature/school-setup-workspace` branch adds a restricted school-
 
 The `feature/academic-period-lifecycle` branch adds two protected academic period status routes, reasoned state changes and audit records, and Activate/Close controls in the school-admin setup workspace. The application uses serializable transactions and database partial unique indexes to preserve only one ACTIVE session/term per scope; closing a session is blocked until all its terms are CLOSED. It adds an additive event-type/reason migration and new policy/database regression cases. **No migrations or full CI-equivalent verification have been run on this branch.** Academic session-scoped teacher allocations, Form Teacher responsibility, assessment workflows, and published-grade history remain future Phase 5+ work.
 
+## Phase 5 session-specific teacher assignments (pending local verification)
+
+The `feature/session-aware-teacher-assignments` branch adds nullable academic-session references to existing teacher assignments, preserving every legacy NULL-session row and its uniqueness in a partial index. A separate unique index permits the same teacher/class/subject in different school-owned academic sessions. New create requests may include a session ID, validated as ACTIVE and same-school in the serializable mutation; reactivation repeats this check. Principal resolution excludes closed-session assignments and teacher academic authorization requires the exact session, not a loosely related class/subject pair. The assignment administration GET includes nullable `sessionId`. Policy and database-route regression tests are authored; **the migration, tests and full CI-equivalent checks have not been run**. Form Teacher assignments and timetable constraints remain future Phase 5 work.
+
 ## Current evidence
 
 - Published development checkpoint: `checkpoint/phase1-tenant-safe-foundation`; `main` remains unchanged

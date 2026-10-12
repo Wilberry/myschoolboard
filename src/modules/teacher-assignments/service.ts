@@ -18,6 +18,7 @@ const createSchema = z
     teacherMembershipId: identifier,
     classId: identifier,
     subjectId: identifier,
+    sessionId: identifier.optional(),
   })
   .strict();
 
@@ -174,6 +175,26 @@ export async function createTeacherClassSubjectAssignment(input: unknown) {
           FOR UPDATE
         `;
 
+        if (data.sessionId) {
+          await tx.$queryRaw`
+            SELECT "id" FROM "AcademicSession"
+            WHERE "id" = ${data.sessionId}
+              AND "schoolId" = ${data.schoolId}
+            FOR UPDATE
+          `;
+          const academicSession = await tx.academicSession.findFirst({
+            where: {
+              id: data.sessionId,
+              schoolId: data.schoolId,
+              status: "ACTIVE",
+            },
+            select: { id: true },
+          });
+          if (!academicSession) {
+            throw new AssignmentServiceError("NOT_FOUND");
+          }
+        }
+
         const [teacher, schoolClass, subject] = await Promise.all([
           tx.membership.findFirst({
             where: {
@@ -212,6 +233,7 @@ export async function createTeacherClassSubjectAssignment(input: unknown) {
             membershipId: teacher.id,
             classId: schoolClass.id,
             subjectId: subject.id,
+            sessionId: data.sessionId ?? null,
           },
         });
         await tx.teacherClassSubjectAssignmentEvent.create({
@@ -293,6 +315,26 @@ async function transitionAssignment(
             WHERE "id" = ${assignment.subjectId} AND "schoolId" = ${data.schoolId}
             FOR UPDATE
           `;
+          if (assignment.sessionId) {
+            await tx.$queryRaw`
+              SELECT "id" FROM "AcademicSession"
+              WHERE "id" = ${assignment.sessionId}
+                AND "schoolId" = ${data.schoolId}
+              FOR UPDATE
+            `;
+            const academicSession = await tx.academicSession.findFirst({
+              where: {
+                id: assignment.sessionId,
+                schoolId: data.schoolId,
+                status: "ACTIVE",
+              },
+              select: { id: true },
+            });
+            if (!academicSession) {
+              throw new AssignmentServiceError("NOT_FOUND");
+            }
+          }
+
           const [teacher, schoolClass, subject] = await Promise.all([
             tx.membership.findFirst({
               where: {
