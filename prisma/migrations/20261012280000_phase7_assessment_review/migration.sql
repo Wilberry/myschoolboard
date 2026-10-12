@@ -65,12 +65,12 @@ BEGIN
       ON term."schoolId"=draft."schoolId"
       AND term."sessionId"=period."id"
       AND term."id"=draft."termId" AND term."status"='ACTIVE'
-    JOIN "SchoolClass" class
-      ON class."schoolId"=draft."schoolId"
-      AND class."id"=draft."classId" AND class."isActive"=true
+    JOIN "SchoolClass" room
+      ON room."schoolId"=draft."schoolId"
+      AND room."id"=draft."classId" AND room."isActive"=true
     JOIN "SchoolSection" section
       ON section."schoolId"=draft."schoolId"
-      AND section."id"=class."sectionId" AND section."isActive"=true
+      AND section."id"=room."sectionId" AND section."isActive"=true
     JOIN "Subject" subject
       ON subject."schoolId"=draft."schoolId"
       AND subject."id"=draft."subjectId" AND subject."isActive"=true
