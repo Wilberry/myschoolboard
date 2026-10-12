@@ -1,5 +1,13 @@
 # Milestone Checklist
 
+### Attendance register candidate — pending Phase 6 exit checks
+
+- [ ] Review and apply the additive attendance migration on **only** the operator-confirmed disposable PostgreSQL test DB; verify schema drift, composite tenant relationships, trigger validation, deferred events and school-deletion cascade.
+- [ ] Run authored attendance policy unit tests and authenticated PostgreSQL API integration suite, including class/date collisions, duplicate/partial roster, role/grant revocation, direct event/entry tampering and concurrent submissions; retain command output and tested commit SHA.
+- [ ] Run unchanged CI-equivalent preflight, format, lint, typecheck, full tests, Next build and `npm audit --audit-level=high`; audit findings remain mandatory blockers.
+- [ ] Add Form Teacher-scoped active roster read and UI, HM/Principal submitted-queue reader and decision UI, explicit immutable correction/revision model and school timezone policy before marking ATT-REQ-001 complete.
+
+
 ## Phase 0 — Documentation baseline complete
 
 - [x] Repository state documented with evidence
@@ -70,6 +78,13 @@
 - [ ] Validate nullable session FK, the legacy partial unique index and new period-specific unique key on an explicitly disposable PostgreSQL database; preserve all pre-existing NULL-session rows and audit events.
 - [ ] Test active same-school session requirements at assignment create/reactivation and exclusion of closed sessions from teacher policy principals.
 - [ ] Continue with separately authorized Form Teacher responsibility, school-configurable curriculum eligibility and timetable conflict detection.
+
+### Attendance register candidate — pending Phase 6 exit checks
+
+- [ ] Review and apply the additive attendance migration on **only** the operator-confirmed disposable PostgreSQL test DB; verify schema drift, composite tenant relationships, trigger validation, deferred events and school-deletion cascade.
+- [ ] Run authored attendance policy unit tests and authenticated PostgreSQL API integration suite, including class/date collisions, duplicate/partial roster, role/grant revocation, direct event/entry tampering and concurrent submissions; retain command output and tested commit SHA.
+- [ ] Run unchanged CI-equivalent preflight, format, lint, typecheck, full tests, Next build and `npm audit --audit-level=high`; audit findings remain mandatory blockers.
+- [ ] Add Form Teacher-scoped active roster read and UI, HM/Principal submitted-queue reader and decision UI, explicit immutable correction/revision model and school timezone policy before marking ATT-REQ-001 complete.
 
 ## Phase 6 — Lesson notes and attendance (safe foundation under development)
 
