@@ -6,6 +6,7 @@ import type { LessonWritingOptions } from "@/src/modules/lesson-notes/read-optio
 interface NoteSummary {
   id: string;
   topic: string;
+  kind: "LESSON_NOTE" | "SCHEME_OF_WORK";
   status: "DRAFT" | "SUBMITTED" | "APPROVED" | "RETURNED";
   currentRevision: number;
   termId: string;
@@ -60,7 +61,7 @@ export function LessonNoteEditor({
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data: { notes: NoteSummary[] } = await response.json();
-    setNotes(data.notes);
+    setNotes(data.notes.filter(note => note.kind === "LESSON_NOTE"));
   }
 
   useEffect(() => {
@@ -73,7 +74,7 @@ export function LessonNoteEditor({
         );
         if (!response.ok) throw new Error("Cannot read own notes");
         const data: { notes: NoteSummary[] } = await response.json();
-        if (active) setNotes(data.notes);
+        if (active) setNotes(data.notes.filter(note => note.kind === "LESSON_NOTE"));
       } catch {
         if (active) {
           setError("The lesson-note list could not be loaded. Refresh or sign in again.");
