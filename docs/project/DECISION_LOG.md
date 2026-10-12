@@ -1,5 +1,12 @@
 # Decision Log
 
+## D-039: Independent School Super Admin assessment publication and terminal withdrawal
+
+- Status: Phase 7 additive development candidate, unexecuted.
+- Decision: Maintain strict separation between HM/Principal exact-section academic approval of a sealed assessment and the school-controlled publication decision. Conservative initial publish/withdraw actor is active same-school SCHOOL_SUPER_ADMIN only (ordinary school/platform admins, teachers and reviewers have no implicit publish rights). The latest configuration cannot be edited; record an immutable PUBLISHED event only after approved sealed active assessment, and at most one immutable WITHDRAWN event afterward. Withdrawal is terminal and may occur when the original teacher assignment is no longer active, as a fail-closed withdrawal mechanism.
+- Scope: A publication record is NOT automatic release to students. No current student exam reader, answer-key reveal, attempt/score service or class record data is enabled. Production-specific publication policy remains configurable only after explicit security/identity and school acceptance. Tests/migrations remain unexecuted. See ADR-025.
+
+
 ## D-038: Section academic assessment moderation before separate CBT publication
 
 - Status: Additive Phase 7 candidate, not validated or production-authorized.
