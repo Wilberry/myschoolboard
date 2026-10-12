@@ -44,6 +44,10 @@ The cumulative `feature/school-admin-timetable-workspace` branch adds a protecte
 
 The cumulative `feature/lesson-note-drafts-and-submission` branch authors `LessonNote`, `LessonNoteRevision`, `LessonNoteEvent` schema and an additive SQL migration, a teacher-only transactional authoring service, five authenticated school-scoped HTTP operations, and six real-session database integration cases. Notes are bound by composite foreign keys to an ACTIVE same-school academic term/session and exact teacher/class/subject assignment. A teacher can create, list/view own notes, revise a DRAFT with a version check and submit it; content and audit events remain immutable. **SUBMITTED does not mean approved or published.** HM/Principal section-scoped review/return, release to verified enrolled students, schemes of work and attendance remain separate Phase 6 slices. No new migration, Vitest integration test, formatter/lint/typecheck/build or CI-equivalent dependency audit has run on this branch. No student data or production environment was accessed.
 
+## Phase 6 teacher lesson-note authoring workspace (awaiting verification)
+
+The cumulative `feature/teacher-lesson-planning-workspace` branch adds a Better Auth guarded teacher lesson-note page, a teacher-specific term/assignment option selector that repeats school/role/member scope in its final DB queries, a draft/revision/submission editor reusing the protected Lesson Note APIs, and home navigation exclusively for active teacher-role memberships. Four direct database-backed option-scope cases are authored, complementing six earlier lesson-note API cases. **No migrations, new tests, browser accessibility flows, lint, typecheck, production build or full CI-equivalent dependency audit were run.** School review/revision-return, signed-off publication, student visibility, schemes of work and attendance enrollment requirements are not implemented.
+
 ## Current evidence
 
 - Published development checkpoint: `checkpoint/phase1-tenant-safe-foundation`; `main` remains unchanged

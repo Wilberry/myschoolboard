@@ -522,3 +522,43 @@ h1 {
   padding: 12px;
   border: 1px solid var(--line);
 }
+
+/* Teacher-owned lesson note planning (no student/reviewer release controls) */
+.lesson-workspace textarea {
+  min-height: 100px;
+  padding: 10px;
+  resize: vertical;
+  border: 1px solid #cbd6cf;
+  border-radius: 3px;
+  background: var(--white);
+  color: var(--ink);
+  font: inherit;
+}
+.lesson-detail {
+  grid-column: 1 / -1;
+}
+.lesson-detail h3 {
+  margin: 26px 0 10px;
+  font-size: 16px;
+}
+.lesson-revisions {
+  display: grid;
+  gap: 14px;
+  padding-left: 22px;
+}
+.lesson-revisions li {
+  padding: 12px;
+  border: 1px solid var(--line);
+}
+.lesson-revisions p {
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.lesson-revision-content {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.lesson-workspace .setup-panel button + button {
+  margin-top: 8px;
+}

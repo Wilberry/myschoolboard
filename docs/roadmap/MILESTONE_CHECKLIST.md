@@ -73,6 +73,9 @@
 
 ## Phase 6 — Lesson notes and attendance (safe foundation under development)
 
+- [ ] Verify teacher lesson-note UI home navigation and server page authorization, active school-owned teacher assignment/term options, note creation/edit/reload/submit, browser keyboard/accessibility, and revision conflict handling.
+- [ ] Run four option-reader database tests and the six author API integration cases against only the explicitly disposable test DB; reject all foreign roles, private student requests and inactive assignment/period access.
+
 - [ ] Apply draft lesson-note tables, exact composite tenant FKs and immutable revision/event triggers on **only** an explicitly disposable PostgreSQL DB; verify rollback and revision concurrency.
 - [ ] Run six authored teacher-only lesson-note API integration cases plus earlier Phase 2–5 tests; verify no teacher self-approval, no student reads and no leakage across classes/schools.
 - [ ] Add verified school-owned Section/class/reviewer scope before HM/Principal lesson-note approval or revision-return; add enrollment and pupil-class-term ownership before attendance and released lesson visibility.

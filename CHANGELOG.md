@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-12 — Teacher lesson-note authoring workspace (unverified)
+
+- Added protected `/schools/{schoolId}/lesson-notes` and teacher-role home navigation, with scoped active academic term/class/subject/session assignment form options, own-note list and immutable revision viewer.
+- Added a client editor to create DRAFT notes, append expected-version revisions and submit current drafts through the existing authenticated APIs. No release or school approval route was added.
+- Four new synthetic/disposable PostgreSQL option isolation tests were authored. **No browser, database, CI audit, build or migration verification has run.** No student-facing release, `main` merge or deployment.
+
 ## 2026-10-12 — Teacher-owned lesson-note drafting and submission (unverified)
 
 - Authored draft-only `LessonNote`, immutable numbered `LessonNoteRevision`, and append-only `LessonNoteEvent` data with composite tenant/session/term/class/subject/assignment FKs. No historic teaching assignment or student record is rewritten.
