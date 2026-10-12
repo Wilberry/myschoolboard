@@ -1,5 +1,10 @@
 # Decision Log
 
+## D-047: Independent section approval for original written mark proposals
+
+- Status: Authored/unverified. The actual exact active section's verified HM (PRIMARY) or Principal (SECONDARY) may record a one-time immutable APPROVED/RETURNED reasoned decision, never the proposing teacher nor a broader school admin. No mark mutation or official report release. Corrections require separate append-only request/decision history. ADR-033.
+
+
 ## D-046: Written/manual teacher marks begin as immutable unapproved proposals
 
 - Status: Phase 7 authored, NOT TESTED.
