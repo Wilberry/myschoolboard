@@ -62,6 +62,13 @@ async function SchoolDetailContent({
 
         {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
           <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/assessment-grading-policies`} className="secondary-link">
+              Grading policy drafts (development)
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
+          <p className="setup-navigation">
             <Link href={`/schools/${schoolId}/assessment-publications`} className="secondary-link">
               Assessment publication ledger (development)
             </Link>
