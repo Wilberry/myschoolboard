@@ -1,5 +1,15 @@
 # Constraints and Invariants
 
+## Attendance ledger invariants (proposed migration, not verified)
+
+- One `AttendanceRegister` per school/session/class/calendar date; duplicate concurrent submits are forbidden by a DB unique index, not merely request checking.
+- The register's original school/session/class/date and PRIMARY Form Teacher responsibility are never rewritten; register status can change only once from SUBMITTED to APPROVED or RETURNED.
+- Each `AttendanceEntry` points to the same exact school/student/enrollment/class/session tuple, enforced through composite FKs. Entry and audit event rows are append-only; PostgreSQL validation additionally requires ACTIVE exact enrollment, school, class and section at initial insert.
+- A deferred database constraint trigger requires a valid SUBMITTED event and marks on new registers, and a matching immutable APPROVED/RETURNED event for each decision. Audit event insertion independently validates the stored PRIMARY Form Teacher author or the exact HM/Principal verified active section.
+- Approval does not modify any mark or publish pupil records. Corrections require a future separately audited revision model; direct SQL edits/deletes/truncation are refused outside the existing explicit school-removal cascade convention.
+- Submission rejects partial active rosters and uses UTC calendar-day as a conservative nonfuture gate pending a school timezone setting. No historic enrollment or attendance has been backfilled. These invariants and triggers are **authored but not executed or independently validated**.
+
+
 ## Mandatory invariants
 
 - All tenant-owned records must include tenant_id and satisfy tenant-bound authorization checks.
