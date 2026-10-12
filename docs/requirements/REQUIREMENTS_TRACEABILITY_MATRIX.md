@@ -1,5 +1,13 @@
 # Requirements Traceability Matrix
 
+## SCH-REQ-001 / ASM-REQ-001 / T-ASM-001 — immutable school grading preview profile (PARTIAL / UNVERIFIED)
+
+- Schema `AssessmentGradingPolicyRevision` and additive SQL `20261012330000_phase7_grading_policy_revisions`: school/session/term/class/subject and School Super Admin actor member exact composite FKs, 0–100 QUIZ/TEST/EXAM whole-number weights sum 100, reason, SQL-serialized per-context version, UTC timestamp, immutable UPDATE/DELETE/TRUNCATE protections. Only active same-school School Super Admin may author profiles; no default and no official status.
+- Server/private admin editor/route `grading-policy-service.ts`, `assessment-grading-policies`: actual signed-in school super admin under SERIALIZABLE school/member lock, fail-closed wrong actor/scope, bounded no-student-Pii history. Teacher class record service reuses final-query original exact assignment authorization and projects latest policy matching school/session/term/class/subject, separate weighted PREVIEW only.
+- Pure `grading-policy.ts` and Vitest tests require complete positively weighted categories; missing/unscored yields `PENDING`, never zero or official grade. Synthetic authenticated school role/tenant/wrong weights/forged actor/immutable revisions and class-sheet preview tests AUTHORED, NOT EXECUTED. `scripts/phase7-grading-policy-guard.test.mjs` added to unchanged full test suite.
+- ASM/SCH requirements still partial; school adoption, manual marking and official result publication not implemented/accepted. Phase 6 and mandatory DB/CI/security exit gates blocked.
+
+
 ## ASM-REQ-001 / T-ASM-001 — private teacher marking and provisional class sheets (PARTIAL, NOT VERIFIED)
 
 - `src/modules/assessments/objective-score-service.ts`: signed-in active exact teacher's submitted-unscored attempt metadata GET; internal `scoreInternalSubmittedAttempt` SQL-computed immutable key-only score. `assessment-score-queue` GET and `assessment-scores/[attemptId]` bodyless POST return no raw answers or correct keys; current school/draft teacher/assignment/term and publication state rechecked.
