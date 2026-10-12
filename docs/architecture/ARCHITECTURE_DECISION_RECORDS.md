@@ -194,3 +194,8 @@
 ## ADR-029: SQL-only immutable secret-key objective marking
 
 - Status: Authored; unverified. Exact active original TEACHER initiates internal-only submitted-attempt scoring. The PostgreSQL trigger, not TS/HTTP/client, reads private AssessmentQuestionKey and latest per-question answer revision, recomputes total/earned/pass/percentage and writes one immutable score. No student result visibility, answer key API, edits or automatic publishing. Requires local DB/CI evidence.
+
+## ADR-030: Live provisional, teacher-scoped record sheet from immutable objective scores
+
+- Status: Development candidate not verified. Private teacher GET uses a final SQL exact Membership→TeacherClassSubjectAssignment→School/Class/Section/Subject/Session/Term join and current ENROLLED matching class/session StudentEnrollment to project minimal student identity. LATERAL sealed approved PUBLISHED/not-withdrawn draft and one highest-score submitted attempt per draft produce a bounded read-only provisional record; pending not zero, scored-only aggregate. A separate bodyless teacher scoring POST delegates to SQL trigger-only key reading; key, answer revisions and result publication are never returned. Ambiguous enrollment duplication and excessive breadth fail closed. Full local SQL, CI, a11y, security and school business aggregation acceptance pending.
+
