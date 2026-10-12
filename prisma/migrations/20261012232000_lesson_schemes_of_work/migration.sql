@@ -31,8 +31,11 @@ BEGIN
     RETURN NEW;
   END IF;
   IF NEW."weeklyPlan" IS NULL OR
-     jsonb_typeof(NEW."weeklyPlan") IS DISTINCT FROM 'array' OR
-     jsonb_array_length(NEW."weeklyPlan") NOT BETWEEN 1 AND 24 THEN
+     jsonb_typeof(NEW."weeklyPlan") IS DISTINCT FROM 'array' THEN
+    RAISE EXCEPTION 'Scheme requires a weekly topic array'
+      USING ERRCODE='23514';
+  END IF;
+  IF jsonb_array_length(NEW."weeklyPlan") NOT BETWEEN 1 AND 24 THEN
     RAISE EXCEPTION 'Scheme requires 1 to 24 weekly topics'
       USING ERRCODE='23514';
   END IF;
