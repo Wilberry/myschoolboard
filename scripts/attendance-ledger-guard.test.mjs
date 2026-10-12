@@ -26,6 +26,8 @@ test("existing unique class/date and exact composite student relationships are r
   assert.match(ledger, /CREATE UNIQUE INDEX "AttendanceRegister_schoolId_sessionId_classId_attendanceDate_key"/);
   assert.match(ledger, /CREATE UNIQUE INDEX "StudentEnrollment_attendance_identity"/);
   assert.match(ledger, /CREATE UNIQUE INDEX "AttendanceRegister_entry_identity"/);
+  assert.match(ledger, /ADD CONSTRAINT "AttendanceRegister_form_teacher_exact_fkey"/);
+  assert.match(schema, /formTeacherResponsibility\s+FormTeacherResponsibility\s+@relation\([^\n]*map: "AttendanceRegister_form_teacher_exact_fkey"/);
   assert.match(ledger, /FOREIGN KEY \("schoolId", "enrollmentId", "studentId", "classId", "sessionId"\)/);
   assert.match(schema, /@@unique\(\[schoolId, sessionId, classId, attendanceDate\]\)/);
 });
