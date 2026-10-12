@@ -10,6 +10,9 @@ import { reserveInternalCbtAttempt } from "@/src/modules/assessments/attempt-res
 import { readInternalCbtAttempt } from "@/src/modules/assessments/attempt-resume-reader";
 import { scoreInternalSubmittedAttempt } from "@/src/modules/assessments/objective-score-service";
 import { GET as CLASS_RECORDS_GET } from "@/app/api/schools/[schoolId]/assessment-class-records/route";
+import {
+  GET as POLICIES_GET, POST as POLICIES_POST,
+} from "@/app/api/schools/[schoolId]/assessment-grading-policies/route";
 import { GET as SCORE_QUEUE } from "@/app/api/schools/[schoolId]/assessment-score-queue/route";
 import { POST as SCORE_POST } from "@/app/api/schools/[schoolId]/assessment-scores/[attemptId]/route";
 import {
@@ -737,11 +740,77 @@ describe("Phase 7 exact-assignment private question bank", () => {
         params: Promise.resolve({ schoolId }),
       });
     };
+    const gradingInput = {
+      sessionId, termId, classId, subjectId,
+      quizWeight: 20, testWeight: 30, examWeight: 50,
+      reason: "Synthetic explicit school grading preview setup",
+    };
+    const gradingRequest = (actor: string, input: unknown, schoolId = schoolA) =>
+      POLICIES_POST(req(actor, schoolId, "POST", input), {
+        params: Promise.resolve({ schoolId }),
+      });
+    const getPolicies = (actor: string, schoolId = schoolA) =>
+      POLICIES_GET(req(actor, schoolId, "GET"), {
+        params: Promise.resolve({ schoolId }),
+      });
+    for (const actor of ["teacher", "student", "admin", "head", "principal", "foreign"]) {
+      expect((await gradingRequest(actor, gradingInput)).status).toBe(404);
+      expect((await getPolicies(actor)).status).toBe(404);
+    }
+    expect((await gradingRequest("super", gradingInput, schoolB)).status).toBe(404);
+    expect((await gradingRequest("super", {
+      ...gradingInput, testWeight: 31,
+    })).status).toBe(400);
+    expect((await gradingRequest("super", {
+      ...gradingInput, actorUserId: users.super,
+    })).status).toBe(400);
+    const revision1 = await gradingRequest("super", gradingInput);
+    expect(revision1.status).toBe(201);
+    const policy1 = (await revision1.json()).policy;
+    expect(policy1.version).toBe(1);
+    expect(policy1.status).toBe("DRAFT_PREVIEW_ONLY");
+    const revision2 = await gradingRequest("super", {
+      ...gradingInput, quizWeight: 0, testWeight: 0, examWeight: 100,
+      reason: "Synthetic updated exam-only preview experiment",
+    });
+    expect(revision2.status).toBe(201);
+    const policy2 = (await revision2.json()).policy;
+    expect(policy2.version).toBe(2);
+    expect((await getPolicies("super")).status).toBe(200);
+    const history = await prisma.assessmentGradingPolicyRevision.findMany({
+      where: { schoolId: schoolA, sessionId, termId, classId, subjectId },
+    });
+    expect(history).toHaveLength(2);
+    await expect(prisma.assessmentGradingPolicyRevision.update({
+      where: { id: policy1.id }, data: { quizWeight: 100 },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentGradingPolicyRevision.delete({
+      where: { id: policy1.id },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentGradingPolicyRevision.create({
+      data: {
+        id: "forged-grading-revision-" + suffix,
+        schoolId: schoolA, sessionId, termId, classId, subjectId,
+        quizWeight: 20, testWeight: 30, examWeight: 50,
+        reason: "Forged actor should be rejected",
+        actorMembershipId: members.admin, actorUserId: users.admin,
+      },
+    })).rejects.toThrow();
     const ownSheet = await record("teacher");
     expect(ownSheet.status).toBe(200);
     expect(ownSheet.headers.get("cache-control")).toBe("private, no-store");
     const sheet = await ownSheet.json();
     expect(sheet.status).toBe("PROVISIONAL");
+    expect(sheet.sheet.gradingPolicy).toMatchObject({
+      version: 2, quizWeight: 0, testWeight: 0, examWeight: 100,
+      status: "DRAFT_PREVIEW_ONLY",
+    });
+    expect(sheet.sheet.students.find(
+      (x: { studentId: string }) => x.studentId === pupilId,
+    ).weightedPreview).toMatchObject({
+      status: "PENDING", weightedPercentBps: null,
+    });
+
     const pupilLine = sheet.sheet.students.find(
       (x: { studentId: string }) => x.studentId === pupilId,
     );
