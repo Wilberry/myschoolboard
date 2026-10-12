@@ -9,6 +9,7 @@ import { GET, POST } from "@/app/api/schools/[schoolId]/assessment-questions/rou
 import { reserveInternalCbtAttempt } from "@/src/modules/assessments/attempt-reservation-service";
 import { readInternalCbtAttempt } from "@/src/modules/assessments/attempt-resume-reader";
 import { scoreInternalSubmittedAttempt } from "@/src/modules/assessments/objective-score-service";
+import { GET as CLASS_RECORDS_GET } from "@/app/api/schools/[schoolId]/assessment-class-records/route";
 import {
   saveInternalCbtAnswer, submitInternalCbtAttempt,
 } from "@/src/modules/assessments/attempt-answer-service";
@@ -699,6 +700,33 @@ describe("Phase 7 exact-assignment private question bank", () => {
       .toEqual(marked);
     expect(JSON.stringify(marked)).not.toContain("correctIndex");
     expect(JSON.stringify(marked)).not.toContain("answerKey");
+    const sheetUrl = (schoolId: string) =>
+      `http://localhost/api/schools/${schoolId}/assessment-class-records?` +
+      new URLSearchParams({ classId, sessionId, subjectId, termId }).toString();
+    const record = (actor: string, schoolId = schoolA) => {
+      context.headers = new Headers(cookies[actor] ? { cookie: cookies[actor] } : {});
+      return CLASS_RECORDS_GET(new Request(sheetUrl(schoolId)), {
+        params: Promise.resolve({ schoolId }),
+      });
+    };
+    const ownSheet = await record("teacher");
+    expect(ownSheet.status).toBe(200);
+    expect(ownSheet.headers.get("cache-control")).toBe("private, no-store");
+    const sheet = await ownSheet.json();
+    expect(sheet.status).toBe("PROVISIONAL");
+    const pupilLine = sheet.sheet.students.find(
+      (x: { studentId: string }) => x.studentId === pupilId,
+    );
+    expect(pupilLine).toBeTruthy();
+    expect(pupilLine.assessments.some((a: { draftId: string; earnedPoints: number }) =>
+      a.draftId === draftId && a.earnedPoints === 4)).toBe(true);
+    expect(JSON.stringify(sheet)).not.toContain("correctIndex");
+    expect(JSON.stringify(sheet)).not.toContain("answerKey");
+    expect((await record("student")).status).toBe(404);
+    expect((await record("other")).status).toBe(404);
+    expect((await record("admin")).status).toBe(404);
+    expect((await record("teacher", schoolB)).status).toBe(404);
+
     await expect(prisma.assessmentAttemptScore.update({
       where: { id: marked.id }, data: { earnedPoints: 0 },
     })).rejects.toThrow();
