@@ -174,6 +174,20 @@ describe("Phase 6 tenant-scoped attendance submission and review", () => {
     expect((await submit("form", { ...formData(classA, enrollmentA), attendanceDate: "1990-01-01" })).status).toBe(404);
   });
 
+  it("rejects revoked Form Teacher membership before submission", async () => {
+    await prisma.membership.update({
+      where: { id: members.form }, data: { isActive: false },
+    });
+    try {
+      expect((await submit("form", formData(classA, enrollmentA))).status).toBe(404);
+      expect(await prisma.attendanceRegister.count({ where: { schoolId: a } })).toBe(0);
+    } finally {
+      await prisma.membership.update({
+        where: { id: members.form }, data: { isActive: true },
+      });
+    }
+  });
+
   it("submits an exact class/date/session attendance snapshot and immutable author event", async () => {
     const response = await submit("form", formData(classA, enrollmentA));
     expect(response.status).toBe(201);
@@ -225,6 +239,20 @@ describe("Phase 6 tenant-scoped attendance submission and review", () => {
       data: { mark: "ABSENT" },
     })).rejects.toThrow();
     await expect(prisma.attendanceEvent.delete({ where: { id: history[0].id } })).rejects.toThrow();
+    await expect(prisma.attendanceEvent.create({
+      data: {
+        schoolId: a, registerId: primaryRegister,
+        actorUserId: users.form, actorMembershipId: members.form,
+        eventType: "RETURNED", reason: "Forged unauthorized decision",
+      },
+    })).rejects.toThrow();
+    await expect(prisma.attendanceEntry.create({
+      data: {
+        schoolId: a, registerId: primaryRegister, sessionId: session,
+        classId: classA, enrollmentId: enrollmentA,
+        studentId: personA, mark: "PRESENT",
+      },
+    })).rejects.toThrow();
     await expect(prisma.$executeRawUnsafe('TRUNCATE TABLE "AttendanceEvent"')).rejects.toThrow();
   });
 
