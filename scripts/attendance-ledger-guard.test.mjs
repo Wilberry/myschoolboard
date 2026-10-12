@@ -76,6 +76,12 @@ test("school calendar policy stays versioned, actor-bound and immutable", () => 
 test("PostgreSQL calendar policy checks preserve the previous UTC guard", () => {
   assert.match(schoolPolicy, /"AttendanceEvent_school_calendar"/);
   assert.match(schoolPolicy, /"AttendanceCorrectionRequest_school_calendar"/);
+  // The trigger handles record shapes with different columns. The event
+  // column must be accessed ONLY under an explicit AttendanceEvent branch.
+  assert.match(schoolPolicy, /IF TG_TABLE_NAME = 'AttendanceEvent' THEN/);
+  assert.match(schoolPolicy, /ELSIF TG_TABLE_NAME <> 'AttendanceCorrectionRequest' THEN/);
+  assert.doesNotMatch(schoolPolicy, /TG_TABLE_NAME = 'AttendanceEvent' AND NEW\."eventType"/);
+
   assert.match(schoolPolicy, /"submissionBackdateDays"/);
   assert.match(schoolPolicy, /"correctionWindowDays"/);
   assert.match(schoolPolicy, /FOR UPDATE/);
