@@ -31,7 +31,7 @@ export async function changeStudentIdentityLink(schoolId: string, payload: unkno
       await tx.$queryRaw`SELECT "id" FROM "Membership"
         WHERE "schoolId" = ${schoolId} AND "id" = ${membershipId} FOR UPDATE`;
       const subject = await tx.membership.findFirst({
-        where: { schoolId, id: membershipId, isActive: true, role: "STUDENT" },
+        where: { schoolId, id: membershipId, ...(action === "LINK" ? { isActive: true } : {}), role: "STUDENT" },
         select: { id: true },
       });
       const student = await tx.studentRecord.findFirst({
