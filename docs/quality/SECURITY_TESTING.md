@@ -12,6 +12,10 @@ The teacher-only note service must derive the actor from Better Auth and require
 
 New `SchoolSection` is a tenant-owned PRIMARY/SECONDARY resource; nullable `SchoolClass.sectionId` is constrained by a composite same-school FK. The principal resolver discards foreign and inactive SECTION ScopeGrants even if verified. Five disposable-DB integration tests are authored for unauthorized/foreign section changes, active creation and one-time class placement, verified foreign-section grant denial, deactivation revocation and append-only configuration events. Future HM/Principal approvals must additionally check the class belongs to the exact active stage-appropriate section, not trust independent scope IDs. **No tests or migrations executed**.
 
+## HM/Principal exact-section lesson-note review enforcement (authored, unverified)
+
+Seven new real Better Auth/disposable-PostgreSQL scenarios cover anonymous/teacher/admin/foreign/no-grant denials; primary-only HEAD_OF_SECTION and secondary-only PRINCIPAL queues and details; refusal to review unclassified or unrelated-section notes; one RETURN per revision with reasoned immutable audit; new teacher revision before resubmission; approval without student release; verified SECTION grant revocation and section inactivity; forged reviewer event insertion, UPDATE and DELETE rejection; and no review of closed-term content. The reader joins the **actual class.sectionId** and the reviewer verified grant in one SQL statement. The mutation transaction locks/rechecks school, membership, note, class, active section and ScopeGrant and the SQL trigger validates reviewer role/stage/grant again. The schema adds a partial unique index on reviewed (note,revision) to prevent contradictory review outcomes. No test, migration, concurrency stress, browser, or full pipeline run has occurred.
+
 ## Required areas
 
 - Tenant isolation tests

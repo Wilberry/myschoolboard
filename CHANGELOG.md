@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-12 — Section-scoped HM/Principal lesson note review (unverified)
+
+- Authored status and workflow transitions for APPROVED/RETURNED lesson notes with immutable actor/reason event history, PostgreSQL exact reviewer SECTION grant/stage/class validation, and one-review-per-revision uniqueness.
+- Added Better Auth section-scoped submitted-note queue/detail reads and audited approve/return POST service; returned notes accept a new immutable teacher revision before resubmission. No student release.
+- Added seven real-session/disposable-DB reviewer integration cases and teacher editor review-state display. The reviewer migration, tests, concurrent checks, format/lint/typecheck/build and full CI audit have **not run**.
+- No `main` merge, student note publication, actual pupil record access, deployment, or security dependency waiver.
+
 ## 2026-10-12 — School section/class admin workspace (unverified)
 
 - Extended the protected academic setup reader to show school-owned sections and class.sectionId with active membership/role filters repeated on the Section collection query.

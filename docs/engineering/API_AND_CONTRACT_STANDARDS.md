@@ -57,6 +57,12 @@ Phase 6 draft-only routes, backed by Better Auth, exact active same-school teach
 
 All HTTP replies are `Cache-Control: private, no-store`; invalid request 400, absent/expired session 401, denied/foreign/missing 404, stale/invalid state 409, generic operational 500. Audit logs never include note text, school/user identifiers, or payloads. No `approve`, `release`, `publish` or student-facing GET exists. **The routes, Prisma migration, tests, typecheck and actual HTTP behavior are unverified development artifacts.**
 
+## Section-specific lesson-note review routes (draft, not DB-verified)
+
+`GET /api/schools/{schoolId}/lesson-note-reviews` lists up to 100 SUBMITTED notes in the reviewer’s exact verified school/section/stage; `GET /api/schools/{schoolId}/lesson-note-reviews/{noteId}` returns the same authorized single note and its immutable revisions; `POST /api/schools/{schoolId}/lesson-note-reviews/{noteId}/decision` with `{action:"APPROVE"|"RETURN",expectedRevision,reason}` writes an audited approval or return for revision. All routes authenticate with Better Auth and filter by the stored class.sectionId; HEAD_OF_SECTION has PRIMARY-only and PRINCIPAL SECONDARY-only review, both requiring an active same-school verified SECTION grant. No school admin/teacher/student gets reviewer APIs by virtue of role or a guessed independent section ID.
+
+Every response uses `Cache-Control: private, no-store`. Invalid request 400, anonymous 401, other school/role/stage/unclassified/missing note 404, stale version/workflow status 409, unexpected faults generic 500 with no lesson-content logging. Review actions require a reason and never release material to students. A RETURNED note can be revised by its exact original subject teacher; existing immutable revision/audit records are never overwritten. The migration and tests are authored but unexecuted.
+
 ## Current status
 
 The teacher-assignment module records the four implemented mutation contracts plus newly authored, unverified D-020 administrative read handlers. Other API contracts remain future work and must follow these standards.

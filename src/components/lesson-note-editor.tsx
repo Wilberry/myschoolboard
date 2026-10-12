@@ -6,7 +6,7 @@ import type { LessonWritingOptions } from "@/src/modules/lesson-notes/read-optio
 interface NoteSummary {
   id: string;
   topic: string;
-  status: "DRAFT" | "SUBMITTED";
+  status: "DRAFT" | "SUBMITTED" | "APPROVED" | "RETURNED";
   currentRevision: number;
   termId: string;
   assignmentId: string;
@@ -25,8 +25,9 @@ interface Revision {
 interface NoteDetail extends NoteSummary {
   revisions: Revision[];
   events: {
-    eventType: "CREATED" | "REVISED" | "SUBMITTED";
+    eventType: "CREATED" | "REVISED" | "SUBMITTED" | "APPROVED" | "RETURNED";
     revisionNumber: number;
+    reason: string | null;
     createdAt: string;
   }[];
 }
@@ -170,7 +171,7 @@ export function LessonNoteEditor({
 
   async function revise(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!activeNote || activeNote.status !== "DRAFT" || pending) return;
+    if (!activeNote || (activeNote.status !== "DRAFT" && activeNote.status !== "RETURNED") || pending) return;
     const values = new FormData(event.currentTarget);
     const id = activeNote.id;
     setError(null);
@@ -207,7 +208,7 @@ export function LessonNoteEditor({
     if (!activeNote || activeNote.status !== "DRAFT" || pending) return;
     if (
       !window.confirm(
-        "Submit this revision for review? Submitted notes cannot be edited until a separate return-for-revision workflow exists.",
+        "Submit this revision for review? It cannot be edited unless the section reviewer returns it for revision.",
       )
     ) return;
     const id = activeNote.id;
@@ -311,7 +312,8 @@ export function LessonNoteEditor({
           <p>
             {activeNote.status} · Latest revision {activeNote.currentRevision}
           </p>
-          {activeNote.status === "DRAFT" && activeNote.revisions[0] && (
+          {(activeNote.status === "DRAFT" || activeNote.status === "RETURNED") &&
+            activeNote.revisions[0] && (
             <form
               key={`${activeNote.id}-${activeNote.currentRevision}`}
               onSubmit={(event) => void revise(event)}
@@ -341,10 +343,30 @@ export function LessonNoteEditor({
                 />
               </label>
               <button type="submit" disabled={pending}>Save new revision</button>
-              <button type="button" disabled={pending} onClick={() => void submitNote()}>
-                Submit for review
-              </button>
+              {activeNote.status === "DRAFT" && (
+                <button type="button" disabled={pending} onClick={() => void submitNote()}>
+                  Submit for review
+                </button>
+              )}
             </form>
+          )}
+          {activeNote.status === "RETURNED" && (
+            <p role="status">Returned for revision. Save a new revision before resubmitting.</p>
+          )}
+          {activeNote.status === "APPROVED" && (
+            <p role="status">Approved by a section reviewer; not released to students.</p>
+          )}
+          {activeNote.events.some((event) => event.reason) && (
+            <div>
+              <h3>Review decisions</h3>
+              <ul>
+                {activeNote.events.filter((event) => event.reason).map((event, index) => (
+                  <li key={`${event.eventType}-${event.revisionNumber}-${index}`}>
+                    {event.eventType} · Revision {event.revisionNumber}: {event.reason}
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
           <h3>Revision history</h3>
           <ol className="lesson-revisions">

@@ -29,6 +29,10 @@ When two rules conflict, the safe default is the more restrictive rule. For rout
 
 - SECTION ScopeGrants in a resolved principal now require matching **active same-school SchoolSection** ownership, alongside the existing verified flag. Future class-level section permissions must independently confirm `SchoolClass.sectionId` equals the authorized section and that the stage/actor role are appropriate. A verified but foreign/inactive section, or a class with NULL sectionId, is not section authority.
 
+## Section-scoped lesson reviewer permission (draft, pending database verification)
+
+Reviewing `LessonNote` SUBMITTED revisions now requires a currently active same-school `HEAD_OF_SECTION` membership for a **PRIMARY** class section, or `PRINCIPAL` for a **SECONDARY** section. The actual stored `SchoolClass.sectionId` must point to an active same-school section; the actor must hold a verified SECTION ScopeGrant for **that exact section** and satisfy `academic:approve`. Independent CLASS or SUBJECT scope IDs do not confer approval rights and unclassified classes are excluded. The reviewer queue binds class/section/grant and active actor within a single SQL statement; the write uses serializable membership/section/scope locks and a separately validating PostgreSQL review-event trigger. Returns require a new author revision; approval never publishes to students. This draft has not been tested against a migrated database.
+
 ## Required distinctions
 
 - Role-based permissions are not enough; section, class, subject, relationship, and workflow constraints also apply.

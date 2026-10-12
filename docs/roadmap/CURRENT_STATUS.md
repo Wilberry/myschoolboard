@@ -56,6 +56,10 @@ The cumulative `feature/verified-school-section-ownership` branch adds a school-
 
 The cumulative `feature/school-section-setup-workspace` branch extends the protected school admin academic setup reader/editor to list explicit primary/secondary sections and class mapping, create sections and assign unclassified classes through the previously authored audited school-owned APIs. Two new tenant-isolation DB tests are authored. **No migration, DB test, real browser, lint, typecheck, build or full CI-equivalent audit has run**. The new UI does not grant HM/Principal approval or attendance authority, nor reclassify old rows automatically.
 
+## Phase 6 section-scoped lesson-note review (development candidate, unverified)
+
+The cumulative `feature/section-scoped-lesson-review` branch implements HEAD_OF_SECTION PRIMARY-only and PRINCIPAL SECONDARY-only review of SUBMITTED lesson notes tied to the exact active school-owned class section and verified grant. It authors a PostgreSQL status/event enum extension, reasoned immutable review-event trigger validation and a one-decision-per-revision unique index; three private/no-store reviewer routes; and seven real-session DB integration scenarios. A RETURNED note requires a new immutable original-teacher revision before resubmission; APPROVED does not publish. **SQL migration, DB tests, concurrent approvals, formatting, TypeScript, build, real Next/browser and full CI-equivalent audit are not executed**. Reviewer UI, section stage/scopes at other academic routes, enrollments, student release and attendance remain pending; do not call LES-REQ-001 or SEC-REQ-001 complete.
+
 ## Current evidence
 
 - Published development checkpoint: `checkpoint/phase1-tenant-safe-foundation`; `main` remains unchanged
