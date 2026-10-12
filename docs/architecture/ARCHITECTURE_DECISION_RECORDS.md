@@ -190,3 +190,7 @@
 
 - Status: Authored; unverified. Final bounded SQL query joins the logged-in STUDENT user ID to stored attempt membership/student attestation/unrevoked ACTIVE enrollment, active academic structure, reviewed and published nonwithdrawn exam, and absence of terminal submission. Current server UTC deadline enforced. LATERAL latest response by descending revision returns only own selection. It never joins the secret key table or exposes other students. No HTTP student route; additional SQL/CI/security validation required before use.
 
+
+## ADR-029: SQL-only immutable secret-key objective marking
+
+- Status: Authored; unverified. Exact active original TEACHER initiates internal-only submitted-attempt scoring. The PostgreSQL trigger, not TS/HTTP/client, reads private AssessmentQuestionKey and latest per-question answer revision, recomputes total/earned/pass/percentage and writes one immutable score. No student result visibility, answer key API, edits or automatic publishing. Requires local DB/CI evidence.
