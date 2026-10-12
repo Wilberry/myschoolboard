@@ -8,6 +8,7 @@ vi.mock("next/headers", () => ({ headers: async () => context.headers }));
 import { GET, POST } from "@/app/api/schools/[schoolId]/assessment-questions/route";
 import { reserveInternalCbtAttempt } from "@/src/modules/assessments/attempt-reservation-service";
 import { readInternalCbtAttempt } from "@/src/modules/assessments/attempt-resume-reader";
+import { scoreInternalSubmittedAttempt } from "@/src/modules/assessments/objective-score-service";
 import {
   saveInternalCbtAnswer, submitInternalCbtAttempt,
 } from "@/src/modules/assessments/attempt-answer-service";
@@ -661,6 +662,13 @@ describe("Phase 7 exact-assignment private question bank", () => {
         selectedIndex: 0, actorMembershipId: members.admin,
         actorUserId: users.admin },
     })).rejects.toThrow();
+    // Latest answer wins. Set the correct option as last immutable revision
+    // before terminal submission for SQL-only auto-marking.
+    const third = await saveInternalCbtAnswer(schoolA, rows[0].id, {
+      questionId, selectedIndex: 0,
+      idempotencyKey: "19f790cc-c4bf-4350-b5cf-325480cd87aa",
+    });
+    expect(third.revision).toBe(3);
     const submitKey = "25a99854-3700-4d38-9b76-eed3b0f19f25";
     const finalized = await submitInternalCbtAttempt(schoolA, rows[0].id, {
       idempotencyKey: submitKey,
@@ -677,6 +685,35 @@ describe("Phase 7 exact-assignment private question bank", () => {
       questionId, selectedIndex: 3,
       idempotencyKey: "19f790cc-c4bf-4350-b5cf-325480cd874c",
     })).rejects.toBeInstanceOf(AssessmentError);
+    // Only exact original teacher, after final submission, may initiate
+    // secret-key-only database auto-scoring. Student never sees scores.
+    await expect(scoreInternalSubmittedAttempt(schoolA, rows[0].id))
+      .rejects.toBeInstanceOf(AssessmentError);
+    context.headers = new Headers({ cookie: cookies.teacher });
+    const marked = await scoreInternalSubmittedAttempt(schoolA, rows[0].id);
+    expect(marked).toMatchObject({
+      maxPoints: 4, earnedPoints: 4, percentBps: 10000,
+      correctCount: 1, questionCount: 1, passed: true,
+    });
+    expect(await scoreInternalSubmittedAttempt(schoolA, rows[0].id))
+      .toEqual(marked);
+    expect(JSON.stringify(marked)).not.toContain("correctIndex");
+    expect(JSON.stringify(marked)).not.toContain("answerKey");
+    await expect(prisma.assessmentAttemptScore.update({
+      where: { id: marked.id }, data: { earnedPoints: 0 },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentAttemptScore.delete({
+      where: { id: marked.id },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentAttemptScore.create({
+      data: {
+        id: "forged-objective-score-" + suffix,
+        schoolId: schoolA, attemptId: rows[0].id,
+        scorerMembershipId: members.admin, scorerUserId: users.admin,
+        earnedPoints: 0, maxPoints: 4, passed: false,
+      },
+    })).rejects.toThrow();
+    context.headers = new Headers({ cookie: cookies.student });
     const submissionRow = await prisma.assessmentAttemptSubmission.findFirstOrThrow({
       where: { schoolId: schoolA, attemptId: rows[0].id },
     });
