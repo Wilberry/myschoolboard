@@ -216,3 +216,7 @@
 ## ADR-033: Terminal section-verified original manual mark approval
 
 - Status: Authored/unverified. One SQL append-only APPROVED/RETURNED decision per original proposed mark, enforced by active school row serialization, current original teacher and child enrollment, independent active PRIMARY section HM/SECONDARY section Principal with exact verified ScopeGrant and user/member. Self-review blocked, no in-place changes or official result publishing. D-047.
+
+## ADR-034: Manual mark corrections append reviewed versioned requests
+
+- Status: Authored not verified. Original initial-approved manual mark stays immutable; SQL school-serialized current original teacher may append a non-identical bounded revision only when no other pending request, and independent verified exact-section HM PRIMARY/Principal SECONDARY reviewer decides once. Effective academic approved points follow latest approved correction, never pending or returned. Immutable record and role/tenant controls mandatory; no official Phase 8 publication. D-048.

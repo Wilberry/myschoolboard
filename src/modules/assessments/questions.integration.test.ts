@@ -18,6 +18,11 @@ import { POST as MANUAL_PROPOSAL_POST } from "@/app/api/schools/[schoolId]/asses
 import { GET as MANUAL_REVIEW_QUEUE } from "@/app/api/schools/[schoolId]/assessment-manual-reviews/route";
 import { POST as MANUAL_REVIEW_DECISION } from "@/app/api/schools/[schoolId]/assessment-manual-reviews/[proposalId]/decision/route";
 import {
+  GET as CORRECTIONS_GET, POST as CORRECTIONS_POST,
+} from "@/app/api/schools/[schoolId]/assessment-manual-corrections/route";
+import { GET as CORRECTION_QUEUE } from "@/app/api/schools/[schoolId]/assessment-manual-correction-reviews/route";
+import { POST as CORRECTION_REVIEW } from "@/app/api/schools/[schoolId]/assessment-manual-correction-reviews/[requestId]/decision/route";
+import {
   GET as POLICIES_GET, POST as POLICIES_POST,
 } from "@/app/api/schools/[schoolId]/assessment-grading-policies/route";
 import { GET as SCORE_QUEUE } from "@/app/api/schools/[schoolId]/assessment-score-queue/route";
@@ -995,6 +1000,103 @@ describe("Phase 7 exact-assignment private question bank", () => {
     await expect(prisma.assessmentManualMarkDecision.delete({
       where: { id: immutableDecision.id },
     })).rejects.toThrow();
+    const correction = (actor: string, input: unknown) =>
+      CORRECTIONS_POST(req(actor, schoolA, "POST", input), {
+        params: Promise.resolve({ schoolId: schoolA }),
+      });
+    const correctionDecision = (actor: string, requestId: string, input: unknown) =>
+      CORRECTION_REVIEW(req(actor, schoolA, "POST", input), {
+        params: Promise.resolve({ schoolId: schoolA, requestId }),
+      });
+    const revisionInput = {
+      proposalId: recorded.id, proposedPoints: 18,
+      reason: "Synthetic mathematical recheck of marked essay",
+    };
+    for (const actor of ["student", "admin", "head", "principal", "other"]) {
+      expect((await correction(actor, revisionInput)).status).toBe(404);
+    }
+    const firstCorrection = await correction("teacher", revisionInput);
+    expect(firstCorrection.status).toBe(201);
+    const correction1 = (await firstCorrection.json()).request;
+    expect(correction1.revision).toBe(1);
+    expect((await correction("teacher", {
+      ...revisionInput, proposedPoints: 19,
+    })).status).not.toBe(201);
+    const activeQueue = await CORRECTION_QUEUE(req("head", schoolA, "GET"), {
+      params: Promise.resolve({ schoolId: schoolA }),
+    });
+    expect(activeQueue.status).toBe(200);
+    expect((await activeQueue.json()).requests.some(
+      (x: { requestId: string }) => x.requestId === correction1.id,
+    )).toBe(true);
+    expect((await correctionDecision("principal", correction1.id, {
+      action: "APPROVED", reason: "Wrong stage principal should be rejected",
+    })).status).toBe(404);
+    expect((await correctionDecision("teacher", correction1.id, {
+      action: "APPROVED", reason: "Proposer cannot self approve corrections",
+    })).status).toBe(404);
+    expect((await correctionDecision("head", correction1.id, {
+      action: "APPROVED", reason: "Synthetic Primary Head approves revised evidence",
+    })).status).toBe(201);
+    const afterFirstCorrection = await CORRECTIONS_GET(req("teacher", schoolA, "GET"), {
+      params: Promise.resolve({ schoolId: schoolA }),
+    });
+    expect(afterFirstCorrection.status).toBe(200);
+    expect((await afterFirstCorrection.json()).marks.find(
+      (x: { proposalId: string }) => x.proposalId === recorded.id,
+    )).toMatchObject({ originalPoints: 17, approvedPoints: 18,
+      latestRevision: 1, pending: false });
+    const returnedCorrection = await correction("teacher", {
+      ...revisionInput, proposedPoints: 19,
+      reason: "Synthetic second correction pending reviewer opinion",
+    });
+    expect(returnedCorrection.status).toBe(201);
+    const correction2 = (await returnedCorrection.json()).request;
+    expect(correction2.revision).toBe(2);
+    expect((await correctionDecision("head", correction2.id, {
+      action: "RETURNED", reason: "Synthetic reason lacked acceptable marking evidence",
+    })).status).toBe(201);
+    const corrected = await correction("teacher", {
+      ...revisionInput, proposedPoints: 16,
+      reason: "Synthetic final verified correction to written score",
+    });
+    expect(corrected.status).toBe(201);
+    const correction3 = (await corrected.json()).request;
+    expect(correction3.revision).toBe(3);
+    expect((await correctionDecision("head", correction3.id, {
+      action: "APPROVED", reason: "Synthetic verified independent final academic review",
+    })).status).toBe(201);
+    expect((await correctionDecision("head", correction3.id, {
+      action: "RETURNED", reason: "Attempted reversal of terminal correction",
+    })).status).not.toBe(201);
+    const revisions = await prisma.assessmentManualCorrectionRequest.findMany({
+      where: { schoolId: schoolA, proposalId: recorded.id },
+      orderBy: { revision: "asc" },
+    });
+    expect(revisions.map(r => r.proposedPoints)).toEqual([18,19,16]);
+    await expect(prisma.assessmentManualCorrectionRequest.update({
+      where: { id: correction1.id }, data: { proposedPoints: 0 },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentManualCorrectionRequest.delete({
+      where: { id: correction1.id },
+    })).rejects.toThrow();
+    const finalDecision = await prisma.assessmentManualCorrectionDecision.findFirstOrThrow({
+      where: { schoolId: schoolA, requestId: correction3.id },
+    });
+    await expect(prisma.assessmentManualCorrectionDecision.update({
+      where: { id: finalDecision.id }, data: { action: "RETURNED" },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentManualCorrectionDecision.delete({
+      where: { id: finalDecision.id },
+    })).rejects.toThrow();
+    const afterLast = await CORRECTIONS_GET(req("teacher", schoolA, "GET"), {
+      params: Promise.resolve({ schoolId: schoolA }),
+    });
+    expect((await afterLast.json()).marks.find(
+      (x: { proposalId: string }) => x.proposalId === recorded.id,
+    )).toMatchObject({ originalPoints: 17, approvedPoints: 16,
+      latestRevision: 3, pending: false });
+
 
     await expect(prisma.assessmentManualMarkProposal.update({
       where: { id: recorded.id }, data: { earnedPoints: 19 },

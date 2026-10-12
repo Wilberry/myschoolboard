@@ -274,6 +274,8 @@ model School {
   assessmentManualComponents AssessmentManualComponent[]
   assessmentManualMarkProposals AssessmentManualMarkProposal[]
   assessmentManualMarkDecisions AssessmentManualMarkDecision[]
+  assessmentManualCorrectionRequests AssessmentManualCorrectionRequest[]
+  assessmentManualCorrectionDecisions AssessmentManualCorrectionDecision[]
 }
 
 model Membership {
@@ -316,6 +318,8 @@ model Membership {
   assessmentManualComponents AssessmentManualComponent[]
   assessmentManualMarkProposals AssessmentManualMarkProposal[]
   assessmentManualMarkDecisions AssessmentManualMarkDecision[]
+  assessmentManualCorrectionRequests AssessmentManualCorrectionRequest[]
+  assessmentManualCorrectionDecisions AssessmentManualCorrectionDecision[]
 }
 
 model ScopeGrant {
@@ -1352,6 +1356,7 @@ model AssessmentManualMarkProposal {
   @@unique([schoolId, componentId, studentId])
   @@index([schoolId, studentId, createdAt])
   decision AssessmentManualMarkDecision?
+  correctionRequests AssessmentManualCorrectionRequest[]
 }
 
 enum ManualMarkReviewAction {
@@ -1376,5 +1381,49 @@ model AssessmentManualMarkDecision {
   reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualMarkDecision_reviewer_fkey")
 
   @@unique([schoolId, proposalId])
+  @@index([schoolId, decidedAt])
+}
+
+/** Monotonic, immutable correction proposal by the original assigned teacher.
+ * The SQL trigger assigns revision and verifies initial APPROVED decision.
+ * A request by itself never changes effective marks. */
+model AssessmentManualCorrectionRequest {
+  id String @id
+  schoolId String
+  proposalId String
+  revision Int @default(1)
+  proposedPoints Int
+  reason String @db.VarChar(500)
+  requesterMembershipId String
+  requesterUserId String
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  proposal AssessmentManualMarkProposal @relation(fields: [schoolId, proposalId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualCorrectionRequest_proposal_fkey")
+  requester Membership @relation(fields: [schoolId, requesterMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualCorrectionRequest_requester_fkey")
+  decision AssessmentManualCorrectionDecision?
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, proposalId, revision])
+  @@index([schoolId, proposalId, createdAt])
+}
+
+/** Independent one-time verified-section decision for each correction.
+ * Approved corrected values are derived, never written over earlier marks. */
+model AssessmentManualCorrectionDecision {
+  id String @id
+  schoolId String
+  requestId String
+  reviewerMembershipId String
+  reviewerUserId String
+  action ManualMarkReviewAction
+  reason String @db.VarChar(500)
+  decidedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  request AssessmentManualCorrectionRequest @relation(fields: [schoolId, requestId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualCorrectionDecision_request_fkey")
+  reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualCorrectionDecision_reviewer_fkey")
+
+  @@unique([schoolId, requestId])
   @@index([schoolId, decidedAt])
 }
