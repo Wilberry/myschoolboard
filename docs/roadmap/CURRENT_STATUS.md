@@ -1,5 +1,10 @@
 # Current Status
 
+## Phase 7 immutable CBT autosave and terminal submission candidate (authored; UNVERIFIED)
+
+Cumulative `feature/phase7-cbt-answer-submission-ledger` adds additive school/attempt/question/member-bound immutable answer events (idempotency key, SQL-assigned per-question revision and UTC timestamp), one terminal immutable attempt submission, and a shared school/attempt-locked validator rechecking current student identity/enrollment/approved+published unwithdrawn sealed draft/current teacher assignment and deadline. Student save/submit functions are **internal only** and return metadata acknowledgements, not answers, keys, grades or scores. Synthetic tests for replay, changed answer, forged actor/foreign question, submission and audit-tamper protection plus Node invariants AUTHORED, NOT EXECUTED. **No student route, CBT UI, key-blind learner question projection or scoring.** Local migrations, strict audit, full CI and Phase 6 prerequisites remain BLOCKED. No merge, deployment or live data.
+
+
 ## Phase 7 internal-only student CBT attempt reservation ledger (authored; UNVERIFIED)
 
 `feature/phase7-cbt-attempt-ledger` cumulatively builds on #53 and adds an additive immutable `AssessmentAttempt` model/SQL trigger for exact published, unwithdrawn, separately APPROVED school/class/session/term exam; signed-in school STUDENT membership; admin-attested unrevoked one-to-one student link; matching ENROLLED StudentRecord/active exact StudentEnrollment; SQL-atomic maxAttempts 1–3, no concurrent unexpired attempt, trusted UTC deadline bounded by exam close. Internal serializable admission service is **not** exposed as a student API and returns only attempt metadata. No question delivery, autosave, submission, key access, scores or class sheets. Synthetic integration and source guards AUTHORED, NOT EXECUTED. Phase 6 and all local migration/CI/audit acceptance remain blocked. No live data, merge or deployment.
