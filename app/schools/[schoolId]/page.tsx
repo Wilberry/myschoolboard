@@ -82,6 +82,21 @@ async function SchoolDetailContent({
             </Link>
           </p>
         )}
+        {(access.principal.membership?.role === "FORM_TEACHER" ||
+          access.principal.membership?.role === "TEACHER") && (
+          <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/attendance-corrections`} className="secondary-link">
+              Request attendance correction
+            </Link>
+          </p>
+        )}
+        {canReviewLessonNotes && (
+          <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/attendance-correction-reviews`} className="secondary-link">
+              Review attendance corrections
+            </Link>
+          </p>
+        )}
         {canReviewLessonNotes && (
           <p className="setup-navigation">
             <Link href={`/schools/${schoolId}/attendance-reviews`} className="secondary-link">
