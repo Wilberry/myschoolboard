@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 type Mark={proposalId:string;componentTitle:string;studentAdmission:string;
- originalPoints:number;approvedPoints:number;maxPoints:number;
+ originalPoints:number;approvedPoints:number|null;maxPoints:number;
  latestRevision:number;pending:boolean};
 export function AssessmentManualCorrectionWorkspace({schoolId}:{schoolId:string}){
  const [marks,setMarks]=useState<Mark[]>([]);
@@ -45,7 +45,7 @@ export function AssessmentManualCorrectionWorkspace({schoolId}:{schoolId:string}
   <p>Only original active teachers. All prior marks are preserved; a different section-authorized academic reviewer must approve changes. No official result is released.</p>
   <ul>{marks.map(mark=><li key={mark.proposalId}>
    <strong>{mark.componentTitle} — {mark.studentAdmission}</strong>
-   <p>Original {mark.originalPoints}/{mark.maxPoints}; latest approved {mark.approvedPoints}/{mark.maxPoints}; revision {mark.latestRevision}</p>
+   <p>Original {mark.originalPoints}/{mark.maxPoints}; latest approved {mark.approvedPoints===null?"Not yet approved":`${mark.approvedPoints}/${mark.maxPoints}`}; revision {mark.latestRevision}</p>
    {mark.pending?<p>A correction awaits review.</p>:<>
     <label htmlFor={`correct-points-${mark.proposalId}`}>Proposed whole marks</label>
     <input id={`correct-points-${mark.proposalId}`} type="number" min={0}
