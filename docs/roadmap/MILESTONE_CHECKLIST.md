@@ -1,5 +1,13 @@
 # Milestone Checklist
 
+### Phase 6 teaching-day calendar acceptance (all unverified)
+
+- [ ] Run additive SchoolAttendanceDayRevision migration on disposable PostgreSQL; test same-date write locking, forged membership, sequential revision, immutable history and no retroactive reclassification when any AttendanceRegister exists.
+- [ ] Execute synthetic active administrator/foreign teacher denial and direct-SQL SUBMITTED event non-teaching-day tests, plus existing all-roster/section-review/correction suites.
+- [ ] Browser-test bounded calendar list, explicit reasoned designation, denied status, UTC/timezone boundaries and accessibility.
+- [ ] Preserve mandatory strict dependency audit and full local CI-equivalent; do not call Phase 6 complete before executed exit evidence.
+
+
 ### School timezone and attendance-window policy — unverified checklist
 
 - [ ] Confirm additive migration `20261012210000_school_attendance_policy` applies cleanly **only** on operator-confirmed disposable PostgreSQL, including PostgreSQL timezone name table, SQL lock order, role validation, immutable policy history and UTC legacy boundary.
