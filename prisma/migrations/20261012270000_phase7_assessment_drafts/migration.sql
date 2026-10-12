@@ -74,7 +74,20 @@ ALTER TABLE "AssessmentDraftQuestion" ADD CONSTRAINT "AssessmentDraftQuestion_qu
  FOREIGN KEY ("schoolId","questionId") REFERENCES "AssessmentQuestion"("schoolId","id")
  ON DELETE NO ACTION ON UPDATE CASCADE;
 
-CREATE FUNCTION "validate_assessment_draft"() RETURNS trigger AS $$
+CREATE TABLE "AssessmentDraftSeal" (
+  "draftId" TEXT NOT NULL, "schoolId" TEXT NOT NULL,
+  "sealedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "AssessmentDraftSeal_pkey" PRIMARY KEY ("draftId")
+);
+CREATE UNIQUE INDEX "AssessmentDraftSeal_schoolId_draftId_key"
+ ON "AssessmentDraftSeal"("schoolId","draftId");
+ALTER TABLE "AssessmentDraftSeal" ADD CONSTRAINT "AssessmentDraftSeal_schoolId_fkey"
+ FOREIGN KEY ("schoolId") REFERENCES "School"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "AssessmentDraftSeal" ADD CONSTRAINT "AssessmentDraftSeal_draft_fkey"
+ FOREIGN KEY ("schoolId","draftId") REFERENCES "AssessmentDraft"("schoolId","id")
+ ON DELETE NO ACTION ON UPDATE CASCADE;
+
+CREATE FUNCTION "validate_assessment_draft"() RETURNS trigger AS $
 BEGIN
   PERFORM 1 FROM "School" school WHERE school."id"=NEW."schoolId"
     AND school."isActive"=true FOR UPDATE;
@@ -121,6 +134,11 @@ CREATE FUNCTION "validate_assessment_draft_question"() RETURNS trigger AS $$
 BEGIN
   PERFORM 1 FROM "School" WHERE "id"=NEW."schoolId" AND "isActive"=true FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'School inactive' USING ERRCODE='23503'; END IF;
+  IF EXISTS (SELECT 1 FROM "AssessmentDraftSeal" sealed
+    WHERE sealed."schoolId"=NEW."schoolId" AND sealed."draftId"=NEW."draftId") THEN
+    RAISE EXCEPTION 'A sealed assessment draft cannot accept new items'
+      USING ERRCODE='23514';
+  END IF;
   IF NOT EXISTS (
     SELECT 1 FROM "AssessmentDraft" draft
     JOIN "AssessmentQuestion" question ON question."schoolId"=draft."schoolId"
@@ -162,6 +180,27 @@ CREATE TRIGGER "AssessmentDraftQuestion_validate"
  BEFORE INSERT ON "AssessmentDraftQuestion"
  FOR EACH ROW EXECUTE FUNCTION "validate_assessment_draft_question"();
 
+CREATE FUNCTION "validate_assessment_draft_seal"() RETURNS trigger AS $
+DECLARE entry_count INTEGER;
+BEGIN
+  PERFORM 1 FROM "School" WHERE "id"=NEW."schoolId" AND "isActive"=true FOR UPDATE;
+  SELECT COUNT(*)::int INTO entry_count
+    FROM "AssessmentDraftQuestion" item
+    WHERE item."schoolId"=NEW."schoolId" AND item."draftId"=NEW."draftId";
+  IF entry_count < 1 OR entry_count > 50 OR NOT EXISTS (
+    SELECT 1 FROM "AssessmentDraft" draft
+    WHERE draft."schoolId"=NEW."schoolId" AND draft."id"=NEW."draftId"
+  ) THEN
+    RAISE EXCEPTION 'Only complete 1–50 question assessment drafts can be sealed'
+      USING ERRCODE='23514';
+  END IF;
+  RETURN NEW;
+END;
+$ LANGUAGE plpgsql;
+CREATE TRIGGER "AssessmentDraftSeal_validate"
+ BEFORE INSERT ON "AssessmentDraftSeal"
+ FOR EACH ROW EXECUTE FUNCTION "validate_assessment_draft_seal"();
+
 CREATE TRIGGER "AssessmentDraft_immutable"
  BEFORE UPDATE OR DELETE ON "AssessmentDraft"
  FOR EACH ROW EXECUTE FUNCTION "prevent_lesson_note_history_mutation"();
@@ -173,4 +212,10 @@ CREATE TRIGGER "AssessmentDraft_no_truncate"
  FOR EACH STATEMENT EXECUTE FUNCTION "prevent_lesson_note_history_truncate"();
 CREATE TRIGGER "AssessmentDraftQuestion_no_truncate"
  BEFORE TRUNCATE ON "AssessmentDraftQuestion"
+ FOR EACH STATEMENT EXECUTE FUNCTION "prevent_lesson_note_history_truncate"();
+CREATE TRIGGER "AssessmentDraftSeal_immutable"
+ BEFORE UPDATE OR DELETE ON "AssessmentDraftSeal"
+ FOR EACH ROW EXECUTE FUNCTION "prevent_lesson_note_history_mutation"();
+CREATE TRIGGER "AssessmentDraftSeal_no_truncate"
+ BEFORE TRUNCATE ON "AssessmentDraftSeal"
  FOR EACH STATEMENT EXECUTE FUNCTION "prevent_lesson_note_history_truncate"();
