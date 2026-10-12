@@ -1,5 +1,10 @@
 # Current Status
 
+## Attendance correction read and UI workspaces (new draft; UNVERIFIED)
+
+`feature/attendance-correction-review-workspaces` builds on the unmerged immutable correction ledger and adds exact Form Teacher-approved-register list/detail reads with original/effective marks, verified HM/Principal section correction queue/detail reads that omit pupil marks/names until authorized detail, private GET endpoints, server-protected request and independent-review browser workspaces, and school navigation. Synthetic real-session tests for authorized projection, stage/grant revocation, foreign-school concealment, PII-free queue and latest-approved overlay are **authored not executed**. The additive migration and all underlying attendance tests/build/audit remain **unexecuted**. No live data, merge, deployment or production disclosure is authorized. D-028/ADR-014 apply; ATT-REQ-001 remains partially authored and unverified.
+
+
 ## Phase 6 immutable attendance corrections — new draft (UNVERIFIED)
 
 `feature/attendance-immutable-corrections` extends the unmerged attendance workspaces with additive revisioned `AttendanceCorrectionRequest` and `AttendanceCorrectionDecision` schema/migration; private POST request and independent review services; exact ACTIVE PRIMARY Form Teacher class/session and HM PRIMARY / Principal SECONDARY verified section checks; SQL actor/revision validation, composite school/entry/register keys, pending-request serialization and immutable no-truncate history. No original mark or prior decision is updated. The existing `AttendanceEvent` Prisma relation map is also corrected to match its migration. Synthetic PostgreSQL integration cases are **AUTHORED NOT EXECUTED**. No correction queue/effective-mark reader/UI, local migrations, full build or security audit has run; school timezone/correction-window policy remains unresolved. Hosted GitHub Actions remains blocked by billing. The cumulative branch is unmerged and **ATT-REQ-001 remains incomplete**.
