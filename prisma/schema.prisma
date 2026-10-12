@@ -273,6 +273,7 @@ model School {
   assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
   assessmentManualComponents AssessmentManualComponent[]
   assessmentManualMarkProposals AssessmentManualMarkProposal[]
+  assessmentManualMarkDecisions AssessmentManualMarkDecision[]
 }
 
 model Membership {
@@ -314,6 +315,7 @@ model Membership {
   assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
   assessmentManualComponents AssessmentManualComponent[]
   assessmentManualMarkProposals AssessmentManualMarkProposal[]
+  assessmentManualMarkDecisions AssessmentManualMarkDecision[]
 }
 
 model ScopeGrant {
@@ -1346,6 +1348,33 @@ model AssessmentManualMarkProposal {
   enrollment StudentEnrollment @relation(fields: [schoolId, enrollmentId, studentId, classId, sessionId], references: [schoolId, id, studentId, classId, sessionId], onDelete: NoAction, map: "AssessmentManualMarkProposal_enrollment_fkey")
   actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualMarkProposal_actor_fkey")
 
+  @@unique([schoolId, id])
   @@unique([schoolId, componentId, studentId])
   @@index([schoolId, studentId, createdAt])
+  decision AssessmentManualMarkDecision?
+}
+
+enum ManualMarkReviewAction {
+  APPROVED
+  RETURNED
+}
+
+/** Terminal verified-section decision on an initial teacher mark proposal.
+ * No score mutation or publication, and no self-review. */
+model AssessmentManualMarkDecision {
+  id String @id
+  schoolId String
+  proposalId String
+  reviewerMembershipId String
+  reviewerUserId String
+  action ManualMarkReviewAction
+  reason String @db.VarChar(500)
+  decidedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  proposal AssessmentManualMarkProposal @relation(fields: [schoolId, proposalId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualMarkDecision_proposal_fkey")
+  reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualMarkDecision_reviewer_fkey")
+
+  @@unique([schoolId, proposalId])
+  @@index([schoolId, decidedAt])
 }
