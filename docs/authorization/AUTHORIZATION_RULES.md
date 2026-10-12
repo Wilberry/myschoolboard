@@ -1,5 +1,10 @@
 # Authorization Rules
 
+## Phase 7 manual written-mark proposal authorization (NOT VERIFIED)
+
+An active exact same-school `TEACHER` may define an immutable non-CBT class/subject/session/term assessment component only for their currently ACTIVE `TeacherClassSubjectAssignment`, and propose a bounded 0..max manual mark only for an actual ENROLLED pupil holding an ACTIVE `StudentEnrollment` for that component's exact class/session. Both the authenticated service and SQL trigger recheck current teacher user+membership identity, exact source assignment, active academic structure and student relation, with original mark/reason preserved permanently. Roster GET joins actual teacher+original component class/subject/term in the final query and caps 500 students. Another teacher, School Admin, School Super Admin, HM/Principal, student, guardian or platform actor has no implicit edit or read authority. A mark proposal never changes objective score, provisional grade, parent/student display or official result. Only a future separate audited section-academic approval/correction workflow may adopt marks; no direct UPDATE. D-046/ADR-032. Tests/runtime not executed.
+
+
 ## Phase 7 school grading profile drafts (NOT VERIFIED)
 
 Only an active same-school `SCHOOL_SUPER_ADMIN` may create or list school/session/term/class/subject grading preview revisions. PostgreSQL validates the true school/member/user, ACTIVE session/term/section/class/subject, and sums QUIZ+TEST+EXAM weights exactly 100; it allocates the next version under a school lock and preserves prior revisions. A TEACHER may **not** author the school policy; the teacher's private class-sheet query may see latest weights only for the teacher's exact active assigned class/subject/session/term, with no cross-class/student access. Policies are DRAFT_PREVIEW_ONLY; no student, guardian, teacher/admin privilege escalation to official grades/results, no assumption of standard weighting, no report publication. Local test/security gate pending. D-045/ADR-031.
