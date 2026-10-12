@@ -185,6 +185,7 @@ CREATE FUNCTION "validate_assessment_answer_event"() RETURNS trigger AS $$
 DECLARE
   server_now TIMESTAMP(3);
   option_count INTEGER;
+  next_revision INTEGER;
 BEGIN
   server_now := "assert_cbt_attempt_writable"(
     NEW."schoolId", NEW."attemptId", NEW."actorMembershipId", NEW."actorUserId"
@@ -212,11 +213,12 @@ BEGIN
     RAISE EXCEPTION 'Duplicate autosave key: use exact idempotent replay'
       USING ERRCODE='23505';
   END IF;
-  SELECT COALESCE(MAX(prior."revision"),0)::int + 1 INTO NEW."revision"
+  SELECT COALESCE(MAX(prior."revision"),0)::int + 1 INTO next_revision
     FROM "AssessmentAttemptAnswerEvent" prior
     WHERE prior."schoolId"=NEW."schoolId"
       AND prior."attemptId"=NEW."attemptId"
       AND prior."questionId"=NEW."questionId";
+  NEW."revision" := next_revision;
   NEW."createdAt" := server_now;
   RETURN NEW;
 END;
