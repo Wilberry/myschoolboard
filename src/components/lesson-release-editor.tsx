@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-interface Note { id: string; topic: string; className: string; sectionName: string;
+interface Note { id: string; topic: string; kind: "LESSON_NOTE" | "SCHEME_OF_WORK"; weekStart: number | null; weekEnd: number | null; className: string; sectionName: string;
   termName: string; currentRevision: number; released: boolean; withdrawn: boolean }
 export function LessonReleaseEditor({ schoolId }: { schoolId: string }) {
   const [items, setItems] = useState<Note[]>([]);
@@ -42,7 +42,7 @@ export function LessonReleaseEditor({ schoolId }: { schoolId: string }) {
     <p>Approval alone never releases content. Release and withdrawal require a separate verified section decision.</p>
     <button type="button" disabled={busy} onClick={() => setRefresh(v => v + 1)}>Refresh</button>
     <ul>{items.map(note => <li key={note.id}>
-      {note.topic} — {note.className} ({note.sectionName}, {note.termName}) ·{" "}
+      {note.kind === "SCHEME_OF_WORK" ? "Scheme of work" : "Lesson note"}: {note.topic} — {note.className} ({note.sectionName}, {note.termName}) ·{" "}
       {note.withdrawn ? "Withdrawn" : note.released ? "Released" : "Approved only"}
       {!note.withdrawn && <button type="button" disabled={busy}
         onClick={() => { setChosen(note); setAck(false); setReason(""); }}>Review publication</button>}
