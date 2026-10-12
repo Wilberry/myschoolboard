@@ -7,6 +7,7 @@ vi.mock("next/headers", () => ({ headers: async () => context.headers }));
 
 import { GET, POST } from "@/app/api/schools/[schoolId]/assessment-questions/route";
 import { reserveInternalCbtAttempt } from "@/src/modules/assessments/attempt-reservation-service";
+import { readInternalCbtAttempt } from "@/src/modules/assessments/attempt-resume-reader";
 import {
   saveInternalCbtAnswer, submitInternalCbtAttempt,
 } from "@/src/modules/assessments/attempt-answer-service";
@@ -597,6 +598,19 @@ describe("Phase 7 exact-assignment private question bank", () => {
     })).rejects.toBeInstanceOf(AssessmentError);
     context.headers = new Headers({ cookie: cookies.student });
     const input = { questionId, selectedIndex: 1, idempotencyKey: firstKey };
+    const beforeSave = await readInternalCbtAttempt(schoolA, rows[0].id);
+    expect(beforeSave.attempt.attemptId).toBe(rows[0].id);
+    expect(beforeSave.questions).toMatchObject([
+      { questionId, selectedIndex: null, revision: null, prompt: payload().prompt },
+    ]);
+    expect(JSON.stringify(beforeSave)).not.toContain("correctIndex");
+    expect(JSON.stringify(beforeSave)).not.toContain("answerKey");
+    context.headers = new Headers({ cookie: cookies.teacher });
+    await expect(readInternalCbtAttempt(schoolA, rows[0].id))
+      .rejects.toBeInstanceOf(AssessmentError);
+    context.headers = new Headers({ cookie: cookies.student });
+    await expect(readInternalCbtAttempt(schoolB, rows[0].id))
+      .rejects.toBeInstanceOf(AssessmentError);
     const first = await saveInternalCbtAnswer(schoolA, rows[0].id, input);
     expect(first).toMatchObject({ questionId, revision: 1 });
     expect(JSON.stringify(first)).not.toContain("correctIndex");
@@ -612,6 +626,13 @@ describe("Phase 7 exact-assignment private question bank", () => {
     });
     expect(second.revision).toBe(2);
     expect(second.id).not.toBe(first.id);
+    const resumed = await readInternalCbtAttempt(schoolA, rows[0].id);
+    expect(resumed.questions).toMatchObject([{
+      questionId, selectedIndex: 2, revision: 2, position: 1,
+    }]);
+    expect(JSON.stringify(resumed)).not.toContain("correctIndex");
+    expect(JSON.stringify(resumed)).not.toContain("answerKey");
+
     await expect(saveInternalCbtAnswer(schoolA, rows[0].id, {
       ...input, questionId: "not-an-assessment-question",
       idempotencyKey: "25a99854-3700-4d38-9b76-eed3b0f19f23",
@@ -650,6 +671,8 @@ describe("Phase 7 exact-assignment private question bank", () => {
     await expect(submitInternalCbtAttempt(schoolA, rows[0].id, {
       idempotencyKey: "19f790cc-c4bf-4350-b5cf-325480cd874b",
     })).rejects.toBeInstanceOf(AssessmentError);
+    await expect(readInternalCbtAttempt(schoolA, rows[0].id))
+      .rejects.toBeInstanceOf(AssessmentError);
     await expect(saveInternalCbtAnswer(schoolA, rows[0].id, {
       questionId, selectedIndex: 3,
       idempotencyKey: "19f790cc-c4bf-4350-b5cf-325480cd874c",

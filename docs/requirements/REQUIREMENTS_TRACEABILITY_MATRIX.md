@@ -1,5 +1,10 @@
 # Requirements Traceability Matrix
 
+## Phase 7 key-blind enrolled-student CBT resume (authored, NOT VERIFIED)
+
+Cumulative `feature/phase7-cbt-private-resume-reader` implements `readInternalCbtAttempt`: an **internal-only** single final SQL query for one exact signed-in, active STUDENT membership → unrevoked administrator-attested StudentAccountLink → ENROLLED StudentRecord and ACTIVE exact class/session StudentEnrollment → sealed, separately APPROVED and PUBLISHED/not WITHDRAWN assessment, current teacher assignment/class/section/subject/session/term, and an unsubmitted attempt strictly inside its server deadline. Returns bounded (up to 50) ordered question prompts/options/points and **only that student's latest saved answer option/revision** with an attempt's ID/number/title/server time bounds; no answer key, `correctIndex`, grade, other student, pupil PII or staff questions. After submission, expiry, revocation or withdrawal, the query returns NOT_FOUND. This foundation deliberately creates **no student-facing API or browser path** pending full Phase 6/student/DB security acceptance. Synthetic real-session test cases for owner/wrong actor/tenant/latest revision/after-submission and read-only Node guards are AUTHORED BUT NOT EXECUTED. All previous strict local CI/audit gates still required. See D-042 / ADR-028.
+
+
 ## ASM-REQ-001 / T-ASM-001 — append-only CBT answer revisions and final submission (PARTIAL; UNVERIFIED)
 
 - Models `AssessmentAttemptAnswerEvent` and `AssessmentAttemptSubmission` are additive, school/attempt/question/member composite-FK-bound, immutable and no-key/no-score. `20261012310000_phase7_cbt_answer_submission`: shared SQL role/identity/active enrollment/approval/publication/term/teacher/deadline guard, school + attempt locks, server-assigned UTC timestamps, question choices and sequential per-question revision, unique request replay key and one terminal submission.
