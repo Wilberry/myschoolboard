@@ -270,6 +270,7 @@ model School {
   assessmentAnswerEvents AssessmentAttemptAnswerEvent[]
   assessmentSubmissions AssessmentAttemptSubmission[]
   assessmentScores AssessmentAttemptScore[]
+  assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
 }
 
 model Membership {
@@ -308,6 +309,7 @@ model Membership {
   assessmentAnswerEvents AssessmentAttemptAnswerEvent[]
   assessmentSubmissions AssessmentAttemptSubmission[]
   assessmentScores AssessmentAttemptScore[]
+  assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
 }
 
 model ScopeGrant {
@@ -358,6 +360,7 @@ model SchoolClass {
   @@index([schoolId, sectionId])
   assessmentQuestions AssessmentQuestion[]
   assessmentDrafts AssessmentDraft[]
+  assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
 }
 
 model Subject {
@@ -375,6 +378,7 @@ model Subject {
   @@index([schoolId])
   assessmentQuestions AssessmentQuestion[]
   assessmentDrafts AssessmentDraft[]
+  assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
 }
 
 model TeacherClassSubjectAssignment {
@@ -469,6 +473,7 @@ model AcademicSession {
   @@index([schoolId, status])
   assessmentQuestions AssessmentQuestion[]
   assessmentDrafts AssessmentDraft[]
+  assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
 }
 
 model AcademicTerm {
@@ -494,6 +499,7 @@ model AcademicTerm {
   @@index([schoolId, sessionId, status])
   assessmentQuestions AssessmentQuestion[]
   assessmentDrafts AssessmentDraft[]
+  assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
 }
 
 model SchoolConfigurationEvent {
@@ -1243,4 +1249,34 @@ model AssessmentAttemptScore {
 
   @@unique([schoolId, attemptId])
   @@index([schoolId, scoredAt])
+}
+
+/** School-configurable, append-only DRAFT profile for provisional grading
+ * previews. No official activation, student result or publication rights.
+ * New profiles receive DB-serialized version numbers; no in-place edits. */
+model AssessmentGradingPolicyRevision {
+  id String @id
+  schoolId String
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  version Int @default(1)
+  quizWeight Int
+  testWeight Int
+  examWeight Int
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  session AcademicSession @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
+  term AcademicTerm @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction)
+  schoolClass SchoolClass @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
+  subject Subject @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction)
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentGradingPolicyRevision_actor_fkey")
+
+  @@unique([schoolId, sessionId, termId, classId, subjectId, version], map: "AssessmentGradingPolicyRevision_context_version_key")
+  @@index([schoolId, classId, subjectId, termId])
 }
