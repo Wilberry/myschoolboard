@@ -26,6 +26,11 @@ export default async function StudentAdministrationPage({
         <h1>Student records and enrollment</h1>
         <p className="lede">{snapshot.school.name}</p>
         <p>Private administrator workspace. Showing up to 50 students and 30 historical enrollments per student; no student or guardian accounts are created.</p>
+        <p className="setup-navigation">
+          <Link href={`/schools/${schoolId}/student-identity`} className="secondary-link">
+            Verify student login identity before released lesson access
+          </Link>
+        </p>
         <StudentWorkspaceEditor schoolId={schoolId} snapshot={snapshot} />
       </section>
     </main>
