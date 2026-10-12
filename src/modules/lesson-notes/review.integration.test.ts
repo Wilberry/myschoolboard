@@ -527,6 +527,33 @@ describe("section-scoped lesson note review and return", () => {
     });
   });
 
+  it("enforces immediate student membership revocation and denies forged identity binding", async () => {
+    await expect(prisma.studentAccountLink.create({
+      data: {
+        schoolId: schoolA, studentId: pupilPrimary,
+        studentMembershipId: secondaryStudentMember,
+        attestedByMembershipId: teacherMember,
+        attestedByUserId: users.teacher,
+        attestationReason: "Attempted forged account to enrolled pupil",
+      },
+    })).rejects.toThrow();
+    await prisma.membership.update({
+      where: { id: primaryStudentMember },
+      data: { isActive: false },
+    });
+    try {
+      const response = await pupilLessonsRoute(request("pupilPrimary", "GET",
+        `/api/schools/${schoolA}/student-lessons`),
+        { params: Promise.resolve({ schoolId: schoolA }) });
+      expect(response.status).toBe(404);
+    } finally {
+      await prisma.membership.update({
+        where: { id: primaryStudentMember },
+        data: { isActive: true },
+      });
+    }
+  });
+
   it("revoking verified section grant or section activity removes reviewer authority", async () => {
     await prisma.scopeGrant.update({
       where: { id: headScopeId },
@@ -590,7 +617,12 @@ describe("section-scoped lesson note review and return", () => {
     });
     expect((await (await queue("head")).json()).notes).toEqual([]);
     expect((await (await queue("principal")).json()).notes).toEqual([]);
+    const deniedAfterClosingTerm = await pupilLessonsRoute(request("pupilPrimary", "GET",
+      `/api/schools/${schoolA}/student-lessons`),
+      { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(deniedAfterClosingTerm.status).toBe(200);
+    expect((await deniedAfterClosingTerm.json()).lessons).toEqual([]);
     expect(await prisma.lessonNote.count({ where: { schoolId: schoolA } }))
-      .toBe(3);
+      .toBe(4);
   });
 });
