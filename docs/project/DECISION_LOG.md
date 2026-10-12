@@ -1,5 +1,11 @@
 # Decision Log
 
+## D-042: CBT student resume requires final-query exact active ownership and no keys
+
+- Status: Implementation candidate; integration/browser/DB gates unexecuted.
+- Decision: A student's active CBT question/resume read is scoped in the FINAL SQL content query to their signed-in school STUDENT membership, unrevoked attested child link, current exact active enrollment, sealed approved published nonwithdrawn assessment, active teacher/term and unsubmitted/unexpired attempt. Return only questions/options and the student's latest saved option, no answer keys/scores/other-pupil identities. The internal reader has no student HTTP route until Phase 6 and local acceptance pass. See ADR-028.
+
+
 ## D-041: Key-blind immutable CBT autosaves and separate final submission
 
 - Status: Phase 7 additive code authored; no SQL/CI acceptance.
