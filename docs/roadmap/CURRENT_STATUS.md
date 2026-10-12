@@ -1,5 +1,10 @@
 # Current Status
 
+## Phase 7 teacher-entered written mark proposals (AUTHORED; UNVERIFIED)
+
+`feature/phase7-manual-mark-proposals` adds append-only exact teacher-owned offline/written assessment components plus one bounded, reasoned unapproved mark proposal per ENROLLED pupil in that class and ACTIVE session enrollment. SQL checks actual teacher membership, original class/subject/term assignment, school and student binding, rejects duplicate proposals and historical edits. Private teacher roster and editor authored with no-store routes; no student/official result exposure, no grading total inclusion until independent review. Tests/SQL/authored only and NOT EXECUTED; migration/local CI/dependency audit and Phase 6 prerequisites still blocked. Written mark approval and correction need separate development.
+
+
 ## Phase 7 school grading preview revisions (AUTHORED; NOT VERIFIED)
 
 `feature/phase7-grading-policy-revisions` adds append-only school/session/term/class/subject draft-only grading weights (QUIZ/TEST/EXAM integers sum exactly 100) with SQL current School Super Admin authorization, versioning, immutable history and no production activation. Private admin editor and current teacher-assigned provisional class sheet show latest matching profile and complete-only weighted preview. Missing/unscored categories with positive weight remain PENDING, never zero. Objective scores, historical audit and official results remain unchanged. Synthetic and pure tests authored but NOT EXECUTED; Phase 6 prerequisite, full local CI-equivalent and strict dependency audit BLOCKED.
