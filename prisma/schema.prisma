@@ -244,6 +244,7 @@ model School {
   attendanceEvents AttendanceEvent[]
   attendanceCorrectionRequests AttendanceCorrectionRequest[]
   attendanceCorrectionDecisions AttendanceCorrectionDecision[]
+  attendancePolicyRevisions SchoolAttendancePolicyRevision[]
 }
 
 model Membership {
@@ -268,6 +269,7 @@ model Membership {
   @@index([userId, isActive])
   attendanceCorrectionRequests AttendanceCorrectionRequest[] @relation("AttendanceCorrectionRequester")
   attendanceCorrectionDecisions AttendanceCorrectionDecision[] @relation("AttendanceCorrectionReviewer")
+  attendancePolicyRevisions SchoolAttendancePolicyRevision[]
 }
 
 model ScopeGrant {
@@ -809,4 +811,26 @@ model AttendanceCorrectionDecision {
 
   @@unique([schoolId, requestId])
   @@index([schoolId, reviewerUserId, createdAt])
+}
+
+
+/** School-approved, immutable attendance calendar policy history. No mutable
+ * policy pointer: the highest authorized revision is authoritative. Legacy
+ * schools with no revision retain the conservative documented UTC default. */
+model SchoolAttendancePolicyRevision {
+  id                       String   @id @default(cuid())
+  schoolId                 String
+  revision                 Int
+  timeZone                 String   @db.VarChar(64)
+  submissionBackdateDays   Int
+  correctionWindowDays     Int
+  reason                   String   @db.VarChar(500)
+  actorUserId              String
+  actorMembershipId        String
+  createdAt                DateTime @default(now())
+  school                   School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  actorMembership          Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "SchoolAttendancePolicyRevision_actor_fkey")
+
+  @@unique([schoolId, revision])
+  @@index([schoolId, createdAt])
 }
