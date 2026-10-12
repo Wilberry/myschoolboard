@@ -1,5 +1,12 @@
 # Authorization Rules
 
+## Phase 7 manual mark initial academic review — AUTHORED, NOT VERIFIED
+
+`feature/phase7-manual-mark-section-approval` introduces immutable `AssessmentManualMarkDecision` with a unique original proposal link and terminal `APPROVED` or `RETURNED` outcome, reviewer identity, reason and trusted SQL UTC clock. Only an ACTIVE same-school **HEAD_OF_SECTION for PRIMARY** or **PRINCIPAL for SECONDARY** with a **verified SECTION grant for the actual proposal class's current section** may make a decision. School, member, original teacher/assignment, academic term, ENROLLED student and matching ACTIVE enrollment are independently checked inside PostgreSQL. No reviewer can self-approve, forge a user ID, amend a decision or submit a second outcome. The decision is approval of the initial manual mark, not final or publicly released results.
+
+The private reviewer queue final query repeats verified section, role/stage, current student and assignment joins; only its own relevant initial pending proposals are returned. The reviewer UI and private no-store decision API preserve reasons and do not expose answer keys. Synthetic authenticated tests for wrong role/section, duplicate and immutable audit and read-only Node guard authored, NOT EXECUTED. Phase 6/prior Phase 7 DB migration and full strict local CI/security acceptance remain BLOCKED. D-047 / ADR-033; Phase 7 partial.
+
+
 ## Phase 7 manual written-mark proposal authorization (NOT VERIFIED)
 
 An active exact same-school `TEACHER` may define an immutable non-CBT class/subject/session/term assessment component only for their currently ACTIVE `TeacherClassSubjectAssignment`, and propose a bounded 0..max manual mark only for an actual ENROLLED pupil holding an ACTIVE `StudentEnrollment` for that component's exact class/session. Both the authenticated service and SQL trigger recheck current teacher user+membership identity, exact source assignment, active academic structure and student relation, with original mark/reason preserved permanently. Roster GET joins actual teacher+original component class/subject/term in the final query and caps 500 students. Another teacher, School Admin, School Super Admin, HM/Principal, student, guardian or platform actor has no implicit edit or read authority. A mark proposal never changes objective score, provisional grade, parent/student display or official result. Only a future separate audited section-academic approval/correction workflow may adopt marks; no direct UPDATE. D-046/ADR-032. Tests/runtime not executed.
