@@ -206,6 +206,7 @@ BEGIN
         AND r."submittedByMembershipId" = NEW."actorMembershipId"
         AND m."userId" = NEW."actorUserId"
         AND r."attendanceDate" BETWEEN session."startsOn" AND session."endsOn"
+        AND r."attendanceDate" <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date
         AND EXISTS (
           SELECT 1 FROM "AttendanceEntry" entry
           WHERE entry."schoolId" = r."schoolId" AND entry."registerId" = r."id"
