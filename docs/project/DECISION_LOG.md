@@ -173,6 +173,13 @@
 - Conservative unresolved-school-policy behavior: no future attendance beyond the UTC current calendar day, even while school timezone configuration is absent; terminal decisions cannot be edited, replaced or resubmitted in this slice. A later approved correction workflow must append reasoned changes while retaining original marks and author/decision provenance. Absence/presence categories are PRESENT/ABSENT/LATE/EXCUSED for this provisional implementation; any school-specific leave or attendance codes require explicit configurable future handling.
 - Consequences: Safe non-production structural development may proceed without accepting new disclosure, historic backfills or irreversible correction policy. Future Form Teacher roster reader, verified section queue, correction ledger, school calendar/timezone, tests and security gates remain mandatory. See ADR-012 and ATT-REQ-001.
 
+## D-027: Narrow Form Teacher and section-reviewer attendance readers (development default)
+
+- Status: Development-only, unverified candidate; **not** permission for deployment or unrestricted pupil data.
+- Decision: Authenticated Form Teachers (including a TEACHER membership carrying a distinct PRIMARY Form Teacher responsibility) can view only their exact ACTIVE school/class/session enrollment roster with minimal admission number/names and student/enrollment IDs, using a single SQL statement joining active school, class, session, section, actor membership, PRIMARY responsibility and student enrollment. Support-only Form Teacher responsibility and independent class/subject teacher assignments do not grant roster access. Head of Section reviews only the PRIMARY section in its exact active verified grant; Principal reviews only SECONDARY. Reviewer queue returns register metadata without minor identities; authorized single-register detail returns its historical marks and minimum names. No generic student GET, export, parent/guardian access or broad `academic:read` reuse.
+- Browser default: No attendance status is preselected; each pupil must be explicitly marked before submitting an immutable whole-class register. A review must include a reason; terminal review cannot edit submitted marks. All mutations recheck transactional authorization independently of UI navigation.
+- Consequences: Author these narrowly relationship-scoped readers and screens under D-023, with tests and documented sensitive projection. Complete disposable-DB, accessibility, browser, timezone and correction checks before marking ATT-REQ-001 complete or releasing. See ADR-013.
+
 ## Unresolved decisions
 
 - Exact support-access escalation, enforcement, expiry, and audit mechanism
