@@ -102,6 +102,25 @@ enum StudentEventType {
   WITHDRAWN
 }
 
+enum AttendanceRegisterStatus {
+  SUBMITTED
+  APPROVED
+  RETURNED
+}
+
+enum AttendanceMark {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum AttendanceEventType {
+  SUBMITTED
+  APPROVED
+  RETURNED
+}
+
 enum LessonNoteStatus {
   DRAFT
   SUBMITTED
@@ -220,6 +239,9 @@ model School {
   studentRecords                      StudentRecord[]
   studentEnrollments                  StudentEnrollment[]
   studentEvents                       StudentEvent[]
+  attendanceRegisters AttendanceRegister[]
+  attendanceEntries AttendanceEntry[]
+  attendanceEvents AttendanceEvent[]
 }
 
 model Membership {
@@ -238,6 +260,7 @@ model Membership {
   timetableSlots                 TimetableSlot[]
   lessonNotes                    LessonNote[]
 
+  attendanceEvents AttendanceEvent[]
   @@unique([schoolId, userId])
   @@unique([schoolId, id])
   @@index([userId, isActive])
@@ -285,6 +308,7 @@ model SchoolClass {
   lessonNotes                    LessonNote[]
   studentEnrollments             StudentEnrollment[]
 
+  attendanceRegisters AttendanceRegister[]
   @@unique([schoolId, id])
   @@index([schoolId])
   @@index([schoolId, sectionId])
@@ -389,6 +413,7 @@ model AcademicSession {
   lessonNotes LessonNote[]
   studentEnrollments StudentEnrollment[]
 
+  attendanceRegisters AttendanceRegister[]
   @@unique([schoolId, id])
   @@unique([schoolId, name])
   @@index([schoolId, status])
@@ -448,6 +473,8 @@ model FormTeacherResponsibility {
   membership   Membership        @relation(fields: [schoolId, membershipId], references: [schoolId, id], onDelete: NoAction)
   events       FormTeacherEvent[]
 
+  attendanceRegisters AttendanceRegister[]
+  @@unique([schoolId, id, membershipId, classId, sessionId], map: "FormTeacherResponsibility_attendance_identity")
   @@unique([schoolId, id, membershipId])
   @@unique([schoolId, id])
   @@index([schoolId, sessionId, classId, status])
@@ -503,7 +530,7 @@ model TimetableSlot {
   school       School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   session      AcademicSession     @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
   term         AcademicTerm        @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction)
-  assignment   TeacherClassSubjectAssignment @relation(fields: [schoolId, assignmentId, membershipId, classId, sessionId], references: [schoolId, id, membershipId, classId, sessionId], onDelete: NoAction)
+  assignment   TeacherClassSubjectAssignment @relation(fields: [schoolId, assignmentId, membershipId, classId, sessionId], references: [schoolId, id, membershipId, classId, sessionId], onDelete: NoAction, map: "AttendanceRegister_form_teacher_exact_fkey")
   membership   Membership          @relation(fields: [schoolId, membershipId], references: [schoolId, id], onDelete: NoAction)
   schoolClass  SchoolClass         @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
   room         TimetableRoom?      @relation(fields: [schoolId, roomId], references: [schoolId, id], onDelete: NoAction)
@@ -645,6 +672,8 @@ model StudentEnrollment {
   schoolClass SchoolClass            @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
   events     StudentEvent[]
 
+  attendanceEntries AttendanceEntry[]
+  @@unique([schoolId, id, studentId, classId, sessionId], map: "StudentEnrollment_attendance_identity")
   @@unique([schoolId, id])
   @@unique([schoolId, id, studentId])
   @@index([schoolId, studentId, sessionId, status])
@@ -666,5 +695,68 @@ model StudentEvent {
   enrollment        StudentEnrollment? @relation(fields: [schoolId, enrollmentId, studentId], references: [schoolId, id, studentId], onDelete: NoAction)
 
   @@index([schoolId, studentId, createdAt])
+  @@index([schoolId, actorUserId, createdAt])
+}
+
+/** One immutable daily class roster snapshot. Only status and reviewedAt may
+ * transition once; entries and history are append-only in PostgreSQL. */
+model AttendanceRegister {
+  id                          String                   @id @default(cuid())
+  schoolId                    String
+  sessionId                   String
+  classId                     String
+  attendanceDate              DateTime                 @db.Date
+  status                      AttendanceRegisterStatus @default(SUBMITTED)
+  submittedByMembershipId     String
+  formTeacherResponsibilityId String
+  submittedAt                 DateTime                 @default(now())
+  reviewedAt                  DateTime?
+  school                      School                   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  session                     AcademicSession          @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
+  schoolClass                 SchoolClass              @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
+  formTeacherResponsibility   FormTeacherResponsibility @relation(fields: [schoolId, formTeacherResponsibilityId, submittedByMembershipId, classId, sessionId], references: [schoolId, id, membershipId, classId, sessionId], onDelete: NoAction)
+  entries                     AttendanceEntry[]
+  events                      AttendanceEvent[]
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, id, sessionId, classId], map: "AttendanceRegister_entry_identity")
+  @@unique([schoolId, sessionId, classId, attendanceDate])
+  @@index([schoolId, status, attendanceDate])
+}
+
+/** Student identity and enrollment are bound through an exact composite FK. */
+model AttendanceEntry {
+  id           String             @id @default(cuid())
+  schoolId     String
+  registerId   String
+  sessionId    String
+  classId      String
+  enrollmentId String
+  studentId    String
+  mark         AttendanceMark
+  createdAt    DateTime           @default(now())
+  school       School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  register     AttendanceRegister @relation(fields: [schoolId, registerId, sessionId, classId], references: [schoolId, id, sessionId, classId], onDelete: NoAction, map: "AttendanceEntry_register_exact_fkey")
+  enrollment   StudentEnrollment  @relation(fields: [schoolId, enrollmentId, studentId, classId, sessionId], references: [schoolId, id, studentId, classId, sessionId], onDelete: NoAction, map: "AttendanceEntry_enrollment_exact_fkey")
+
+  @@unique([schoolId, registerId, studentId])
+  @@index([schoolId, studentId, createdAt])
+}
+
+/** Every submit and decision event is immutable, actor-validated and scoped. */
+model AttendanceEvent {
+  id                String              @id @default(cuid())
+  schoolId          String
+  registerId        String
+  actorUserId       String
+  actorMembershipId String
+  eventType         AttendanceEventType
+  reason            String?
+  createdAt         DateTime            @default(now())
+  school            School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  register          AttendanceRegister  @relation(fields: [schoolId, registerId], references: [schoolId, id], onDelete: NoAction, map: "AttendanceEvent_actor_membership_fkey")
+  actorMembership   Membership          @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction)
+
+  @@unique([schoolId, registerId, eventType])
   @@index([schoolId, actorUserId, createdAt])
 }

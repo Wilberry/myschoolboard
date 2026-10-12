@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  canApproveAttendance, canSubmitAttendance, hasExactActiveEnrollment,
+  canApproveAttendance, canApproveRegister, canSubmitAttendance, hasExactActiveEnrollment,
   type AttendanceActor, type AttendanceContext,
 } from "./eligibility";
 
@@ -51,6 +51,17 @@ describe("attendance exact-relationship deny-by-default kernel", () => {
     expect(hasExactActiveEnrollment({ ...context, sessionActive: false })).toBe(false);
     expect(hasExactActiveEnrollment({ ...context, schoolActive: false })).toBe(false);
   });
+  it("requires active exact-section authority for register-only review", () => {
+    const { enrollment: _enrollment, studentId: _studentId, ...register } = context;
+    expect(canApproveRegister(hm, register)).toBe(true);
+    expect(canApproveRegister({ ...hm, verifiedSectionIds: ["other"] }, register)).toBe(false);
+    expect(canApproveRegister(hm, { ...register, section: null })).toBe(false);
+    expect(canApproveRegister(hm, {
+      ...register, section: { ...register.section!, schoolId: "foreign" },
+    })).toBe(false);
+    expect(canApproveRegister(hm, { ...register, schoolActive: false })).toBe(false);
+  });
+
   it("approves PRIMARY only with exact verified HM scope, SECONDARY only Principal", () => {
     expect(canApproveAttendance(hm, context)).toBe(true);
     expect(canApproveAttendance({ ...hm, verifiedSectionIds: ["other"] }, context)).toBe(false);

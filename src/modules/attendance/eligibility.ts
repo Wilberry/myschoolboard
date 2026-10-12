@@ -55,12 +55,29 @@ export function canSubmitAttendance(
       r.kind === "PRIMARY" && r.status === "ACTIVE");
 }
 
+export type AttendanceRegisterContext = Omit<
+  AttendanceContext, "studentId" | "enrollment"
+>;
+
+/** Register-level approval checks the stored class section independently
+ * of student-level eligibility, never fabricating an enrollment relationship.
+ */
+export function canApproveRegister(
+  actor: AttendanceActor, context: AttendanceRegisterContext,
+): boolean {
+  const section = context.section;
+  if (!actor.active || !context.schoolId || !context.classId ||
+      !context.sessionId || !context.schoolActive || !context.sessionActive ||
+      !context.classActive || actor.schoolId !== context.schoolId ||
+      !section || !section.id || !section.active ||
+      section.schoolId !== context.schoolId) return false;
+  return ((actor.role === "HEAD_OF_SECTION" && section.stage === "PRIMARY") ||
+    (actor.role === "PRINCIPAL" && section.stage === "SECONDARY")) &&
+    actor.verifiedSectionIds.includes(section.id);
+}
+
 export function canApproveAttendance(
   actor: AttendanceActor, context: AttendanceContext,
 ): boolean {
-  if (!hasExactActiveEnrollment(context) || !actor.active ||
-      actor.schoolId !== context.schoolId || !context.section) return false;
-  return ((actor.role === "HEAD_OF_SECTION" && context.section.stage === "PRIMARY") ||
-    (actor.role === "PRINCIPAL" && context.section.stage === "SECONDARY")) &&
-    actor.verifiedSectionIds.includes(context.section.id);
+  return hasExactActiveEnrollment(context) && canApproveRegister(actor, context);
 }

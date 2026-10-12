@@ -1,5 +1,13 @@
 # Requirements Traceability Matrix
 
+## Phase 6 attendance mutation candidate — ATT-REQ-001 (unverified)
+
+- Data: `AttendanceRegister`, `AttendanceEntry`, `AttendanceEvent`, composite school/student/enrollment/class/session FKs and SQL append-only audit/decision constraints in `20261012180000_attendance_register_ledger` (migration **authored, not run**).
+- Server: `src/modules/attendance/service.ts` exact active roster/PRIMARY Form Teacher submission and HM/Principal section-grant decision functions; POST-only routes under `app/api/schools/[schoolId]/attendance`.
+- T-ATT-001: `eligibility.test.ts` role/section policy cases and `routes.integration.test.ts` synthetic disposable database cases for duplicates, forged enrollment, role revocation, actor history, concurrent submissions and reviewer grants. **Tests authored, not executed**.
+- Status: **Partially authored, unverified; NOT complete**. There is no teacher roster read/UI, reviewer queue/UI, approved correction/revision history, configured timezone or full acceptance/security evidence. TEN-REQ-001/SEC-REQ-001 remain independently open.
+
+
 The matrix below links requirements to the canonical domains and expected roadmap phases. This is a specification-first matrix and can be used as the implementation baseline before code exists.
 
 | Requirement ID | Module | Role/Permission | Workflow | Data Entity | API/UI Area | Test Case | Roadmap Phase | Status |
@@ -10,7 +18,7 @@ The matrix below links requirements to the canonical domains and expected roadma
 | USR-REQ-001 | Identity and auth | Platform and school roles | Permission assignment | UserRole, ScopeConstraint | Auth service | T-USR-001 | Phase 2 | Specified |
 | ADM-REQ-001 | Admissions | School admin | Student admission lifecycle | Student, Guardian, Enrollment | Student records | T-ADM-001 | Phase 4 | Specified |
 | TCH-REQ-001 | Teacher assignments | HM, Principal, Teacher | Assignment and conflict validation | TeacherClassSubjectAssignment | Staff assignment screens | T-TCH-001 | Phase 5 | Specified |
-| ATT-REQ-001 | Attendance | Form Teacher, HM, Principal | Submit/approve attendance | AttendanceRecord | Attendance dashboard | T-ATT-001 | Phase 6 | Specified |
+| ATT-REQ-001 | Attendance | Form Teacher, HM, Principal | Submit/approve attendance | AttendanceRegister, AttendanceEntry, AttendanceEvent | Private POST only (no UI/read) | T-ATT-001 | Phase 6 | Partially authored — unverified |
 | LES-REQ-001 | Lesson notes | Teacher, HM, Principal | Approval and release | LessonNote | Academic planning | T-LES-001 | Phase 6 | Specified |
 | ASM-REQ-001 | Assessments | Teacher, HM, Principal | CBT and assessment scoring | Assessment, Score | Assessment UI | T-ASM-001 | Phase 7 | Specified |
 | RES-REQ-001 | Results and report cards | Teacher, HM, Principal, School Super Admin | Approve and publish report cards | ResultSheet, ReportCard | Results area | T-RES-001 | Phase 8 | Specified |

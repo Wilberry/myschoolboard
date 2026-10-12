@@ -1,5 +1,10 @@
 # Current Status
 
+## Phase 6 transactional attendance ledger and section approvals (authored; NOT verified)
+
+The cumulative `feature/attendance-register-ledger` branch adds an additive Prisma schema/migration, exact-relationship register and student-mark foreign keys, database date/class/session uniqueness, append-only event/entry guards, actor-validating submission/decision triggers, and a deferred event-consistency check. Two private POST routes use authenticated active-school Form Teacher PRIMARY responsibility (exact class/session/student enrollment and complete current roster), and verified stage-matched section HM/Principal decision authorization with serializable locks. Unit and synthetic-disposable-PostgreSQL scenarios for cross-school/role denials, absent or duplicate marks, rejected partial roster, revoke-before-submit, concurrent duplicates, approval scope and audit tampering are **AUTHORED BUT NOT EXECUTED**. The historical attendance correction lifecycle, teacher roster UI/read, review queue/UI, full browser verification and local CI-equivalent security gate remain outstanding. PostgreSQL migration is **review-only and unexecuted**; hosted Actions are still blocked by billing. D-026 / ADR-012 document UTC date and terminal-decision development defaults, not completed school-policy decisions or acceptance of security risk.
+
+
 ## Phase 6 attendance permission foundation (draft, not operational)
 
 The `feature/attendance-eligibility-policy` branch based on the unmerged student administrator workspace introduces testable pure predicates for exact student/class/session enrollment, current PRIMARY Form Teacher responsibility, and section-stage-specific verified HM/Principal approval. Authenticated transactional data loading, secure mutation routes, class/date duplicate prevention, immutable attendance submissions/decisions/corrections, UI and PostgreSQL authorization/concurrency tests are **not implemented**. Unit tests are **authored, not executed**; the cumulative branch is unverified and may not be merged or released until the agreed local CI-equivalent checkpoint and mandatory security gate are satisfied.
