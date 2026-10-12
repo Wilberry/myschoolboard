@@ -197,6 +197,9 @@ export async function readInternalTeacherClassRecord(
       grouped.set(row.studentId, student);
     }
     if (row.draftId && row.title && row.kind) {
+      if (student.assessments.some(a => a.draftId === row.draftId)) {
+        throw new AssessmentError("CONFLICT");
+      }
       if (student.assessments.length >= 30) throw new AssessmentError("CONFLICT");
       const possiblePoints = row.assessmentMaxPoints ?? 0;
       if (possiblePoints < 1) throw new AssessmentError("CONFLICT");
