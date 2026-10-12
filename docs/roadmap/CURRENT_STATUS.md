@@ -1,5 +1,10 @@
 # Current Status
 
+## Phase 7 internal-only student CBT attempt reservation ledger (authored; UNVERIFIED)
+
+`feature/phase7-cbt-attempt-ledger` cumulatively builds on #53 and adds an additive immutable `AssessmentAttempt` model/SQL trigger for exact published, unwithdrawn, separately APPROVED school/class/session/term exam; signed-in school STUDENT membership; admin-attested unrevoked one-to-one student link; matching ENROLLED StudentRecord/active exact StudentEnrollment; SQL-atomic maxAttempts 1–3, no concurrent unexpired attempt, trusted UTC deadline bounded by exam close. Internal serializable admission service is **not** exposed as a student API and returns only attempt metadata. No question delivery, autosave, submission, key access, scores or class sheets. Synthetic integration and source guards AUTHORED, NOT EXECUTED. Phase 6 and all local migration/CI/audit acceptance remain blocked. No live data, merge or deployment.
+
+
 ## Phase 7 independent school assessment publication (authored; UNVERIFIED)
 
 `feature/phase7-assessment-publication-ledger` cumulatively adds an immutable School Super Admin-only PUBLISHED/WITHDRAWN event ledger, separate from the prior exact HM/Principal section-approved sealed draft. Service and additive SQL validate active exact school, actor/membership, approved review, teacher assignment, class/section/subject/session/term, seal, no prior publication, withdrawal state and audit immutability. Private publication GET/POST, School Super Admin page and synthetic tests authored. **No student exam delivery/attempt/score or keys read endpoint is present.** Tests, migration and full CI-equivalent NOT EXECUTED; Phase 6 remains unverified and Phase 7 ASM-REQ-001 remains partial. GitHub Actions billing restriction continues; no merge, deployment, live data or security relaxation.
