@@ -6,6 +6,9 @@ import { useEffect, useState, type FormEvent } from "react";
 interface ReviewSummary {
   id: string;
   topic: string;
+  kind: "LESSON_NOTE" | "SCHEME_OF_WORK";
+  weekStart: number | null;
+  weekEnd: number | null;
   classId: string;
   className: string;
   sectionName: string;
