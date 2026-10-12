@@ -1,5 +1,10 @@
 # Decision Log
 
+## D-043: Teacher-authorized server objective scoring, independent of publication
+
+- Status: Authored unverified. Immutable one-per-submitted-attempt PostgreSQL calculated score based on latest answer event and secret key, exact active original teacher, separate review/release and school rules. No student publication, staff override, theory grade or mutable marks. New scoring decisions require audited correction workflow, not UPDATE. ADR-029.
+
+
 ## D-042: CBT student resume requires final-query exact active ownership and no keys
 
 - Status: Implementation candidate; integration/browser/DB gates unexecuted.
