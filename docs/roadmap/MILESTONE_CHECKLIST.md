@@ -1,5 +1,12 @@
 # Milestone Checklist
 
+## Phase 7 manual mark initial academic review — AUTHORED, NOT VERIFIED
+
+`feature/phase7-manual-mark-section-approval` introduces immutable `AssessmentManualMarkDecision` with a unique original proposal link and terminal `APPROVED` or `RETURNED` outcome, reviewer identity, reason and trusted SQL UTC clock. Only an ACTIVE same-school **HEAD_OF_SECTION for PRIMARY** or **PRINCIPAL for SECONDARY** with a **verified SECTION grant for the actual proposal class's current section** may make a decision. School, member, original teacher/assignment, academic term, ENROLLED student and matching ACTIVE enrollment are independently checked inside PostgreSQL. No reviewer can self-approve, forge a user ID, amend a decision or submit a second outcome. The decision is approval of the initial manual mark, not final or publicly released results.
+
+The private reviewer queue final query repeats verified section, role/stage, current student and assignment joins; only its own relevant initial pending proposals are returned. The reviewer UI and private no-store decision API preserve reasons and do not expose answer keys. Synthetic authenticated tests for wrong role/section, duplicate and immutable audit and read-only Node guard authored, NOT EXECUTED. Phase 6/prior Phase 7 DB migration and full strict local CI/security acceptance remain BLOCKED. D-047 / ADR-033; Phase 7 partial.
+
+
 ### Phase 7 written/offline manual marks: unapproved proposals (UNVERIFIED)
 
 - [ ] Run cumulative `20261012340000_phase7_manual_mark_proposals` on owner-confirmed disposable PostgreSQL; verify all exact school/assignment/student enrollment FK mappings, actor and point SQL triggers, concurrent duplicate proposals and immutable DML/truncate rules.
