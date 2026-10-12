@@ -53,7 +53,7 @@ BEGIN
     SELECT 1 FROM "Membership" student_member
     WHERE student_member."id" = NEW."membershipId"
       AND student_member."schoolId" = NEW."schoolId"
-      AND student_member."isActive" = true
+      AND (NEW."eventType" = 'REVOKED' OR student_member."isActive" = true)
       AND student_member."role" = 'STUDENT'
   ) THEN
     RAISE EXCEPTION 'Verified school administrator and active STUDENT membership required'
