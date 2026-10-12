@@ -1,5 +1,13 @@
 # Decision Log
 
+## D-030: Database independent exact full-roster submission guard
+
+- Status: Development-only hardening authored; trigger and tests not executed on PostgreSQL.
+- Context: Existing UI and serializable submit service reject partial rosters, but the initial SQL AttendanceEvent actor trigger only demanded at least one entry. A database caller could record an otherwise eligible Form Teacher submission with omitted active pupils.
+- Decision: Layer an additive BEFORE INSERT ON AttendanceEvent trigger for SUBMITTED events that takes an active school row lock and enforces 1–500 entries, equality with the complete ACTIVE enrollment/ENROLLED student roster for the persisted school/class/session, and individual entry eligibility at the stored date. Do not remove, replace or relax existing composite FKs, actor validators, deferred event-presence triggers or immutable audit history. Preserve API full-roster checks as defense-in-depth.
+- Consequences: add direct SQL rejection/rollback integration test and lightweight read-only schema-invariant guard inside existing `npm test`; no data backfill, migrations applied, release claim or new permissions. Source-inspection pass is not DB execution. See ADR-016.
+
+
 ## D-029: Restricted correction read disclosure default (unverified)
 
 - Status: Development-only implementation direction; no user/live data access authorized.
