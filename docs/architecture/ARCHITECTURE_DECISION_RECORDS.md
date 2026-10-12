@@ -220,3 +220,7 @@
 ## ADR-034: Manual mark corrections append reviewed versioned requests
 
 - Status: Authored not verified. Original initial-approved manual mark stays immutable; SQL school-serialized current original teacher may append a non-identical bounded revision only when no other pending request, and independent verified exact-section HM PRIMARY/Principal SECONDARY reviewer decides once. Effective academic approved points follow latest approved correction, never pending or returned. Immutable record and role/tenant controls mandatory; no official Phase 8 publication. D-048.
+
+## ADR-035: Private approved-only manual gradebook is a derived read, not result publication
+
+- Status: authored/unverified. Final SQL exact teacher/academic enrollment joins a manual component with initial immutable APPROVED mark and latest independently APPROVED correction; pending, returned or absent marks remain explicitly unapproved. No grades published or mutated. Completion requires all components approved and no pending correction. Strict bounded no-key no-export reader. D-049. Phase 8 official reports separate.
