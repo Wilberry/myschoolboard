@@ -1,5 +1,13 @@
 # Decision Log
 
+## D-031: Audited school calendar-day attendance policy (development default)
+
+- Status: Draft implementation; not business policy approval or executed validation.
+- Decision: Configure school attendance timezone and age limits as append-only actor-attributed SchoolAttendancePolicyRevision rows rather than overwriting an old school setting. Only active same-school school:configure members may add revisions; SQL must validate actor, sequential revision and PostgreSQL-recognized time zone in addition to service authorization. The no-revision default is Etc/UTC with past 7 calendar days for submission and past 30 days for corrections. School may choose submission 0–30 and correction 0–365 days. Local calendar arithmetic accounts for daylight saving transitions.
+- Preserve the original UTC nonfuture submission constraint: a configured school timezone may **restrict** but must not extend that limit. This conservative overlap avoids rewriting earlier SQL actor/audit guards pending validation. All original marks and prior correction approvals remain immutable when policy changes. School holidays, closure exceptions and broader retrospective policy require future specification and tests; no production authorization implied.
+- Enforcement: server checks within school-locked serializable transactions plus additive direct-write SQL event/correction-request guards and immutable audit. This may be tightened after full DB evidence, but cannot be loosened silently. See ADR-017.
+
+
 ## D-030: Database independent exact full-roster submission guard
 
 - Status: Development-only hardening authored; trigger and tests not executed on PostgreSQL.
