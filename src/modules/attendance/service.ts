@@ -3,7 +3,7 @@ import { z } from "zod";
 import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
 import {
-  canApproveAttendance,
+  canApproveRegister,
   canSubmitAttendance,
   type AttendanceActor,
   type AttendanceContext,
@@ -273,25 +273,15 @@ export async function decideAttendance(schoolId: string, registerId: string, inp
         active: true, schoolId, role: reviewer.role, membershipId: reviewer.id,
         verifiedSectionIds: [section.id], formTeacherResponsibilities: [],
       };
-      const context: AttendanceContext = {
-        schoolId, studentId: "review-context", classId: register.classId,
-        sessionId: register.sessionId,
+      const sectionAuthorized = canApproveRegister(acting, {
+        schoolId, classId: register.classId, sessionId: register.sessionId,
         schoolActive: true, classActive: true, sessionActive: true,
-        section: { id: section.id, schoolId: section.schoolId, stage: section.stage, active: section.isActive },
-        // Approval is register-level, not a manufactured student enrollment.
-        enrollment: null,
-      };
-      // Register approvals check exact verified section through the same
-      // role-stage predicate but never invent a student relationship. The
-      // student-level predicate is exercised per entry at submission time.
-      const sectionAuthorized =
-        acting.active && acting.schoolId === schoolId &&
-        acting.verifiedSectionIds.includes(section.id) &&
-        ((acting.role === "HEAD_OF_SECTION" && section.stage === "PRIMARY") ||
-          (acting.role === "PRINCIPAL" && section.stage === "SECONDARY"));
-      if (!sectionAuthorized || context.section?.schoolId !== schoolId) {
-        throw new AttendanceError("NOT_FOUND");
-      }
+        section: {
+          id: section.id, schoolId: section.schoolId,
+          stage: section.stage, active: section.isActive,
+        },
+      });
+      if (!sectionAuthorized) throw new AttendanceError("NOT_FOUND");
       if (register.status !== "SUBMITTED") throw new AttendanceError("CONFLICT");
       // The immutable submitted entries must exist before a review.
       const entries = await tx.attendanceEntry.count({ where: { schoolId, registerId } });
