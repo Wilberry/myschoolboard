@@ -7,9 +7,14 @@ interface Draft {
   termName: string; questionCount: number; maxScore: number;
   durationMinutes: number; maxAttempts: number; passPercent: number;
 }
+interface Item {
+  questionId: string; position: number; points: number;
+  prompt: string; options: string[];
+}
 export function AssessmentReviewEditor({ schoolId }: { schoolId: string }) {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [selected, setSelected] = useState<Draft | null>(null);
+  const [preview, setPreview] = useState<Item[]>([]);
   const [decision, setDecision] = useState<"APPROVED" | "RETURNED">("RETURNED");
   const [reason, setReason] = useState("");
   const [confirmed, setConfirmed] = useState(false);
@@ -25,6 +30,22 @@ export function AssessmentReviewEditor({ schoolId }: { schoolId: string }) {
       .catch(() => { if (active) { setDrafts([]); setMessage("Review access is unavailable."); } });
     return () => { active = false; };
   }, [schoolId, refresh]);
+  async function inspect(draft: Draft) {
+    if (busy) return;
+    setBusy(true); setSelected(null); setPreview([]); setMessage("");
+    try {
+      const response = await fetch(
+        `/api/schools/${encodeURIComponent(schoolId)}/assessment-reviews/${encodeURIComponent(draft.id)}`,
+        { credentials: "same-origin", cache: "no-store" });
+      if (!response.ok) throw Error();
+      const payload = await response.json() as { items: Item[] };
+      if (!payload.items.length) throw Error();
+      setPreview(payload.items); setSelected(draft);
+      setReason(""); setConfirmed(false);
+    } catch {
+      setMessage("Question preview unavailable. Section permission or draft may have changed.");
+    } finally { setBusy(false); }
+  }
   async function save() {
     if (busy || !selected || !confirmed || reason.trim().length < 5) return;
     setBusy(true); setMessage("");
@@ -54,13 +75,19 @@ export function AssessmentReviewEditor({ schoolId }: { schoolId: string }) {
       {d.sectionName}, {d.termName} · {d.questionCount} questions ·
       {d.maxScore} marks · {d.durationMinutes} minutes
       <button type="button" disabled={busy}
-        onClick={() => { setSelected(d); setReason(""); setConfirmed(false); }}>
+        onClick={() => { void inspect(d); }}>
         Review draft
       </button>
     </li>)}</ul>
     {selected && <section aria-label="Assessment review decision">
       <h3>{selected.title} — {selected.className}</h3>
       <p>Attempt limit {selected.maxAttempts}. Passing threshold {selected.passPercent}%.</p>
+      <h4>Private draft questions (correct answers hidden)</h4>
+      <ol>{preview.map(item => <li key={item.questionId}>
+        <strong>{item.prompt}</strong> · {item.points} marks
+        <ol>{item.options.map((option, index) =>
+          <li key={index}>{option}</li>)}</ol>
+      </li>)}</ol>
       <label htmlFor="review-decision">Decision</label>
       <select id="review-decision" value={decision}
         onChange={e => setDecision(e.target.value as "APPROVED" | "RETURNED")}>
@@ -72,8 +99,8 @@ export function AssessmentReviewEditor({ schoolId }: { schoolId: string }) {
         value={reason} onChange={e => setReason(e.target.value)} />
       <label><input type="checkbox" checked={confirmed}
         onChange={e => setConfirmed(e.target.checked)} />
-        I have checked this draft's class, subject, section, timing and limits.</label>
-      <button type="button" disabled={busy || !confirmed || reason.trim().length < 5}
+        I have inspected the question content, class, subject, section, timing and limits.</label>
+      <button type="button" disabled={busy || !confirmed || preview.length === 0 || reason.trim().length < 5}
         onClick={save}>Record irreversible review decision</button>
     </section>}
     <p role="status" aria-live="polite">{message}</p>
