@@ -39,4 +39,4 @@
 
 ## Scope governance
 
-Any feature not listed here remains unresolved unless it is added to the requirement log, roadmap, and decision records with explicit product-owner approval.
+The [Product Charter](PRODUCT_CHARTER.md), [Functional Requirements](../requirements/FUNCTIONAL_REQUIREMENTS.md), [Traceability Matrix](../requirements/REQUIREMENTS_TRACEABILITY_MATRIX.md), and [Implementation Roadmap](../roadmap/IMPLEMENTATION_ROADMAP.md) collectively define authorized product scope. A feature need not be repeated verbatim in this summary to be in scope. The [Standing Development Mandate](STANDING_DEVELOPMENT_MANDATE.md) authorizes routine feature implementation, tests, engineering defaults, and draft development PRs within that scope. Only a materially new business goal, an irreversible/unsafe policy change, or a production/release exception needs a separate owner decision. Actual school-user workflow approvals and cross-tenant restrictions remain unchanged.

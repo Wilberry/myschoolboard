@@ -12,7 +12,7 @@
 
 ## Conflict resolution
 
-When two rules conflict, the safe default is the more restrictive rule. The conflict must be recorded and escalated for product-owner approval if the requirement cannot be resolved without a policy change.
+When two rules conflict, the safe default is the more restrictive rule. For routine ambiguity, use a reversible least-privilege implementation default under [D-023](../project/STANDING_DEVELOPMENT_MANDATE.md) and document it. Escalate only a material conflict affecting school policy, sensitive data, irreversible live-data changes, or production/release boundaries.
 
 ## Required checks
 
@@ -23,7 +23,7 @@ When two rules conflict, the safe default is the more restrictive rule. The conf
 - Teacher academic read, edit, and submit actions for a class and subject require an active assignment matching the exact school, membership, class, and subject tuple.
 - Section, class, and subject `ScopeGrant` records must have `verified: true` before they authorize access to that resource. In the current DB-backed principal resolver, CLASS and SUBJECT grants must additionally refer to **active** class/subject records owned by the requested school, regardless of the stored `verified` flag. Scope identifiers are not foreign keys; matching strings alone are insufficient cross-tenant authorization. SECTION and CHILD require their own model/relationship checks before any future school-data routes are exposed. A matching but unverified scope is not permission. Teacher academic operations still require an exact, active class-subject assignment independently of these grants.
 - Independent class and subject `ScopeGrant` records must never be combined to infer a teacher assignment. The policy helper enforces the assignment check, but protected academic routes must still load the principal through the assignment-aware resolver and pass the requested class and subject.
-- Assignment lifecycle mutations use `school:configure`, currently limited by the policy to active School Administrator and School Super Admin memberships. The four implemented assignment mutation routes authenticate with Better Auth, check the school principal at the route boundary, and call the internal service, which repeats authorization transactionally. Platform Super Admin status does not independently grant school mutation authority. Client-supplied actor identifiers are not accepted. Future academic routes must use the same server-side tenant and service checks; assignment reads remain unresolved under D-020.
+- Assignment lifecycle mutations use `school:configure`, currently limited by the policy to active School Administrator and School Super Admin memberships. The four implemented assignment mutation routes authenticate with Better Auth, check the school principal at the route boundary, and call the internal service, which repeats authorization transactionally. Platform Super Admin status does not independently grant school mutation authority. Client-supplied actor identifiers are not accepted. Future academic routes must use the same server-side tenant and service checks; D-020 authorizes a development-only default for assignment **administration** reads: active same-school membership with `school:configure`, minimal necessary fields and concealed cross-tenant IDs. No assignment read handler is implemented yet; teacher self-service reads require exact-resource scoping, not a general `academic:read` grant.
 
 ## Required distinctions
 

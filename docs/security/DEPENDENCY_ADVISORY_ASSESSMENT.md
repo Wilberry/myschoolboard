@@ -1,5 +1,9 @@
 # Dependency Advisory Assessment
 
+## Development governance clarification (2026-10-12)
+
+The Project Owner's [Standing Development Mandate](../project/STANDING_DEVELOPMENT_MANDATE.md), recorded as D-023, authorizes ongoing **non-production** roadmap implementation, reviewed development feature-branch pushes, and draft PRs without repeated per-feature approval. This document records the actual security findings and **historical scope** of the original D-022 exception; its 2026-10-18 review/expiry is **not** a project development deadline, does not stop normal coding, and is neither renewed nor expanded by D-023. The current findings remain unresolved and block any claim of passing security audit, production readiness, or release. **Keep `npm audit --audit-level=high` enabled and report its actual local results without suppression.** Merging to `main`, deploying, and accepting a failing production gate still require distinct review and authorization.
+
 ## Assessment metadata
 
 - Reviewed: 2026-10-11 (reverified)
@@ -68,9 +72,9 @@ The eight high entries reported by npm comprise the two advisories above and the
 - CI gate: remains unchanged and failing; no advisory was suppressed.
 - Owner decision: D-015 Option A was selected on 2026-10-10 and remains active outside D-022 Option C. Option C was explicitly approved for 2026-10-11 through 2026-10-18 solely for the validated development branch and draft PR. The unresolved findings continue to block merge, deployment, and release.
 
-## Owner decision and limited development exception
+## Historical risk-owner decision and limited original-checkpoint exception
 
-**Status: D-015 Option A remains active except for the time-limited D-022 development-only branch and draft PR (2026-10-11 through 2026-10-18).** The CI audit gate remains unchanged and continues to fail while these advisories are present.
+**Historical status:** D-015 Option A was selected before the D-022 original-checkpoint publication exception (2026-10-11 through 2026-10-18). D-023 now provides ordinary prospective non-production development authority, **not** renewed dependency-risk acceptance or permission to merge/deploy. The security audit gate remains unchanged and was failing at the last recorded audit evidence; the eventual local run must report its actual result.
 
 ### Option A — Keep checkpoint blocked
 

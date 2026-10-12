@@ -1,11 +1,11 @@
 # AGENTS.md
 
-This repository is a specification-first project. Before making any code change, every agent must read and follow this file, the documentation index, and the relevant requirements and roadmap documents.
+MySchoolBoard is an actively implemented, specification-led project. The Project Owner's [Standing Development Mandate](docs/project/STANDING_DEVELOPMENT_MANDATE.md) (D-023) authorizes normal non-production engineering work, development feature-branch pushes, and draft PRs within the documented roadmap without repeated approval. Before a code change, read this file, the documentation index, and the relevant requirements and roadmap documents.
 
 ## Required reading order
 
 1. Read this file.
-2. Read [docs/README.md](docs/README.md).
+2. Read [docs/README.md](docs/README.md) and the [Standing Development Mandate](docs/project/STANDING_DEVELOPMENT_MANDATE.md).
 3. Read the current phase in [docs/roadmap/IMPLEMENTATION_ROADMAP.md](docs/roadmap/IMPLEMENTATION_ROADMAP.md).
 4. Read the relevant module specification under [docs/modules](docs/modules) and the matching requirement IDs in [docs/requirements/REQUIREMENTS_TRACEABILITY_MATRIX.md](docs/requirements/REQUIREMENTS_TRACEABILITY_MATRIX.md).
 5. Read the applicable authorization rules in [docs/authorization](docs/authorization) and security requirements in [docs/security](docs/security).
@@ -27,9 +27,9 @@ This repository is a specification-first project. Before making any code change,
 - Never delete tests or weaken acceptance criteria simply to get green results.
 - Never make destructive repository changes without explicit authorization.
 - Never claim a commit, push, deployment, or external operation occurred unless the tool confirms it.
-- Never infer approval, completion, or deployment from documentation alone; the repository state and actual command output are the source of truth.
+- Rely on the explicit standing authority in D-023 for routine non-production work; do not assume unrelated release, production security-risk acceptance, or live-data authorization. The repository state and actual command output are the source of truth.
 - Preserve the distinction between specified, proposed, implemented, tested, and deployed statuses.
-- Avoid expanding scope without explicit authorization.
+- Work freely within the charter, requirements, and roadmap. Escalate only a genuinely new material business scope or an exception listed in the Standing Development Mandate.
 - Update traceability when requirements or behavior change.
 
 ## Required checkpoint format
@@ -53,16 +53,17 @@ Each implementation phase must end with a checkpoint containing:
 
 ## Change control
 
-If implementation reveals a conflict or a requirement cannot be implemented as written:
+For routine underspecified implementation within the approved roadmap, choose a least-privilege, reversible and preferably configurable engineering default; document it and its tests, and continue. Do **not** repeatedly request permission to design, code, test, commit, push a non-default development branch, or open a draft PR. An unresolved future vendor or business-policy choice does not freeze unrelated modules.
 
-1. Stop the affected work before making an irreversible assumption.
-2. Document the conflict and evidence.
-3. Explain the impact and options.
-4. Recommend the safest reasonable option.
-5. Mark it unresolved until product-owner approval.
-6. Update the canonical requirement and decision record after approval.
-7. Update dependent requirements, tests, diagrams, and roadmap items.
+Only when a requirement conflict would create an irreversible data change, contradict a material school policy, expand sensitive-data access, or cross a production/release boundary:
+
+1. Isolate and pause **only that affected operation**; continue independent work.
+2. Record the evidence, trade-offs, safe interim no-op/denial, and recommended resolution.
+3. Escalate one focused question to the Project Owner where the existing documents do not safely decide it.
+4. Record the resolution and update dependent requirements, tests, diagrams, and roadmap items.
+
+See [Standing Development Mandate](docs/project/STANDING_DEVELOPMENT_MANDATE.md) (D-023). Historical D-022's review on 2026-10-18 does not halt normal development; it remains a narrowly scoped security-publication risk record, not release approval.
 
 ## Source-of-truth policy
 
-Canonical information is owned by the documents in this repository, not by chat history. Requirement IDs and decision records are authoritative.
+Canonical information is owned by the documents in this repository, not by chat history. Requirement IDs and decision records are authoritative; where older development-only gate language conflicts with D-023's later standing mandate, D-023 controls routine non-production workflow without relaxing substantive security or release protections.
