@@ -11,12 +11,31 @@ const noteText = z.object({
   objectives: z.string().trim().min(5).max(4000),
   content: z.string().trim().min(10).max(20000),
 }).strict();
+const weeklyPlan = z.array(z.object({
+  week: z.number().int().min(1).max(24),
+  topic: z.string().trim().min(2).max(180),
+  objectives: z.string().trim().min(5).max(4000),
+  activities: z.string().trim().min(5).max(4000),
+}).strict()).min(1).max(24).refine(
+  weeks => weeks.every((week, index) =>
+    index === 0 || week.week > weeks[index - 1].week),
+);
+const materialKind = z.enum(["LESSON_NOTE", "SCHEME_OF_WORK"]);
+function validMaterialPlan(
+  kind: z.infer<typeof materialKind>,
+  plan?: z.infer<typeof weeklyPlan>,
+) {
+  return kind === "SCHEME_OF_WORK" ? plan !== undefined : plan === undefined;
+}
 const createInput = noteText.extend({
   termId: identifier,
   assignmentId: identifier,
-}).strict();
+  kind: materialKind.default("LESSON_NOTE"),
+  weeklyPlan: weeklyPlan.optional(),
+}).strict().refine(data => validMaterialPlan(data.kind, data.weeklyPlan));
 const reviseInput = noteText.extend({
   expectedRevision: z.number().int().min(1),
+  weeklyPlan: weeklyPlan.optional(),
 }).strict();
 const submitInput = z.object({
   expectedRevision: z.number().int().min(1),
@@ -174,6 +193,7 @@ const noteProjection = {
   classId: true,
   subjectId: true,
   topic: true,
+  kind: true,
   status: true,
   currentRevision: true,
   createdAt: true,
@@ -207,6 +227,7 @@ export async function createLessonNote(schoolId: string, input: unknown) {
             classId: assignment.classId,
             subjectId: assignment.subjectId,
             topic: parsed.data.topic,
+            kind: parsed.data.kind,
           },
           select: noteProjection,
         });
@@ -218,6 +239,7 @@ export async function createLessonNote(schoolId: string, input: unknown) {
             topic: parsed.data.topic,
             objectives: parsed.data.objectives,
             content: parsed.data.content,
+            ...(parsed.data.weeklyPlan ? { weeklyPlan: parsed.data.weeklyPlan } : {}),
             actorUserId: userId,
           },
         });
@@ -275,7 +297,7 @@ async function changeOwnDraft(
           FOR UPDATE`;
         const note = await tx.lessonNote.findFirst({
           where: { schoolId, id: noteId, teacherMembershipId: member.id },
-          select: { id: true, status: true, currentRevision: true },
+          select: { id: true, status: true, currentRevision: true, kind: true },
         });
         if (!note) throw new LessonNoteError("NOT_FOUND");
         const canChange = action === "revise"
@@ -307,6 +329,10 @@ async function changeOwnDraft(
         if (!("topic" in data) || !("objectives" in data) || !("content" in data)) {
           throw new LessonNoteError("INVALID_INPUT");
         }
+        if (!validMaterialPlan(note.kind,
+            "weeklyPlan" in data ? data.weeklyPlan : undefined)) {
+          throw new LessonNoteError("INVALID_INPUT");
+        }
         const nextRevision = note.currentRevision + 1;
         const result = await tx.lessonNote.update({
           where: { id: noteId },
@@ -329,6 +355,7 @@ async function changeOwnDraft(
             topic: data.topic,
             objectives: data.objectives,
             content: data.content,
+            ...("weeklyPlan" in data && data.weeklyPlan ? { weeklyPlan: data.weeklyPlan } : {}),
             actorUserId: userId,
           },
         });
@@ -415,6 +442,7 @@ export async function readOwnLessonNotes(schoolId: string, noteId?: string) {
           topic: true,
           objectives: true,
           content: true,
+          weeklyPlan: true,
           createdAt: true,
         },
         orderBy: { revisionNumber: "desc" },
