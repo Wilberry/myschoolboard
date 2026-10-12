@@ -171,7 +171,12 @@ export async function readInternalReviewedManualGradebook(
  `);
  if(rows.length>15500)throw new AssessmentError("CONFLICT");
  const students=new Map<string,ReviewedManualStudent>();
+ const seenEmptyRows=new Set<string>();
  for(const r of rows){
+  if(r.componentId===null) {
+   if(seenEmptyRows.has(r.studentId))throw new AssessmentError("CONFLICT");
+   seenEmptyRows.add(r.studentId);
+  }
   let student=students.get(r.studentId);
   if(!student){
    student={studentId:r.studentId,admissionNumber:r.admissionNumber,
