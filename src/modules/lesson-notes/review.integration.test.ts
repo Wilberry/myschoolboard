@@ -451,6 +451,14 @@ describe("section-scoped lesson note review and return", () => {
     expect(lessons[0].content).toBeTruthy();
     expect(JSON.stringify(lessons)).not.toContain(primaryNoteId);
 
+    const withdrawal = await releaseRoute(request("principal", "POST",
+      `/api/schools/${schoolA}/lesson-releases/${secondaryNoteId}/decision`, {
+        action: "WITHDRAW", expectedRevision: 1,
+        reason: "Synthetic explicit withdrawal of published lesson",
+      }), { params: Promise.resolve({ schoolId: schoolA, noteId: secondaryNoteId }) });
+    expect(withdrawal.status).toBe(201);
+    expect((await (await studentLessons("student")).json()).lessons).toEqual([]);
+
     await prisma.studentEnrollment.update({
       where: { id: verifiedEnrollmentId }, data: { status: "ENDED", endedAt: new Date() },
     });
