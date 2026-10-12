@@ -1,5 +1,13 @@
 # Milestone Checklist
 
+### Attendance correction readers / browser workspaces (verification still required)
+
+- [ ] Run Form Teacher exact-class approved-register and effective-mark reads on disposable PostgreSQL, including withdrawn historical student entry access only via current class/session PRIMARY responsibility.
+- [ ] Run pending correction queue/detail tests for empty unauthorized queues, no pupil identities or marks in index, stage-specific reviewer grants, foreign-school concealment, immediate scope revocation.
+- [ ] Verify Form Teacher correction request and separate HM/Principal correction approval screens, explicit mark/reason, keyboard accessibility, stale mark/error messaging and immutable original on actual Next browser.
+- [ ] Execute all new and existing Phase 2–6 tests, migration integrity, full build and unchanged high-severity dependency audit gate; record exit codes and exact tested commit.
+
+
 ### Phase 6 immutable correction candidate (all unchecked; unverified)
 
 - [ ] Apply additive correction migration to **only** confirmed disposable PostgreSQL; verify exact composite keys, PostgreSQL trigger SQL, locking and school cascade behavior without live data.
