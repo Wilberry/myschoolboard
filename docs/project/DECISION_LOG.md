@@ -1,5 +1,12 @@
 # Decision Log
 
+## D-033: Explicit lesson release distinct from approval (development default)
+
+- Status: Authored, not executed or released.
+- Decision: An HM/Principal section approval never automatically publishes lesson content to learners. An active exact verified HM PRIMARY / Principal SECONDARY reviewer may append a separate reasoned RELEASED event for the exact current approved immutable lesson revision, and later WITHDRAWN once. SQL guards independently validate school/class/subject/term/session, teacher assignment, approval event and correct actor section. A withdrawn revision cannot silently republish. No automatic student relationship from membership or name.
+- Next: verified student-account/student-record link with explicit administrator attestation; exact active class/session and term-visibility reader; disposable DB and security checkpoint. See ADR-019.
+
+
 ## D-032: Explicit, immutable school teaching-day calendar
 
 - Status: Development default; not production-verified.
