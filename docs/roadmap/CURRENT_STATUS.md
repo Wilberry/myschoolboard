@@ -1,5 +1,10 @@
 # Current Status
 
+## Phase 7 independent school assessment publication (authored; UNVERIFIED)
+
+`feature/phase7-assessment-publication-ledger` cumulatively adds an immutable School Super Admin-only PUBLISHED/WITHDRAWN event ledger, separate from the prior exact HM/Principal section-approved sealed draft. Service and additive SQL validate active exact school, actor/membership, approved review, teacher assignment, class/section/subject/session/term, seal, no prior publication, withdrawal state and audit immutability. Private publication GET/POST, School Super Admin page and synthetic tests authored. **No student exam delivery/attempt/score or keys read endpoint is present.** Tests, migration and full CI-equivalent NOT EXECUTED; Phase 6 remains unverified and Phase 7 ASM-REQ-001 remains partial. GitHub Actions billing restriction continues; no merge, deployment, live data or security relaxation.
+
+
 ## Phase 7 section assessment moderation and CBT timing preflight (authored; UNVERIFIED)
 
 `feature/phase7-cbt-attempt-foundation` on cumulative PR #51 adds immutable terminal APPROVED/RETURNED academic decisions restricted to exact verified HM PRIMARY/Principal SECONDARY sections, SQL active actor/class/term/assignment audit guard, no-store reviewer queue and ordered key-free draft question preview plus restricted reviewer workspace. Adds pure future CBT deadline/attempt limit planning helper and unit tests; **no student exam publication, attempt API, autosave, scoring or official class-record sheet**. Repairs invalid function dollar-quoting in the parent assessment-draft SQL migration. Synthetic stage/scope/revocation/key-nondisclosure/immutable decision tests and read-only Node guards are AUTHORED, NOT EXECUTED. No disposable PostgreSQL migration, Prisma, Node/Vitest, TypeScript, lint, Next build, browser/accessibility or strict dependency audit run. Phase 6 dependency and Phase 7 ASM-REQ-001 exit gates remain blocked.
