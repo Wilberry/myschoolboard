@@ -138,3 +138,11 @@
 - Status: Additive code/migration authored; unexecuted.
 - Mechanism: Extend LessonNote with a defaulted typed `LESSON_NOTE|SCHEME_OF_WORK` discriminator and immutable nullable weekStart/weekEnd columns. PostgreSQL CHECK enforces ordered weeks 1–53 for schemes, no weeks for normal notes; composite partial unique index prevents duplicate exact scheme/class/subject/term/week-range. Existing lesson version, approval and release controls stay mandatory for both kinds; the editor, review queue, release queue and student reader expose the explicit kind and scheme weeks. Original approved/released content, actor and review are never rewritten. Schedule overlaps with different week endpoints and business-specific scheme templates are future policy decisions, not a privilege bypass.
 
+
+## ADR-022: Separate immutable question content from secret marking keys
+
+- Status: Implementation candidate; additive migration and tests NOT executed.
+- Context: Returning marking keys from ordinary question list or joining a question by class grant alone exposes exam solutions early. In-place question/key edits destroy accountability.
+- Decision: AssessmentQuestion is an immutable school-owned exact teacher-assignment/class/subject/session/term MCQ snapshot; AssessmentQuestionKey is a separate immutable one-to-one composite school/question-bound correctIndex. Only an active TEACHER with the current exact assignment can insert both transactionally. Database BEFORE INSERT validations independently verify tenant/actor/assignment, active academic relationships, options, key index; immutable triggers block normal update/delete/truncate. Staff GET projects question content only through the original currently active author assignment and omits key; there are no student or key GETs.
+- Consequences: A later controlled question-replacement/version lifecycle, assessment configuration, marking service, key-reveal rules and verified CBT attempts are separately required. No release or role broadening. Full disposable-DB + source/code CI and security audit required before milestone completion.
+
