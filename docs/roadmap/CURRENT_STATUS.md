@@ -1,5 +1,10 @@
 # Current Status
 
+## Phase 6 immutable attendance corrections — new draft (UNVERIFIED)
+
+`feature/attendance-immutable-corrections` extends the unmerged attendance workspaces with additive revisioned `AttendanceCorrectionRequest` and `AttendanceCorrectionDecision` schema/migration; private POST request and independent review services; exact ACTIVE PRIMARY Form Teacher class/session and HM PRIMARY / Principal SECONDARY verified section checks; SQL actor/revision validation, composite school/entry/register keys, pending-request serialization and immutable no-truncate history. No original mark or prior decision is updated. The existing `AttendanceEvent` Prisma relation map is also corrected to match its migration. Synthetic PostgreSQL integration cases are **AUTHORED NOT EXECUTED**. No correction queue/effective-mark reader/UI, local migrations, full build or security audit has run; school timezone/correction-window policy remains unresolved. Hosted GitHub Actions remains blocked by billing. The cumulative branch is unmerged and **ATT-REQ-001 remains incomplete**.
+
+
 ## Phase 6 attendance role-scoped reads and browser workspaces (draft, unverified)
 
 `feature/attendance-scoped-read-workspaces` builds on the unmerged attendance ledger and adds a SQL single-statement Form Teacher roster reader, exact stored SECTION-grant HM/Principal pending queue/detail readers, authenticated private GET routes, two server-restricted browser workspaces with explicit complete-class marks and reasoned reviews, and role-aware school navigation. Synthetic disposable-database tests were authored for role/stage, tenant, grant revocation, data minimization, queue privacy, navigation and detail disclosure. **No tests, browser checks, migrations, formatting, typecheck, build or npm audit were executed on this branch**. The immutable correction lifecycle, school timezone policies, historical enrollment transitions, full local CI-equivalent checkpoint and hosted billing blocker remain outstanding; this does not complete Phase 6 or authorize production release.
