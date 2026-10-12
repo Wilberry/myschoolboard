@@ -99,3 +99,11 @@
 - Decision: Do not mutate `AttendanceEntry.mark` or add a writable materialized currentMark. For each exact authorized original entry, derive effective mark using the highest `AttendanceCorrectionRequest.revision` that has an immutable `AttendanceCorrectionDecision.approved=true`; pending/returned records never change it. Role-specific SQL joins repeat actor membership, ACTIVE PRIMARY Form Teacher or current verified-section HM/Principal scope and resource ownership at the final sensitive-data query. Correction queue excludes pupil identity/mark/reason; correction detail is separately constrained. Bound returned records and prohibit caching and exports.
 - Consequences: Purely additive, audit-reconstructable history; future reports and official extracts must use an independently authorized effective-mark projector and the approved correction ledger, not raw mark replacement. Requires SQL regression checks, performance review, school timezone/correction window design and browser accessibility.
 
+
+## ADR-016: Submission event enforces a complete enrolled class at PostgreSQL
+
+- Status: Additive security repair authored, pending disposable PostgreSQL execution and complete CI-equivalent.
+- Risk: The existing audit-event insertion trigger validates the Form Teacher but only requires EXISTS(AttendanceEntry). A direct SQL caller can otherwise persist an incomplete class roster even when application submission correctly rejects it.
+- Decision: Add separate BEFORE INSERT event trigger which, for SUBMITTED only, takes an active school row lock, counts existing immutable entries, all exact eligible active student entry joins, and the complete ACTIVE school/class/session student enrollment roster; all three must agree and remain within 1–500 marks. Existing Event actor, Entry insert, deferred Register presence, one-way decision, immutable UPDATE/DELETE/TRUNCATE and composite keys remain independently enforced. Avoid destructive changes and backfill.
+- Trade-offs: Additional count queries occur once per submitted class register and require performance validation with large roster. School timezone, concurrent enrollment changes, trusted DB owner threats and strict role revocation races still require executed disposable-DB tests. Read-only file-presence assertions do not validate PostgreSQL syntax/runtime behavior.
+
