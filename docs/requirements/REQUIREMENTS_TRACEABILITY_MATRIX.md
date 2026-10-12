@@ -1,5 +1,13 @@
 # Requirements Traceability Matrix
 
+## Correction subset ATT-REQ-001 / T-ATT-001 — authored, unverified
+
+- `prisma/migrations/20261012190000_attendance_immutable_corrections/migration.sql`, schema models and actor/revision/immutability triggers: additive revisioned correction request + independent correction decision; never update original marks.
+- `src/modules/attendance/corrections-service.ts`, `corrections-http.ts`: POST correction request on approved class attendance by currently responsible PRIMARY Form Teacher; POST decision by exact verified HM/Principal section; authenticated actor from Better Auth, serializable transactional guards.
+- `src/modules/attendance/corrections.integration.test.ts`: synthetic real-session coverage for stale marks, skipped/overlapping revisions, returned and approved review, wrong/foreign/revoked actor, forged direct inserts, immutable events and concurrent request attempts. **Tests authored; NOT EXECUTED**.
+- No correction UI, authorized effective-mark read, school configuration, migration/test/local CI gate evidence. ATT-REQ-001, TEN-REQ-001 and SEC-REQ-001 remain **not complete**.
+
+
 ## Attendance reviewer and Form Teacher workspaces — ATT-REQ-001 (additional unverified evidence)
 
 - `src/modules/attendance/read-service.ts`: one-statement authenticated active PRIMARY Form Teacher roster; verified-stored-section Head/Principal queue and detail; bounded 500-pupil view and 100-item queue, generic unauthorized denials; private GET handlers in `app/api/schools/[schoolId]/attendance/roster` and `attendance-reviews`.

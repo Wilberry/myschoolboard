@@ -1,5 +1,14 @@
 # Milestone Checklist
 
+### Phase 6 immutable correction candidate (all unchecked; unverified)
+
+- [ ] Apply additive correction migration to **only** confirmed disposable PostgreSQL; verify exact composite keys, PostgreSQL trigger SQL, locking and school cascade behavior without live data.
+- [ ] Execute authored synthetic correction API tests, inspect assertion counts and verified principal/stage/pupil boundaries; add stronger concurrent decision-revocation tests before release.
+- [ ] Confirm original AttendanceEntry and original events cannot change, returned/pending revisions are excluded from effective marks and a newly approved later revision is the only newest effective value.
+- [ ] Build least-privilege effective-mark reads, correction review queue, correction screens and school-configured correction windows/timezones.
+- [ ] Execute unchanged complete local CI-equivalent and strict `npm audit --audit-level=high` gate; no risk acceptance or waiver inferred.
+
+
 ### Scoped attendance read and UI candidate — still pending verification
 
 - [ ] Validate the Form Teacher roster endpoint only returns enrollment/name/mark inputs for an active exact PRIMARY responsibility in the same school/session/class, with no teacher-wide access.

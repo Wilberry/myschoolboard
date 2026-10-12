@@ -242,6 +242,8 @@ model School {
   attendanceRegisters AttendanceRegister[]
   attendanceEntries AttendanceEntry[]
   attendanceEvents AttendanceEvent[]
+  attendanceCorrectionRequests AttendanceCorrectionRequest[]
+  attendanceCorrectionDecisions AttendanceCorrectionDecision[]
 }
 
 model Membership {
@@ -264,6 +266,8 @@ model Membership {
   @@unique([schoolId, userId])
   @@unique([schoolId, id])
   @@index([userId, isActive])
+  attendanceCorrectionRequests AttendanceCorrectionRequest[] @relation("AttendanceCorrectionRequester")
+  attendanceCorrectionDecisions AttendanceCorrectionDecision[] @relation("AttendanceCorrectionReviewer")
 }
 
 model ScopeGrant {
@@ -741,6 +745,8 @@ model AttendanceEntry {
 
   @@unique([schoolId, registerId, studentId])
   @@index([schoolId, studentId, createdAt])
+  correctionRequests AttendanceCorrectionRequest[]
+  @@unique([schoolId, id, registerId], map: "AttendanceEntry_correction_identity")
 }
 
 /** Every submit and decision event is immutable, actor-validated and scoped. */
@@ -754,9 +760,53 @@ model AttendanceEvent {
   reason            String?
   createdAt         DateTime            @default(now())
   school            School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  register          AttendanceRegister  @relation(fields: [schoolId, registerId], references: [schoolId, id], onDelete: NoAction, map: "AttendanceEvent_actor_membership_fkey")
-  actorMembership   Membership          @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction)
+  register          AttendanceRegister  @relation(fields: [schoolId, registerId], references: [schoolId, id], onDelete: NoAction, map: "AttendanceEvent_schoolId_registerId_fkey")
+  actorMembership   Membership          @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AttendanceEvent_actor_membership_fkey")
 
   @@unique([schoolId, registerId, eventType])
   @@index([schoolId, actorUserId, createdAt])
+}
+
+/** Original AttendanceEntry remains immutable. Each reasoned correction is a
+ * separate immutable request; reviewer decision is an immutable separate row. */
+model AttendanceCorrectionRequest {
+  id                      String   @id @default(cuid())
+  schoolId                String
+  registerId              String
+  entryId                 String
+  revision                Int
+  expectedMark            AttendanceMark
+  proposedMark            AttendanceMark
+  reason                  String
+  requestedByUserId       String
+  requestedByMembershipId String
+  createdAt               DateTime @default(now())
+  school                  School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  entry                   AttendanceEntry @relation(fields: [schoolId, entryId, registerId], references: [schoolId, id, registerId], onDelete: NoAction, map: "AttendanceCorrectionRequest_entry_fkey")
+  requester               Membership @relation("AttendanceCorrectionRequester", fields: [schoolId, requestedByMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AttendanceCorrectionRequest_requester_fkey")
+  decision                AttendanceCorrectionDecision?
+
+  @@unique([schoolId, id, registerId], map: "AttendanceCorrectionRequest_decision_identity")
+  @@unique([schoolId, entryId, revision])
+  @@index([schoolId, registerId, createdAt])
+}
+
+/** One reviewer decision per immutable request; true = approve; false = return.
+ * Effective attendance reads must use only the latest APPROVED correction. */
+model AttendanceCorrectionDecision {
+  id                   String   @id @default(cuid())
+  schoolId             String
+  requestId            String
+  registerId           String
+  reviewerUserId       String
+  reviewerMembershipId String
+  approved             Boolean
+  reason               String
+  createdAt            DateTime @default(now())
+  school               School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  request              AttendanceCorrectionRequest @relation(fields: [schoolId, requestId, registerId], references: [schoolId, id, registerId], onDelete: NoAction, map: "AttendanceCorrectionDecision_request_fkey")
+  reviewer             Membership @relation("AttendanceCorrectionReviewer", fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AttendanceCorrectionDecision_reviewer_fkey")
+
+  @@unique([schoolId, requestId])
+  @@index([schoolId, reviewerUserId, createdAt])
 }
