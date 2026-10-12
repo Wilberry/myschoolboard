@@ -50,6 +50,7 @@ export async function readReleasedLessonsForStudent(schoolId: string) {
         WHERE enrollment."studentId" = pupil."id"
           AND enrollment."schoolId" = pupil."schoolId"
           AND enrollment."status" = 'ACTIVE'
+          AND enrollment."startedAt" <= CURRENT_TIMESTAMP
           AND EXISTS (
             SELECT 1 FROM "AcademicSession" sess
             WHERE sess."id" = enrollment."sessionId"
@@ -83,6 +84,7 @@ export async function readReleasedLessonsForStudent(schoolId: string) {
       ON enrollment."schoolId" = school."id"
       AND enrollment."studentId" = pupil."id"
       AND enrollment."status" = 'ACTIVE'
+      AND enrollment."startedAt" <= CURRENT_TIMESTAMP
     JOIN "AcademicSession" sess ON sess."id" = enrollment."sessionId"
       AND sess."schoolId" = school."id" AND sess."status" = 'ACTIVE'
     JOIN "SchoolClass" c ON c."id" = enrollment."classId"
