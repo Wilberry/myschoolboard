@@ -61,6 +61,10 @@ The following remain explicitly unresolved or intentionally deferred:
 - exceptional support-access approval mechanism; unrestricted routine access is not allowed
 - payment-provider selection, parent-first report visibility, and QR disclosure in their relevant phases
 
+## Standing development authorization
+
+The Project Owner has approved [D-023: Standing Development Mandate](docs/project/STANDING_DEVELOPMENT_MANDATE.md). The product charter and implementation roadmap authorize routine non-production implementation, commits, reviewed development branches, and draft pull requests without repeated per-feature approval. Continue to enforce tenant isolation, academic publication controls, security audit gates, and recorded test evidence. The historical D-022 development-publication exception review date is **not** a stop-work date for ordinary engineering; it does not authorize merging into `main` or releasing with unresolved security findings.
+
 ## Local CI verification while GitHub Actions is unavailable
 
 GitHub-hosted runners are currently unavailable under the owner-reported billing restriction. The development follow-up provides a guarded local runner, documented in [Local CI Verification Runbook](docs/quality/LOCAL_CI_RUNBOOK.md). With the explicitly disposable `postgres-test` service and test-only environment, run `npm run verify:local:guards`, then `npm run verify:local:preflight`, and finally `npm run verify:local` **only when ready for database-writing verification**. The runner mirrors `.github/workflows/ci.yml` and keeps the high-severity audit step. A public dependency-free liveness route is added at `GET /api/health/live`; it is not a database readiness probe. These additions remain unverified against the full project until the planned local CI run.

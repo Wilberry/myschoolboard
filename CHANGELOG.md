@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-12 — Standing roadmap-led development governance (documentation only)
+
+- The Project Owner authorized D-023 and [Standing Development Mandate](docs/project/STANDING_DEVELOPMENT_MANDATE.md) to remove per-feature/per-branch approval loops for routine work already specified in the charter, requirements, and roadmap.
+- Clarified AGENTS.md, charter, scope, decision register, architecture/roadmap status and security assessment so development can proceed using documented reversible, configurable, least-privilege defaults.
+- Adopted D-020's restricted `school:configure` development default for future teacher-assignment administration reads and D-021/P-013–P-017's additive academic staffing design defaults; **no read handler, new school policy, migration or feature implementation is claimed by this documentation change**.
+- Preserved the historical D-022 2026-10-18 exception record without treating it as a recurring engineering deadline or expanding its security risk acceptance; all high-severity dependency findings and the unchanged high-severity audit gate remain active release concerns.
+- No merge, deployment, production risk acceptance, production-auth policy activation, or database operation occurred as part of this governance revision.
+
 ## 2026-10-09 — Initial documentation baseline
 
 - Added the initial documentation set for the multi-tenant school management SaaS specification.

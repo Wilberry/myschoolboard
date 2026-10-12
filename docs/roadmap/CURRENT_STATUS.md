@@ -85,4 +85,4 @@ The local repository checkpoint is ready for review within the implemented scope
 
 ## Next approved action
 
-The next Phase 5 work should address the remaining TCH-REQ-001 criteria for timetable/class constraints and the distinction between Form Teacher and subject-teacher assignments, subject to the Phase 4 academic-structure decisions. Keep assignment list/detail routes gated on D-020 and the high-severity dependency audit blocker explicit.
+Continue the next unblocked Phase 2/3/4 roadmap work under D-023. D-020 now provides a conservative `school:configure` development default for assignment administration reads, and D-021 supplies additive academic-session/Form Teacher design direction. Build and test them without inventing historical periods or expanding sensitive access. Resolve actual provider, data migration, high-severity security audit and deployment/release gates separately; the existence of a default is **not** evidence a route or schema was implemented or tested.

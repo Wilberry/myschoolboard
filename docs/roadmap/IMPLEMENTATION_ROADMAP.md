@@ -1,5 +1,7 @@
 # Implementation Roadmap
 
+The Project Owner's [Standing Development Mandate](../project/STANDING_DEVELOPMENT_MANDATE.md) (D-023) authorizes routine roadmap delivery, safe engineering defaults, development branches and draft PRs without repeated per-module approvals. Any unresolved vendor or school-policy decision blocks **only** its unsafe or irreversible operation, not independent implementation. In-product authorization, approval workflows, security tests, and deployment/release gates remain mandatory.
+
 ## Phase 0 — Repository baseline and documentation foundation
 
 - Objective: establish the documentation source of truth and capture the specification baseline.

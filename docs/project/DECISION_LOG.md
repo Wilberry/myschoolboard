@@ -84,11 +84,11 @@
 - Decision: Payment-provider selection is deferred to Phase 9; parent-first report visibility to Phase 8; QR disclosure to the QR verification implementation phase. Hosting provider and domain remain deferred until local development and testing are complete.
 - Rationale: These decisions are outside the verified local foundation and must remain unresolved until their owning phase.
 
-## D-015: Dependency audit remains a checkpoint blocker
+## D-015: Dependency audit remains a security and release blocker
 
-- Status: Option A remains active except for the limited development-publication exception approved under D-022 through 2026-10-18.
+- Status: The original dependency-remediation/release restriction remains active. D-022's time-limited exception records publication of the *original checkpoint*; D-023 separately authorizes routine ongoing development and draft PRs without accepting production dependency risk.
 - Decision: The known dependency findings remain unresolved. D-022 Option C supersedes Option A only for publishing the specifically scoped development-only feature branch and pull request; it does not accept production risk, authorize merging to `main`, production deployment, or release. Preserve the `npm audit --audit-level=high` CI gate and disclose its expected failure.
-- Rationale: As reverified on 2026-10-10, no compatible braces patch is published; stable Prisma 6 and 7 still pin the vulnerable deepmerge-ts version; Prisma 8 is only a release candidate and not a compatible update for this foundation. See [Dependency Advisory Assessment](../security/DEPENDENCY_ADVISORY_ASSESSMENT.md). Do not suppress or weaken the CI audit gate.
+- Rationale: The 2026-10-10 dependency review recorded no verified compatible remediation for the two advisories. See [Dependency Advisory Assessment](../security/DEPENDENCY_ADVISORY_ASSESSMENT.md) for dated evidence; reassess current fixes before release. Do not suppress or weaken the CI audit gate. Dependency findings do not halt ordinary non-production feature development.
 
 ## D-022: Approved limited development-branch dependency risk exception
 
@@ -105,6 +105,7 @@
 - Separate authorization: This risk approval does not authorize push, merge, deployment, or release. Push authorization remains separate. The current checkpoint preparation request separately authorizes creating the named local branch, staging the exact manifest, and making one local commit.
 - Decision record: The approval identity, scope, expiry, controls, and advisory exposure are also recorded in the [Dependency Advisory Assessment](../security/DEPENDENCY_ADVISORY_ASSESSMENT.md).
 - Publication evidence (2026-10-11): The exact 81-file checkpoint commit `2c7c6b9a905272ac5f9cc70d06b67367b2c1c791` was separately authorized and pushed to `checkpoint/phase1-tenant-safe-foundation`; [draft PR #1](https://github.com/Wilberry/myschoolboard/pull/1) was created. This records completion of those specific actions, not permission for merge, deployment, or release.
+- Subsequent governance (D-023, 2026-10-12): The 2026-10-18 date remains the historic review/expiry of **this specific risk acceptance**, not a project deadline or a requirement for per-branch/per-feature sign-off. D-023 does not renew, retroactively enlarge, or override its accepted security exposure.
 
 ## D-016: Canonical teacher assignment persistence
 
@@ -132,18 +133,26 @@
 
 ## D-020: Assignment read-route authorization
 
-- Status: Unresolved; product-owner decision required before implementing assignment list or detail routes
-- Decision needed: Confirm which active school roles may list and retrieve teacher-assignment administration records and which existing permission governs those reads. `academic:read` exists in the policy helper and authorization rules for academic content, but its approval for assignment-administration records is not established by the permissions matrix.
-- Safe interim rule: Do not expose assignment read routes until this decision is recorded. If approved, enforce school membership and resource ownership on the server and require teachers to match the exact active school, class, and subject assignment where applicable. `school:configure` remains the required permission for mutations; platform role alone grants no school authority.
-- Rationale: Assignment reads expose staff/class/subject relationships. Reusing an existing policy action for a new resource without explicit product authorization would silently expand access.
+- Status: **Development implementation default adopted under D-023 on 2026-10-12; not implemented or locally validated.**
+- Decision: School-level teacher-assignment **administrative** list/detail reads may be implemented only for an authenticated, active school membership with `school:configure`, scoped to that school and with a deliberately minimal response. Cross-school or nonexistent IDs remain indistinguishable. Do **not** reuse broad `academic:read` to expose administration records, and do not grant teachers or platform operators additional school authority.
+- Future teacher self-service: Design a separate explicitly resource-scoped view, restricted to the requesting teacher's own exact active school/class/subject assignment. This development default does not enable that route by implication.
+- Rationale: Reuse the already restricted administration permission rather than widening ordinary academic access. New routes require actual negative tenant/role tests before use; production policy may refine the school-configurable readers without broadening default access.
 
-## D-021: Academic assignment domain proposals
+## D-021: Academic assignment domain implementation direction
 
-- Status: Proposed; product-owner approval pending. No schema or application change is authorized by this entry.
-- Proposal: Resolve academic-session versus term scope before changing the period-free assignment key; permit multiple teachers per class-subject unless an approved staffing policy requires exclusivity; leave class-subject eligibility unresolved pending curriculum requirements; model Form Teacher responsibility separately with cardinality left open; and prefer multiple responsibilities on one school membership, subject to authorization review.
-- Decision detail: P-013 through P-017 in [Product Decisions for Approval](PRODUCT_DECISIONS_FOR_APPROVAL.md) record each exact question, recommendation, alternatives, trade-offs, affected requirements/ADR/schema/tests, and implementation gate.
-- Safety constraints: Do not infer historical periods from `createdAt`, status, or `ScopeGrant`. Preserve D-016's current behavior until an approved migration plan exists. Keep D-020 as a separate read-authorization gate and retain the existing tenant, mutation-authorization, lifecycle, and audit controls.
-- Rationale: The current schema has no session, term, class-subject eligibility, timetable, or Form Teacher relationship. Selecting constraints before product approval could reject valid staffing arrangements or misclassify historical authorization.
+- Status: **Reversible, school-configurable development defaults authorized under D-023 on 2026-10-12; schema and acceptance still require implementation/testing.**
+- Decision: Add school-owned `AcademicSession` with terms beneath it and session-scoped *new* subject assignments. Permit more than one teacher per class/subject/session while preventing duplicate assignment for the same teacher and pair. Keep curriculum eligibility configurable rather than assuming a universal required `ClassSubject`. Model Form Teacher responsibility separately from subject-teacher assignments; support a primary responsible teacher and explicitly modeled co-responsibility/handover without silently imposing irreversible cardinality on legacy data. A school membership may hold both responsibilities, each with distinct permissions.
+- Decision detail: P-013 through P-017 in [Product Decisions for Approval](PRODUCT_DECISIONS_FOR_APPROVAL.md) document the development defaults and school-specific options. Follow that module's tests and requirements; do not treat design authorization as feature completion.
+- Safety constraints: **Never infer periods for existing period-free assignments** from timestamps, status, or scope grants. Use additive schema with explicit legacy handling; require authoritative data mapping before a destructive or mandatory backfill. Maintain same-school FKs, tenant isolation, transactional authorization, audit history, and distinct D-020 assignment-administration reader permissions.
+- Rationale: The documented product explicitly supports configurable primary/secondary school staffing. Secure reversible defaults let implementation advance while preventing silent data rewrites or unjustified restrictions.
+
+## D-023: Standing, roadmap-led development authorization
+
+- Status: **Approved by the Project Owner on 2026-10-12, effective for routine non-production implementation going forward.**
+- Decision: The existing charter, requirements, module specifications and phased roadmap constitute the ongoing engineering mandate. Engineers and agents may design, implement, test, refactor, document, commit, push reviewed *non-default development branches*, and open draft PRs within that scope without repeated per-task approvals. Use secure, reversible, configurable defaults for ordinary specification gaps, record decisions, and continue other work if one material choice remains isolated.
+- Reserved decisions: New material business/legal policy, irreversible live-data changes, production/shared-data operations, broadening minor/financial-data access, external payment/communication rollout, **merging to `main`**, deployment, release, and acceptance or weakening of a failing security gate still require explicit Project Owner authorization and completed safety checks. In-product academic, payment and support-access approvals remain mandatory.
+- Security effect: **No waiver** of tenant isolation, active membership/resource authorization, verified relationships, immutable audit, CI-equivalent local verification, or `npm audit --audit-level=high`. The recorded high-severity dependencies remain unresolved and block release readiness. D-022 remains a historical, limited exception ending/requiring review 2026-10-18; **that date is not a deadline for ordinary engineering and D-023 is not a renewal of its risk acceptance**.
+- Authority and rationale: Explicit Project Owner instruction to remove unnecessary approval loops while following the canonical roadmap and requirements. The controlling operational rules are in [Standing Development Mandate](STANDING_DEVELOPMENT_MANDATE.md). This change does not assert that new features are implemented, tested, deployed, or production-ready.
 
 ## Unresolved decisions
 
@@ -154,10 +163,10 @@
 - Final public QR verification and disclosure fields
 - External identity-provider selection and production identity strategy
 - Remediation or explicit risk acceptance for high-severity dependency advisories
-- Limited development-branch/PR dependency-risk exception (D-022), approved through 2026-10-18; D-015 Option A remains active outside that scope
+- Security remediation for D-015; the historic D-022 **original-checkpoint** risk exception is reviewed/expires 2026-10-18, but ordinary non-production work continues under D-023
 - Whether section, stream, grade, code, or academic-year dimensions belong in class/subject identity
 - Whether future audit readers, retention, or export workflows require additional owner-approved policy
-- Which roles may read assignment-administration records and which existing permission applies (D-020)
-- Academic assignment period scope (P-013), teacher allocation cardinality (P-014), class-subject eligibility (P-015), Form Teacher scope/cardinality (P-016), and combined teacher responsibilities (P-017; D-021)
+- Whether individual schools require additional assignment-administration reader roles beyond D-020's conservative `school:configure` development default (do not broaden access without a documented school policy)
+- School-specific configuration of curriculum eligibility, co-teaching, Form Teacher co-responsibility and handover under D-021/P-013–P-017; safe additive development can proceed while destructive legacy backfills remain prohibited
 
-These items remain unresolved for their relevant phases and must not be represented as implemented or approved by the local foundation.
+These items remain tracked in their owning phase; they are not all stop-work gates. Follow D-023 and the standing mandate to build reversible development defaults. Do not misrepresent unresolved **production** choices, implementation status, validation or historical risk approvals.

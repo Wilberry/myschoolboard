@@ -12,7 +12,8 @@ This folder is the canonical documentation set for the MySchoolBoard project.
 - [project/GLOSSARY.md](project/GLOSSARY.md) — common terminology
 - [project/ASSUMPTIONS_AND_CONSTRAINTS.md](project/ASSUMPTIONS_AND_CONSTRAINTS.md) — assumptions, constraints, and explicit decisions
 - [project/DECISION_LOG.md](project/DECISION_LOG.md) — material decisions and unresolved matters
-- [project/PRODUCT_DECISIONS_FOR_APPROVAL.md](project/PRODUCT_DECISIONS_FOR_APPROVAL.md) — product-owner approval register for Phase 1 decisions
+- [project/STANDING_DEVELOPMENT_MANDATE.md](project/STANDING_DEVELOPMENT_MANDATE.md) — D-023 standing authority for roadmap-led development and narrow approval exceptions
+- [project/PRODUCT_DECISIONS_FOR_APPROVAL.md](project/PRODUCT_DECISIONS_FOR_APPROVAL.md) — development policy defaults, configurable choices, and decisions reserved for owner review
 - [project/RISK_REGISTER.md](project/RISK_REGISTER.md) — product, technical, security, and delivery risks
 
 ### Requirements and quality
