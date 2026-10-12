@@ -267,6 +267,8 @@ model School {
   assessmentReviewEvents AssessmentReviewEvent[]
   assessmentPublicationEvents AssessmentPublicationEvent[]
   assessmentAttempts AssessmentAttempt[]
+  assessmentAnswerEvents AssessmentAttemptAnswerEvent[]
+  assessmentSubmissions AssessmentAttemptSubmission[]
 }
 
 model Membership {
@@ -302,6 +304,8 @@ model Membership {
   assessmentReviewEvents AssessmentReviewEvent[]
   assessmentPublicationEvents AssessmentPublicationEvent[]
   assessmentAttempts AssessmentAttempt[]
+  assessmentAnswerEvents AssessmentAttemptAnswerEvent[]
+  assessmentSubmissions AssessmentAttemptSubmission[]
 }
 
 model ScopeGrant {
@@ -994,6 +998,7 @@ model AssessmentQuestion {
   @@index([schoolId, classId, subjectId, termId])
   @@index([schoolId, teacherMembershipId, createdAt])
   assessmentDraftQuestions AssessmentDraftQuestion[]
+  assessmentAnswerEvents AssessmentAttemptAnswerEvent[]
 }
 
 /** Kept physically and permission-wise apart from question metadata.
@@ -1166,4 +1171,49 @@ model AssessmentAttempt {
   @@unique([schoolId, id])
   @@unique([schoolId, draftId, studentId, attemptNumber])
   @@index([schoolId, studentId, startedAt])
+  answerEvents AssessmentAttemptAnswerEvent[]
+  submission AssessmentAttemptSubmission?
+}
+
+/** Each autosave is an immutable event. The DB assigns the per-question
+ * revision under a school lock; client retry keys cannot change payload.
+ * No correct key, grade or score appears in this table. */
+model AssessmentAttemptAnswerEvent {
+  id String @id
+  schoolId String
+  attemptId String
+  questionId String
+  requestKey String @db.VarChar(128)
+  selectedIndex Int
+  revision Int @default(1)
+  actorMembershipId String
+  actorUserId String
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  attempt AssessmentAttempt @relation(fields: [schoolId, attemptId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttemptAnswerEvent_attempt_fkey")
+  question AssessmentQuestion @relation(fields: [schoolId, questionId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttemptAnswerEvent_question_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttemptAnswerEvent_actor_fkey")
+
+  @@unique([schoolId, attemptId, requestKey])
+  @@unique([schoolId, attemptId, questionId, revision])
+  @@index([schoolId, attemptId, createdAt])
+}
+
+/** Terminal submitted event, one per attempt. Expiry is represented by
+ * the immutable attempt.deadlineAt; no backdated submission is allowed. */
+model AssessmentAttemptSubmission {
+  id String @id
+  schoolId String
+  attemptId String
+  requestKey String @db.VarChar(128)
+  actorMembershipId String
+  actorUserId String
+  submittedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  attempt AssessmentAttempt @relation(fields: [schoolId, attemptId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttemptSubmission_attempt_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttemptSubmission_actor_fkey")
+
+  @@unique([schoolId, attemptId])
 }

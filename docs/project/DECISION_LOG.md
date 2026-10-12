@@ -1,5 +1,12 @@
 # Decision Log
 
+## D-041: Key-blind immutable CBT autosaves and separate final submission
+
+- Status: Phase 7 additive code authored; no SQL/CI acceptance.
+- Decision: Persist each submitted option selection as an immutable school/attempt/question-bound AssessmentAttemptAnswerEvent with its own UUID idempotency key and SQL-generated sequential question revision/UTC timestamp, not a mutable latest-answer row. A second distinct request key creates a new audit revision; same-key/same-payload replay is acknowledged once, changed replay denied. Maintain one immutable terminal AssessmentAttemptSubmission per attempt; never rewrite admission start/deadline or prior autosaves. A terminal submission does not produce grades or publish results.
+- SQL/server boundary: repeat active exact attested student+enrollment, approved+PUBLISHED/not-withdrawn draft, current teacher/term, sealed selected question/option and server deadline. Both event kinds serialize on school + attempt and reject new writes after cutoff/submission. Internal-only serializable services remain hidden until safe question projection, real student UI and cumulative database/CI/audit verification. See ADR-027.
+
+
 ## D-040: Fail-closed CBT admission reservation is not student examination delivery
 
 - Status: Phase 7 candidate authored, PostgreSQL/runtime verification pending.

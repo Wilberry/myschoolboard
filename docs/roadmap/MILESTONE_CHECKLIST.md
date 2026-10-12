@@ -1,5 +1,15 @@
 # Milestone Checklist
 
+### Phase 7 CBT immutable autosave and submission (unverified)
+
+- [ ] Apply cumulative `20261012310000_phase7_cbt_answer_submission` only on approved disposable PostgreSQL and validate all composite FKs, PL/pgSQL lock order, trigger/row deletion lifecycle, Prisma drift and SQL parser.
+- [ ] Execute synthetic authenticated exact enrolled student/foreign actor/revoked membership/binding/withdrawn publication/wrong class, stale term/teacher, not-in-draft question and out-of-options selectedIndex denials.
+- [ ] Verify serialized answer revisions and request-key replay: exact same event acknowledged once, changed replay rejected, concurrent same-key and different-key requests, terminal submission, duplicate submit and all post-submit or post-deadline writes rejected.
+- [ ] Verify trusted UTC DB save/submittedAt clocks cannot be backdated and audit UPDATE/DELETE/TRUNCATE blocked. No marking key or student score exposed in replies.
+- [ ] Build independently authorized, minimum-data **key-blind** question and resume read, safe real student HTTP delivery only after Phase 6 local verification; subsequently implement restricted scoring/teacher moderation/class record sheets and separate result publication.
+- [ ] Run all local CI-equivalent tests and `npm audit --audit-level=high` with no security-waivers, record exact tested commit and results. Keep all PRs draft/unmerged.
+
+
 ### Phase 7 internal CBT admission reservations (authoring checkpoint; unverified)
 
 - [ ] Validate cumulative additive migration `20261012300000_phase7_cbt_attempt_admission` on owner-confirmed disposable loopback PostgreSQL: school/draft/student/member/link/enrollment composite FKs, SQL checked 1–3 attempt numbers and immutable deadline, no direct SQL actor/enrollment/clock spoofing or tampering.

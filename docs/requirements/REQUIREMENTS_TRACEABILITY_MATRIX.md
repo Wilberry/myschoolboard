@@ -1,5 +1,13 @@
 # Requirements Traceability Matrix
 
+## ASM-REQ-001 / T-ASM-001 — append-only CBT answer revisions and final submission (PARTIAL; UNVERIFIED)
+
+- Models `AssessmentAttemptAnswerEvent` and `AssessmentAttemptSubmission` are additive, school/attempt/question/member composite-FK-bound, immutable and no-key/no-score. `20261012310000_phase7_cbt_answer_submission`: shared SQL role/identity/active enrollment/approval/publication/term/teacher/deadline guard, school + attempt locks, server-assigned UTC timestamps, question choices and sequential per-question revision, unique request replay key and one terminal submission.
+- Internal-only `src/modules/assessments/attempt-answer-service.ts` authenticates the actual STUDENT session, repeats current school/identity/attempt access, serializable exact-payload autosave retry and single final submit; only metadata acknowledgements. No student-facing API, attempt editor, answer-key read, marking result or report sheet.
+- `questions.integration.test.ts` extended with synthetic auth actor mismatch, accepted and changed-payload idempotent replay, revised response number, invalid question/choice, terminal submission and direct ORM audit-mutation denials. `scripts/phase7-cbt-answer-guard.test.mjs` added to Node guard suites while all existing Vitest/security audit checks remain enabled. Both AUTHORED BUT NOT EXECUTED. Exact PostgreSQL server clock, foreign classes, forged SQL and concurrent boundary races require disposable DB.
+- ASM-REQ-001 PARTIALLY AUTHORED, NOT VERIFIED; Phase 6 prerequisite and strict local CI/security gate BLOCKED. No real CBT availability.
+
+
 ## ASM-REQ-001 / T-ASM-001 — exact verified-student CBT attempt reservation (PARTIAL / UNVERIFIED)
 
 - Additive Prisma `AssessmentAttempt` and `20261012300000_phase7_cbt_attempt_admission` with school/draft/pupil/enrollment/class/session/student member/unrevoked attested link composite FKs, immutable attempt ordinal/timestamps and SQL approval+publication+active class/term/assignment and student actor/identity checks. Explicit PUBLISHED without WITHDRAWN and exact ACTIVE enrollment required; a STUDENT role, matching name/email or class string alone never enables admission.

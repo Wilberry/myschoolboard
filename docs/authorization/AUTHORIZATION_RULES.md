@@ -1,5 +1,12 @@
 # Authorization Rules
 
+## Phase 7 CBT autosave/submission boundary (internal-only, NOT VERIFIED)
+
+CBT answer and final submission events require the previously admitted exact AssessmentAttempt, actual signed-in same-school active STUDENT member, unrevoked admin-attested StudentAccountLink, exact ENROLLED StudentRecord/ACTIVE same-class/session StudentEnrollment, active original class/subject/session/term/teacher assignment, separate HM/Principal APPROVED and School Super Admin PUBLISHED events without WITHDRAWN. All actual mutations independently recheck this at DB INSERT under school+attempt lock. The database server sets UTC answer revisions/save time/final submit time, checks selectedIndex against the assessment's actual sealed question choices and rejects writes at/after deadline or after terminal submission. Server accepts only questionId, option index and UUID retry key; no client actor/user/class/session/clock/correct answer fields are accepted. A genuine identical replay returns a minimal acknowledgement only after current ownership/scope verification.
+
+A STUDENT role alone, broad academic:read, platform support privilege, guardian/teacher/admin role or matching name/email does not grant another student's attempt/answers. No student HTTP/API, quiz UI, scoring, answer key read or result publication exists in this candidate. Local tenant, trigger, race, CI and security acceptance mandatory before exposure.
+
+
 ## Phase 7 student CBT attempt reservation (internal-only, NOT VERIFIED)
 
 A separate APPROVED HM/Principal review and nonwithdrawn PUBLISHED School Super Admin authorization are necessary but insufficient for student CBT admission. The internal-only reservation service/SQL trigger additionally require an actual signed-in active same-school STUDENT membership with a permanently attested and unrevoked exact StudentAccountLink to an ENROLLED StudentRecord and ACTIVE StudentEnrollment for the **same assessment class and session**, plus active school, section, term, subject and original teacher assignment. No inferred student account, role-only pupil, Form Teacher, guardian, platform support, foreign tenant or school admin override. The PostgreSQL clock/row lock, not request timestamps, determines a unique attemptNumber and deadline bounded by the assessment close; unexpired attempts block parallel reservations, all historical starts count against maxAttempts.
