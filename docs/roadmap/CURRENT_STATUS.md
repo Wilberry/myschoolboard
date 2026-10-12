@@ -60,6 +60,10 @@ The cumulative `feature/school-section-setup-workspace` branch extends the prote
 
 The cumulative `feature/section-scoped-lesson-review` branch implements HEAD_OF_SECTION PRIMARY-only and PRINCIPAL SECONDARY-only review of SUBMITTED lesson notes tied to the exact active school-owned class section and verified grant. It authors a PostgreSQL status/event enum extension, reasoned immutable review-event trigger validation and a one-decision-per-revision unique index; three private/no-store reviewer routes; and seven real-session DB integration scenarios. A RETURNED note requires a new immutable original-teacher revision before resubmission; APPROVED does not publish. **SQL migration, DB tests, concurrent approvals, formatting, TypeScript, build, real Next/browser and full CI-equivalent audit are not executed**. Reviewer UI, section stage/scopes at other academic routes, enrollments, student release and attendance remain pending; do not call LES-REQ-001 or SEC-REQ-001 complete.
 
+## HM/Principal lesson reviewer workspace (draft, pending verification)
+
+The cumulative `feature/lesson-reviewer-workspace` branch extends section-scoped lesson-review APIs with a restricted Next server reviewer page, guarded school-detail navigation and a client queue/detail UI for reasoned `APPROVE` or `RETURN` using exact revision numbers. Four new synthetic DB-backed navigation tests are authored; prior seven review API tests remain authored but unexecuted. **No new DB test, migration, browser, typecheck, build, format/lint or full local CI audit has run**. Both approval and return preserve immutable history; APPROVED content stays non-public. Enrollment and student release, class-specific attendance, HM/Principal timetable control and production readiness remain out of scope.
+
 ## Current evidence
 
 - Published development checkpoint: `checkpoint/phase1-tenant-safe-foundation`; `main` remains unchanged

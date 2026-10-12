@@ -68,6 +68,10 @@ Two new disposable-DB cases extend school setup reader coverage for exact school
 
 Execute seven new disposable DB reviewer-route tests to verify HEAD_OF_SECTION PRIMARY-only and PRINCIPAL SECONDARY-only access, active verified same-school SECTION grant matched to the actual class.sectionId, denial of foreign/NULL/inactive sections and other actors, audited RETURN→new teacher revision→resubmission→APPROVAL, stale/duplicate review denial, direct SQL event tampering and role-stage forgery rejection, and term closure removing pending reads. Test concurrent contradictory review attempts against the same expected revision and the PostgreSQL unique partial index; verify reviewer UI/browser transport separately when available. These tests are **authored only** and are not production acceptance evidence.
 
+## Reviewer screen, safe school-detail link and result confirmation (unverified)
+
+Four synthetic/disposable PostgreSQL regression cases verify the review link is available only for active verified same-school PRIMARY HEAD_OF_SECTION or SECONDARY PRINCIPAL grants; other teachers/foreign schools have no link, revoking verified status hides it, and the final navigation query rechecks actual active school membership/section stage. The browser acceptance pass must test direct forbidden URL access, safe signed-in navigation, viewing a submitted note's complete revision history, required reasons, confirmation before approval/return, stale submissions, no publication UI and accessible keyboard focus/labels. These are **authored**, not run; existing reviewer endpoint DB tests remain unverified.
+
 ## Required negative tests
 
 - Cross-tenant access

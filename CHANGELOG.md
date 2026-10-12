@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-12 — Section-scoped lesson-note review workspace (unverified)
+
+- Added a server-authenticated reviewer page, actual section-grant-aware school navigation, and a client list/detail interface for reasoned, confirmed APPROVE/RETURN decisions through the existing section-bound API.
+- Only HEAD_OF_SECTION with verified PRIMARY grants or PRINCIPAL with verified SECONDARY grants sees the reviewer entry; the page independently rechecks permissions. No content is published to pupils.
+- Four more synthetic/disposable-DB reviewer navigation scenarios authored. **No new DB tests, browser, static/build or full CI-equivalent audit has run**; draft only, no main merge or deployment.
+
 ## 2026-10-12 — Section-scoped HM/Principal lesson note review (unverified)
 
 - Authored status and workflow transitions for APPROVED/RETURNED lesson notes with immutable actor/reason event history, PostgreSQL exact reviewer SECTION grant/stage/class validation, and one-review-per-revision uniqueness.
