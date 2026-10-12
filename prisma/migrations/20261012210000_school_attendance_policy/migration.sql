@@ -86,8 +86,15 @@ DECLARE
   local_today DATE;
   date_age INTEGER;
 BEGIN
-  IF TG_TABLE_NAME = 'AttendanceEvent' AND NEW."eventType" <> 'SUBMITTED' THEN
-    RETURN NEW;
+  -- The same function handles two different record shapes. Never access
+  -- eventType on AttendanceCorrectionRequest (which has no such column).
+  IF TG_TABLE_NAME = 'AttendanceEvent' THEN
+    IF NEW."eventType" <> 'SUBMITTED' THEN
+      RETURN NEW;
+    END IF;
+  ELSIF TG_TABLE_NAME <> 'AttendanceCorrectionRequest' THEN
+    RAISE EXCEPTION 'Unsupported attendance calendar trigger table'
+      USING ERRCODE = '23514';
   END IF;
 
   -- Serialize policy edits and direct attendance/correction writes on the
