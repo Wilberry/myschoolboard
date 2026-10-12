@@ -56,3 +56,30 @@ test("new hardening migration adds no destructive statement or original mark upd
   assert.doesNotMatch(hardening, /\b(?:DROP|TRUNCATE|DELETE\s+FROM|UPDATE\s+"AttendanceEntry"|ALTER\s+TABLE)\b/i);
   assert.match(hardening, /CREATE FUNCTION "validate_attendance_complete_roster"/);
 });
+
+const schoolPolicy = readFileSync(
+  new URL("../prisma/migrations/20261012210000_school_attendance_policy/migration.sql", import.meta.url),
+  "utf8",
+);
+
+test("school calendar policy stays versioned, actor-bound and immutable", () => {
+  assert.match(schema, /model SchoolAttendancePolicyRevision \{/);
+  assert.match(schema, /@@unique\(\[schoolId, revision\]\)/);
+  assert.match(schoolPolicy, /"SchoolAttendancePolicyRevision_validate"/);
+  assert.match(schoolPolicy, /"SchoolAttendancePolicyRevision_immutable"/);
+  assert.match(schoolPolicy, /"SchoolAttendancePolicyRevision_no_truncate"/);
+  assert.match(schoolPolicy, /"SchoolAttendancePolicyRevision_actor_fkey"/);
+  assert.match(schoolPolicy, /"role" IN \('SCHOOL_ADMIN', 'SCHOOL_SUPER_ADMIN'\)/);
+  assert.match(schoolPolicy, /pg_timezone_names/);
+});
+
+test("PostgreSQL calendar policy checks preserve the previous UTC guard", () => {
+  assert.match(schoolPolicy, /"AttendanceEvent_school_calendar"/);
+  assert.match(schoolPolicy, /"AttendanceCorrectionRequest_school_calendar"/);
+  assert.match(schoolPolicy, /"submissionBackdateDays"/);
+  assert.match(schoolPolicy, /"correctionWindowDays"/);
+  assert.match(schoolPolicy, /FOR UPDATE/);
+  assert.match(schoolPolicy, /record_date > \(CURRENT_TIMESTAMP AT TIME ZONE 'Etc\/UTC'\)::date/);
+  assert.match(ledger, /"attendanceDate" <= \(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'\)::date/);
+  assert.doesNotMatch(schoolPolicy, /\bDROP TABLE\b|\bTRUNCATE TABLE\b|UPDATE\s+"AttendanceEntry"/);
+});
