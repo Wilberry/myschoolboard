@@ -7,6 +7,8 @@ import { LessonNoteError } from "./service";
 interface ReleasedLessonRow {
   id: string;
   topic: string;
+  kind: "LESSON_NOTE" | "SCHEME_OF_WORK";
+  weeklyPlan: unknown;
   className: string;
   subjectName: string;
   termName: string;
@@ -63,7 +65,7 @@ export async function readReleasedLessonsForStudent(schoolId: string) {
   if (!eligible.length) throw new LessonNoteError("NOT_FOUND");
 
   const notes = await prisma.$queryRaw<ReleasedLessonRow[]>(Prisma.sql`
-    SELECT DISTINCT n."id", n."topic", c."name" AS "className",
+    SELECT DISTINCT n."id", n."topic", n."kind", content."weeklyPlan", c."name" AS "className",
       subject."name" AS "subjectName", term."name" AS "termName",
       n."currentRevision" AS "revisionNumber",
       content."objectives", content."content"
