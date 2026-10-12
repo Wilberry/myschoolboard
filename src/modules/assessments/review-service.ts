@@ -107,6 +107,75 @@ export async function listAssessmentReviewQueue(schoolId: string) {
   `);
 }
 
+/** Reviewer-only item preview. Authorization is re-evaluated in one exact
+ * school/section/assignment/term SQL query. No key table is selected or
+ * joined and no student/user answer material is present in the response. */
+export async function readAssessmentReviewItems(schoolId: string, draftId: string) {
+  if (!id.safeParse(schoolId).success || !id.safeParse(draftId).success) {
+    throw new AssessmentError("INVALID_INPUT");
+  }
+  const userId = await assessmentUserId();
+  const rows = await prisma.$queryRaw<Array<{
+    questionId: string; position: number; points: number;
+    prompt: string; options: unknown;
+  }>>(Prisma.sql`
+    SELECT q."id" AS "questionId", item."position", item."points",
+      q."prompt", q."options"
+    FROM "AssessmentDraft" draft
+    JOIN "School" school ON school."id"=draft."schoolId"
+      AND school."isActive"=true
+    JOIN "AssessmentDraftSeal" seal ON seal."schoolId"=draft."schoolId"
+      AND seal."draftId"=draft."id"
+    JOIN "AssessmentDraftQuestion" item ON item."schoolId"=draft."schoolId"
+      AND item."draftId"=draft."id"
+    JOIN "AssessmentQuestion" q ON q."schoolId"=draft."schoolId"
+      AND q."id"=item."questionId"
+      AND q."classId"=draft."classId" AND q."subjectId"=draft."subjectId"
+      AND q."sessionId"=draft."sessionId" AND q."termId"=draft."termId"
+      AND q."assignmentId"=draft."assignmentId"
+      AND q."teacherMembershipId"=draft."teacherMembershipId"
+    JOIN "AcademicSession" period ON period."schoolId"=draft."schoolId"
+      AND period."id"=draft."sessionId" AND period."status"='ACTIVE'
+    JOIN "AcademicTerm" term ON term."schoolId"=draft."schoolId"
+      AND term."sessionId"=draft."sessionId"
+      AND term."id"=draft."termId" AND term."status"='ACTIVE'
+    JOIN "SchoolClass" room ON room."schoolId"=draft."schoolId"
+      AND room."id"=draft."classId" AND room."isActive"=true
+    JOIN "SchoolSection" section ON section."schoolId"=room."schoolId"
+      AND section."id"=room."sectionId" AND section."isActive"=true
+    JOIN "Subject" subject ON subject."schoolId"=draft."schoolId"
+      AND subject."id"=draft."subjectId" AND subject."isActive"=true
+    JOIN "Membership" teacher ON teacher."schoolId"=draft."schoolId"
+      AND teacher."id"=draft."teacherMembershipId"
+      AND teacher."userId"=draft."teacherUserId"
+      AND teacher."role"='TEACHER' AND teacher."isActive"=true
+    JOIN "TeacherClassSubjectAssignment" assignment
+      ON assignment."schoolId"=draft."schoolId"
+      AND assignment."id"=draft."assignmentId"
+      AND assignment."membershipId"=teacher."id"
+      AND assignment."classId"=draft."classId"
+      AND assignment."subjectId"=draft."subjectId"
+      AND assignment."sessionId"=draft."sessionId"
+      AND assignment."status"='ACTIVE'
+    JOIN "Membership" reviewer ON reviewer."schoolId"=draft."schoolId"
+      AND reviewer."userId"=${userId}
+      AND reviewer."isActive"=true
+      AND reviewer."role" IN ('HEAD_OF_SECTION','PRINCIPAL')
+    JOIN "ScopeGrant" scope ON scope."membershipId"=reviewer."id"
+      AND scope."type"='SECTION' AND scope."verified"=true
+      AND scope."scopeId"=section."id"
+    WHERE draft."schoolId"=${schoolId} AND draft."id"=${draftId}
+      AND NOT EXISTS (SELECT 1 FROM "AssessmentReviewEvent" earlier
+        WHERE earlier."schoolId"=draft."schoolId"
+          AND earlier."draftId"=draft."id")
+      AND ((reviewer."role"='HEAD_OF_SECTION' AND section."stage"='PRIMARY')
+        OR (reviewer."role"='PRINCIPAL' AND section."stage"='SECONDARY'))
+    ORDER BY item."position" ASC LIMIT 50
+  `);
+  if (!rows.length) throw new AssessmentError("NOT_FOUND");
+  return rows;
+}
+
 /** HM PRIMARY / Principal SECONDARY verified-section decision is terminal
  * for this immutable draft. It never publishes a CBT to students. */
 export async function decideAssessmentReview(
