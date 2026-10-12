@@ -1,5 +1,10 @@
 # Current Status
 
+## Phase 6 structured schemes of work (authored; UNVERIFIED)
+
+`feature/lesson-schemes-of-work` builds on draft student lesson release PR #48 and adds versioned SCHEME_OF_WORK materials with ordered week/topic/outcome/activity entries, one scheme per current teacher assignment/term, SQL revision shape checks and immutable material classification, teacher form and protected page. The existing exact HM PRIMARY/Principal SECONDARY reviewer and distinct release paths now project weekly plans, and enrolled explicitly linked STUDENT access is still conditional on APPROVED + RELEASED without WITHDRAWN. Synthetic create/invalid week/return/revise/reapprove/release/student class visibility tests are **authored not executed**. All Prisma migrations, SQL, full Vitest, type/lint/build, browser and high-severity audit/local CI-equivalent remain pending. Phase 6 functional source is broadly authored but **NOT accepted or marked complete**.
+
+
 ## Phase 6 verified student lesson visibility (authored, not executed)
 
 `feature/lesson-verified-student-release-read` builds on release PR #47 and adds an audited explicit School Administrator STUDENT membership-to-StudentRecord link/revocation model and private manual verification screen, plus a deny-by-default student content GET and lesson page. The final SQL projection requires latest linked exact student identity, ACTIVE started school/class/session enrollment, ACTIVE term/assignment, exact APPROVED lesson revision, independent RELEASED event and no WITHDRAWN event; original lesson and identity audit history remain immutable. Synthetic exact-class/role, unauthorized no-link, revoked link, enrollment end and withdrawal tests added to the lesson review suite. **Authored but NOT EXECUTED**, migration not applied; no live account link, merge, deployment or school policy adoption. Schemes-of-work development and full Phase 6 security/CI exit evidence remain open. D-034 / ADR-020.
