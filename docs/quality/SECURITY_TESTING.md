@@ -56,6 +56,10 @@ Six new real Better Auth/disposable PostgreSQL integration cases exercise the Fo
 
 Six disposable-DB integration cases validate anonymous/teacher/foreign-school denial, forged academic term/assignment IDs, room normalization, overlapping teacher/class/room conflicts, adjacent and different-day slots, cancellation releasing the interval while preserving audit events, update/delete audit tamper rejection, and denial of new slots after term closure. Cross-school term/session/class/assignment and optional room FKs, active teacher membership and private/no-store responses are mandatory. PostgreSQL `btree_gist` exclusion constraints are the concurrency backstop; **actual migration and concurrent race tests remain pending local execution**.
 
+## Timetable administration view isolation (authored, awaiting local test)
+
+The server-only `readTimetableSetup` rechecks the Better Auth user, active school `school:configure` membership and the current role before disclosing timetable data. School, active term, room, teacher assignment and slot data queries each repeat the same-school, active-membership role predicate and enforce explicit field selection/caps. A teacher or foreign administrator is not authorized just because they know a path. Five disposable-DB integration cases are authored: own-school active summary, foreign/teacher denial, revoked membership, final SQL tenant/role predicates and cancelled-slot exclusion. Browser interaction with time inputs, collision errors, cancellation confirmation, and HTTP/session cookie protection remains unverified.
+
 ## Requirement
 
 Security tests must be executed before release and must continue as part of regression checks.

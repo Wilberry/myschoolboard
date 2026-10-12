@@ -36,6 +36,10 @@ The cumulative `feature/form-teacher-responsibility` branch introduces separate 
 
 The `feature/timetable-conflict-foundation` branch authors school-owned room/slot/event models and a migration with PostgreSQL `btree_gist` teacher/class/room overlap exclusions, plus three school-admin-only room/slot/cancellation POST routes and six database-backed regression cases. Scheduling requires the exact ACTIVE school-owned session/term teacher allocation, while cancelled slots remain audit history. **The migration, tests, lint, TypeScript, build, and CI-equivalent audit have not run.** Protected timetable read UI, room lifecycle, actual concurrent collision evidence and Phase 6 lesson attendance remain pending. No merge or deployment is authorized.
 
+## Phase 5 timetable administration workspace (awaiting local verification)
+
+The cumulative `feature/school-admin-timetable-workspace` branch adds a protected, server-rendered weekly timetable view, a client editor for school-owned room/scheduling/cancellation POST flows, and a read helper that repeats active school-membership/role predicates for every selected record collection. An academic setup navigation link is visible only after server permission checks. Five database-backed isolation cases cover active school data, wrong-school and teacher denials, membership revocation, SQL query scopes, and cancelled-booking exclusion. **No new test, actual browser run, build, local PostgreSQL migration, or complete CI-equivalent audit has been executed.** Student timetables, room lifecycle, timetable editing, planned-term previews, capacity/stream allocation and Phase 6 attendance/lesson-note workflows remain open.
+
 ## Current evidence
 
 - Published development checkpoint: `checkpoint/phase1-tenant-safe-foundation`; `main` remains unchanged

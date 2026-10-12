@@ -14,6 +14,12 @@
 
 This setup view supports draft sessions and terms plus class/subject creation; it does **not** activate periods, publish academic results, edit historical records or change school approval flows.
 
+## School administrator timetable workspace (authored, pending browser verification)
+
+The `/schools/{schoolId}/timetable` page is linked from the separately authorized academic setup screen and independently re-authenticates the School Administrator or School Super Admin. Its server-side `readTimetableSetup` returns only the active same-school term, room, assignment and slot records needed to manage a weekly timetable, with explicit field projection, capped collection sizes and a fresh active school-membership/role predicate on **each final data query**. Staff names are visible only to the authorized school administrator in this view; no student or guardian schedule endpoint exists.
+
+The client editor uses the existing `POST` room/slot/cancellation APIs instead of trusting the UI to enforce business rules. It offers accessible labels, school-local time inputs, role/period-aware assignment selection, safe error/status messages, and reasoned cancellation confirmation. The server/database remain authoritative for overlapping periods and cross-school authorization. **Five new disposable-DB read-isolation cases and real-browser tests are authored/pending respectively; the complete pipeline has not run.**
+
 ## Platform Super Admin dashboard
 
 - Tenant status summary
