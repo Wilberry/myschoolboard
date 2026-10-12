@@ -1,5 +1,16 @@
 # Configuration Catalog
 
+## Attendance school calendar policy (development-only implementation default)
+
+| Setting | Default (no revision) | Scope / editor | Constraints | Audit / enforcement |
+| --- | --- | --- | --- | --- |
+| Attendance IANA timezone | Etc/UTC | School Administrator or School Super Admin with active same-school school:configure | Must be recognized by both Node Intl and PostgreSQL | Immutable, actor-attributed SchoolAttendancePolicyRevision |
+| Daily attendance historical entry | Previous 7 local calendar days | Same | Configurable 0–30 days; submission cannot exceed school-local **or UTC** current day | Transactional server check and independent PostgreSQL BEFORE INSERT audit-event guard |
+| Attendance correction window | 30 local calendar days from attendance date | Same | Configurable 0–365 days, while original session/class/section remain active and Form Teacher/reviewer authority holds | Transactional request check plus independent PostgreSQL BEFORE INSERT correction-request guard |
+
+These are restricted engineering defaults, not an authorized national or individual school policy. School holidays, extraordinary closures, retrospective approvals, or non-teaching-day exceptions have not been implemented. Changes append a new auditable revision and never rewrite historic register marks or decisions. D-031 / ADR-017 describe the narrower-than-existing-UTC safeguard.
+
+
 This catalog lists the major configurable policies that must be supported at the school or platform level.
 
 | Setting | Default | Scope | Authorized editor | Validation rules | Versioning | Modules affected |

@@ -1,5 +1,14 @@
 # Milestone Checklist
 
+### School timezone and attendance-window policy — unverified checklist
+
+- [ ] Confirm additive migration `20261012210000_school_attendance_policy` applies cleanly **only** on operator-confirmed disposable PostgreSQL, including PostgreSQL timezone name table, SQL lock order, role validation, immutable policy history and UTC legacy boundary.
+- [ ] Execute pure `school-date-policy.test.ts` across DST changes and UTC/local midnight overlap; verify calendar-day arithmetic rather than time duration.
+- [ ] Execute synthetic policy integration suite for admin role, cross-school denial, version history, forged raw DB actors, stale revisions, membership revocation, direct SQL UPDATE/DELETE/TRUNCATE and school cascade behavior.
+- [ ] Add live HTTP/Next UI keyboard and accessibility tests for policy editor; confirm audit actor, reason and version without ever altering historic attendance.
+- [ ] Run unchanged full local CI-equivalent with explicit disposable DB, including format, lint, typecheck, whole Vitest/Node tests, build, and strict `npm audit --audit-level=high`; no waivers.
+
+
 ### Direct-SQL incomplete-roster prevention (unverified)
 
 - [ ] Apply review-only `20261012200000_attendance_complete_roster_guard` **after** the earlier attendance migrations, only against confirmed disposable test PostgreSQL; assert full two-pupil register + immutable SUBMITTED event succeeds and a one-pupil direct-write attempt atomically rolls back.

@@ -2,6 +2,8 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
+import { loadAttendanceDatePolicy } from "./policy-service";
+import { isAttendanceDateAllowed } from "./school-date-policy";
 import {
   canApproveRegister,
   canSubmitAttendance,
@@ -87,6 +89,10 @@ export async function submitAttendance(schoolId: string, input: unknown) {
         WHERE "id" = ${schoolId} FOR UPDATE`;
       await tx.$queryRaw`SELECT "id" FROM "Membership"
         WHERE "schoolId" = ${schoolId} AND "userId" = ${userId} FOR UPDATE`;
+      const datePolicy = await loadAttendanceDatePolicy(tx, schoolId);
+      if (!isAttendanceDateAllowed(value.attendanceDate, datePolicy, "SUBMIT")) {
+        throw new AttendanceError("INVALID_INPUT");
+      }
       const actor = await tx.membership.findFirst({
         where: {
           schoolId, userId, isActive: true,

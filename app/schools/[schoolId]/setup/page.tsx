@@ -41,6 +41,11 @@ export default async function SchoolSetupPage({
             Manage weekly timetable
           </Link>
         </div>
+        <p className="setup-navigation">
+          <Link href={`/schools/${schoolId}/attendance-policy`} className="secondary-link">
+            Configure school attendance calendar and correction windows
+          </Link>
+        </p>
         <SchoolSetupEditor schoolId={schoolId} snapshot={snapshot} />
       </section>
     </main>
