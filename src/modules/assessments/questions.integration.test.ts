@@ -7,6 +7,8 @@ vi.mock("next/headers", () => ({ headers: async () => context.headers }));
 
 import { GET, POST } from "@/app/api/schools/[schoolId]/assessment-questions/route";
 import { GET as REVIEW_QUEUE } from "@/app/api/schools/[schoolId]/assessment-reviews/route";
+import { GET as PUBLICATION_QUEUE } from "@/app/api/schools/[schoolId]/assessment-publications/route";
+import { POST as PUBLICATION_DECISION } from "@/app/api/schools/[schoolId]/assessment-publications/[draftId]/decision/route";
 import { GET as REVIEW_DETAIL } from "@/app/api/schools/[schoolId]/assessment-reviews/[draftId]/route";
 import { POST as REVIEW_DECISION } from "@/app/api/schools/[schoolId]/assessment-reviews/[draftId]/decision/route";
 import {
@@ -59,7 +61,7 @@ async function list(actor: string, schoolId = schoolA) {
 
 describe("Phase 7 exact-assignment private question bank", () => {
   beforeAll(async () => {
-    for (const name of ["teacher", "other", "admin", "foreign", "head", "principal"]) {
+    for (const name of ["teacher", "other", "admin", "foreign", "head", "principal", "super"]) {
       const email = `asm-${name}-${suffix}@example.test`;
       const registered = await auth.api.signUpEmail({
         body: { name: `Synthetic ${name}`, email, password },
@@ -84,6 +86,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
       ["foreign", "TEACHER", schoolB],
       ["head", "HEAD_OF_SECTION", schoolA],
       ["principal", "PRINCIPAL", schoolA],
+      ["super", "SCHOOL_SUPER_ADMIN", schoolA],
     ] as const) {
       const member = await prisma.membership.create({
         data: { userId: users[name], schoolId, role },
@@ -429,6 +432,74 @@ describe("Phase 7 exact-assignment private question bank", () => {
       where: { schoolId: schoolA, draftId },
     })).toBe(1);
     // A RETURNED immutable configuration cannot be edited: author new draft.
+  });
+
+  it("requires independent school super admin publication after APPROVED, not RETURNED", async () => {
+    async function listPublication(actor: string, schoolId = schoolA) {
+      return PUBLICATION_QUEUE(req(actor, schoolId, "GET"),
+        { params: Promise.resolve({ schoolId }) });
+    }
+    async function publish(actor: string, draftId: string,
+      action: "PUBLISHED" | "WITHDRAWN", schoolId = schoolA) {
+      return PUBLICATION_DECISION(req(actor, schoolId, "POST", {
+        action, reason: "Synthetic independent school publication authorization",
+      }), { params: Promise.resolve({ schoolId, draftId }) });
+    }
+    const approved = await prisma.assessmentReviewEvent.findFirstOrThrow({
+      where: { schoolId: schoolA, decision: "APPROVED" },
+      select: { draftId: true },
+    });
+    const returned = await prisma.assessmentReviewEvent.findFirstOrThrow({
+      where: { schoolId: schoolA, decision: "RETURNED" },
+      select: { draftId: true },
+    });
+    for (const [actor, code] of [
+      ["", 401], ["teacher", 404], ["admin", 404],
+      ["head", 404], ["principal", 404], ["foreign", 404],
+    ] as const) {
+      expect((await listPublication(actor)).status).toBe(code);
+      expect((await publish(actor, approved.draftId, "PUBLISHED")).status).toBe(code);
+    }
+    expect((await publish("super", approved.draftId, "PUBLISHED", schoolB)).status).toBe(404);
+    expect((await publish("super", returned.draftId, "PUBLISHED")).status).toBe(404);
+    expect((await publish("super", approved.draftId, "WITHDRAWN")).status).toBe(409);
+    const listing = await listPublication("super");
+    expect(listing.status).toBe(200);
+    expect(listing.headers.get("cache-control")).toBe("private, no-store");
+    const response = await listing.json();
+    expect(response.drafts.some((x: { id: string }) => x.id === approved.draftId)).toBe(true);
+    expect(response.drafts.some((x: { id: string }) => x.id === returned.draftId)).toBe(false);
+    expect(JSON.stringify(response)).not.toContain("correctIndex");
+    expect(JSON.stringify(response)).not.toContain("answerKey");
+
+    const published = await publish("super", approved.draftId, "PUBLISHED");
+    expect(published.status).toBe(201);
+    expect((await published.json()).event.action).toBe("PUBLISHED");
+    expect((await publish("super", approved.draftId, "PUBLISHED")).status).toBe(409);
+
+    await expect(prisma.assessmentPublicationEvent.create({
+      data: {
+        schoolId: schoolA, draftId: approved.draftId, action: "WITHDRAWN",
+        actorMembershipId: members.admin, actorUserId: users.admin,
+        reason: "Forged ordinary administrator withdrawal",
+      },
+    })).rejects.toThrow();
+
+    const withdrawal = await publish("super", approved.draftId, "WITHDRAWN");
+    expect(withdrawal.status).toBe(201);
+    expect((await withdrawal.json()).event.action).toBe("WITHDRAWN");
+    expect((await publish("super", approved.draftId, "WITHDRAWN")).status).toBe(409);
+    expect((await publish("super", approved.draftId, "PUBLISHED")).status).toBe(409);
+    const events = await prisma.assessmentPublicationEvent.findMany({
+      where: { schoolId: schoolA, draftId: approved.draftId },
+    });
+    expect(events.map(e => e.action).sort()).toEqual(["PUBLISHED","WITHDRAWN"]);
+    await expect(prisma.assessmentPublicationEvent.update({
+      where: { id: events[0].id }, data: { reason: "Tampered publication decision" },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentPublicationEvent.delete({
+      where: { id: events[0].id },
+    })).rejects.toThrow();
   });
 
   it("revoking exact verified section grant blocks new academic moderation", async () => {
