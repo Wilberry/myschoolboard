@@ -4,12 +4,9 @@ const headers = { "Cache-Control": "private, no-store" };
 export async function POST(request: Request,
   { params }: { params: Promise<{ schoolId: string; attemptId: string }> }) {
   try {
-    if (new URL(request.url).search || request.headers.get("content-length") !== "0") {
-      // Only an empty POST may initiate automatic objective marking.
-      if (new URL(request.url).search ||
-        Number(request.headers.get("content-length") ?? 0) !== 0) {
-        return Response.json({ error: "Invalid request" }, { status: 400, headers });
-      }
+    // Scoring accepts no client-provided numeric mark or student identifier.
+    if (new URL(request.url).search || request.body !== null) {
+      return Response.json({ error: "Invalid request" }, { status: 400, headers });
     }
     const { schoolId, attemptId } = await params;
     const score = await scoreInternalSubmittedAttempt(schoolId, attemptId);
