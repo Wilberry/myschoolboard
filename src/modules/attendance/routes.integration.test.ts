@@ -275,6 +275,47 @@ describe("Phase 6 tenant-scoped attendance submission and review", () => {
     })).toBe(0);
   });
 
+  it("rejects a forged SQL submission event with only one of two active pupils", async () => {
+    const before = await prisma.attendanceRegister.count({
+      where: { schoolId: a, classId: classC, sessionId: session },
+    });
+    expect(before).toBe(0);
+    await expect(prisma.$transaction(async tx => {
+      const register = await tx.attendanceRegister.create({
+        data: {
+          schoolId: a, sessionId: session, classId: classC,
+          attendanceDate: new Date(`${today}T00:00:00.000Z`),
+          submittedByMembershipId: members.form,
+          formTeacherResponsibilityId: responsibilityC,
+        },
+      });
+      // This single row is individually valid, but the full class contains
+      // TWO active enrolled pupils. The submission audit must deny the
+      // incomplete class roster even if a direct database writer skips HTTP.
+      await tx.attendanceEntry.create({
+        data: {
+          schoolId: a, registerId: register.id,
+          sessionId: session, classId: classC,
+          enrollmentId: enrollmentC, studentId: personC, mark: "PRESENT",
+        },
+      });
+      await tx.attendanceEvent.create({
+        data: {
+          schoolId: a, registerId: register.id,
+          actorUserId: users.form, actorMembershipId: members.form,
+          eventType: "SUBMITTED",
+        },
+      });
+    })).rejects.toThrow();
+    expect(await prisma.attendanceRegister.count({
+      where: { schoolId: a, classId: classC, sessionId: session },
+    })).toBe(0);
+    expect(await prisma.attendanceEvent.count({
+      where: { schoolId: a, eventType: "SUBMITTED",
+        register: { classId: classC, sessionId: session } },
+    })).toBe(0);
+  });
+
   it("allows only one of two concurrent exact class/date submissions", async () => {
     context.headers = new Headers({ cookie: cookies.form });
     const input = { ...formData(classC, enrollmentC), marks: [
