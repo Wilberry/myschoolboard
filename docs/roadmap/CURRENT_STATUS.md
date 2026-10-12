@@ -1,5 +1,10 @@
 # Current Status
 
+## Student administration workspace (draft; validation pending)
+
+From verified base `741f8eb028a3d41125b5a509292bd0ce8f6e3237`, `feature/student-admin-workspace` adds an administrator-only student register, bounded history read, and browser controls invoking the existing audited register/enroll/withdraw POST routes. An authenticated active same-school `school:configure` principal and per-query membership/tenant predicates gate all reads. Synthetic disposable-database isolation tests have been authored **but not run**. No migration, full CI-equivalent run or dependency-audit execution is claimed for this candidate. Phase 6 attendance entry, exact active class/session/student verification, Form Teacher permission, section-specific HM/Principal approval and immutable attendance events remain to implement; no attendance endpoint has been exposed. The existing security audit gate remains mandatory and the hosted GitHub Actions billing block remains unresolved.
+
+
 ## Status summary
 
 The project is no longer documentation-only. A verified local Phase 1 foundation has been implemented in the working tree and validated against the repository’s auth, tenancy, migration, and build workflow. The implementation remains local-only and is not a production deployment.
