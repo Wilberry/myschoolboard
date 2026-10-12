@@ -984,10 +984,22 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect((await postRoster.json()).students).toMatchObject([{
       studentId: pupilId, proposed: true,
     }]);
-    // Manual proposals cannot enter the objective-score ledger or class sheets.
-    expect(await prisma.assessmentAttemptScore.count({
-      where: { schoolId: schoolA, attempt: { studentId: pupilId } },
-    })).toBeGreaterThanOrEqual(0);
+    // Proposals are deliberately excluded from class record aggregates
+    // until independent academic review and correction controls exist.
+    const recordQuery = new URLSearchParams({
+      classId, sessionId, termId, subjectId,
+    });
+    const provisional = await CLASS_RECORDS_GET(new Request(
+      `http://localhost/api/schools/${schoolA}/assessment-class-records?${recordQuery}`,
+    ), { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(provisional.status).toBe(200);
+    const content = await provisional.json();
+    const own = content.sheet.students.find(
+      (value: { studentId: string }) => value.studentId === pupilId,
+    );
+    expect(own.assessments.some((a: { title: string }) =>
+      a.title === componentInput.title)).toBe(false);
+
   });
 
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
