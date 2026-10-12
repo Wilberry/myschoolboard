@@ -1271,10 +1271,10 @@ model AssessmentGradingPolicyRevision {
   createdAt DateTime @default(now())
 
   school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  session AcademicSession @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
-  term AcademicTerm @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction)
-  schoolClass SchoolClass @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
-  subject Subject @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction)
+  session AcademicSession @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentGradingPolicyRevision_session_fkey")
+  term AcademicTerm @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction, map: "AssessmentGradingPolicyRevision_term_fkey")
+  schoolClass SchoolClass @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentGradingPolicyRevision_schoolClass_fkey")
+  subject Subject @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentGradingPolicyRevision_subject_fkey")
   actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentGradingPolicyRevision_actor_fkey")
 
   @@unique([schoolId, sessionId, termId, classId, subjectId, version], map: "AssessmentGradingPolicyRevision_context_version_key")
