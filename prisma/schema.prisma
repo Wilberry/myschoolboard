@@ -263,6 +263,7 @@ model School {
   assessmentQuestionKeys AssessmentQuestionKey[]
   assessmentDrafts AssessmentDraft[]
   assessmentDraftQuestions AssessmentDraftQuestion[]
+  assessmentDraftSeals AssessmentDraftSeal[]
 }
 
 model Membership {
@@ -1039,6 +1040,7 @@ model AssessmentDraft {
   @@unique([schoolId, id])
   @@index([schoolId, teacherMembershipId, createdAt])
   @@index([schoolId, classId, subjectId, termId])
+  seal AssessmentDraftSeal?
 }
 
 /** Snapshot of the chosen private question IDs and their positive marks.
@@ -1058,4 +1060,16 @@ model AssessmentDraftQuestion {
   @@unique([schoolId, draftId, position])
   @@unique([schoolId, draftId, questionId])
   @@index([schoolId, questionId])
+}
+
+/** Atomically seals the exact immutable DRAFT item snapshot. Only sealed
+ * drafts are visible to staff lists; sealing never publishes a student exam. */
+model AssessmentDraftSeal {
+  draftId String @id
+  schoolId String
+  sealedAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  draft AssessmentDraft @relation(fields: [schoolId, draftId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentDraftSeal_draft_fkey")
+
+  @@unique([schoolId, draftId])
 }
