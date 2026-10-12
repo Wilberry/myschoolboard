@@ -95,3 +95,89 @@ export async function scoreInternalSubmittedAttempt(
   }
   throw new AssessmentError("INTERNAL");
 }
+
+/** Current assignment TEACHER's own submitted-but-unscored attempt queue.
+ * Metadata only, not question responses or answer keys. The exact final
+ * SELECT repeats user/teacher/assignment/term/class/subject restrictions. */
+export async function listOwnUnscoredCbtAttempts(schoolId: string) {
+  if (!idValid(schoolId)) throw new AssessmentError("INVALID_INPUT");
+  const userId = await assessmentUserId();
+  const permitted = await prisma.$queryRaw<Array<{ allowed: boolean }>>(Prisma.sql`
+    SELECT true AS "allowed" FROM "School" school
+    JOIN "Membership" teacher ON teacher."schoolId"=school."id"
+      AND teacher."userId"=${userId}
+      AND teacher."role"='TEACHER' AND teacher."isActive"=true
+    JOIN "TeacherClassSubjectAssignment" assignment
+      ON assignment."schoolId"=school."id"
+      AND assignment."membershipId"=teacher."id"
+      AND assignment."status"='ACTIVE' AND assignment."sessionId" IS NOT NULL
+    JOIN "AcademicSession" period ON period."schoolId"=assignment."schoolId"
+      AND period."id"=assignment."sessionId" AND period."status"='ACTIVE'
+    WHERE school."id"=${schoolId} AND school."isActive"=true LIMIT 1
+  `);
+  if (!permitted.length) throw new AssessmentError("NOT_FOUND");
+  return prisma.$queryRaw<Array<{
+    attemptId: string; draftId: string; title: string;
+    className: string; subjectName: string;
+    admissionNumber: string; attemptNumber: number; submittedAt: Date;
+  }>>(Prisma.sql`
+    SELECT attempt."id" AS "attemptId", draft."id" AS "draftId",
+      draft."title", room."name" AS "className",
+      subject."name" AS "subjectName", pupil."admissionNumber",
+      attempt."attemptNumber", finished."submittedAt"
+    FROM "AssessmentAttempt" attempt
+    JOIN "School" school ON school."id"=attempt."schoolId"
+      AND school."isActive"=true
+    JOIN "AssessmentAttemptSubmission" finished
+      ON finished."schoolId"=attempt."schoolId"
+      AND finished."attemptId"=attempt."id"
+      AND finished."submittedAt" <= attempt."deadlineAt"
+    JOIN "AssessmentDraft" draft ON draft."schoolId"=attempt."schoolId"
+      AND draft."id"=attempt."draftId"
+      AND draft."classId"=attempt."classId"
+      AND draft."sessionId"=attempt."sessionId"
+    JOIN "AssessmentDraftSeal" seal ON seal."schoolId"=draft."schoolId"
+      AND seal."draftId"=draft."id"
+    JOIN "AssessmentReviewEvent" review ON review."schoolId"=draft."schoolId"
+      AND review."draftId"=draft."id" AND review."decision"='APPROVED'
+    JOIN "AssessmentPublicationEvent" published
+      ON published."schoolId"=draft."schoolId"
+      AND published."draftId"=draft."id" AND published."action"='PUBLISHED'
+    JOIN "Membership" teacher ON teacher."schoolId"=draft."schoolId"
+      AND teacher."id"=draft."teacherMembershipId"
+      AND teacher."userId"=${userId}
+      AND teacher."role"='TEACHER' AND teacher."isActive"=true
+    JOIN "TeacherClassSubjectAssignment" assignment
+      ON assignment."schoolId"=draft."schoolId"
+      AND assignment."id"=draft."assignmentId"
+      AND assignment."membershipId"=teacher."id"
+      AND assignment."classId"=draft."classId"
+      AND assignment."subjectId"=draft."subjectId"
+      AND assignment."sessionId"=draft."sessionId"
+      AND assignment."status"='ACTIVE'
+    JOIN "AcademicSession" period ON period."schoolId"=draft."schoolId"
+      AND period."id"=draft."sessionId" AND period."status"='ACTIVE'
+    JOIN "AcademicTerm" term ON term."schoolId"=draft."schoolId"
+      AND term."sessionId"=draft."sessionId"
+      AND term."id"=draft."termId" AND term."status"='ACTIVE'
+    JOIN "SchoolClass" room ON room."schoolId"=draft."schoolId"
+      AND room."id"=draft."classId" AND room."isActive"=true
+    JOIN "SchoolSection" section ON section."schoolId"=room."schoolId"
+      AND section."id"=room."sectionId" AND section."isActive"=true
+    JOIN "Subject" subject ON subject."schoolId"=draft."schoolId"
+      AND subject."id"=draft."subjectId" AND subject."isActive"=true
+    JOIN "StudentRecord" pupil ON pupil."schoolId"=attempt."schoolId"
+      AND pupil."id"=attempt."studentId"
+    LEFT JOIN "AssessmentAttemptScore" scored
+      ON scored."schoolId"=attempt."schoolId"
+      AND scored."attemptId"=attempt."id"
+    WHERE attempt."schoolId"=${schoolId} AND scored."id" IS NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM "AssessmentPublicationEvent" withdrawn
+        WHERE withdrawn."schoolId"=draft."schoolId"
+          AND withdrawn."draftId"=draft."id"
+          AND withdrawn."action"='WITHDRAWN'
+      )
+    ORDER BY finished."submittedAt" ASC, attempt."id" ASC LIMIT 100
+  `);
+}

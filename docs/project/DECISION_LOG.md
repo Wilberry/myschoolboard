@@ -1,5 +1,10 @@
 # Decision Log
 
+## D-044: Teacher-only provisional class record, best scored attempt until school grade policy
+
+- Status: Authored; unverified. The teacher owning an exact ACTIVE class/subject/session assignment may trigger SQL-computed objective marking of their submitted attempts (not supply marks) and privately view current ENROLLED students in that same class/session/term. The provisional per-assessment best scored attempt rule prefers highest percent, then marks, then earlier ordinal; pending scores do not count as zero. The reader bounds pupil and assessment rows and fails closed on duplicate enrollment. No permanent class sheet or official result publication occurs, and no other roles inherit grade access. CA/exam weights, theory grades, grading scales, correction and report release need later scoped audited design/acceptance. See ADR-030.
+
+
 ## D-043: Teacher-authorized server objective scoring, independent of publication
 
 - Status: Authored unverified. Immutable one-per-submitted-attempt PostgreSQL calculated score based on latest answer event and secret key, exact active original teacher, separate review/release and school rules. No student publication, staff override, theory grade or mutable marks. New scoring decisions require audited correction workflow, not UPDATE. ADR-029.

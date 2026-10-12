@@ -6,6 +6,8 @@ export interface LessonWritingOptions {
   assignments: {
     id: string;
     sessionId: string;
+    classId: string;
+    subjectId: string;
     label: string;
   }[];
 }
@@ -65,6 +67,8 @@ export async function readLessonWritingOptions(
       select: {
         id: true,
         sessionId: true,
+        classId: true,
+        subjectId: true,
         schoolClass: { select: { name: true } },
         subject: { select: { name: true } },
       },
@@ -110,6 +114,8 @@ export async function readLessonWritingOptions(
         ? [{
             id: assignment.id,
             sessionId: assignment.sessionId,
+            classId: assignment.classId,
+            subjectId: assignment.subjectId,
             label: `${assignment.schoolClass.name} · ${assignment.subject.name}`,
           }]
         : [],

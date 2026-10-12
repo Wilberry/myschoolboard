@@ -9,6 +9,9 @@ import { GET, POST } from "@/app/api/schools/[schoolId]/assessment-questions/rou
 import { reserveInternalCbtAttempt } from "@/src/modules/assessments/attempt-reservation-service";
 import { readInternalCbtAttempt } from "@/src/modules/assessments/attempt-resume-reader";
 import { scoreInternalSubmittedAttempt } from "@/src/modules/assessments/objective-score-service";
+import { GET as CLASS_RECORDS_GET } from "@/app/api/schools/[schoolId]/assessment-class-records/route";
+import { GET as SCORE_QUEUE } from "@/app/api/schools/[schoolId]/assessment-score-queue/route";
+import { POST as SCORE_POST } from "@/app/api/schools/[schoolId]/assessment-scores/[attemptId]/route";
 import {
   saveInternalCbtAnswer, submitInternalCbtAttempt,
 } from "@/src/modules/assessments/attempt-answer-service";
@@ -689,6 +692,20 @@ describe("Phase 7 exact-assignment private question bank", () => {
     // secret-key-only database auto-scoring. Student never sees scores.
     await expect(scoreInternalSubmittedAttempt(schoolA, rows[0].id))
       .rejects.toBeInstanceOf(AssessmentError);
+    const getScoringQueue = (actor: string, schoolId = schoolA) => {
+      context.headers = new Headers(cookies[actor] ? { cookie: cookies[actor] } : {});
+      return SCORE_QUEUE(new Request(
+        `http://localhost/api/schools/${schoolId}/assessment-score-queue`,
+      ), { params: Promise.resolve({ schoolId }) });
+    };
+    const beforeMark = await getScoringQueue("teacher");
+    expect(beforeMark.status).toBe(200);
+    expect((await beforeMark.json()).attempts.some(
+      (a: { attemptId: string }) => a.attemptId === rows[0].id,
+    )).toBe(true);
+    expect((await getScoringQueue("student")).status).toBe(404);
+    expect((await getScoringQueue("admin")).status).toBe(404);
+    expect((await getScoringQueue("other")).status).toBe(404);
     context.headers = new Headers({ cookie: cookies.teacher });
     const marked = await scoreInternalSubmittedAttempt(schoolA, rows[0].id);
     expect(marked).toMatchObject({
@@ -697,8 +714,47 @@ describe("Phase 7 exact-assignment private question bank", () => {
     });
     expect(await scoreInternalSubmittedAttempt(schoolA, rows[0].id))
       .toEqual(marked);
+    const markerResponse = await SCORE_POST(new Request(
+      `http://localhost/api/schools/${schoolA}/assessment-scores/${rows[0].id}`,
+      { method: "POST" },
+    ), { params: Promise.resolve({ schoolId: schoolA, attemptId: rows[0].id }) });
+    expect(markerResponse.status).toBe(200);
+    expect((await markerResponse.json()).score.id).toBe(marked.id);
+    const afterMark = await getScoringQueue("teacher");
+    expect((await afterMark.json()).attempts.some(
+      (a: { attemptId: string }) => a.attemptId === rows[0].id,
+    )).toBe(false);
+    context.headers = new Headers({ cookie: cookies.teacher });
+
     expect(JSON.stringify(marked)).not.toContain("correctIndex");
     expect(JSON.stringify(marked)).not.toContain("answerKey");
+    const sheetUrl = (schoolId: string) =>
+      `http://localhost/api/schools/${schoolId}/assessment-class-records?` +
+      new URLSearchParams({ classId, sessionId, subjectId, termId }).toString();
+    const record = (actor: string, schoolId = schoolA) => {
+      context.headers = new Headers(cookies[actor] ? { cookie: cookies[actor] } : {});
+      return CLASS_RECORDS_GET(new Request(sheetUrl(schoolId)), {
+        params: Promise.resolve({ schoolId }),
+      });
+    };
+    const ownSheet = await record("teacher");
+    expect(ownSheet.status).toBe(200);
+    expect(ownSheet.headers.get("cache-control")).toBe("private, no-store");
+    const sheet = await ownSheet.json();
+    expect(sheet.status).toBe("PROVISIONAL");
+    const pupilLine = sheet.sheet.students.find(
+      (x: { studentId: string }) => x.studentId === pupilId,
+    );
+    expect(pupilLine).toBeTruthy();
+    expect(pupilLine.assessments.some((a: { draftId: string; earnedPoints: number }) =>
+      a.draftId === draftId && a.earnedPoints === 4)).toBe(true);
+    expect(JSON.stringify(sheet)).not.toContain("correctIndex");
+    expect(JSON.stringify(sheet)).not.toContain("answerKey");
+    expect((await record("student")).status).toBe(404);
+    expect((await record("other")).status).toBe(404);
+    expect((await record("admin")).status).toBe(404);
+    expect((await record("teacher", schoolB)).status).toBe(404);
+
     await expect(prisma.assessmentAttemptScore.update({
       where: { id: marked.id }, data: { earnedPoints: 0 },
     })).rejects.toThrow();
