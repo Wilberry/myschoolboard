@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-12 — School section/class admin workspace (unverified)
+
+- Extended the protected academic setup reader to show school-owned sections and class.sectionId with active membership/role filters repeated on the Section collection query.
+- Added school admin forms to create Primary/Secondary sections and classify unassigned active classes using existing reasoned, tenant-owned APIs. No class reclassification or HM/Principal permissions were introduced.
+- Two disposable DB reader cases authored, not executed; full migrations, browser, tests, build and audit remain pending. No merge/deployment.
+
 ## 2026-10-12 — School-owned section/class association (unverified)
 
 - Added named primary/secondary Section model and nullable same-school Class.sectionId, preserving old unclassified classes without guessed backfills.

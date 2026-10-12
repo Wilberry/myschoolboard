@@ -20,7 +20,18 @@ export interface SetupSnapshot {
     startsOn: string;
     endsOn: string;
   }[];
-  classes: { id: string; name: string; isActive: boolean }[];
+  sections: {
+    id: string;
+    name: string;
+    stage: "PRIMARY" | "SECONDARY";
+    isActive: boolean;
+  }[];
+  classes: {
+    id: string;
+    name: string;
+    sectionId: string | null;
+    isActive: boolean;
+  }[];
   subjects: { id: string; name: string; isActive: boolean }[];
 }
 
@@ -75,7 +86,7 @@ export async function readSchoolSetup(
   });
   if (!school) return null;
 
-  const [sessions, terms, classes, subjects] = await Promise.all([
+  const [sessions, terms, sections, classes, subjects] = await Promise.all([
     prisma.academicSession.findMany({
       where: membershipWhere,
       select: {
@@ -102,9 +113,15 @@ export async function readSchoolSetup(
       take: 100,
       orderBy: [{ startsOn: "desc" }, { position: "asc" }],
     }),
+    prisma.schoolSection.findMany({
+      where: membershipWhere,
+      select: { id: true, name: true, stage: true, isActive: true },
+      take: 100,
+      orderBy: [{ stage: "asc" }, { name: "asc" }],
+    }),
     prisma.schoolClass.findMany({
       where: membershipWhere,
-      select: { id: true, name: true, isActive: true },
+      select: { id: true, name: true, sectionId: true, isActive: true },
       take: 100,
       orderBy: { name: "asc" },
     }),
@@ -128,6 +145,7 @@ export async function readSchoolSetup(
       startsOn: dateOnly(item.startsOn),
       endsOn: dateOnly(item.endsOn),
     })),
+    sections,
     classes,
     subjects,
   };

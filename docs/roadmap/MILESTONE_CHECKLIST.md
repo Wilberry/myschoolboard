@@ -73,6 +73,9 @@
 
 ## Phase 6 — Lesson notes and attendance (safe foundation under development)
 
+- [ ] Verify the school section setup forms in the local browser, including creation, active class classification, a previously classified class having no move action, cross-school rejection, safe error messages and keyboard labels.
+- [ ] Run two additional section-reader SQL predicate/isolation tests together with the section mutation tests and all previous Phase 2–6 suites.
+
 - [ ] Apply SchoolSection schema/migration to disposable PostgreSQL and verify previous classes remain unclassified (NULL) and other-school section IDs are rejected.
 - [ ] Run five section creation/class placement/grant tests and real cross-section/stage denial tests before enabling scoped HM/Principal lesson-note approvals or timetable mutations.
 

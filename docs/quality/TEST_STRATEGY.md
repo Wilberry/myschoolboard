@@ -60,6 +60,10 @@ Four direct disposable-DB option-read integration cases are authored for own-sch
 
 Apply the additive section migration to only an explicitly disposable PostgreSQL target and verify legacy classes retain NULL sectionId and foreign section IDs fail the composite FK. Run five authored real-session section API tests for admin/foreign/anonymous denial, one-time placement, verified SECTION grant ownership filtering, inactive section revocation and immutable audit events. Concurrency/reclassification and downstream exact-class HM/Principal stage/role checks remain separate acceptance gates. None has run yet.
 
+## School section setup UI and reader regression (unverified)
+
+Two new disposable-DB cases extend school setup reader coverage for exact school-owned PRIMARY/SECONDARY sections, class.sectionId, non-disclosure of foreign section records and active admin membership on the final Section query. The school setup browser must validate section creation, stage selection, class selection limited to unclassified active entries, generic conflict/error responses, reload and keyboard semantics. No new tests or end-to-end run has been executed.
+
 ## Required negative tests
 
 - Cross-tenant access

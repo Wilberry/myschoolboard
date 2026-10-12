@@ -129,6 +129,67 @@ export function SchoolSetupEditor({
     }
   }
 
+  async function submitSection(
+    event: FormEvent<HTMLFormElement>,
+    operation: "create" | "assign",
+  ) {
+    event.preventDefault();
+    if (pending) return;
+    const form = event.currentTarget;
+    const values = new FormData(form);
+    const classId = String(values.get("classId") ?? "");
+    const sectionId = String(values.get("sectionId") ?? "");
+    const reason = String(values.get("reason") ?? "").trim();
+    setPending(true);
+    setError(null);
+    setSuccess(null);
+    const route = operation === "create"
+      ? `sections`
+      : `classes/${encodeURIComponent(classId)}/section`;
+    const body = operation === "create"
+      ? {
+          name: String(values.get("name") ?? "").trim(),
+          stage: String(values.get("stage") ?? ""),
+          reason,
+        }
+      : { sectionId, reason };
+    try {
+      const response = await fetch(
+        `/api/schools/${encodeURIComponent(schoolId)}/${route}`,
+        {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+          body: JSON.stringify(body),
+        },
+      );
+      if (!response.ok) {
+        setError(
+          response.status === 409
+            ? "The section name already exists or the class has already been classified."
+            : response.status === 400
+              ? "Check the section and justification entered."
+              : response.status === 401 || response.status === 404
+                ? "The school, section, class or your permission is no longer active."
+                : "Could not save this section configuration.",
+        );
+        return;
+      }
+      form.reset();
+      setSuccess(
+        operation === "create"
+          ? "Section created. The configuration is refreshing."
+          : "Class assigned to a section with an audit record.",
+      );
+      router.refresh();
+    } catch {
+      setError("Network connection failed. No change has been confirmed.");
+    } finally {
+      setPending(false);
+    }
+  }
+
   return (
     <div className="setup-workspace">
       {error && <p className="form-error" role="alert">{error}</p>}
@@ -269,6 +330,86 @@ export function SchoolSetupEditor({
         </ul>
       </section>
 
+      <section className="setup-panel" aria-labelledby="sections-title">
+        <h2 id="sections-title">Primary and secondary sections</h2>
+        <p>Sections are school-owned. Existing classes remain unclassified until assigned.</p>
+        <form onSubmit={(event) => void submitSection(event, "create")}>
+          <label>
+            Section name
+            <input
+              name="name" required minLength={2} maxLength={120}
+              placeholder="Primary Department"
+            />
+          </label>
+          <label>
+            Education stage
+            <select name="stage" required defaultValue="PRIMARY">
+              <option value="PRIMARY">Primary</option>
+              <option value="SECONDARY">Secondary</option>
+            </select>
+          </label>
+          <label>
+            Reason
+            <input name="reason" required minLength={5} maxLength={500} />
+          </label>
+          <button type="submit" disabled={pending}>
+            {pending ? "Saving…" : "Create section"}
+          </button>
+        </form>
+        <ul className="setup-records">
+          {snapshot.sections.map((section) => (
+            <li key={section.id}>
+              <strong>{section.name}</strong>
+              <span>{section.stage} · {section.isActive ? "Active" : "Inactive"}</span>
+            </li>
+          ))}
+          {snapshot.sections.length === 0 && <li>No sections configured yet.</li>}
+        </ul>
+      </section>
+
+      <section className="setup-panel" aria-labelledby="class-section-title">
+        <h2 id="class-section-title">Class section placement</h2>
+        <p>A class can be placed once. Moving it later requires a separate reviewed transfer workflow.</p>
+        <form onSubmit={(event) => void submitSection(event, "assign")}>
+          <label>
+            Unclassified class
+            <select name="classId" required defaultValue="">
+              <option value="" disabled>Choose a class</option>
+              {snapshot.classes
+                .filter((item) => item.isActive && !item.sectionId)
+                .map((item) => (
+                  <option key={item.id} value={item.id}>{item.name}</option>
+                ))}
+            </select>
+          </label>
+          <label>
+            Active section
+            <select name="sectionId" required defaultValue="">
+              <option value="" disabled>Choose a section</option>
+              {snapshot.sections.filter((item) => item.isActive).map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name} ({item.stage})
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Placement reason
+            <input name="reason" minLength={5} maxLength={500} required />
+          </label>
+          <button
+            type="submit"
+            disabled={
+              pending ||
+              !snapshot.sections.some((item) => item.isActive) ||
+              !snapshot.classes.some((item) => item.isActive && !item.sectionId)
+            }
+          >
+            {pending ? "Saving…" : "Assign class to section"}
+          </button>
+        </form>
+      </section>
+
       <section className="setup-panel" aria-labelledby="classes-title">
         <h2 id="classes-title">Classes</h2>
         <form onSubmit={(event) => void submit(event, "class")}>
@@ -285,6 +426,10 @@ export function SchoolSetupEditor({
             <li key={item.id}>
               <strong>{item.name}</strong>
               <span>{item.isActive ? "Active" : "Inactive"}</span>
+              <span>
+                Section: {snapshot.sections.find((section) => section.id === item.sectionId)?.name ??
+                  "Unclassified"}
+              </span>
             </li>
           ))}
           {snapshot.classes.length === 0 && <li>No classes configured yet.</li>}

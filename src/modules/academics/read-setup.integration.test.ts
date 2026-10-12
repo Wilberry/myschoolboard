@@ -11,6 +11,8 @@ const schoolB = `setup-b-${tag}`;
 const adminA = `setup-admin-a-${tag}`;
 const adminB = `setup-admin-b-${tag}`;
 const principal = `setup-principal-${tag}`;
+const sectionA = `setup-section-a-${tag}`;
+const sectionB = `setup-section-b-${tag}`;
 
 describe("school setup view data tenant isolation", () => {
   beforeAll(async () => {
@@ -66,10 +68,16 @@ describe("school setup view data tenant isolation", () => {
         endsOn: new Date("2026-12-18T00:00:00.000Z"),
       },
     });
+    await prisma.schoolSection.createMany({
+      data: [
+        { id: sectionA, schoolId: schoolA, name: "Primary", stage: "PRIMARY" },
+        { id: sectionB, schoolId: schoolB, name: "Foreign Secondary", stage: "SECONDARY" },
+      ],
+    });
     await prisma.schoolClass.createMany({
       data: [
-        { schoolId: schoolA, name: "Class 1" },
-        { schoolId: schoolB, name: "Foreign Class 1" },
+        { schoolId: schoolA, name: "Class 1", sectionId: sectionA },
+        { schoolId: schoolB, name: "Foreign Class 1", sectionId: sectionB },
       ],
     });
     await prisma.subject.createMany({
@@ -126,6 +134,44 @@ describe("school setup view data tenant isolation", () => {
         where: { id: membership.id },
         data: { isActive: true },
       });
+    }
+  });
+
+  it("includes only own school section and class-to-section mapping", async () => {
+    const snapshot = await readSchoolSetup(adminA, schoolA);
+    expect(snapshot?.sections).toEqual([{
+      id: sectionA,
+      name: "Primary",
+      stage: "PRIMARY",
+      isActive: true,
+    }]);
+    expect(snapshot?.classes[0].sectionId).toBe(sectionA);
+    expect(JSON.stringify(snapshot)).not.toContain(sectionB);
+  });
+
+  it("rechecks active school-administrator identity in the final section query", async () => {
+    const spy = vi.spyOn(prisma.schoolSection, "findMany");
+    try {
+      expect(await readSchoolSetup(adminA, schoolA)).not.toBeNull();
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            schoolId: schoolA,
+            school: {
+              isActive: true,
+              memberships: {
+                some: {
+                  userId: adminA,
+                  role: "SCHOOL_ADMIN",
+                  isActive: true,
+                },
+              },
+            },
+          },
+        }),
+      );
+    } finally {
+      spy.mockRestore();
     }
   });
 
