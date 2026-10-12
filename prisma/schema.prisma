@@ -1342,7 +1342,7 @@ model AssessmentManualMarkProposal {
 
   school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   component AssessmentManualComponent @relation(fields: [schoolId, componentId, classId, sessionId], references: [schoolId, id, classId, sessionId], onDelete: NoAction, map: "AssessmentManualMarkProposal_component_fkey")
-  student StudentRecord @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction)
+  student StudentRecord @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualMarkProposal_student_fkey")
   enrollment StudentEnrollment @relation(fields: [schoolId, enrollmentId, studentId, classId, sessionId], references: [schoolId, id, studentId, classId, sessionId], onDelete: NoAction, map: "AssessmentManualMarkProposal_enrollment_fkey")
   actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualMarkProposal_actor_fkey")
 
