@@ -60,6 +60,13 @@ async function SchoolDetailContent({
           </Link>
         </div>
 
+        {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
+          <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/assessment-publications`} className="secondary-link">
+              Assessment publication ledger (development)
+            </Link>
+          </p>
+        )}
         {authorize(access.principal, "school:configure", { schoolId }).allowed && (
           <p className="setup-navigation">
             <Link href={`/schools/${schoolId}/setup`} className="secondary-link">

@@ -265,6 +265,7 @@ model School {
   assessmentDraftQuestions AssessmentDraftQuestion[]
   assessmentDraftSeals AssessmentDraftSeal[]
   assessmentReviewEvents AssessmentReviewEvent[]
+  assessmentPublicationEvents AssessmentPublicationEvent[]
 }
 
 model Membership {
@@ -298,6 +299,7 @@ model Membership {
   assessmentQuestions AssessmentQuestion[]
   assessmentDrafts AssessmentDraft[]
   assessmentReviewEvents AssessmentReviewEvent[]
+  assessmentPublicationEvents AssessmentPublicationEvent[]
 }
 
 model ScopeGrant {
@@ -1044,6 +1046,7 @@ model AssessmentDraft {
   @@index([schoolId, classId, subjectId, termId])
   seal AssessmentDraftSeal?
   reviews AssessmentReviewEvent[]
+  publicationEvents AssessmentPublicationEvent[]
 }
 
 /** Snapshot of the chosen private question IDs and their positive marks.
@@ -1099,5 +1102,31 @@ model AssessmentReviewEvent {
   reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentReviewEvent_reviewer_fkey")
 
   @@unique([schoolId, draftId])
+  @@index([schoolId, createdAt])
+}
+
+/** Separate school-super-admin publication authorization, never inferred
+ * from the academic HM/Principal APPROVED decision. Still no student
+ * delivery route, attempt, scoring or answer-key release in this subset. */
+enum AssessmentPublicationAction {
+  PUBLISHED
+  WITHDRAWN
+}
+
+model AssessmentPublicationEvent {
+  id String @id @default(cuid())
+  schoolId String
+  draftId String
+  action AssessmentPublicationAction
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  draft AssessmentDraft @relation(fields: [schoolId, draftId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentPublicationEvent_draft_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentPublicationEvent_actor_fkey")
+
+  @@unique([schoolId, draftId, action])
   @@index([schoolId, createdAt])
 }

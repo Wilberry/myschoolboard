@@ -162,3 +162,10 @@
 - Reviewer read projections are separately scoped by actor-to-section-to-draft joins, omitting AssessmentQuestionKey. The question preview is private/no-store and cannot be used by students. No blind approval solely by metadata; question content is available for moderator inspection without marking keys.
 - CBT timer helper computes UTC elapsed-time expiry bounded by scheduled close and counts every attempt and active attempt conflict. This module is only pure planning, not runtime permission. Future student CBT requires distinct controlled publication, unrevoked admin-verified identity binding and exact active enrollment, transactional attempt numbering/counting and immutable events, no early key disclosure and complete CI/DB acceptance. Parent migration quoting regression has been fixed in this branch; production/run status remains BLOCKED.
 
+
+## ADR-025: Distinct immutable school publication ledger for assessment configurations
+
+- Status: Additive Phase 7 proposal implemented in draft code, not runtime-verified.
+- Split HM PRIMARY/Principal SECONDARY academic moderation from School Super Admin publication. AssessmentPublicationEvent is a school-bound immutable PUBLISHED/WITHDRAWN sequence with exact school/draft and school/member actor FKs. SQL validator serializes events on school and draft rows, checks active SCHOOL_SUPER_ADMIN actor identity, APPROVED reviewed sealed draft with active teacher/session/term/section/class/subject for PUBLISHED, forbids duplicate publication and terminally forbids republishing after withdrawal. WITHDRAWN requires prior publication but does not require the original author still active, supporting immediate admin safety revocation.
+- A separate service transaction repeats identity/state checks, and the private super-admin queue contains only approved draft metadata. This ledger is deliberately not an exposure, delivery, scoring or CBT attempt path; later student delivery must independently verify approved publication still effective, time/attempt limits, unrevoked student-account link and exact active enrollment. No new early answer-key access. Local PostgreSQL/CI/security gates remain blocked.
+

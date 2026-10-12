@@ -1,5 +1,10 @@
 # Authorization Rules
 
+## Separate school assessment publication (Phase 7 development-only, unverified)
+
+Only an active same-school `SCHOOL_SUPER_ADMIN` may record an AssessmentPublicationEvent PUBLISHED after a sealed exam configuration has a terminal exact-section HM/Principal APPROVED review; WITHDRAWN requires a prior publication and is terminal. Neither normal SCHOOL_ADMIN, HM/Principal reviewer, assignment TEACHER, Form Teacher nor Platform Super Admin can perform this action by role inheritance. The server and SQL separately validate the current signed-in user/member and the real school, approved draft and active academic source before publication; an independent SQL actor membership check prevents forged lower-privilege role associations. This is a **publication ledger decision, not an enabled CBT student exam endpoint**. No results publication rights change. D-039/ADR-025; full PostgreSQL and CI verification pending.
+
+
 ## Section-scoped assessment review — Phase 7 draft, unverified
 
 The current Phase 7 `AssessmentReviewEvent` candidate permits an active school `HEAD_OF_SECTION` to APPROVE/RETURN a sealed teacher-created assessment configuration from the stored class's **active same-school PRIMARY section** only. A `PRINCIPAL` may do so only for SECONDARY; both require a current verified SECTION ScopeGrant for the exact `SchoolClass.sectionId`. Review queue/detail and decision repeatedly bind the actor and actual class/section plus current teacher assignment, term/session, and subject. Neither an academic role alone, independent verified CLASS and SUBJECT grants, School Administrator, School Super Admin, Form Teacher nor Platform Super Admin are exceptions. One immutable terminal review event per draft cannot be altered or used for student exam publication.
