@@ -20,6 +20,10 @@ Seven new real Better Auth/disposable-PostgreSQL scenarios cover anonymous/teach
 
 A reviewer role is insufficient for a navigation link; the active school, reviewer membership, verified SECTION grant and required PRIMARY/SECONDARY stage must all match. The protected reviewer page uses the same owner-bound SQL filter as its underlying GET/POST API, so bypassing the link or editing client state cannot cross section boundaries. Four new disposable PostgreSQL navigation tests cover positive matching grants, teacher/foreign denials, grant revocation and final query scope with inactive section. Real Next browser session/cookie, keyboard, CSRF configuration, race/revocation, and HTTP response tests remain pending.
 
+## Student registration/enrollment private ledger (authored, not verified)
+
+The new StudentRecord and StudentEnrollment use composite school-bound student/session/class FKs. An ACTIVE enrollment requires an ACTIVE academic session and an active class explicitly associated with an active school-owned Section; historic classes with NULL section may not receive pupils through this route. PostgreSQL partial uniqueness independently prevents two ACTIVE rows for the same school/student/session, even across concurrent writers. The school-admin-only registration/enroll/withdraw services revalidate identity and resources inside serializable transactions and insert actor/reasoned `StudentEvent` records with SQL actor/state validation and append-only mutation/truncate guards. Six real-session disposable DB tests are authored for anonymous/foreign/teacher denials, school-specific admission code, exact classified class/session ownership, partial uniqueness and cross-tenant FK, historical withdrawal/record preservation and attempted audit forging/update/delete. Real concurrency, actual migration, user association and pupil-record reader permission tests remain outstanding; there is **no GET/roster or student portal API**.
+
 ## Required areas
 
 - Tenant isolation tests

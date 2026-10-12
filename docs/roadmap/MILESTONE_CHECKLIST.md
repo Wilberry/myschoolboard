@@ -73,6 +73,10 @@
 
 ## Phase 6 — Lesson notes and attendance (safe foundation under development)
 
+- [ ] Apply additive student registration/enrollment migration only to the confirmed disposable local PostgreSQL test DB; validate same-school composite FKs, active-only uniqueness index, SQL StudentEvent state/actor checks and cascade behavior.
+- [ ] Run six real-session registration/enrollment/withdrawal DB cases and previous Phase 2–6 tenant, identity, Section, assignment, lesson review suites. Add concurrent duplicate admission/session enrollment attempts and revocation races before release.
+- [ ] Build full audited admissions promotion/transfer/graduation lifecycle and a narrow school-admin student overview, then use **verified active student/class/session enrollment** plus explicit Form Teacher/section authority for attendance; no student/guardian read until their identity relationships are verified.
+
 - [ ] Check the HM/Principal reviewer page via actual Next browser: verified section-only navigation, direct URL denial, pending queue and complete submitted revision, required reason/confirmation, successful approve/return, stale-status generic error and no student release.
 - [ ] Run four new school-section reviewer navigation DB cases together with seven reviewer service cases, earlier lesson teacher authoring cases, ScopeGrant tests and audit triggers on disposable PostgreSQL.
 
