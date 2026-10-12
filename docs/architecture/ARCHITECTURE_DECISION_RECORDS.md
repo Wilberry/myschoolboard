@@ -199,3 +199,10 @@
 
 - Status: Development candidate not verified. Private teacher GET uses a final SQL exact Membership→TeacherClassSubjectAssignment→School/Class/Section/Subject/Session/Term join and current ENROLLED matching class/session StudentEnrollment to project minimal student identity. LATERAL sealed approved PUBLISHED/not-withdrawn draft and one highest-score submitted attempt per draft produce a bounded read-only provisional record; pending not zero, scored-only aggregate. A separate bodyless teacher scoring POST delegates to SQL trigger-only key reading; key, answer revisions and result publication are never returned. Ambiguous enrollment duplication and excessive breadth fail closed. Full local SQL, CI, a11y, security and school business aggregation acceptance pending.
 
+
+## ADR-031: School-owned immutable draft weights and complete-only provisional grade preview
+
+- Status: Authoring candidate; no SQL/runtime acceptance.
+- Store an append-only AssessmentGradingPolicyRevision keyed by exact school/session/term/class/subject/version; current School Super Admin membership and active academic structure independently checked in SQL BEFORE INSERT. A School row lock allocates ordinal version and immutable audit triggers reject history tampering. Every revision contains integer QUIZ/TEST/EXAM percentages totaling 100, an actor and a reason.
+- Teacher final class-sheet query projects latest context-matching profile **only through existing exact assigned teacher + student enrollment authorizations**. A pure deterministic function averages scored assessment percentages per kind, applies explicit weights, and returns PENDING/null unless every positive-weight kind has a complete set of scored assessments. No implicit default, no score mutation, no official result release or access broadening. Mandatory disposable SQL, unit/integration, browser, audit and Phase 6 verification still required.
+
