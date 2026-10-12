@@ -1,5 +1,10 @@
 # Current Status
 
+## Phase 6 explicit teaching/non-teaching dates (development candidate)
+
+Draft branch `feature/attendance-nonteaching-calendar` builds on #45 and adds a school-owned immutable per-day designation ledger, calendar SQL insertion and audit guards, active administrator mutation API, guarded school policy UI, and denial of new attendance submissions on explicitly closed days. Existing real attendance days cannot be reclassified; default without school/day revision is teaching-day, with no inferred weekends or national holidays. Synthetic admin, role, history and direct-actor tests are **authored but not executed**; database migration and comprehensive local CI are pending. Phase 6 ATT-REQ-001 remains unfinished and unverified.
+
+
 ## Phase 6 school attendance calendar configuration (draft, unverified)
 
 Cumulative `feature/attendance-school-calendar-policy` adds an additive append-only school timezone and submission/correction-window policy revision, SQL role/actor/revision/timezone guard, private School Administrator / School Super Admin editor and POST, current policy admin read, and school-local calendar-day eligibility checks on submission and correction requests with independent direct-SQL triggers. The earlier UTC nonfuture submission safeguard remains intact. Pure DST/timezone/date-boundary Vitest unit and synthetic administrator role, audit immutability and versioning integration tests are **AUTHORED BUT NOT EXECUTED**. A separate, ad hoc Node 22 smoke harness against the SHA-verified byte-identical production `school-date-policy.ts` helper **executed 12/12 checks successfully**; these checks do not run the authored Vitest suite or establish PostgreSQL behavior. School holiday/calendar-day exceptions remain unimplemented. The additive migration is review-only; no database command, typecheck, build, Vitest, real browser, full local CI-equivalent or strict dependency audit has run. All cumulative drafts remain unmerged and unreleased. ATT-REQ-001/TEN-REQ-001/SEC-REQ-001 are not complete.
