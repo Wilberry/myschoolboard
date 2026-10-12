@@ -1,5 +1,12 @@
 # Authorization Rules
 
+## Phase 7 student CBT attempt reservation (internal-only, NOT VERIFIED)
+
+A separate APPROVED HM/Principal review and nonwithdrawn PUBLISHED School Super Admin authorization are necessary but insufficient for student CBT admission. The internal-only reservation service/SQL trigger additionally require an actual signed-in active same-school STUDENT membership with a permanently attested and unrevoked exact StudentAccountLink to an ENROLLED StudentRecord and ACTIVE StudentEnrollment for the **same assessment class and session**, plus active school, section, term, subject and original teacher assignment. No inferred student account, role-only pupil, Form Teacher, guardian, platform support, foreign tenant or school admin override. The PostgreSQL clock/row lock, not request timestamps, determines a unique attemptNumber and deadline bounded by the assessment close; unexpired attempts block parallel reservations, all historical starts count against maxAttempts.
+
+No student CBT route or question projection has been implemented yet. This is a nonproduction internal contract, not permission to release student exams or results; full SQL, authenticated, concurrency, privacy and local CI-equivalent acceptance remains mandatory. D-040/ADR-026.
+
+
 ## Separate school assessment publication (Phase 7 development-only, unverified)
 
 Only an active same-school `SCHOOL_SUPER_ADMIN` may record an AssessmentPublicationEvent PUBLISHED after a sealed exam configuration has a terminal exact-section HM/Principal APPROVED review; WITHDRAWN requires a prior publication and is terminal. Neither normal SCHOOL_ADMIN, HM/Principal reviewer, assignment TEACHER, Form Teacher nor Platform Super Admin can perform this action by role inheritance. The server and SQL separately validate the current signed-in user/member and the real school, approved draft and active academic source before publication; an independent SQL actor membership check prevents forged lower-privilege role associations. This is a **publication ledger decision, not an enabled CBT student exam endpoint**. No results publication rights change. D-039/ADR-025; full PostgreSQL and CI verification pending.
