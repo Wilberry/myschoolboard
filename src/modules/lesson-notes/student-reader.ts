@@ -32,6 +32,26 @@ export async function readPupilReleasedLessons(
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) throw new LessonNoteError("UNAUTHENTICATED");
   const userId = session.user.id;
+  // Deny unauthorised *empty lists*, too; final SQL still revalidates every
+  // sensitive row so a revoked identity cannot survive between queries.
+  const linked = await prisma.membership.findFirst({
+    where: {
+      schoolId, userId, role: "STUDENT", isActive: true,
+      school: { isActive: true },
+      studentAccountLink: {
+        revocation: null,
+        student: {
+          schoolId, status: "ENROLLED",
+          enrollments: { some: { schoolId, status: "ACTIVE",
+            session: { status: "ACTIVE" },
+            schoolClass: { isActive: true, section: { isActive: true } },
+          } },
+        },
+      },
+    },
+    select: { id: true },
+  });
+  if (!linked) throw new LessonNoteError("NOT_FOUND");
   const projection = noteId
     ? Prisma.sql`, revision."objectives", revision."content"`
     : Prisma.empty;
