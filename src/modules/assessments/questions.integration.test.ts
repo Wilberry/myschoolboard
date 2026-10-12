@@ -1206,6 +1206,89 @@ describe("Phase 7 exact-assignment private question bank", () => {
 
   });
 
+  it("reworks a RETURNED initial written mark through immutable independent correction approval", async () => {
+    const newComponent = await MANUAL_COMPONENTS_POST(
+      req("teacher", schoolA, "POST", {
+        assignmentId, termId, kind: "QUIZ",
+        title: "Synthetic returned initial offline quiz",
+        maxPoints: 10,
+      }), { params: Promise.resolve({ schoolId: schoolA }) },
+    );
+    expect(newComponent.status).toBe(201);
+    const component = (await newComponent.json()).component;
+    const proposed = await MANUAL_PROPOSAL_POST(
+      req("teacher", schoolA, "POST", {
+        componentId: component.id, studentId: pupilId,
+        earnedPoints: 9, reason: "Synthetic first handwritten quiz marking",
+      }), { params: Promise.resolve({ schoolId: schoolA }) },
+    );
+    expect(proposed.status).toBe(201);
+    const initial = (await proposed.json()).proposal;
+    const correctionBeforeDecision = await CORRECTIONS_POST(req("teacher", schoolA, "POST", {
+      proposalId: initial.id, proposedPoints: 8,
+      reason: "An unreviewed initial mark is not yet eligible",
+    }), { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(correctionBeforeDecision.status).not.toBe(201);
+    const returned = await MANUAL_REVIEW_DECISION(req("head", schoolA, "POST", {
+      action: "RETURNED", reason: "Synthetic primary reviewer returned initial quiz mark",
+    }), { params: Promise.resolve({ schoolId: schoolA, proposalId: initial.id }) });
+    expect(returned.status).toBe(201);
+    const returnedQ = new URLSearchParams({ classId, sessionId, subjectId, termId });
+    const preview = (actor: string) => {
+      context.headers = new Headers({ cookie: cookies[actor] });
+      return REVIEWED_MANUAL_GRADEBOOK_GET(new Request(
+        `http://localhost/api/schools/${schoolA}/assessment-reviewed-manual-gradebook?${returnedQ}`,
+      ), { params: Promise.resolve({ schoolId: schoolA }) });
+    };
+    const returnedSheet = (await (await preview("teacher")).json()).gradebook;
+    const before = returnedSheet.students.find((x: { studentId: string }) => x.studentId === pupilId);
+    expect(before.readyForFurtherAcademicReview).toBe(false);
+    expect(before.components.find((c: { componentId: string }) =>
+      c.componentId === component.id)).toMatchObject({
+      originalPoints: 9, effectiveApprovedPoints: null,
+      status: "RETURNED_NOT_APPROVED",
+    });
+    const reworked = await CORRECTIONS_POST(req("teacher", schoolA, "POST", {
+      proposalId: initial.id, proposedPoints: 8,
+      reason: "Synthetic first reconsideration after returned initial mark",
+    }), { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(reworked.status).toBe(201);
+    const change = (await reworked.json()).request;
+    expect(change.revision).toBe(1);
+    const queue = await CORRECTION_QUEUE(req("head", schoolA, "GET"), {
+      params: Promise.resolve({ schoolId: schoolA }),
+    });
+    expect(queue.status).toBe(200);
+    expect((await queue.json()).requests.some(
+      (x: { requestId: string }) => x.requestId === change.id,
+    )).toBe(true);
+    const awaiting = (await (await preview("teacher")).json()).gradebook.students.find(
+      (x: { studentId: string }) => x.studentId === pupilId,
+    );
+    expect(awaiting.components.find((c: { componentId: string }) =>
+      c.componentId === component.id)).toMatchObject({
+      effectiveApprovedPoints: null, status: "RETURNED_CORRECTION_PENDING",
+    });
+    const reviewed = await CORRECTION_REVIEW(req("head", schoolA, "POST", {
+      action: "APPROVED", reason: "Synthetic independent approval of reworked initial quiz mark",
+    }), { params: Promise.resolve({ schoolId: schoolA, requestId: change.id }) });
+    expect(reviewed.status).toBe(201);
+    const finished = (await (await preview("teacher")).json()).gradebook.students.find(
+      (x: { studentId: string }) => x.studentId === pupilId,
+    );
+    expect(finished.components.find((c: { componentId: string }) =>
+      c.componentId === component.id)).toMatchObject({
+      originalPoints: 9, effectiveApprovedPoints: 8,
+      approvedCorrectionRevision: 1, status: "APPROVED_CORRECTED",
+    });
+    expect(await prisma.assessmentManualMarkProposal.findFirstOrThrow({
+      where: { schoolId: schoolA, id: initial.id },
+    })).toMatchObject({ earnedPoints: 9 });
+    expect(await prisma.assessmentManualMarkDecision.findFirstOrThrow({
+      where: { schoolId: schoolA, proposalId: initial.id },
+    })).toMatchObject({ action: "RETURNED" });
+  });
+
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
     await prisma.teacherClassSubjectAssignment.update({
       where: { id: assignmentId }, data: { status: "REVOKED" },
