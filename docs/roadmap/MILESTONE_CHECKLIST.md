@@ -1,5 +1,14 @@
 # Milestone Checklist
 
+### Phase 7 assessment publication authorization (unverified)
+
+- [ ] On confirmed disposable PostgreSQL, validate `20261012290000_phase7_assessment_publication` with preceding cumulative migrations and Prisma drift, actor/membership FKs, immutable append-only event/withdrawal checks and school deletion lifecycle.
+- [ ] Execute synthetic logged-in School Super Admin vs normal School Admin, Teacher, HM, Principal, foreign school and Platform roles. Ensure an APPROVED sealed draft is required; a RETURNED draft must never be published.
+- [ ] Execute forged direct SQL actor, duplicate/parallel publish, rejected withdrawal before publish, terminal withdrawal, revoked membership and audit mutation/rollback tests. No early question/key/score/student disclosures.
+- [ ] Browser-test private School Super Admin publication workflow/accessibility and no automatic CBT activation; confirm returned draft and withdrawn assessment never enter a future student queue.
+- [ ] Add verified student publication reader only AFTER Phase 6 identity/enrollment CI evidence and separate CBT attempt clock/number SQL enforcement; complete full local CI-equivalent/security audit before milestone signoff.
+
+
 ### Phase 7 assessment section review and CBT admission-preflight checkpoint (unverified)
 
 - [ ] On confirmed disposable PostgreSQL, apply cumulative migrations including repaired assessment-draft migration, new `20261012280000_phase7_assessment_review`, verify all dollar-quote delimiters, Prisma drift, SQL exact reviewer actor + verified section, active teacher/term, audit mutability denial and tenant school deletion.
