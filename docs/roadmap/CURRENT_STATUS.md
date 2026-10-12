@@ -1,5 +1,10 @@
 # Current Status
 
+## Phase 7 section assessment moderation and CBT timing preflight (authored; UNVERIFIED)
+
+`feature/phase7-cbt-attempt-foundation` on cumulative PR #51 adds immutable terminal APPROVED/RETURNED academic decisions restricted to exact verified HM PRIMARY/Principal SECONDARY sections, SQL active actor/class/term/assignment audit guard, no-store reviewer queue and ordered key-free draft question preview plus restricted reviewer workspace. Adds pure future CBT deadline/attempt limit planning helper and unit tests; **no student exam publication, attempt API, autosave, scoring or official class-record sheet**. Repairs invalid function dollar-quoting in the parent assessment-draft SQL migration. Synthetic stage/scope/revocation/key-nondisclosure/immutable decision tests and read-only Node guards are AUTHORED, NOT EXECUTED. No disposable PostgreSQL migration, Prisma, Node/Vitest, TypeScript, lint, Next build, browser/accessibility or strict dependency audit run. Phase 6 dependency and Phase 7 ASM-REQ-001 exit gates remain blocked.
+
+
 ## Phase 7 immutable assessment draft configuration (candidate; UNVERIFIED)
 
 `feature/phase7-assessment-draft-config` extends #50 question bank with review-only additive assessment DRAFT records for exact active school/class/subject/session/term TEACHER assignment, configurable UTC time windows, duration (5–180 minutes), max attempts (1–3), passPercent (0–100), and 1–50 positioned privately keyed questions (1–20 points). An immutable seal prevents future question attachments; only sealed drafts appear on private teacher metadata GET. API/UI are teacher-gated and do not provide student exams, keys, scoring or results. Synthetic authenticated database tests and read-only Node invariants **AUTHORED, NOT EXECUTED**. Both Phase 6 dependency and full Phase 7 CI-equivalent/security gates remain **BLOCKED**. No merge, deployment or live data.
