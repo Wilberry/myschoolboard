@@ -90,6 +90,13 @@ async function SchoolDetailContent({
             </Link>
           </p>
         )}
+        {access.principal.membership?.role === "TEACHER" && (
+          <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/schemes-of-work`} className="secondary-link">
+              Prepare schemes of work
+            </Link>
+          </p>
+        )}
         {canReviewLessonNotes && (
           <p className="setup-navigation">
             <Link href={`/schools/${schoolId}/lesson-releases`} className="secondary-link">
