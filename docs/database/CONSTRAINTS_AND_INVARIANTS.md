@@ -1,5 +1,14 @@
 # Constraints and Invariants
 
+## Correction history invariants (authored; DB verification outstanding)
+
+- `AttendanceCorrectionRequest` references one exact school/register/entry tuple and snapshots the actor, reason, expectedMark, proposedMark and sequential revision; `AttendanceCorrectionDecision` references that exact school/register/request tuple with reasoned separate reviewer identity and approval/return.
+- On request INSERT, PostgreSQL locks the immutable original entry and independently verifies current PRIMARY Form Teacher school/class/session authority, APPROVED register, ACTIVE session/class/section and latest effective mark. No overlapping pending revisions or stale expected/proposed marks are allowed, including direct SQL attempts. Sequential `revision` and one decision per request are unique.
+- On decision INSERT, SQL validates the reviewer is an active, independent HM in the stored class's PRIMARY section or Principal in the SECONDARY section, holding an exact currently verified SECTION grant. No teacher, support, foreign membership or School/Platform Super Admin override.
+- Both ledger tables reject direct UPDATE, DELETE and TRUNCATE while preserving the existing explicit school-deletion cascade convention. Original `AttendanceEntry.mark` and `AttendanceEvent` are never overwritten.
+- For authorized effective-mark readers, only the **highest-revision APPROVED** request's proposedMark supersedes the original; RETURNED/PENDING requests never alter effective attendance. No general correction GET exists yet. Migration/trigger proof and destructive-event/cascade tests remain **unexecuted**.
+
+
 ## Attendance ledger invariants (proposed migration, not verified)
 
 - One `AttendanceRegister` per school/session/class/calendar date; duplicate concurrent submits are forbidden by a DB unique index, not merely request checking.
