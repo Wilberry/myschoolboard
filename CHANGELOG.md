@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-12 — Teacher-owned lesson-note drafting and submission (unverified)
+
+- Authored draft-only `LessonNote`, immutable numbered `LessonNoteRevision`, and append-only `LessonNoteEvent` data with composite tenant/session/term/class/subject/assignment FKs. No historic teaching assignment or student record is rewritten.
+- Added authenticated exact-active-teacher APIs to create, list/view own notes, revise with optimistic expected-version protection and submit for separate approval. Submitted does **not** imply official release.
+- Six real-session disposable-PostgreSQL integration cases cover denial, ownership, stale versions, history immutability and access after revocation/term closure. **No migration, tests or full CI-equivalent verification have run.** HM/Principal approval and released student reads remain blocked pending verified section/enrollment scope.
+- No `main` merge, production release, deployment or `npm audit` bypass.
+
 ## 2026-10-12 — Protected school timetable administration workspace (unverified)
 
 - Added a school administrator timetable screen linked from academic setup, with room configuration, exact teacher-assignment scheduling and audited cancellation through existing POST APIs.

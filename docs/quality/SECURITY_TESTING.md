@@ -4,6 +4,10 @@
 
 The `resolveSchoolPrincipal` loader must not trust a CLASS or SUBJECT `ScopeGrant.scopeId` as proof of school ownership merely because its grant is verified. Only identifiers resolving to **active** classes or subjects in the requested school can enter the resolved principal. New disposable-DB integration cases deliberately create verified school-A grants for school-B class/subject IDs, verify that the invalid grants are filtered, and then deactivate the valid school-A resources to confirm those grants cease to authorize reads. These cases have **not** been executed on the cumulative branch. SECTION/CHILD resource binding, concurrency guarantees across multiple queries, and production read routes remain separate unverified responsibilities; do not infer them from these tests.
 
+## Draft lesson-note ownership and immutable revision history (unverified)
+
+The teacher-only note service must derive the actor from Better Auth and require an active exact tenant-owned class/subject/session assignment in an ACTIVE term. Revision/submit writes lock the school, teacher membership, academic term, assignment, and current note inside serializable transactions; an expected revision check prevents lost updates. Composite school/term/assignment FKs and PostgreSQL validation/immutability triggers protect the author note, revision and workflow ledger. **Submitted notes are never student-visible and cannot be self-approved**. The six authored real-session disposable-DB scenarios cover anonymous/admin/foreign/other-teacher denials; exact school/term/assignment binding and forged input rejection; own-notes reads; immutable numbered revision chain and stale updates; submit-only transition and no reopening; direct revision/event tamper rejection; and denial after assignment revocation/term closure. All remain unexecuted, as do true concurrent editors, rollback and real HTTP browser checks.
+
 ## Required areas
 
 - Tenant isolation tests

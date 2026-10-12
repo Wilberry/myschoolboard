@@ -80,6 +80,17 @@ enum TimetableEventType {
   CANCELLED
 }
 
+enum LessonNoteStatus {
+  DRAFT
+  SUBMITTED
+}
+
+enum LessonNoteEventType {
+  CREATED
+  REVISED
+  SUBMITTED
+}
+
 enum SchoolConfigurationEventType {
   ACADEMIC_SESSION_CREATED
   ACADEMIC_TERM_CREATED
@@ -174,6 +185,9 @@ model School {
   timetableRooms                      TimetableRoom[]
   timetableSlots                      TimetableSlot[]
   timetableEvents                     TimetableEvent[]
+  lessonNotes                         LessonNote[]
+  lessonNoteRevisions                 LessonNoteRevision[]
+  lessonNoteEvents                    LessonNoteEvent[]
 }
 
 model Membership {
@@ -190,6 +204,7 @@ model Membership {
   teacherClassSubjectAssignments TeacherClassSubjectAssignment[]
   formTeacherResponsibilities    FormTeacherResponsibility[]
   timetableSlots                 TimetableSlot[]
+  lessonNotes                    LessonNote[]
 
   @@unique([schoolId, userId])
   @@unique([schoolId, id])
@@ -233,6 +248,7 @@ model SchoolClass {
   teacherClassSubjectAssignments TeacherClassSubjectAssignment[]
   formTeacherResponsibilities    FormTeacherResponsibility[]
   timetableSlots                 TimetableSlot[]
+  lessonNotes                    LessonNote[]
 
   @@unique([schoolId, id])
   @@index([schoolId])
@@ -247,6 +263,7 @@ model Subject {
   updatedAt                      DateTime                        @updatedAt
   school                         School                          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   teacherClassSubjectAssignments TeacherClassSubjectAssignment[]
+  lessonNotes                   LessonNote[]
 
   @@unique([schoolId, id])
   @@index([schoolId])
@@ -269,12 +286,14 @@ model TeacherClassSubjectAssignment {
   academicSession AcademicSession?                    @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
   events       TeacherClassSubjectAssignmentEvent[]
   timetableSlots TimetableSlot[]
+  lessonNotes LessonNote[]
 
   // Existing NULL-session assignments retain uniqueness via a SQL partial index.
   // Non-null session assignments are unique per teacher, class, subject and session.
   @@unique([schoolId, membershipId, classId, subjectId, sessionId], map: "TeacherAssignment_period_unique")
   @@unique([schoolId, id, membershipId])
   @@unique([schoolId, id, membershipId, classId, sessionId], map: "TeacherAssignment_schedule_identity")
+  @@unique([schoolId, id, membershipId, classId, subjectId, sessionId], map: "TeacherAssignment_lesson_identity")
   @@unique([schoolId, id])
   @@index([schoolId, membershipId, status])
   @@index([schoolId, classId, subjectId, status])
@@ -331,6 +350,7 @@ model AcademicSession {
   teacherAssignments TeacherClassSubjectAssignment[]
   formTeacherResponsibilities FormTeacherResponsibility[]
   timetableSlots TimetableSlot[]
+  lessonNotes LessonNote[]
 
   @@unique([schoolId, id])
   @@unique([schoolId, name])
@@ -351,6 +371,7 @@ model AcademicTerm {
   school    School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   session   AcademicSession      @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
   timetableSlots TimetableSlot[]
+  lessonNotes LessonNote[]
 
   @@unique([schoolId, sessionId, name])
   @@unique([schoolId, sessionId, position])
@@ -469,5 +490,68 @@ model TimetableEvent {
   slot              TimetableSlot      @relation(fields: [schoolId, slotId], references: [schoolId, id], onDelete: NoAction)
 
   @@index([schoolId, slotId, createdAt])
+  @@index([schoolId, actorUserId, createdAt])
+}
+
+model LessonNote {
+  id                  String           @id @default(cuid())
+  schoolId            String
+  sessionId           String
+  termId              String
+  assignmentId        String
+  teacherMembershipId String
+  classId             String
+  subjectId           String
+  topic               String
+  status              LessonNoteStatus @default(DRAFT)
+  currentRevision     Int              @default(1)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  submittedAt         DateTime?
+  school              School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  session             AcademicSession  @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
+  term                AcademicTerm     @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction)
+  assignment          TeacherClassSubjectAssignment @relation(fields: [schoolId, assignmentId, teacherMembershipId, classId, subjectId, sessionId], references: [schoolId, id, membershipId, classId, subjectId, sessionId], onDelete: NoAction)
+  teacherMembership   Membership       @relation(fields: [schoolId, teacherMembershipId], references: [schoolId, id], onDelete: NoAction)
+  schoolClass         SchoolClass      @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
+  subject             Subject          @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction)
+  revisions           LessonNoteRevision[]
+  events              LessonNoteEvent[]
+
+  @@unique([schoolId, id])
+  @@index([schoolId, termId, status])
+  @@index([schoolId, teacherMembershipId, updatedAt])
+}
+
+model LessonNoteRevision {
+  id             String      @id @default(cuid())
+  schoolId       String
+  noteId         String
+  revisionNumber Int
+  topic          String
+  objectives     String
+  content        String
+  actorUserId    String
+  createdAt      DateTime    @default(now())
+  school         School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  note           LessonNote  @relation(fields: [schoolId, noteId], references: [schoolId, id], onDelete: NoAction)
+
+  @@unique([schoolId, noteId, revisionNumber])
+  @@index([schoolId, noteId, createdAt])
+}
+
+model LessonNoteEvent {
+  id                String              @id @default(cuid())
+  schoolId          String
+  noteId            String
+  actorUserId       String
+  actorMembershipId String
+  eventType         LessonNoteEventType
+  revisionNumber    Int
+  createdAt         DateTime            @default(now())
+  school            School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  note              LessonNote          @relation(fields: [schoolId, noteId], references: [schoolId, id], onDelete: NoAction)
+
+  @@index([schoolId, noteId, createdAt])
   @@index([schoolId, actorUserId, createdAt])
 }

@@ -46,6 +46,17 @@ The default `allowCoFormTeachers` setting is false. Each successful mutation ret
 
 School-only `school:configure` operators may POST `/api/schools/{schoolId}/timetable/rooms` with `{name, reason}` (upper-case-normalized room); POST `/api/schools/{schoolId}/timetable/slots` with `{termId, assignmentId, roomId?, weekday, startMinute, endMinute, reason}` (ACTIVE term and session, exact session-bound teacher assignment); and POST `/api/schools/{schoolId}/timetable/slots/{slotId}/cancel` with `{reason}`. They use the current Better Auth actor, tenant-scoped serializable SQL checks, atomic insert-only audit events, private/no-store responses, generic `400`/`401`/`404`/`409`/`500` outcomes and no physical delete. The final database GiST exclusions block overlaps among ACTIVE teacher/class/room allocations. There is **no** timetable list, public calendar or student-data read API yet. None of the new migration or tests has been executed.
 
+## Teacher-owned lesson-note draft and submission API (unverified)
+
+Phase 6 draft-only routes, backed by Better Auth, exact active same-school teacher/class/subject/session assignment and ACTIVE academic term:
+- `POST /api/schools/{schoolId}/lesson-notes`: `{termId,assignmentId,topic,objectives,content}`; create DRAFT and immutable revision 1 + CREATED audit, 201.
+- `GET /api/schools/{schoolId}/lesson-notes`: list at most 100 of **own** active-assignment notes (minimum selected metadata), 200.
+- `GET /api/schools/{schoolId}/lesson-notes/{noteId}`: single own note plus up to 100 immutable revisions and workflow events, 200.
+- `POST /api/schools/{schoolId}/lesson-notes/{noteId}/revisions`: `{expectedRevision,topic,objectives,content}`; append a numbered revision/event only while DRAFT, 200.
+- `POST /api/schools/{schoolId}/lesson-notes/{noteId}/submit`: `{expectedRevision}`; change DRAFT to SUBMITTED and write a workflow event, 200.
+
+All HTTP replies are `Cache-Control: private, no-store`; invalid request 400, absent/expired session 401, denied/foreign/missing 404, stale/invalid state 409, generic operational 500. Audit logs never include note text, school/user identifiers, or payloads. No `approve`, `release`, `publish` or student-facing GET exists. **The routes, Prisma migration, tests, typecheck and actual HTTP behavior are unverified development artifacts.**
+
 ## Current status
 
 The teacher-assignment module records the four implemented mutation contracts plus newly authored, unverified D-020 administrative read handlers. Other API contracts remain future work and must follow these standards.
