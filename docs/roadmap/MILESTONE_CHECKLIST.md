@@ -1,5 +1,14 @@
 # Milestone Checklist
 
+### Phase 7 internal CBT admission reservations (authoring checkpoint; unverified)
+
+- [ ] Validate cumulative additive migration `20261012300000_phase7_cbt_attempt_admission` on owner-confirmed disposable loopback PostgreSQL: school/draft/student/member/link/enrollment composite FKs, SQL checked 1–3 attempt numbers and immutable deadline, no direct SQL actor/enrollment/clock spoofing or tampering.
+- [ ] Execute real-session synthetic student/teacher/admin/foreign school attempts, absent/revoked admin-attested student binding, wrong class/session/term/enrollment, rejected approval-only or withdrawn exam and invalid window tests. Confirm failed attempts leave no reservations.
+- [ ] Race two starts for the same pupil/draft: at most one reservation. Confirm last-write terminal publication withdrawal / student-account revocation and direct identity/enrollment changes deny admission, including SQL transaction races.
+- [ ] Ensure server UTC clock sets startedAt/deadlineAt, ignores fabricated timestamps/attemptNumber, handles exact closing boundary, counts abandoned reservations and respects maxAttempts. No student API currently exists.
+- [ ] Next: independently reviewed, idempotent resume/answer/autosave/submit/expiry ledger and key-blind student question projection, safe scoring and official class record sheet workflow. Do not enable student CBT until Phase 6 prerequisite, disposable database acceptance, full CI-equivalent and strict high-severity audit all pass.
+
+
 ### Phase 7 assessment publication authorization (unverified)
 
 - [ ] On confirmed disposable PostgreSQL, validate `20261012290000_phase7_assessment_publication` with preceding cumulative migrations and Prisma drift, actor/membership FKs, immutable append-only event/withdrawal checks and school deletion lifecycle.

@@ -1,5 +1,13 @@
 # Requirements Traceability Matrix
 
+## ASM-REQ-001 / T-ASM-001 — exact verified-student CBT attempt reservation (PARTIAL / UNVERIFIED)
+
+- Additive Prisma `AssessmentAttempt` and `20261012300000_phase7_cbt_attempt_admission` with school/draft/pupil/enrollment/class/session/student member/unrevoked attested link composite FKs, immutable attempt ordinal/timestamps and SQL approval+publication+active class/term/assignment and student actor/identity checks. Explicit PUBLISHED without WITHDRAWN and exact ACTIVE enrollment required; a STUDENT role, matching name/email or class string alone never enables admission.
+- Database-level school lock serializes attempt counts with publication withdrawal and student link revocation. The DB—not browser—assigns attemptNumber and UTC start/deadline <= exam close, refuses >maxAttempts or parallel unexpired reservations and blocks history UPDATE/DELETE/TRUNCATE. Expired attempts still count.
+- `src/modules/assessments/attempt-reservation-service.ts`: authenticated internal-only, exact candidate selection and serializable insertion; **no HTTP student endpoint, attempt resume, question delivery, autosave, submit, scoring or score sheet**.
+- `questions.integration.test.ts` synthetic real-session attempted bypass/race/revocation and audit immutability test; `scripts/phase7-attempt-admission-guard.test.mjs` added to unchanged full Node/Vitest path. Both AUTHORED, NOT EXECUTED. Local PostgreSQL, security audit and Phase 6 prerequisites remain blocked. ASM-REQ-001 remains only partially authored.
+
+
 ## ASM-REQ-001 / T-ASM-001 — controlled publication/withdrawal subset (authored; NOT VERIFIED)
 
 - `AssessmentPublicationAction`, `AssessmentPublicationEvent` Prisma + `20261012290000_phase7_assessment_publication` SQL: append-only school/draft/actor composite FK, school-Super-Admin-only current actor verification, prerequisite terminal HM/Principal APPROVED sealed draft, active school/class/section/subject/assignment/session/term and immutable PUBLISHED then optional terminal WITHDRAWN sequence. Cannot publish a RETURNED draft or silently republish withdrawn configuration.

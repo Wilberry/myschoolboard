@@ -6,6 +6,8 @@ const context = vi.hoisted(() => ({ headers: new Headers() }));
 vi.mock("next/headers", () => ({ headers: async () => context.headers }));
 
 import { GET, POST } from "@/app/api/schools/[schoolId]/assessment-questions/route";
+import { reserveInternalCbtAttempt } from "@/src/modules/assessments/attempt-reservation-service";
+import { AssessmentError } from "@/src/modules/assessments/question-service";
 import { GET as REVIEW_QUEUE } from "@/app/api/schools/[schoolId]/assessment-reviews/route";
 import { GET as PUBLICATION_QUEUE } from "@/app/api/schools/[schoolId]/assessment-publications/route";
 import { POST as PUBLICATION_DECISION } from "@/app/api/schools/[schoolId]/assessment-publications/[draftId]/decision/route";
@@ -27,6 +29,8 @@ const subjectId = `asm-subject-${suffix}`;
 const sessionId = `asm-session-${suffix}`;
 const termId = `asm-term-${suffix}`;
 const assignmentId = `asm-assignment-${suffix}`;
+const pupilId = `asm-student-${suffix}`;
+const enrollmentId = `asm-student-enrollment-${suffix}`;
 const secondarySectionId = `asm-section-secondary-${suffix}`;
 const secondaryClassId = `asm-class-secondary-${suffix}`;
 const secondaryAssignmentId = `asm-assignment-secondary-${suffix}`;
@@ -61,7 +65,7 @@ async function list(actor: string, schoolId = schoolA) {
 
 describe("Phase 7 exact-assignment private question bank", () => {
   beforeAll(async () => {
-    for (const name of ["teacher", "other", "admin", "foreign", "head", "principal", "super"]) {
+    for (const name of ["teacher", "other", "admin", "foreign", "head", "principal", "super", "student"]) {
       const email = `asm-${name}-${suffix}@example.test`;
       const registered = await auth.api.signUpEmail({
         body: { name: `Synthetic ${name}`, email, password },
@@ -87,6 +91,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
       ["head", "HEAD_OF_SECTION", schoolA],
       ["principal", "PRINCIPAL", schoolA],
       ["super", "SCHOOL_SUPER_ADMIN", schoolA],
+      ["student", "STUDENT", schoolA],
     ] as const) {
       const member = await prisma.membership.create({
         data: { userId: users[name], schoolId, role },
@@ -137,6 +142,15 @@ describe("Phase 7 exact-assignment private question bank", () => {
     await prisma.teacherClassSubjectAssignment.create({
       data: { id: secondaryAssignmentId, schoolId: schoolA, membershipId: members.teacher,
         classId: secondaryClassId, subjectId, sessionId, status: "ACTIVE" },
+    });
+    await prisma.studentRecord.create({
+      data: { id: pupilId, schoolId: schoolA,
+        admissionNumber: `ASM-SYNTHETIC-${suffix}`,
+        givenName: "Synthetic", familyName: "Pupil", status: "ENROLLED" },
+    });
+    await prisma.studentEnrollment.create({
+      data: { id: enrollmentId, schoolId: schoolA, studentId: pupilId,
+        classId, sessionId, status: "ACTIVE" },
     });
   });
   afterAll(async () => {
@@ -500,6 +514,92 @@ describe("Phase 7 exact-assignment private question bank", () => {
     await expect(prisma.assessmentPublicationEvent.delete({
       where: { id: events[0].id },
     })).rejects.toThrow();
+  });
+
+  it("reserves a database-clock attempt only for a linked exact enrolled STUDENT and published exam", async () => {
+    async function reserve(actor: string, draftId: string, schoolId = schoolA) {
+      context.headers = new Headers(cookies[actor] ? { cookie: cookies[actor] } : {});
+      return reserveInternalCbtAttempt(schoolId, draftId);
+    }
+    const q = await create("teacher", payload());
+    expect(q.status).toBe(201);
+    const questionId = (await q.json()).question.id;
+    // Start already open by trusted DB clock; only synthetic disposable DB.
+    const opens = new Date(Date.now() - 5 * 60000).toISOString();
+    const closes = new Date(Date.now() + 70 * 60000).toISOString();
+    const d = await POST_DRAFTS(req("teacher", schoolA, "POST", {
+      assignmentId, termId, kind: "QUIZ",
+      title: "Synthetic pupil-admission attempt test",
+      startsAt: opens, endsAt: closes,
+      durationMinutes: 30, maxAttempts: 1, passPercent: 60,
+      questions: [{ questionId, points: 4 }],
+    }), { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(d.status).toBe(201);
+    const draftId = (await d.json()).draft.id;
+    // Approval alone and absence of identity link cannot grant admission.
+    await expect(reserve("student", draftId)).rejects.toBeInstanceOf(AssessmentError);
+    const approved = await REVIEW_DECISION(req("head", schoolA, "POST", {
+      decision: "APPROVED",
+      reason: "Synthetic HM approves immutable pupil admission test",
+    }), { params: Promise.resolve({ schoolId: schoolA, draftId }) });
+    expect(approved.status).toBe(201);
+    await expect(reserve("student", draftId)).rejects.toBeInstanceOf(AssessmentError);
+    const published = await PUBLICATION_DECISION(req("super", schoolA, "POST", {
+      action: "PUBLISHED",
+      reason: "Synthetic separate school approval for internal CBT test",
+    }), { params: Promise.resolve({ schoolId: schoolA, draftId }) });
+    expect(published.status).toBe(201);
+    await expect(reserve("student", draftId)).rejects.toBeInstanceOf(AssessmentError);
+    const link = await prisma.studentAccountLink.create({
+      data: { schoolId: schoolA, studentId: pupilId,
+        studentMembershipId: members.student,
+        attestedByMembershipId: members.admin,
+        attestedByUserId: users.admin,
+        attestationReason: "Synthetic verified account and enrolled student record",
+      },
+    });
+    await expect(reserve("teacher", draftId)).rejects.toBeInstanceOf(AssessmentError);
+    await expect(reserve("student", draftId, schoolB)).rejects.toBeInstanceOf(AssessmentError);
+    // Transactional school row lock and DB-trigger attempt counter: racing
+    // submissions may not result in two issued first attempt numbers.
+    context.headers = new Headers({ cookie: cookies.student });
+    const outcomes = await Promise.allSettled([
+      reserveInternalCbtAttempt(schoolA, draftId),
+      reserveInternalCbtAttempt(schoolA, draftId),
+    ]);
+    expect(outcomes.filter(x => x.status === "fulfilled")).toHaveLength(1);
+    const reservation = outcomes.find(x => x.status === "fulfilled");
+    if (!reservation || reservation.status !== "fulfilled") {
+      throw new Error("Synthetic reservation missing");
+    }
+    expect(reservation.value.attemptNumber).toBe(1);
+    expect(reservation.value.startedAt.getTime()).toBeGreaterThan(
+      Date.parse(opens),
+    );
+    expect(reservation.value.deadlineAt.getTime()).toBeLessThanOrEqual(Date.parse(closes));
+    const rows = await prisma.assessmentAttempt.findMany({
+      where: { schoolId: schoolA, draftId },
+    });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      studentId: pupilId, enrollmentId, studentMembershipId: members.student,
+      linkId: link.id, classId, sessionId, attemptNumber: 1,
+    });
+    await expect(reserve("student", draftId)).rejects.toBeInstanceOf(AssessmentError);
+    await expect(prisma.assessmentAttempt.update({
+      where: { id: rows[0].id }, data: { attemptNumber: 2 },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentAttempt.delete({
+      where: { id: rows[0].id },
+    })).rejects.toThrow();
+    // Revocation is append-only and forbids all future admissions.
+    await prisma.studentAccountLinkRevocation.create({
+      data: { schoolId: schoolA, linkId: link.id,
+        actorMembershipId: members.admin, actorUserId: users.admin,
+        reason: "Synthetic child account safety revocation during CBT check",
+      },
+    });
+    await expect(reserve("student", draftId)).rejects.toBeInstanceOf(AssessmentError);
   });
 
   it("revoking exact verified section grant blocks new academic moderation", async () => {

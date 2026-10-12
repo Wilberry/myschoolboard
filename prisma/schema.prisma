@@ -266,6 +266,7 @@ model School {
   assessmentDraftSeals AssessmentDraftSeal[]
   assessmentReviewEvents AssessmentReviewEvent[]
   assessmentPublicationEvents AssessmentPublicationEvent[]
+  assessmentAttempts AssessmentAttempt[]
 }
 
 model Membership {
@@ -300,6 +301,7 @@ model Membership {
   assessmentDrafts AssessmentDraft[]
   assessmentReviewEvents AssessmentReviewEvent[]
   assessmentPublicationEvents AssessmentPublicationEvent[]
+  assessmentAttempts AssessmentAttempt[]
 }
 
 model ScopeGrant {
@@ -704,6 +706,7 @@ model StudentRecord {
   @@unique([schoolId, admissionNumber])
   @@index([schoolId, status])
   accountLink StudentAccountLink?
+  assessmentAttempts AssessmentAttempt[]
 }
 
 model StudentEnrollment {
@@ -729,6 +732,7 @@ model StudentEnrollment {
   @@unique([schoolId, id, studentId])
   @@index([schoolId, studentId, sessionId, status])
   @@index([schoolId, classId, sessionId, status])
+  assessmentAttempts AssessmentAttempt[]
 }
 
 model StudentEvent {
@@ -941,6 +945,7 @@ model StudentAccountLink {
   @@unique([schoolId, id])
   @@unique([schoolId, studentId])
   @@unique([schoolId, studentMembershipId])
+  assessmentAttempts AssessmentAttempt[]
 }
 
 /** Revocation is terminal; an identity cannot silently be reassigned.
@@ -1047,6 +1052,7 @@ model AssessmentDraft {
   seal AssessmentDraftSeal?
   reviews AssessmentReviewEvent[]
   publicationEvents AssessmentPublicationEvent[]
+  attempts AssessmentAttempt[]
 }
 
 /** Snapshot of the chosen private question IDs and their positive marks.
@@ -1129,4 +1135,35 @@ model AssessmentPublicationEvent {
 
   @@unique([schoolId, draftId, action])
   @@index([schoolId, createdAt])
+}
+
+/** Server-and-database admitted enrollment-bound CBT attempt reservation.
+ * This foundation intentionally has NO student HTTP route, question delivery,
+ * autosave, completion or marking. Once created its identity and deadline
+ * cannot be edited. Attempt numbers are assigned by the DB, not by clients. */
+model AssessmentAttempt {
+  id String @id
+  schoolId String
+  draftId String
+  studentId String
+  enrollmentId String
+  classId String
+  sessionId String
+  studentMembershipId String
+  linkId String
+  studentUserId String
+  attemptNumber Int @default(1)
+  startedAt DateTime @default(now())
+  deadlineAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  draft AssessmentDraft @relation(fields: [schoolId, draftId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttempt_draft_fkey")
+  student StudentRecord @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttempt_student_fkey")
+  enrollment StudentEnrollment @relation(fields: [schoolId, enrollmentId, studentId, classId, sessionId], references: [schoolId, id, studentId, classId, sessionId], onDelete: NoAction, map: "AssessmentAttempt_enrollment_fkey")
+  member Membership @relation(fields: [schoolId, studentMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttempt_membership_fkey")
+  link StudentAccountLink @relation(fields: [schoolId, linkId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttempt_link_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, draftId, studentId, attemptNumber])
+  @@index([schoolId, studentId, startedAt])
 }
