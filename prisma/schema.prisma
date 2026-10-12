@@ -30,6 +30,23 @@ enum ScopeType {
   CHILD
 }
 
+enum SchoolLifecycleStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+  CLOSED
+}
+
+enum SchoolLifecycleEventType {
+  ONBOARDED
+  ACTIVATED
+  SUSPENDED
+  EXPIRED
+  CLOSED
+  REACTIVATED
+}
+
 model User {
   id            String       @id
   name          String
@@ -93,6 +110,7 @@ model School {
   name                                String
   slug                                String                               @unique
   isActive                            Boolean                              @default(true)
+  lifecycleStatus                     SchoolLifecycleStatus?
   createdAt                           DateTime                             @default(now())
   updatedAt                           DateTime                             @updatedAt
   memberships                         Membership[]
@@ -100,6 +118,7 @@ model School {
   subjects                            Subject[]
   teacherClassSubjectAssignments      TeacherClassSubjectAssignment[]
   teacherClassSubjectAssignmentEvents TeacherClassSubjectAssignmentEvent[]
+  lifecycleEvents                     SchoolLifecycleEvent[]
 }
 
 model Membership {
@@ -215,4 +234,19 @@ model TeacherClassSubjectAssignmentEvent {
   @@index([schoolId, assignmentId, createdAt])
   @@index([schoolId, actorUserId, createdAt])
   @@index([schoolId, teacherMembershipId, createdAt])
+}
+
+model SchoolLifecycleEvent {
+  id             String                   @id @default(cuid())
+  schoolId       String
+  actorUserId    String
+  eventType      SchoolLifecycleEventType
+  previousStatus SchoolLifecycleStatus?
+  newStatus      SchoolLifecycleStatus
+  reason         String?
+  createdAt      DateTime                 @default(now())
+  school         School                   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId, createdAt])
+  @@index([actorUserId, createdAt])
 }

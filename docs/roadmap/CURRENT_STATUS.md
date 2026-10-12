@@ -8,6 +8,10 @@ The project is no longer documentation-only. A verified local Phase 1 foundation
 
 The new `feature/assignment-admin-read-api` branch adds an authenticated list/detail teacher-assignment administration API using the D-020/D-023 conservative `school:configure` reader permission. Each final assignment SQL query rechecks active school, membership, authenticated actor and role. List results use selected fields with a 50-record cap and tenant-validated cursor; reads are non-cacheable, generic on denial/error, and never return audit events. Eleven new disposable-PostgreSQL integration cases and a revised mutation-route negative-export check were authored. **No full CI-equivalent database test, lint, typecheck, build, or audit run has been performed on the changed branch.** New code remains an unmerged draft and does not complete TEN-REQ-001, SEC-REQ-001 or TCH-REQ-001.
 
+## Phase 3 platform school onboarding and lifecycle foundation (pending local verification)
+
+On the cumulative `feature/platform-school-onboarding-lifecycle` branch, new schema and a review-only migration add nullable lifecycle state for existing schools and immutable platform lifecycle events. Platform-only transactional onboarding starts new schools as PENDING and inactive; state changes update lifecycle and the existing `isActive` tenant barrier together. A transition policy, two platform API POST handlers, unit and database integration tests have been added. **No migration, test suite, lint, typecheck, build or dependency audit has yet run for this branch.** Staff invitation, plans/subscriptions, tenant read-only/export policy, physical closure/retention and browser/admin UI remain incomplete. The new schema is a development-only additive design and is not deployed.
+
 ## Current evidence
 
 - Published development checkpoint: `checkpoint/phase1-tenant-safe-foundation`; `main` remains unchanged
