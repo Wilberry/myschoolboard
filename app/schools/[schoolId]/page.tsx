@@ -67,6 +67,13 @@ async function SchoolDetailContent({
             </Link>
           </p>
         )}
+        {authorize(access.principal, "school:configure", { schoolId }).allowed && (
+          <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/students`} className="secondary-link">
+              Manage students and enrollment
+            </Link>
+          </p>
+        )}
         {canReviewLessonNotes && (
           <p className="setup-navigation">
             <Link href={`/schools/${schoolId}/lesson-note-reviews`} className="secondary-link">
