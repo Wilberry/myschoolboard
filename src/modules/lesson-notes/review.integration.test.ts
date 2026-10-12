@@ -42,10 +42,13 @@ const principalMember = `review-principal-member-${suffix}`;
 const foreignMember = `review-foreign-member-${suffix}`;
 const pupilPrimary = `review-student-primary-${suffix}`;
 const pupilSecondary = `review-student-secondary-${suffix}`;
+const pupilUnlinked = `review-student-unlinked-${suffix}`;
 const enrollmentPrimary = `review-enroll-primary-${suffix}`;
 const enrollmentSecondary = `review-enroll-secondary-${suffix}`;
+const enrollmentUnlinked = `review-enroll-unlinked-${suffix}`;
 const primaryStudentMember = `review-student-member-primary-${suffix}`;
 const secondaryStudentMember = `review-student-member-secondary-${suffix}`;
+const unlinkedStudentMember = `review-student-member-unlinked-${suffix}`;
 const primaryAssignment = `review-assign-primary-${suffix}`;
 const secondaryAssignment = `review-assign-secondary-${suffix}`;
 const unknownAssignment = `review-assign-unknown-${suffix}`;
@@ -59,6 +62,7 @@ const emails = {
   foreign: `review-foreign-${suffix}@example.test`,
   pupilPrimary: `review-pupil-primary-${suffix}@example.test`,
   pupilSecondary: `review-pupil-secondary-${suffix}@example.test`,
+  pupilUnlinked: `review-pupil-unlinked-${suffix}@example.test`,
 };
 const users: Record<string, string> = {};
 const cookies: Record<string, string> = {};
@@ -157,6 +161,7 @@ describe("section-scoped lesson note review and return", () => {
         { id: teacherMember, userId: users.teacher, schoolId: schoolA, role: "TEACHER" },
         { id: primaryStudentMember, userId: users.pupilPrimary, schoolId: schoolA, role: "STUDENT" },
         { id: secondaryStudentMember, userId: users.pupilSecondary, schoolId: schoolA, role: "STUDENT" },
+        { id: unlinkedStudentMember, userId: users.pupilUnlinked, schoolId: schoolA, role: "STUDENT" },
         { id: headMember, userId: users.head, schoolId: schoolA, role: "HEAD_OF_SECTION" },
         { id: principalMember, userId: users.principal, schoolId: schoolA, role: "PRINCIPAL" },
         { userId: users.noGrant, schoolId: schoolA, role: "HEAD_OF_SECTION" },
@@ -208,12 +213,16 @@ describe("section-scoped lesson note review and return", () => {
         givenName: "Synthetic", familyName: "Primary", status: "ENROLLED" },
       { id: pupilSecondary, schoolId: schoolA, admissionNumber: "TEST-SECONDARY-001",
         givenName: "Synthetic", familyName: "Secondary", status: "ENROLLED" },
+      { id: pupilUnlinked, schoolId: schoolA, admissionNumber: "TEST-UNLINKED-001",
+        givenName: "Synthetic", familyName: "Unlinked", status: "ENROLLED" },
     ] });
     await prisma.studentEnrollment.createMany({ data: [
       { id: enrollmentPrimary, schoolId: schoolA, studentId: pupilPrimary,
         sessionId, classId: classPrimary },
       { id: enrollmentSecondary, schoolId: schoolA, studentId: pupilSecondary,
         sessionId, classId: classSecondary },
+      { id: enrollmentUnlinked, schoolId: schoolA, studentId: pupilUnlinked,
+        sessionId, classId: classPrimary },
     ] });
     const grant = await prisma.scopeGrant.create({
       data: {
@@ -435,6 +444,7 @@ describe("section-scoped lesson note review and return", () => {
         }), { params: Promise.resolve({ schoolId: schoolA }) });
     }
     expect((await pupilList("pupilSecondary")).status).toBe(404);
+    expect((await pupilList("pupilUnlinked")).status).toBe(404);
     expect((await pupilList("teacher")).status).toBe(404);
     expect((await pupilDetail("pupilSecondary", secondaryNoteId)).status).toBe(404);
     const invalid = await studentLinkRoute(request("admin", "POST",
@@ -530,8 +540,8 @@ describe("section-scoped lesson note review and return", () => {
   it("enforces immediate student membership revocation and denies forged identity binding", async () => {
     await expect(prisma.studentAccountLink.create({
       data: {
-        schoolId: schoolA, studentId: pupilPrimary,
-        studentMembershipId: secondaryStudentMember,
+        schoolId: schoolA, studentId: pupilUnlinked,
+        studentMembershipId: unlinkedStudentMember,
         attestedByMembershipId: teacherMember,
         attestedByUserId: users.teacher,
         attestationReason: "Attempted forged account to enrolled pupil",
