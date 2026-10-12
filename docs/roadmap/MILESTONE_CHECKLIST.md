@@ -53,6 +53,9 @@
 
 ## Phase 5 — Form Teacher and timetable integrity
 
+- [ ] Validate the administrator timetable page, school-isolated server reads, room/slot creation, weekday/minute input conversion, AJAX error handling, cancellation history, accessibility and Next HTTP session transport against the reviewed cumulative commit.
+- [ ] Verify the read cap behavior and add school-configurable large-campus timetable pagination before marking a full timetable module complete.
+
 - [ ] Apply timetable GiST extension/constraint migration on an explicitly disposable PostgreSQL DB; prove exact tenant foreign keys and concurrency-safe teacher, class and room conflict rejection.
 - [ ] Run slot-create/cancel route tests and existing teacher/Form Teacher tenant/audit suites; verify exact active session/term/teacher relationship and preserved cancellation audit.
 - [ ] Add school-admin timetable listing and editing UI plus room lifecycle policies, then progress to Phase 6 attendance and lesson planning.

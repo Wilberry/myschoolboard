@@ -1,5 +1,11 @@
 # Staff and Teacher Assignments
 
+## School administrator timetable workspace (new, unverified)
+
+A restricted `/schools/{schoolId}/timetable` page displays an active weekly schedule with school-owned rooms, ACTIVE academic terms and session-specific teacher assignments, and active slot times by weekday. The user can create a room, schedule a lesson, and cancel an existing slot through the existing protected POST endpoints. Term selection narrows eligible assignments to the same session; actual tenant/role/session/timetable-overlap enforcement stays in the server transactions and PostgreSQL constraints, not in browser state. The server reader repeats same-school active membership/role checks in all collection predicates. Teacher/staff names appear only in the authenticated school administrator workspace, not any parent/student/teacher self-service route.
+
+The listing caps active terms/rooms at 100 and assignments/slots at 200; large-school paging and draft-term timetables remain future work. Five database-backed reader tests and actual browser keyboard/submit/refresh/cancel tests have **not** run for this cumulative candidate. The earlier API-only timetable foundation is not thereby declared production-verified.
+
 ## School-owned timetable integrity (authored, unverified)
 
 The timetable foundation stores `TimetableRoom`, `TimetableSlot` and append-only `TimetableEvent` with composite school/session/term/assignment/teacher/class/room ownership. A slot requires an ACTIVE academic term and session and an exact ACTIVE **session-specific** teacher-class-subject assignment; legacy NULL-session assignments are not automatically scheduled. Weekday 1–7 means Monday–Sunday, with school-local minutes 0–1440 and half-open [start,end) intervals. No universal bell schedule or timezone is assumed.

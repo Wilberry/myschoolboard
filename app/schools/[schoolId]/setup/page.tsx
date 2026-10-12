@@ -34,6 +34,12 @@ export default async function SchoolSetupPage({
             <h1>Academic setup</h1>
             <p className="lede">{snapshot.school.name}</p>
           </div>
+          <Link
+            href={`/schools/${schoolId}/timetable`}
+            className="secondary-link"
+          >
+            Manage weekly timetable
+          </Link>
         </div>
         <SchoolSetupEditor schoolId={schoolId} snapshot={snapshot} />
       </section>

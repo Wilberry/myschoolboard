@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-12 — Protected school timetable administration workspace (unverified)
+
+- Added a school administrator timetable screen linked from academic setup, with room configuration, exact teacher-assignment scheduling and audited cancellation through existing POST APIs.
+- Added a server-side timetable snapshot reader with active same-school membership/role filters in each final SQL query and capped minimal data projections; five disposable PostgreSQL isolation tests were authored.
+- No student timetable, public read API, new schema, deployment, audit waiver or merge. Local database, Next browser/accessibility, format/lint/typecheck/build and unchanged audit checks remain **not yet executed**.
+
 ## 2026-10-12 — Tenant-scoped timetable conflict foundation (unverified)
 
 - Added TimetableRoom/TimetableSlot/TimetableEvent and school-bound composite academic term/assignment relationships, plus PostgreSQL btree_gist exclusions for concurrent ACTIVE teacher/class/room time conflicts.
