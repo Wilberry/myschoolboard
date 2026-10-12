@@ -219,6 +219,8 @@ BEGIN
     IF NOT EXISTS (
       SELECT 1 FROM "AttendanceRegister" r
       JOIN "School" s ON s."id" = r."schoolId" AND s."isActive" = true
+      JOIN "AcademicSession" session ON session."id" = r."sessionId"
+        AND session."schoolId" = r."schoolId" AND session."status" = 'ACTIVE'
       JOIN "SchoolClass" c ON c."id" = r."classId"
         AND c."schoolId" = r."schoolId" AND c."isActive" = true
       JOIN "SchoolSection" section ON section."id" = c."sectionId"
