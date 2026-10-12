@@ -1,5 +1,12 @@
 # Decision Log
 
+## D-045: Explicit append-only school grading profile revisions, with fail-closed previews
+
+- Status: Phase 7 grading foundation authored; NOT EXECUTED.
+- Decision: Choose a reversible per school/session/term/class/subject immutable School Super Admin-authored QUIZ/TEST/EXAM weighting profile (non-negative integer percentages exactly 100). No global/national school weighting default. Each change appends a SQL-serialized reasoned version; no in-place edits or historical score recalculation. Display separate provisional teacher-only weighted preview only when every positive-weight category has at least one published assessment and each has a scored attempt. No official status, student grade publication or auto-migration of records.
+- Consequence: Profile is a **policy candidate**, not adoption. Manual/theory scores, alternate CA rules, exam eligibility and report-card acceptance remain separate decisions; full database/CI/strict audit gate blocked. See ADR-031.
+
+
 ## D-044: Teacher-only provisional class record, best scored attempt until school grade policy
 
 - Status: Authored; unverified. The teacher owning an exact ACTIVE class/subject/session assignment may trigger SQL-computed objective marking of their submitted attempts (not supply marks) and privately view current ENROLLED students in that same class/session/term. The provisional per-assessment best scored attempt rule prefers highest percent, then marks, then earlier ordinal; pending scores do not count as zero. The reader bounds pupil and assessment rows and fails closed on duplicate enrollment. No permanent class sheet or official result publication occurs, and no other roles inherit grade access. CA/exam weights, theory grades, grading scales, correction and report release need later scoped audited design/acceptance. See ADR-030.
