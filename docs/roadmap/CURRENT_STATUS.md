@@ -20,6 +20,10 @@ The cumulative `feature/academic-session-term-foundation` branch adds school-own
 
 The cumulative `feature/school-setup-workspace` branch adds a restricted school-admin setup page, a client editor for new sessions/terms/classes/subjects, and a read service that rechecks same-school active membership/role in each final query. Four database-backed tests for authorized data selection, other-school concealment, inactive membership and final-query predicates are authored. **No full CI-equivalent validation, browser accessibility/HTTP verification, migration execution, or audit run has been performed** on this candidate. The workspace is not evidence of complete Phase 4, grading configuration, Section/Guardian enrollment models or academic workflow publication.
 
+## Academic session and term activation/closure (pending verification)
+
+The `feature/academic-period-lifecycle` branch adds two protected academic period status routes, reasoned state changes and audit records, and Activate/Close controls in the school-admin setup workspace. The application uses serializable transactions and database partial unique indexes to preserve only one ACTIVE session/term per scope; closing a session is blocked until all its terms are CLOSED. It adds an additive event-type/reason migration and new policy/database regression cases. **No migrations or full CI-equivalent verification have been run on this branch.** Academic session-scoped teacher allocations, Form Teacher responsibility, assessment workflows, and published-grade history remain future Phase 5+ work.
+
 ## Current evidence
 
 - Published development checkpoint: `checkpoint/phase1-tenant-safe-foundation`; `main` remains unchanged

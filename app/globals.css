@@ -500,3 +500,11 @@ h1 {
 .setup-records span {
   color: var(--muted);
 }
+.setup-status-form {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+.setup-status-form button {
+  background: var(--green-dark);
+}

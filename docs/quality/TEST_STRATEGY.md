@@ -32,6 +32,10 @@ Create-only academic session/term and class/subject handlers must use active `sc
 
 The `readSchoolSetup` server helper revalidates `school:configure`, active school membership and per-collection school ownership. Four direct database integration cases check exact school data, cross-school and insufficient role denial, membership revocation, and the final Prisma predicate on academic-session reads. Browser end-to-end verification of the setup editor forms, refresh behavior, keyboard labels and denied navigation remains pending; server-rendered links are hints and may not replace authorization in the data-fetch service.
 
+## Academic period transition safety (authored, awaiting local verification)
+
+Period status endpoints use `school:configure` and server-derived Better Auth identities; transitions require a reason and serializable audit-atomic writes. New pure policy tests cover valid and terminal-invalid transitions; database tests check unauthenticated/cross-school denial, activation ordering (session before term), rejection of closing a session while terms remain active/planned, and exact audit event type/actor/reason persistence. The database partial unique constraints prevent two ACTIVE sessions per school or two ACTIVE terms per session; verify concurrency behavior in the postponed local test run. These new unit/DB/HTTP/UI tests have **not** run.
+
 ## Required negative tests
 
 - Cross-tenant access

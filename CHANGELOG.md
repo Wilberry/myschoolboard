@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-12 — Academic period activation and closure (unverified)
+
+- Added reasoned session/term PLANNED→ACTIVE→CLOSED status transitions, with school-admin-only HTTP handlers, serializable membership revalidation, audit event types and stored justifications.
+- Enforced activation of a parent session before its term and closure of all terms before session closure; database partial unique indexes protect single-active-period constraints.
+- Added school setup Activate/Close controls, pure transition tests and disposable-database integration cases, all **awaiting** full local validation.
+- No legacy teacher assignment period mapping, grading-history rewrite, physical deletion, `main` merge, CI audit change or production deployment.
+
 ## 2026-10-12 — School setup workspace (unverified)
 
 - Added a school-scoped academic setup page with an interactive creation form for planned sessions/terms and school-owned class/subject catalogs.

@@ -34,6 +34,8 @@
 
 ## Phase 4 — Academic structure foundation authored, not yet verified
 
+- [ ] Test period activation and closure against actual PostgreSQL partial unique indexes and race conditions; verify role denial, required reasons, immutable event history and the school setup browser controls.
+
 - [ ] Verify school setup workspace navigation, server-side role checks, final-query tenant predicates, create forms, non-cacheable API responses and 100-row display caps in local browser and disposable-DB tests.
 
 - [ ] Apply academic session/term/configuration event migration on only a disposable PostgreSQL test DB; inspect FK ownership, date checks, unique positions and audit immutability.

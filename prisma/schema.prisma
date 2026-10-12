@@ -56,6 +56,10 @@ enum AcademicPeriodStatus {
 enum SchoolConfigurationEventType {
   ACADEMIC_SESSION_CREATED
   ACADEMIC_TERM_CREATED
+  ACADEMIC_SESSION_ACTIVATED
+  ACADEMIC_SESSION_CLOSED
+  ACADEMIC_TERM_ACTIVATED
+  ACADEMIC_TERM_CLOSED
   CLASS_CREATED
   SUBJECT_CREATED
 }
@@ -311,6 +315,7 @@ model SchoolConfigurationEvent {
   actorMembershipId String
   eventType         SchoolConfigurationEventType
   resourceId        String
+  reason            String?
   createdAt         DateTime                     @default(now())
   school            School                       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
