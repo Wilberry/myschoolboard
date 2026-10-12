@@ -1,5 +1,13 @@
 # Requirements Traceability Matrix
 
+## LES-REQ-001 structured term schemes of work (authored, unverified)
+
+- `LessonMaterialKind` and `LessonNoteRevision.weeklyPlan` add a SCHEME_OF_WORK subtype with unique per school/term/assignment history, SQL array/week/content validation and immutable kind in `20261012232000_lesson_schemes_of_work`. Existing lesson notes default to LESSON_NOTE.
+- `lesson-notes/service.ts` validates ordered 1–24 topic/outcome/activity weeks on exact authenticated assigned TEACHER create/revision; `scheme-of-work-editor.tsx` and `/schools/[schoolId]/schemes-of-work` supply a protected authoring workspace.
+- Existing exact active HM/Principal reviewer and separate release paths now carry kind and structured plan; exact verified STUDENT enrollment reader displays only currently approved, released, nonwithdrawn scheme revisions. `review.integration.test.ts` scheme lifecycle tests **authored, not executed**.
+- LES-REQ-001 remains **partially authored, not verified** until migration, role/tenant tests, browser, full local CI and strict security audit pass.
+
+
 ## LES-REQ-001 released student identity/class/term projection (authored; UNVERIFIED)
 
 - `StudentIdentityLinkEvent` + additive `20261012231000_student_identity_links` SQL: latest LINKED/REVOKED account-to-school-student mapping, exact same-school STUDENT membership/StudentRecord FKs, authorized School Admin/Super Admin verification and immutable actor history; no automatic identity inference.
@@ -75,7 +83,7 @@ The matrix below links requirements to the canonical domains and expected roadma
 | ADM-REQ-001 | Admissions | School admin | Student admission lifecycle | Student, Guardian, Enrollment | Student records | T-ADM-001 | Phase 4 | Specified |
 | TCH-REQ-001 | Teacher assignments | HM, Principal, Teacher | Assignment and conflict validation | TeacherClassSubjectAssignment | Staff assignment screens | T-TCH-001 | Phase 5 | Specified |
 | ATT-REQ-001 | Attendance | Form Teacher, HM, Principal | Submit/approve attendance | AttendanceRegister, AttendanceEntry, AttendanceEvent | Private POST only (no UI/read) | T-ATT-001 | Phase 6 | Partially authored — unverified |
-| LES-REQ-001 | Lesson notes | Teacher, HM, Principal | Approval and release | LessonNote | Academic planning | T-LES-001 | Phase 6 | Specified |
+| LES-REQ-001 | Lesson notes and schemes | Teacher, HM, Principal, verified Student | Versioned approval, release and exact class/term visibility | LessonNote, LessonNoteRevision, LessonReleaseEvent, StudentIdentityLinkEvent | Protected teacher/reviewer/student workspaces | T-LES-001 | Phase 6 | Partially authored — unverified |
 | ASM-REQ-001 | Assessments | Teacher, HM, Principal | CBT and assessment scoring | Assessment, Score | Assessment UI | T-ASM-001 | Phase 7 | Specified |
 | RES-REQ-001 | Results and report cards | Teacher, HM, Principal, School Super Admin | Approve and publish report cards | ResultSheet, ReportCard | Results area | T-RES-001 | Phase 8 | Specified |
 | FEE-REQ-001 | Fees and payments | School admin, Parent | Payment and receipt workflow | FeeObligation, Payment | Finance portal | T-FEE-001 | Phase 9 | Specified |
