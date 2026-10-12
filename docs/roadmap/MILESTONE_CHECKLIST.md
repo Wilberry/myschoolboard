@@ -1,5 +1,13 @@
 # Milestone Checklist
 
+### Direct-SQL incomplete-roster prevention (unverified)
+
+- [ ] Apply review-only `20261012200000_attendance_complete_roster_guard` **after** the earlier attendance migrations, only against confirmed disposable test PostgreSQL; assert full two-pupil register + immutable SUBMITTED event succeeds and a one-pupil direct-write attempt atomically rolls back.
+- [ ] Run the read-only Node SQL/schema invariants through the existing `npm test` command; preserve all Vitest suites and `npm audit --audit-level=high`.
+- [ ] Verify concurrency with enrollment changes, currently active student status transitions, Form Teacher revocation, stopped school/session, direct SQL tamper and explicit tenant deletion cascade. Capture exact test SHA, commands and output.
+- [ ] Retain blocker until full local CI-equivalent is executed successfully; GitHub Actions billing remains separately blocked.
+
+
 ### Attendance correction readers / browser workspaces (verification still required)
 
 - [ ] Run Form Teacher exact-class approved-register and effective-mark reads on disposable PostgreSQL, including withdrawn historical student entry access only via current class/session PRIMARY responsibility.

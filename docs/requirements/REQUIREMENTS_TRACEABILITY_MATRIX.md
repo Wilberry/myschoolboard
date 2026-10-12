@@ -1,5 +1,13 @@
 # Requirements Traceability Matrix
 
+## Attendance SQL bypass hardening — ATT-REQ-001/T-ATT-001 (unverified)
+
+- Finding: prior DB SUBMITTED-event trigger verified original actor and **at least one** attendance entry, but did not require all active class/session enrolled pupils. API full-roster check was insufficient against bypassing the application using direct SQL.
+- New migration: `20261012200000_attendance_complete_roster_guard` requires exact full active roster in the immutable SUBMITTED event transaction; bounded count, school lock and per-entry eligibility checks. Original database audit and authorization mechanisms retained.
+- Tests: synthetic direct-SQL partial-class transaction rejection and rollback in `routes.integration.test.ts`, read-only `scripts/attendance-ledger-guard.test.mjs` included in `npm test`. **Authored, not run**. Ten GitHub content static-consistency presence checks were executed; these do not meet PostgreSQL, authorization or CI acceptance.
+- Status remains **partially authored, unverified**; do not mark security/attendance complete.
+
+
 ## ATT-REQ-001 correction read/workspace extension — still unverified
 
 - `src/modules/attendance/corrections-read.ts` and `corrections-read-http.ts`: Form Teacher current-primary-responsibility approved-register/entry queries and exact HM/Principal active-section pending queue/detail; select originalMark alongside latest APPROVED revision effectiveMark. Pending and RETURNED proposals are excluded from corrected effective value.
