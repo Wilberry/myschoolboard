@@ -51,6 +51,9 @@ export async function resolveSchoolPrincipal(
   // ScopeGrant stores an untyped resource ID rather than a foreign key.
   // Resolve class/subject grants against active resources in this school,
   // so even a verified ID belonging to another tenant is not authority.
+  const sectionIds = membership.scopes
+    .filter((scope) => scope.type === "SECTION")
+    .map((scope) => scope.scopeId);
   const classIds = membership.scopes
     .filter((scope) => scope.type === "CLASS")
     .map((scope) => scope.scopeId);
@@ -58,7 +61,17 @@ export async function resolveSchoolPrincipal(
     .filter((scope) => scope.type === "SUBJECT")
     .map((scope) => scope.scopeId);
 
-  const [classes, subjects] = await Promise.all([
+  const [sections, classes, subjects] = await Promise.all([
+    sectionIds.length
+      ? prisma.schoolSection.findMany({
+          where: {
+            schoolId: requestedSchoolId,
+            id: { in: sectionIds },
+            isActive: true,
+          },
+          select: { id: true },
+        })
+      : Promise.resolve([]),
     classIds.length
       ? prisma.schoolClass.findMany({
           where: {
@@ -81,13 +94,14 @@ export async function resolveSchoolPrincipal(
       : Promise.resolve([]),
   ]);
 
+  const allowedSectionIds = new Set(sections.map((section) => section.id));
   const allowedClassIds = new Set(classes.map((schoolClass) => schoolClass.id));
   const allowedSubjectIds = new Set(subjects.map((subject) => subject.id));
   const scopes = membership.scopes.filter((scope) => {
+    if (scope.type === "SECTION") return allowedSectionIds.has(scope.scopeId);
     if (scope.type === "CLASS") return allowedClassIds.has(scope.scopeId);
     if (scope.type === "SUBJECT") return allowedSubjectIds.has(scope.scopeId);
-    // SECTION and CHILD are governed by separate, not-yet-implemented
-    // resource models. No new authorization is granted here.
+    // CHILD remains governed by a separate, unimplemented enrollment model.
     return true;
   });
 

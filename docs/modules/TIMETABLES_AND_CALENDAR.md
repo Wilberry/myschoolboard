@@ -17,6 +17,10 @@ The current Phase 5 development candidate provides an **administrator-only** tim
 
 **HM and Principal section-scoped timetable control remains a required feature in this canonical specification, not an accepted omission.** Because the current foundation has not yet implemented verified school-owned Section/class ownership, the new APIs do not grant an HM or Principal unbounded school-wide scheduling permissions. The next section-aware implementation must scope staff to the exact active primary/secondary section, relevant class, session and timetable resources and add real cross-section negative tests before enabling these roles. The same restriction applies to future class/lesson data routes. Staff teaching allocations and room/teacher conflicts remain independently enforced. The new migration, HTTP/browser tests and cross-section access checks are **not yet verified** on the owner-run disposable local database.
 
+## Explicit section prerequisite (draft, not validated)
+
+The school-owned `SchoolSection` and nullable same-school `SchoolClass.sectionId` relationship now provide an authoritative future primary/secondary map, with **no guessed mapping** for existing classes. Verified SECTION scope grants are filtered against active sections of the requested school. Before HM/Principal school-timetable rights can be opened, each timetable transaction must match the requested class to its verified active section and enforce actor role/stage/scope; neither a standalone sectionId nor school-wide `school:configure` suffices. Unverified migration and tests are not permission evidence.
+
 ## Audit expectations
 
 - Timetable changes are auditable.

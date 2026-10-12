@@ -27,6 +27,8 @@ When two rules conflict, the safe default is the more restrictive rule. For rout
 
 - When a subject-teacher assignment is tied to an academic session, teacher access requires an **exact matching sessionId** as well as the existing active same-school class/subject tuple. The principal resolver excludes session-specific assignments if the session is not ACTIVE. A legacy NULL-session assignment is not proof of teaching in a historical or future named academic session.
 
+- SECTION ScopeGrants in a resolved principal now require matching **active same-school SchoolSection** ownership, alongside the existing verified flag. Future class-level section permissions must independently confirm `SchoolClass.sectionId` equals the authorized section and that the stage/actor role are appropriate. A verified but foreign/inactive section, or a class with NULL sectionId, is not section authority.
+
 ## Required distinctions
 
 - Role-based permissions are not enough; section, class, subject, relationship, and workflow constraints also apply.

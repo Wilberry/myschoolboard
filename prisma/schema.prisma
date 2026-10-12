@@ -80,6 +80,11 @@ enum TimetableEventType {
   CANCELLED
 }
 
+enum SchoolSectionStage {
+  PRIMARY
+  SECONDARY
+}
+
 enum LessonNoteStatus {
   DRAFT
   SUBMITTED
@@ -102,6 +107,8 @@ enum SchoolConfigurationEventType {
   SUBJECT_CREATED
   FORM_TEACHER_POLICY_CHANGED
   TIMETABLE_ROOM_CREATED
+  SECTION_CREATED
+  CLASS_SECTION_ASSIGNED
 }
 
 model User {
@@ -188,6 +195,7 @@ model School {
   lessonNotes                         LessonNote[]
   lessonNoteRevisions                 LessonNoteRevision[]
   lessonNoteEvents                    LessonNoteEvent[]
+  sections                            SchoolSection[]
 }
 
 model Membership {
@@ -240,11 +248,13 @@ enum TeacherClassSubjectAssignmentEventType {
 model SchoolClass {
   id                             String                          @id @default(cuid())
   schoolId                       String
+  sectionId                      String?
   name                           String
   isActive                       Boolean                         @default(true)
   createdAt                      DateTime                        @default(now())
   updatedAt                      DateTime                        @updatedAt
   school                         School                          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  section                        SchoolSection?                 @relation(fields: [schoolId, sectionId], references: [schoolId, id], onDelete: NoAction)
   teacherClassSubjectAssignments TeacherClassSubjectAssignment[]
   formTeacherResponsibilities    FormTeacherResponsibility[]
   timetableSlots                 TimetableSlot[]
@@ -252,6 +262,7 @@ model SchoolClass {
 
   @@unique([schoolId, id])
   @@index([schoolId])
+  @@index([schoolId, sectionId])
 }
 
 model Subject {
@@ -554,4 +565,20 @@ model LessonNoteEvent {
 
   @@index([schoolId, noteId, createdAt])
   @@index([schoolId, actorUserId, createdAt])
+}
+
+model SchoolSection {
+  id        String             @id @default(cuid())
+  schoolId  String
+  name      String
+  stage     SchoolSectionStage
+  isActive  Boolean            @default(true)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  school    School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  classes   SchoolClass[]
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, name])
+  @@index([schoolId, stage, isActive])
 }

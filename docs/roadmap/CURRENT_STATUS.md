@@ -48,6 +48,10 @@ The cumulative `feature/lesson-note-drafts-and-submission` branch authors `Lesso
 
 The cumulative `feature/teacher-lesson-planning-workspace` branch adds a Better Auth guarded teacher lesson-note page, a teacher-specific term/assignment option selector that repeats school/role/member scope in its final DB queries, a draft/revision/submission editor reusing the protected Lesson Note APIs, and home navigation exclusively for active teacher-role memberships. Four direct database-backed option-scope cases are authored, complementing six earlier lesson-note API cases. **No migrations, new tests, browser accessibility flows, lint, typecheck, production build or full CI-equivalent dependency audit were run.** School review/revision-return, signed-off publication, student visibility, schemes of work and attendance enrollment requirements are not implemented.
 
+## Phase 5–6 Section/class ownership prerequisite (unverified)
+
+The cumulative `feature/verified-school-section-ownership` branch adds a school-owned PRIMARY/SECONDARY Section model, nullable same-school class section reference with no legacy inference, two school-admin section-configuration mutations with reasoned audit, and principal filtering of verified foreign/inactive SECTION IDs. Five real-session DB integration cases are authored; **no migration, test, format, lint, typecheck, build or full CI audit was run**. HM/Principal section-scoped review, timetable writes, student enrollments and attendance remain closed until exact class-to-section and stage checks are independently implemented.
+
 ## Current evidence
 
 - Published development checkpoint: `checkpoint/phase1-tenant-safe-foundation`; `main` remains unchanged
