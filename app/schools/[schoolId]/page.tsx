@@ -104,6 +104,13 @@ async function SchoolDetailContent({
         )}
         {access.principal.membership?.role === "TEACHER" && (
           <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/assessment-manual-corrections`} className="secondary-link">
+              Request corrections to approved written marks (development)
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "TEACHER" && (
+          <p className="setup-navigation">
             <Link href={`/schools/${schoolId}/assessment-manual-marks`} className="secondary-link">
               Written assessment mark proposals (development)
             </Link>
@@ -150,6 +157,13 @@ async function SchoolDetailContent({
           <p className="setup-navigation">
             <Link href={`/schools/${schoolId}/attendance-corrections`} className="secondary-link">
               Request attendance correction
+            </Link>
+          </p>
+        )}
+        {canReviewLessonNotes && (
+          <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/assessment-manual-correction-reviews`} className="secondary-link">
+              Review written mark corrections (development)
             </Link>
           </p>
         )}
