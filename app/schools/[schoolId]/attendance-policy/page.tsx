@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/src/lib/auth";
 import { readAttendancePolicyForAdmin } from "@/src/modules/attendance/policy-service";
 import { AttendancePolicyEditor } from "@/src/components/attendance-policy-editor";
+import { AttendanceDayEditor } from "@/src/components/attendance-day-editor";
 
 export default async function AttendancePolicyPage({
   params,
@@ -27,6 +28,7 @@ export default async function AttendancePolicyPage({
         <p className="lede">{snapshot.school.name}</p>
         <p>Changes create permanent policy revisions. Previously submitted attendance and approval history are not modified. Dates remain restricted to the UTC day or earlier until full timezone-policy verification.</p>
         <AttendancePolicyEditor schoolId={schoolId} current={snapshot.current} />
+        <AttendanceDayEditor schoolId={schoolId} recent={snapshot.recentTeachingDays} />
       </section>
     </main>
   );
