@@ -1,5 +1,12 @@
 # Authorization Rules
 
+## Section-scoped assessment review — Phase 7 draft, unverified
+
+The current Phase 7 `AssessmentReviewEvent` candidate permits an active school `HEAD_OF_SECTION` to APPROVE/RETURN a sealed teacher-created assessment configuration from the stored class's **active same-school PRIMARY section** only. A `PRINCIPAL` may do so only for SECONDARY; both require a current verified SECTION ScopeGrant for the exact `SchoolClass.sectionId`. Review queue/detail and decision repeatedly bind the actor and actual class/section plus current teacher assignment, term/session, and subject. Neither an academic role alone, independent verified CLASS and SUBJECT grants, School Administrator, School Super Admin, Form Teacher nor Platform Super Admin are exceptions. One immutable terminal review event per draft cannot be altered or used for student exam publication.
+
+Answer keys remain separate and are not exposed in reviewer metadata or question previews. No official results or student CBT rights are granted by assessment review. See D-038/ADR-024. Database/CI tests not yet executed.
+
+
 ## Rule precedence
 
 1. Tenant and school scope

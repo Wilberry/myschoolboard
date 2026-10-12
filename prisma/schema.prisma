@@ -264,6 +264,7 @@ model School {
   assessmentDrafts AssessmentDraft[]
   assessmentDraftQuestions AssessmentDraftQuestion[]
   assessmentDraftSeals AssessmentDraftSeal[]
+  assessmentReviewEvents AssessmentReviewEvent[]
 }
 
 model Membership {
@@ -296,6 +297,7 @@ model Membership {
   studentLinkRevocations StudentAccountLinkRevocation[] @relation("StudentLinkRevoker")
   assessmentQuestions AssessmentQuestion[]
   assessmentDrafts AssessmentDraft[]
+  assessmentReviewEvents AssessmentReviewEvent[]
 }
 
 model ScopeGrant {
@@ -1041,6 +1043,7 @@ model AssessmentDraft {
   @@index([schoolId, teacherMembershipId, createdAt])
   @@index([schoolId, classId, subjectId, termId])
   seal AssessmentDraftSeal?
+  reviews AssessmentReviewEvent[]
 }
 
 /** Snapshot of the chosen private question IDs and their positive marks.
@@ -1072,4 +1075,29 @@ model AssessmentDraftSeal {
   draft AssessmentDraft @relation(fields: [schoolId, draftId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentDraftSeal_draft_fkey")
 
   @@unique([schoolId, draftId])
+}
+
+/** Exact, terminal section academic moderation of one sealed draft.
+ * This is NOT a publication or permission to begin CBT attempts. */
+enum AssessmentReviewDecision {
+  APPROVED
+  RETURNED
+}
+
+model AssessmentReviewEvent {
+  id String @id @default(cuid())
+  schoolId String
+  draftId String
+  decision AssessmentReviewDecision
+  reason String @db.VarChar(500)
+  reviewerMembershipId String
+  reviewerUserId String
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  draft AssessmentDraft @relation(fields: [schoolId, draftId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentReviewEvent_draft_fkey")
+  reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentReviewEvent_reviewer_fkey")
+
+  @@unique([schoolId, draftId])
+  @@index([schoolId, createdAt])
 }

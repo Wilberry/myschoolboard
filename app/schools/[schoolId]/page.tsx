@@ -120,6 +120,13 @@ async function SchoolDetailContent({
         )}
         {canReviewLessonNotes && (
           <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/assessment-reviews`} className="secondary-link">
+              Review assessment configurations (development)
+            </Link>
+          </p>
+        )}
+        {canReviewLessonNotes && (
+          <p className="setup-navigation">
             <Link href={`/schools/${schoolId}/lesson-releases`} className="secondary-link">
               Manage approved lesson releases
             </Link>

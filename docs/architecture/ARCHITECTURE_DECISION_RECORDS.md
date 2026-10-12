@@ -154,3 +154,11 @@
 - Decision: Materialize teacher-authored AssessmentDraft as an immutable typed configuration for a precise active assignment/term, plus immutable question-position/point rows and an atomic unique AssessmentDraftSeal. SQL inserts validate the actual current actor, assignment, period, matching private-keyed questions and bounded grading/schedule constraints. A school row lock makes post-seal additions fail even by direct SQL. Teacher GET only returns sealed metadata and aggregate marks/count, never the private key; no student-facing route or publication status exists.
 - Consequences: New versions require new draft snapshots; future CBT attempt service must explicitly enforce maxAttempts, timer, idempotence, question delivery and delayed marking key access. Full Prisma/SQL/lock and browser tests plus dependency audit are prerequisites, not waived by draft PR.
 
+
+## ADR-024: Terminal section review and non-authoritative CBT attempt policy
+
+- Status: Authored, not executed.
+- Use append-only one-per-school/draft AssessmentReviewEvent with exact school/draft FK and active reviewer school membership FK; service and PostgreSQL independently verify a sealed draft with active teacher assignment and academic period plus stored class.sectionId and verified SECTION scope (HM PRIMARY, Principal SECONDARY). Approval, return and reason live in immutable event history. A NEW draft is required to correct a returned configuration. No report publication/status mutation/answer key release.
+- Reviewer read projections are separately scoped by actor-to-section-to-draft joins, omitting AssessmentQuestionKey. The question preview is private/no-store and cannot be used by students. No blind approval solely by metadata; question content is available for moderator inspection without marking keys.
+- CBT timer helper computes UTC elapsed-time expiry bounded by scheduled close and counts every attempt and active attempt conflict. This module is only pure planning, not runtime permission. Future student CBT requires distinct controlled publication, unrevoked admin-verified identity binding and exact active enrollment, transactional attempt numbering/counting and immutable events, no early key disclosure and complete CI/DB acceptance. Parent migration quoting regression has been fixed in this branch; production/run status remains BLOCKED.
+

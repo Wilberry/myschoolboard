@@ -1,5 +1,14 @@
 # Requirements Traceability Matrix
 
+## ASM-REQ-001 / T-ASM-001 — section academic moderation and attempt planning (authored; unverified)
+
+- Add `AssessmentReviewDecision` APPROVED/RETURNED + `AssessmentReviewEvent` immutable one-decision-per-school/draft, new additive `20261012280000_phase7_assessment_review` composite FKs + SQL actor/verified SECTION/stage/session/term/teacher/seal validator. An HM reviews only PRIMARY and Principal only SECONDARY with exact stored section, not generic class/subject or school roles.
+- `src/modules/assessments/review-service.ts`, private assessment-reviews queue/detail/decision GET/POST, reviewer page: sealed draft metadata, exact-section question text/options/positions/marks for moderator only, no key or correctIndex, review reason/confirmation, terminal decision; no publication.
+- `src/modules/assessments/cbt-admission-policy.ts` and `.test.ts`: pure UTC duration/close-boundary, 1–3 attempt cap and no parallel active attempt planning; **not an authoritative student admission API**. No AssessmentAttempt table, student exam route, scoring or record sheet introduced.
+- `src/modules/assessments/questions.integration.test.ts` synthetic HM/Principal primary/secondary scope, wrong-role/stage/foreign denial, revoked grant, immutable approval and preview key omission. `scripts/phase7-cbt-review-guard.test.mjs` includes parent SQL dollar-quote regression and review invariants in `npm test` and `verify:local:guards`. All tests **AUTHORED NOT EXECUTED**; executed local DB/CI still pending.
+- Parent assessment migration PL/pgSQL delimiter bug fixed in cumulative branch. ASM-REQ-001 remains PARTIALLY AUTHORED; Phase 6 prerequisite and mandatory security gate BLOCKED.
+
+
 ## ASM-REQ-001 / T-ASM-001 — assessment configuration subset (authored; NOT EXECUTED)
 
 - Models: `AssessmentDraft` QUIZ/TEST/EXAM UTC term-bound immutable config, `AssessmentDraftQuestion` (ordered exact assignment keyed question IDs and points), `AssessmentDraftSeal` (one-time complete snapshot). SQL guards enforce active TEACHER/school/class/subject/session/term and same-assignment question+key; CHECK: duration 5–180, maxAttempts 1–3, passPercent 0–100, item position 1–50/points 1–20, schedule contains duration; seal denies later additions.

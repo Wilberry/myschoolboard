@@ -1,5 +1,13 @@
 # Decision Log
 
+## D-038: Section academic assessment moderation before separate CBT publication
+
+- Status: Additive Phase 7 candidate, not validated or production-authorized.
+- Decision: A sealed immutable teacher assessment draft receives at most one terminal reasoned APPROVED or RETURNED academic review event. Only active HM with verified PRIMARY section of the draft's true class or Principal with verified SECONDARY section can review. Validate actor membership, stage, grant, current assignment/term, complete seal independently in PostgreSQL. Reviewers may preview ordered question text/options/points but not private correct keys. Approvals do not independently publish exams, confer student eligibility, start attempts, calculate scores or approve official report cards.
+- Future CBT preflight: use server clock and deadline min(start + duration, exam close), count all attempts toward 1–3 configured limit and deny parallel active attempts. This pure logic is not an authorization boundary until same exact constraints are enforced transactionally and with SQL alongside distinct publication and verified enrollment.
+- Finding: previously authored assessment-draft migration included malformed function dollar quotes; repaired on cumulative branch and test guard added, actual PostgreSQL migration execution pending. D-023 permits this safe review hardening without release approval. See ADR-024.
+
+
 ## D-037: Immutable draft-only assessment setup with post-creation seal
 
 - Status: Phase 7 development candidate, untested.

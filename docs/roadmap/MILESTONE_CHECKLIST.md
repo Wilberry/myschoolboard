@@ -1,5 +1,15 @@
 # Milestone Checklist
 
+### Phase 7 assessment section review and CBT admission-preflight checkpoint (unverified)
+
+- [ ] On confirmed disposable PostgreSQL, apply cumulative migrations including repaired assessment-draft migration, new `20261012280000_phase7_assessment_review`, verify all dollar-quote delimiters, Prisma drift, SQL exact reviewer actor + verified section, active teacher/term, audit mutability denial and tenant school deletion.
+- [ ] Execute synthetic authenticated HM PRIMARY/Principal SECONDARY review cases: wrong-section actor, direct spoofed actor on unreviewed draft, expired/revoked scope or assignment, duplicate/parallel terminal decisions, immutable event and no key disclosure in queue/preview.
+- [ ] Execute CBT admission policy tests for server-minute deadlines, late entry, exact close, active/abandoned attempts and maxAttempts 1–3. These are pure rules only; independent SQL enforcement must precede any student use.
+- [ ] Browser-test private reviewer preview, confirmation/accessibility and no score, answer-key, attempt or student question API exposure.
+- [ ] Next safe milestone: separately controlled exam publication/release, verified exact enrolled student attempt ledger with atomic count and timing, idempotent autosave and submit; no student delivery before full local CI-equivalent and Phase 6 verification.
+- [ ] Run unchanged high-severity dependency audit and full local CI-equivalent on one commit with all cumulative suites. Never mark ASM-REQ-001 complete based on static checks.
+
+
 ### Phase 7 assessment draft configuration (unverified)
 
 - [ ] On confirmed disposable PostgreSQL, validate additive draft + seal migration, FK and SQL actor/term/question-key constraints after cumulative Phase 6 + question bank migrations; verify school deletion and rollback.
