@@ -1,5 +1,10 @@
 # Constraints and Invariants
 
+## Database submission-event exact roster guard (unexecuted)
+
+Additive migration `20261012200000_attendance_complete_roster_guard` strengthens direct SQL writes: to commit a `SUBMITTED` attendance event, entries must match **all** currently active `StudentEnrollment` + `ENROLLED` students for that exact school/session/class, not merely contain one valid student. Every entry must still be backed by active, same-class/session enrollment whose startedAt is not after the attendance date. The event refuses zero or over-500 marks, acquires a school lock, and rejects mismatches using SQLSTATE 23514; no original immutable table is modified. This is in addition to, not a replacement for, exact composite FKs, the per-entry insertion validator, the active owning PRIMARY Form Teacher event validator, the deferred register event constraint, and existing complete roster API checks. Transactional enrollment races and direct SQL writer edge cases remain part of the disposable-PostgreSQL acceptance gate. **Designed and authored, not executed.**
+
+
 ## Correction history invariants (authored; DB verification outstanding)
 
 - `AttendanceCorrectionRequest` references one exact school/register/entry tuple and snapshots the actor, reason, expectedMark, proposedMark and sequential revision; `AttendanceCorrectionDecision` references that exact school/register/request tuple with reasoned separate reviewer identity and approval/return.
