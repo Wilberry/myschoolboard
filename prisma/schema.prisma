@@ -718,7 +718,7 @@ model AttendanceRegister {
   school                      School                   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   session                     AcademicSession          @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
   schoolClass                 SchoolClass              @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
-  formTeacherResponsibility   FormTeacherResponsibility @relation(fields: [schoolId, formTeacherResponsibilityId, submittedByMembershipId, classId, sessionId], references: [schoolId, id, membershipId, classId, sessionId], onDelete: NoAction)
+  formTeacherResponsibility   FormTeacherResponsibility @relation(fields: [schoolId, formTeacherResponsibilityId, submittedByMembershipId, classId, sessionId], references: [schoolId, id, membershipId, classId, sessionId], onDelete: NoAction, map: "AttendanceRegister_form_teacher_exact_fkey")
   entries                     AttendanceEntry[]
   events                      AttendanceEvent[]
 
