@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-12 — Tenant-scoped timetable conflict foundation (unverified)
+
+- Added TimetableRoom/TimetableSlot/TimetableEvent and school-bound composite academic term/assignment relationships, plus PostgreSQL btree_gist exclusions for concurrent ACTIVE teacher/class/room time conflicts.
+- Authored three protected administration endpoints for room configuration, scheduled slots and audited cancellation, and six disposable-DB regression cases for denials, overlap, adjacency, cancelled history and active-term checks.
+- **No migration, automated tests, full static/build checks or dependency audit was executed.** No historical teacher records were changed or production data accessed.
+
 ## 2026-10-12 — Form Teacher responsibility, co-teaching policy and handover (unverified)
 
 - Authored separate tenant/session/class scoped Form Teacher responsibilities (PRIMARY and optional SUPPORT) with PostgreSQL primary/duplicate-active constraints and a dedicated append-only event ledger.

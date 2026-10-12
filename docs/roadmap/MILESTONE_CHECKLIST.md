@@ -53,6 +53,11 @@
 
 ## Phase 5 — Form Teacher and timetable integrity
 
+- [ ] Apply timetable GiST extension/constraint migration on an explicitly disposable PostgreSQL DB; prove exact tenant foreign keys and concurrency-safe teacher, class and room conflict rejection.
+- [ ] Run slot-create/cancel route tests and existing teacher/Form Teacher tenant/audit suites; verify exact active session/term/teacher relationship and preserved cancellation audit.
+- [ ] Add school-admin timetable listing and editing UI plus room lifecycle policies, then progress to Phase 6 attendance and lesson planning.
+
+
 - [ ] Apply the Form Teacher schema/migration on an explicitly disposable local test database, inspect PostgreSQL partial unique indexes and school-bound foreign keys, and confirm legacy subject assignments remain untouched.
 - [ ] Verify six new real-session route/DB scenarios, audit event immutability, support-policy transition rules, school membership deactivation, atomic handover, and denial of unauthorized subject/child access.
 - [ ] Implement and test tenant-owned timetable slots and conflicts (teacher, class, room, and academic period) without assuming school-specific bell times or a fixed curriculum; proceed to Phase 6 attendance/lesson notes only after safe timetable foundations.

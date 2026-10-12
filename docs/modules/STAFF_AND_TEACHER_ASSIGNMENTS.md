@@ -1,5 +1,11 @@
 # Staff and Teacher Assignments
 
+## School-owned timetable integrity (authored, unverified)
+
+The timetable foundation stores `TimetableRoom`, `TimetableSlot` and append-only `TimetableEvent` with composite school/session/term/assignment/teacher/class/room ownership. A slot requires an ACTIVE academic term and session and an exact ACTIVE **session-specific** teacher-class-subject assignment; legacy NULL-session assignments are not automatically scheduled. Weekday 1–7 means Monday–Sunday, with school-local minutes 0–1440 and half-open [start,end) intervals. No universal bell schedule or timezone is assumed.
+
+The three administrator-only POST handlers create school rooms, schedule slots and cancel slots. All write operations revalidate an active same-school `school:configure` actor inside a serializable transaction and record an audited reason. PostgreSQL `btree_gist` exclusion constraints prevent two overlapping ACTIVE slots sharing a teacher, class or non-null room within the same school, term and weekday. Adjacent slots are permitted. Cancellation preserves the original slot/event history and releases the occupied interval; teacher assignment revocation does not silently delete timetable history. Six database-backed integration cases are authored but not run, and actual concurrent migration/race verification remains an explicit gate. No timetable read UI, lesson attendance or student portal is included.
+
 ## Form Teacher responsibility and handover — authored, awaiting local verification
 
 The new `FormTeacherResponsibility` is independent of subject-teacher assignments. It references the **same school**, an **ACTIVE academic session**, an **active class**, and an **active TEACHER or FORM_TEACHER membership** through composite school-owned foreign keys. The relationship stores PRIMARY or SUPPORT, ACTIVE or ENDED, and the end timestamp; no user or school membership is duplicated. Subject-teacher `academic:read/edit/submit` and verified guardian/child rights remain **separate**. A Form Teacher relationship by itself does not authorize a subject or student's private data.
