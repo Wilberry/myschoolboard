@@ -158,7 +158,7 @@ export function LessonReviewWorkspace({
         <ul className="setup-records">
           {notes.map((note) => (
             <li key={note.id}>
-              <strong>{note.topic}</strong>
+              <strong>{note.kind === "SCHEME_OF_WORK" ? "Scheme of work" : "Lesson note"}: {note.topic}{note.weekStart ? ` (weeks ${note.weekStart}–${note.weekEnd})` : ""}</strong>
               <span>
                 {note.sectionName} · {note.className} · {note.subjectName}
               </span>
