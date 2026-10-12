@@ -16,6 +16,10 @@ On the cumulative `feature/platform-school-onboarding-lifecycle` branch, new sch
 
 The cumulative `feature/academic-session-term-foundation` branch adds school-owned `AcademicSession`, `AcademicTerm` and append-only `SchoolConfigurationEvent` schema plus migration. Four create-only school-admin endpoints create PLANNED sessions/terms and active school-owned classes/subjects under transactional `school:configure`, preserving prior teacher-assignment histories. Date/term containment and same-school ownership are validated; five database-backed cases for role/tenant denials, duplicates, range validation and immutable events were authored. **The migrations, PostgreSQL tests, Next build, typecheck, lint and high-severity audit have not been executed on this cumulative candidate.** No UI, section/stream policies, academic session activation or published-record grading recalculation is claimed.
 
+## Phase 4 school setup workspace and tenant-scoped configuration reads (pending verification)
+
+The cumulative `feature/school-setup-workspace` branch adds a restricted school-admin setup page, a client editor for new sessions/terms/classes/subjects, and a read service that rechecks same-school active membership/role in each final query. Four database-backed tests for authorized data selection, other-school concealment, inactive membership and final-query predicates are authored. **No full CI-equivalent validation, browser accessibility/HTTP verification, migration execution, or audit run has been performed** on this candidate. The workspace is not evidence of complete Phase 4, grading configuration, Section/Guardian enrollment models or academic workflow publication.
+
 ## Current evidence
 
 - Published development checkpoint: `checkpoint/phase1-tenant-safe-foundation`; `main` remains unchanged

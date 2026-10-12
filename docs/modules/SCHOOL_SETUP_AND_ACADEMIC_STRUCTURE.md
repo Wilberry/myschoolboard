@@ -19,6 +19,10 @@ School Administrators and School Super Admins with active same-school membership
 
 These routes are **create-only**, not general academic read authorization or production workflow publication. Section structures, streams, grading-policy versioning, academic-period activation/closure, session-linked new teacher assignments, staff responsibilities and UI remain separate work. The migration and new database tests have not been run in the owner's postponed local CI-equivalent verification.
 
+## School setup workspace — new draft UI
+
+A guarded school setup page at `/schools/{schoolId}/setup` uses active school `school:configure` authority to display the school's latest 100 sessions, terms, classes and subjects. Each final collection query repeats same-school active membership and role conditions, even after the initial principal resolution. Users can create new planned sessions/terms and class/subject catalog entries through the existing protected POST handlers. Only verified success refreshes the view; errors are generic. There is no general academic read endpoint, teacher access, grade history recalculation or period activation from this screen. Four new database-backed read regression tests and browser-level workflow checks are **not yet executed**.
+
 ## Important constraints
 
 - Academic configuration changes must not mutate previously published official records without an explicit correction workflow.

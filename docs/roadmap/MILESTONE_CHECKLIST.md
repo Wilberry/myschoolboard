@@ -34,6 +34,8 @@
 
 ## Phase 4 — Academic structure foundation authored, not yet verified
 
+- [ ] Verify school setup workspace navigation, server-side role checks, final-query tenant predicates, create forms, non-cacheable API responses and 100-row display caps in local browser and disposable-DB tests.
+
 - [ ] Apply academic session/term/configuration event migration on only a disposable PostgreSQL test DB; inspect FK ownership, date checks, unique positions and audit immutability.
 - [ ] Run new same-school administrator create tests, malformed date and term-range tests, cross-school denials and existing teacher-assignment regression suite.
 - [ ] Finish school configuration UI, current session activation/closure workflow, sections/streams, grading-policy versioning, and session-scoped teacher assignment evolution without fabricating legacy period mappings.

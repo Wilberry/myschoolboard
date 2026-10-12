@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-12 — School setup workspace (unverified)
+
+- Added a school-scoped academic setup page with an interactive creation form for planned sessions/terms and school-owned class/subject catalogs.
+- Added a server-side snapshot reader limited to 100 records per collection, repeating school ownership and administrator membership checks in final Prisma queries, and a permission-conditional school-detail navigation link.
+- Added four disposable PostgreSQL read-isolation cases for active administrator access, cross-school denials, revocation and final query constraints. The local full CI, migration, route transport and browser UX/accessibility tests have **not** run.
+- No change to `main`, academic publication, teacher assignment history, payment data, dependency audit or production permissions.
+
 ## 2026-10-12 — Academic sessions, terms and catalogs (unverified)
 
 - Added additive, tenant-scoped `AcademicSession` and `AcademicTerm` models with date checks, uniqueness, one-active-period guards, and a dedicated append-only `SchoolConfigurationEvent` ledger.

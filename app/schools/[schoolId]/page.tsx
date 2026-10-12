@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { auth } from "@/src/lib/auth";
 import { requireSchoolAccess } from "@/src/modules/tenancy/school-access";
+import { authorize } from "@/src/modules/authorization/policy";
 
 export default async function SchoolDetailPage({
   params,
@@ -57,6 +58,13 @@ async function SchoolDetailContent({
           </Link>
         </div>
 
+        {authorize(access.principal, "school:configure", { schoolId }).allowed && (
+          <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/setup`} className="secondary-link">
+              Configure academic structure
+            </Link>
+          </p>
+        )}
         <div className="school-card">
           <dl>
             <div>

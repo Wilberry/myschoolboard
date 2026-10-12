@@ -8,6 +8,12 @@
 - Empty, loading, and error states must be explicit.
 - Dashboard widgets must not expose data outside the user’s authorization.
 
+## School academic setup workspace (authored, pending validation)
+
+`/schools/{schoolId}/setup` is a server-rendered, restricted School Administrator / School Super Admin workspace linked from the existing school details page only when `school:configure` allows it. The server reauthenticates with Better Auth, resolves the current school membership and repeats active same-school identity/role constraints on each selected collection query. The view lists up to 100 sessions, terms, classes, and subjects separately; a client editor submits strictly validated create requests through the existing school-owned API, surfaces safe error states and refreshes on confirmed success. No public guardian, teacher, or platform-only access follows from the navigation link. Keyboard label and error-status semantics are authored but require real browser accessibility and HTTP-transport validation.
+
+This setup view supports draft sessions and terms plus class/subject creation; it does **not** activate periods, publish academic results, edit historical records or change school approval flows.
+
 ## Platform Super Admin dashboard
 
 - Tenant status summary
