@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-12 — School-owned section/class association (unverified)
+
+- Added named primary/secondary Section model and nullable same-school Class.sectionId, preserving old unclassified classes without guessed backfills.
+- Added school-admin-only section creation and initial class placement with serialized authorization, reasoned audit and no silent reclassification.
+- Principal SECTION grants now require active same-school ownership. Five disposable-DB regression scenarios are authored; **not executed**. Reviewer/student/attendance routes and HM/Principal timetable expansion remain restricted.
+- No `main` merge, deployment or security audit waiver.
+
 ## 2026-10-12 — Teacher lesson-note authoring workspace (unverified)
 
 - Added protected `/schools/{schoolId}/lesson-notes` and teacher-role home navigation, with scoped active academic term/class/subject/session assignment form options, own-note list and immutable revision viewer.

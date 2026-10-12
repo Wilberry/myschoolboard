@@ -56,6 +56,10 @@ Execute six real Better Auth / disposable PostgreSQL cases testing: unauthorized
 
 Four direct disposable-DB option-read integration cases are authored for own-school ACTIVE teacher/term/assignment options, foreign/admin denial, membership revocation and explicit last-query tenant/role predicate checks. The actual browser must verify signed-in navigation, term/assignment option narrowing, accessible labels, draft creation, reloaded note detail, optimistic revision conflict handling, on-screen history, submission confirmation, and no student/HM approval controls. None of these newly authored tests or the full exact-commit CI-equivalent suite has run.
 
+## Section ownership and scope validation (pending local test)
+
+Apply the additive section migration to only an explicitly disposable PostgreSQL target and verify legacy classes retain NULL sectionId and foreign section IDs fail the composite FK. Run five authored real-session section API tests for admin/foreign/anonymous denial, one-time placement, verified SECTION grant ownership filtering, inactive section revocation and immutable audit events. Concurrency/reclassification and downstream exact-class HM/Principal stage/role checks remain separate acceptance gates. None has run yet.
+
 ## Required negative tests
 
 - Cross-tenant access

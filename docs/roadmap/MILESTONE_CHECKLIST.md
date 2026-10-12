@@ -73,6 +73,9 @@
 
 ## Phase 6 — Lesson notes and attendance (safe foundation under development)
 
+- [ ] Apply SchoolSection schema/migration to disposable PostgreSQL and verify previous classes remain unclassified (NULL) and other-school section IDs are rejected.
+- [ ] Run five section creation/class placement/grant tests and real cross-section/stage denial tests before enabling scoped HM/Principal lesson-note approvals or timetable mutations.
+
 - [ ] Verify teacher lesson-note UI home navigation and server page authorization, active school-owned teacher assignment/term options, note creation/edit/reload/submit, browser keyboard/accessibility, and revision conflict handling.
 - [ ] Run four option-reader database tests and the six author API integration cases against only the explicitly disposable test DB; reject all foreign roles, private student requests and inactive assignment/period access.
 

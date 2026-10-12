@@ -1,5 +1,11 @@
 # School Setup and Academic Structure
 
+## Primary/secondary section ownership (draft, unverified)
+
+The additive `SchoolSection` model stores named, active, school-owned PRIMARY and SECONDARY sections; `SchoolClass.sectionId` is nullable, has a composite same-school foreign key, and is **not backfilled**. Unclassified historical classes are not assumed to belong to either stage. School Admin / School Super Admin may create sections with a reason via `POST /api/schools/{schoolId}/sections` and classify an active unclassified class via `POST /api/schools/{schoolId}/classes/{classId}/section`. Active membership is checked in a serializable transaction with resource locks and an append-only school configuration event. Changing an already assigned section is rejected until an explicit history-preserving reclassification workflow exists.
+
+Verified SECTION ScopeGrant identifiers are now filtered through active sections owned by the requested school in `resolveSchoolPrincipal`; a forged foreign-school section ID cannot supply authority. Future HM/Principal approval, timetable or attendance endpoints **must** also check that each requested class has the appropriate exact `SchoolClass.sectionId` and stage; merely passing a valid sectionId is insufficient. No new HM/Principal student-data or timetable privilege is enabled by this source-only foundation. SQL migration and five database integration cases are authored, **not executed**.
+
 ## Configurable Form Teacher policy (draft, pending verification)
 
 A school-owned `allowCoFormTeachers` flag defaults to false; an authorized school administrator may change it through the separately authenticated `PATCH /api/schools/{schoolId}/settings/form-teachers` endpoint, giving a reason recorded in `SchoolConfigurationEvent`. Disabling the flag is rejected while any active SUPPORT responsibilities remain. PRIMARY Form Teacher responsibility is at most one teacher per class/session; any SUPPORT assignment requires an active PRIMARY. Responsibilities are separate from academic subject teaching and grant no student-data rights. The policy API and model are authored but **not yet validated on the local database**.
