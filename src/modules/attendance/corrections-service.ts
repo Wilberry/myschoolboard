@@ -2,6 +2,8 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
+import { loadAttendanceDatePolicy } from "./policy-service";
+import { isAttendanceDateAllowed } from "./school-date-policy";
 import { canApproveRegister, type AttendanceActor } from "./eligibility";
 import { AttendanceError } from "./service";
 
@@ -80,9 +82,13 @@ export async function requestAttendanceCorrection(
             section: { isActive: true, schoolId },
           },
         },
-        select: { id: true, classId: true, sessionId: true },
+        select: { id: true, classId: true, sessionId: true, attendanceDate: true },
       });
       if (!register) throw new AttendanceError("NOT_FOUND");
+      const datePolicy = await loadAttendanceDatePolicy(tx, schoolId);
+      if (!isAttendanceDateAllowed(register.attendanceDate.toISOString().slice(0, 10), datePolicy, "CORRECT")) {
+        throw new AttendanceError("CONFLICT");
+      }
 
       await tx.$queryRaw`SELECT "id" FROM "AcademicSession"
         WHERE "schoolId" = ${schoolId} AND "id" = ${register.sessionId}
