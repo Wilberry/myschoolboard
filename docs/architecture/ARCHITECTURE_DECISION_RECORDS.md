@@ -127,3 +127,14 @@
 - Status: Unverified additive release design.
 - LessonNote APPROVED and corresponding immutable APPROVED LessonNoteEvent are prerequisites, never substitutes, for an immutable release event. A school-owned LessonReleaseEvent records RELEASED or WITHDRAWN with exact note/revision, actor user/membership, reason/time. The service transaction and SQL insert trigger both enforce current active assignment, term/session, class/section and reviewer membership with exact verified SECTION grant, HM PRIMARY or Principal SECONDARY. A unique event key and row locks block duplicate release/withdrawal. No student delivery without independently verified identity and enrollment. No historical LessonNoteRevision is updated. Local PostgreSQL, CI and browser verification mandatory.
 
+
+## ADR-020: Student identity binding is explicit and separately revocable
+
+- Status: Additive code/migration authored; unexecuted.
+- Mechanism: School admin selects an existing ENROLLED StudentRecord with an ACTIVE enrollment and an existing active STUDENT Membership belonging to the same school. A strict acknowledgement and recorded reason establish staff attestation (not automated identity proof). DB unique composite school/student and school/member ownership, SQL actor validation and immutable original link plus terminal revocation enforce a stable mapping. The student GET joins logged-in Membership userId, exact unrevoked link, active StudentRecord/Enrollment, matching class/session/term, approved immutable revision and RELEASED not WITHDRAWN event in one query. A separate preliminary membership check conceals unauthorized empty queues, without weakening final-row joins. No parent access or inferred child link. Test, migration and verification gates remain blocked.
+
+## ADR-021: Academic planning schemes share immutable lesson review/release
+
+- Status: Additive code/migration authored; unexecuted.
+- Mechanism: Extend LessonNote with a defaulted typed `LESSON_NOTE|SCHEME_OF_WORK` discriminator and immutable nullable weekStart/weekEnd columns. PostgreSQL CHECK enforces ordered weeks 1–53 for schemes, no weeks for normal notes; composite partial unique index prevents duplicate exact scheme/class/subject/term/week-range. Existing lesson version, approval and release controls stay mandatory for both kinds; the editor, review queue, release queue and student reader expose the explicit kind and scheme weeks. Original approved/released content, actor and review are never rewritten. Schedule overlaps with different week endpoints and business-specific scheme templates are future policy decisions, not a privilege bypass.
+
