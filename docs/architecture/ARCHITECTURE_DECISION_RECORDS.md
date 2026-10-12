@@ -146,3 +146,11 @@
 - Decision: AssessmentQuestion is an immutable school-owned exact teacher-assignment/class/subject/session/term MCQ snapshot; AssessmentQuestionKey is a separate immutable one-to-one composite school/question-bound correctIndex. Only an active TEACHER with the current exact assignment can insert both transactionally. Database BEFORE INSERT validations independently verify tenant/actor/assignment, active academic relationships, options, key index; immutable triggers block normal update/delete/truncate. Staff GET projects question content only through the original currently active author assignment and omits key; there are no student or key GETs.
 - Consequences: A later controlled question-replacement/version lifecycle, assessment configuration, marking service, key-reveal rules and verified CBT attempts are separately required. No release or role broadening. Full disposable-DB + source/code CI and security audit required before milestone completion.
 
+
+## ADR-023: Sealed, draft-only assessment configurations
+
+- Status: Code/migration authored; no runtime verification.
+- Context: A mutable question list can invalidate attempted exams after students start, and role-only assessment configuration can mix classes/subjects or expose keys. Stored attempt limits are meaningless without a later enforcement state machine.
+- Decision: Materialize teacher-authored AssessmentDraft as an immutable typed configuration for a precise active assignment/term, plus immutable question-position/point rows and an atomic unique AssessmentDraftSeal. SQL inserts validate the actual current actor, assignment, period, matching private-keyed questions and bounded grading/schedule constraints. A school row lock makes post-seal additions fail even by direct SQL. Teacher GET only returns sealed metadata and aggregate marks/count, never the private key; no student-facing route or publication status exists.
+- Consequences: New versions require new draft snapshots; future CBT attempt service must explicitly enforce maxAttempts, timer, idempotence, question delivery and delayed marking key access. Full Prisma/SQL/lock and browser tests plus dependency audit are prerequisites, not waived by draft PR.
+
