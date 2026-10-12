@@ -16,6 +16,10 @@ import { POST as authorCreate } from "@/app/api/schools/[schoolId]/lesson-notes/
 import { POST as authorRevise } from "@/app/api/schools/[schoolId]/lesson-notes/[noteId]/revisions/route";
 import { POST as authorSubmit } from "@/app/api/schools/[schoolId]/lesson-notes/[noteId]/submit/route";
 import { GET as authorDetail } from "@/app/api/schools/[schoolId]/lesson-notes/[noteId]/route";
+import { POST as studentLinkRoute } from "@/app/api/schools/[schoolId]/student-links/route";
+import { POST as studentRevokeRoute } from "@/app/api/schools/[schoolId]/student-links/[linkId]/revoke/route";
+import { GET as pupilLessonsRoute } from "@/app/api/schools/[schoolId]/student-lessons/route";
+import { GET as pupilLessonDetailRoute } from "@/app/api/schools/[schoolId]/student-lessons/[noteId]/route";
 import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
 import { env } from "@/src/lib/env";
@@ -36,6 +40,12 @@ const teacherMember = `review-teacher-member-${suffix}`;
 const headMember = `review-head-member-${suffix}`;
 const principalMember = `review-principal-member-${suffix}`;
 const foreignMember = `review-foreign-member-${suffix}`;
+const pupilPrimary = `review-student-primary-${suffix}`;
+const pupilSecondary = `review-student-secondary-${suffix}`;
+const enrollmentPrimary = `review-enroll-primary-${suffix}`;
+const enrollmentSecondary = `review-enroll-secondary-${suffix}`;
+const primaryStudentMember = `review-student-member-primary-${suffix}`;
+const secondaryStudentMember = `review-student-member-secondary-${suffix}`;
 const primaryAssignment = `review-assign-primary-${suffix}`;
 const secondaryAssignment = `review-assign-secondary-${suffix}`;
 const unknownAssignment = `review-assign-unknown-${suffix}`;
@@ -47,6 +57,8 @@ const emails = {
   noGrant: `review-no-grant-${suffix}@example.test`,
   admin: `review-admin-${suffix}@example.test`,
   foreign: `review-foreign-${suffix}@example.test`,
+  pupilPrimary: `review-pupil-primary-${suffix}@example.test`,
+  pupilSecondary: `review-pupil-secondary-${suffix}@example.test`,
 };
 const users: Record<string, string> = {};
 const cookies: Record<string, string> = {};
@@ -143,6 +155,8 @@ describe("section-scoped lesson note review and return", () => {
     await prisma.membership.createMany({
       data: [
         { id: teacherMember, userId: users.teacher, schoolId: schoolA, role: "TEACHER" },
+        { id: primaryStudentMember, userId: users.pupilPrimary, schoolId: schoolA, role: "STUDENT" },
+        { id: secondaryStudentMember, userId: users.pupilSecondary, schoolId: schoolA, role: "STUDENT" },
         { id: headMember, userId: users.head, schoolId: schoolA, role: "HEAD_OF_SECTION" },
         { id: principalMember, userId: users.principal, schoolId: schoolA, role: "PRINCIPAL" },
         { userId: users.noGrant, schoolId: schoolA, role: "HEAD_OF_SECTION" },
@@ -189,6 +203,18 @@ describe("section-scoped lesson note review and return", () => {
           membershipId: teacherMember, classId: classUnknown, subjectId: subject },
       ],
     });
+    await prisma.studentRecord.createMany({ data: [
+      { id: pupilPrimary, schoolId: schoolA, admissionNumber: "TEST-PRIMARY-001",
+        givenName: "Synthetic", familyName: "Primary", status: "ENROLLED" },
+      { id: pupilSecondary, schoolId: schoolA, admissionNumber: "TEST-SECONDARY-001",
+        givenName: "Synthetic", familyName: "Secondary", status: "ENROLLED" },
+    ] });
+    await prisma.studentEnrollment.createMany({ data: [
+      { id: enrollmentPrimary, schoolId: schoolA, studentId: pupilPrimary,
+        sessionId, classId: classPrimary },
+      { id: enrollmentSecondary, schoolId: schoolA, studentId: pupilSecondary,
+        sessionId, classId: classSecondary },
+    ] });
     const grant = await prisma.scopeGrant.create({
       data: {
         membershipId: headMember, type: "SECTION",
@@ -387,6 +413,118 @@ describe("section-scoped lesson note review and return", () => {
     await expect(prisma.lessonReleaseEvent.delete({
       where: { id: events[0].id },
     })).rejects.toThrow();
+  });
+
+  it("uses explicit admin-attested pupil binding for released class/term lessons", async () => {
+    async function pupilList(actor: string) {
+      return pupilLessonsRoute(request(actor, "GET",
+        `/api/schools/${schoolA}/student-lessons`),
+        { params: Promise.resolve({ schoolId: schoolA }) });
+    }
+    async function pupilDetail(actor: string, noteId: string) {
+      return pupilLessonDetailRoute(request(actor, "GET",
+        `/api/schools/${schoolA}/student-lessons/${noteId}`),
+        { params: Promise.resolve({ schoolId: schoolA, noteId }) });
+    }
+    async function attest(studentId: string, membershipId: string) {
+      return studentLinkRoute(request("admin", "POST",
+        `/api/schools/${schoolA}/student-links`, {
+          studentId, studentMembershipId: membershipId,
+          identityVerified: true,
+          reason: "Verified against synthetic enrollment and student account records",
+        }), { params: Promise.resolve({ schoolId: schoolA }) });
+    }
+    expect((await pupilList("pupilSecondary")).status).toBe(404);
+    expect((await pupilList("teacher")).status).toBe(404);
+    expect((await pupilDetail("pupilSecondary", secondaryNoteId)).status).toBe(404);
+    const invalid = await studentLinkRoute(request("admin", "POST",
+      `/api/schools/${schoolA}/student-links`, {
+        studentId: pupilSecondary, studentMembershipId: secondaryStudentMember,
+        reason: "Missing independent identity verification checkbox",
+      }), { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(invalid.status).toBe(400);
+    const a = await attest(pupilPrimary, primaryStudentMember);
+    expect(a.status).toBe(201);
+    const b = await attest(pupilSecondary, secondaryStudentMember);
+    expect(b.status).toBe(201);
+    const linkId = (await b.json()).link.id;
+    expect((await attest(pupilPrimary, secondaryStudentMember)).status).toBe(409);
+    expect((await pupilList("pupilSecondary")).status).toBe(200);
+    expect((await (await pupilList("pupilSecondary")).json()).lessons).toEqual([]);
+    // Primary previously withdrawn; link alone gives no access to that content.
+    expect((await pupilDetail("pupilPrimary", primaryNoteId)).status).toBe(404);
+    const released = await releaseRoute(request("principal", "POST",
+      `/api/schools/${schoolA}/lesson-releases/${secondaryNoteId}/decision`, {
+        action: "RELEASE", expectedRevision: 1,
+        reason: "Synthetic approved secondary class document release",
+      }), { params: Promise.resolve({ schoolId: schoolA, noteId: secondaryNoteId }) });
+    expect(released.status).toBe(201);
+    const list = await pupilList("pupilSecondary");
+    expect(list.status).toBe(200);
+    expect(list.headers.get("cache-control")).toBe("private, no-store");
+    const items = (await list.json()).lessons;
+    expect(items.map((x: { id: string }) => x.id)).toEqual([secondaryNoteId]);
+    expect(JSON.stringify(items)).not.toContain("Synthetic class-specific lesson text");
+    const detail = await pupilDetail("pupilSecondary", secondaryNoteId);
+    expect(detail.status).toBe(200);
+    expect((await detail.json()).lesson.content).toContain("Synthetic class-specific");
+    expect((await pupilDetail("pupilPrimary", secondaryNoteId)).status).toBe(404);
+    const revoke = await studentRevokeRoute(request("admin", "POST",
+      `/api/schools/${schoolA}/student-links/${linkId}/revoke`, {
+        reason: "Synthetic identity revocation requiring fresh administrator investigation",
+      }), { params: Promise.resolve({ schoolId: schoolA, linkId }) });
+    expect(revoke.status).toBe(201);
+    expect((await pupilList("pupilSecondary")).status).toBe(404);
+    expect((await pupilDetail("pupilSecondary", secondaryNoteId)).status).toBe(404);
+    await expect(prisma.studentAccountLink.delete({ where: { id: linkId } }))
+      .rejects.toThrow();
+  });
+
+  it("versions and separately approves and releases typed schemes of work", async () => {
+    const input = {
+      termId, assignmentId: primaryAssignment,
+      kind: "SCHEME_OF_WORK", weekStart: 2, weekEnd: 5,
+      topic: "Fractions term coverage",
+      objectives: "Weekly progression and measurable class outcomes",
+      content: "Weeks two to five cover equivalent fractions, ordering and practical exercises.",
+    };
+    expect((await author("teacher", "create", "", {
+      ...input, weekStart: 7, weekEnd: 2,
+    })).status).toBe(400);
+    const created = await author("teacher", "create", "", input);
+    expect(created.status).toBe(201);
+    const scheme = (await created.json()).note;
+    expect(scheme).toMatchObject({
+      kind: "SCHEME_OF_WORK", weekStart: 2, weekEnd: 5,
+      status: "DRAFT", currentRevision: 1,
+    });
+    expect((await author("teacher", "submit", scheme.id,
+      { expectedRevision: 1 })).status).toBe(200);
+    expect((await decide("head", scheme.id, "APPROVE", 1)).status).toBe(200);
+    const release = await releaseRoute(request("head", "POST",
+      `/api/schools/${schoolA}/lesson-releases/${scheme.id}/decision`, {
+        action: "RELEASE", expectedRevision: 1,
+        reason: "Synthetic independent release of approved scheme of work",
+      }), { params: Promise.resolve({ schoolId: schoolA, noteId: scheme.id }) });
+    expect(release.status).toBe(201);
+    const rows = await prisma.lessonNote.findFirstOrThrow({
+      where: { id: scheme.id },
+    });
+    expect(rows).toMatchObject({
+      kind: "SCHEME_OF_WORK", weekStart: 2, weekEnd: 5,
+      status: "APPROVED",
+    });
+    await expect(prisma.lessonNote.update({
+      where: { id: scheme.id },
+      data: { weekEnd: 6 },
+    })).rejects.toThrow();
+    const pupil = await pupilLessonDetailRoute(request("pupilPrimary", "GET",
+      `/api/schools/${schoolA}/student-lessons/${scheme.id}`),
+      { params: Promise.resolve({ schoolId: schoolA, noteId: scheme.id }) });
+    expect(pupil.status).toBe(200);
+    expect((await pupil.json()).lesson).toMatchObject({
+      kind: "SCHEME_OF_WORK", weekStart: 2, weekEnd: 5,
+    });
   });
 
   it("revoking verified section grant or section activity removes reviewer authority", async () => {
