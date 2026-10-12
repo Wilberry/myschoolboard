@@ -1,5 +1,14 @@
 # Assessments and CBT
 
+## Phase 7 written/offline assessment and manual mark proposals (AUTHORED; NOT VERIFIED)
+
+`feature/phase7-manual-mark-proposals` introduces additive immutable `AssessmentManualComponent` (teacher, exact active school/session/term/class/subject assignment, type QUIZ/TEST/EXAM, title and integer maximum 1–100) and `AssessmentManualMarkProposal` (one **unapproved** per same-school component/ENROLLED student with exact ACTIVE StudentEnrollment and class/session, whole marks 0..component.maxPoints, teacher actor and mandatory reason). Current TEACHER for the original assignment may create a component and initial student proposal; direct SQL independently checks actor user+membership/role, active school/class/section/subject/session/term/assignment, current pupil/enrollment, valid points and append-only audit history. A duplicate first proposal is rejected; no overwrite, delete, self-approved correction or hidden in-place grade edit.
+
+The authenticated teacher workspace uses assignment/term selectors, creates immutable written components, loads only an active exact same-school class/session pupil roster via an authorization-joined final SQL query (bounded 500 with duplicate active enrollment rejection), and records one initial marks proposal. Private no-store API routes are role/tenant scoped; school administrators, HM, Principal, platform staff, other teachers/students cannot submit another teacher's marks or read their private roster by role inheritance. All events and pupil marks remain **UNAPPROVED_NOT_SCORED**; they do **not** enter objective CBT scores, provisional class totals, weighted grade previews, student/guardian results or official report cards. Theory grading corrections and HM/Principal review will be separate audited workflows.
+
+Authored but NOT EXECUTED: `20261012340000_phase7_manual_mark_proposals` migration, Prisma relations, authenticated synthetic teacher/foreign/role/points/duplicate/forgery/audit tests, read-only Node invariants, Next/private UI. No disposable DB, full tests, build or audit. D-046/ADR-032. Phase 6 and Phase 7 acceptance blocked.
+
+
 ## Phase 7 versioned school grading profile drafts (AUTHORED; UNVERIFIED)
 
 `feature/phase7-grading-policy-revisions` adds `AssessmentGradingPolicyRevision` as an append-only **PREVIEW-ONLY** school+session+term+class+subject configuration record. An active same-school `SCHOOL_SUPER_ADMIN` may create a revision with explicitly entered 0–100 integer QUIZ/TEST/EXAM weights totaling **exactly 100** and a reason. SQL independently checks the actual actor user/member, active school/class/section/subject/academic session/term, serializes revision numbers with a school row lock, assigns server UTC createdAt, and rejects UPDATE/DELETE/TRUNCATE. There are no magic national/school weights, no status that activates the profile as official, and no score mutations/backfills.

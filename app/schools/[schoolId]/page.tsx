@@ -104,6 +104,13 @@ async function SchoolDetailContent({
         )}
         {access.principal.membership?.role === "TEACHER" && (
           <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/assessment-manual-marks`} className="secondary-link">
+              Written assessment mark proposals (development)
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "TEACHER" && (
+          <p className="setup-navigation">
             <Link href={`/schools/${schoolId}/assessment-marking`} className="secondary-link">
               Mark submitted objective assessments (development)
             </Link>

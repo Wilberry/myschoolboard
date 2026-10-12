@@ -271,6 +271,8 @@ model School {
   assessmentSubmissions AssessmentAttemptSubmission[]
   assessmentScores AssessmentAttemptScore[]
   assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
+  assessmentManualComponents AssessmentManualComponent[]
+  assessmentManualMarkProposals AssessmentManualMarkProposal[]
 }
 
 model Membership {
@@ -310,6 +312,8 @@ model Membership {
   assessmentSubmissions AssessmentAttemptSubmission[]
   assessmentScores AssessmentAttemptScore[]
   assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
+  assessmentManualComponents AssessmentManualComponent[]
+  assessmentManualMarkProposals AssessmentManualMarkProposal[]
 }
 
 model ScopeGrant {
@@ -361,6 +365,7 @@ model SchoolClass {
   assessmentQuestions AssessmentQuestion[]
   assessmentDrafts AssessmentDraft[]
   assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
+  assessmentManualComponents AssessmentManualComponent[]
 }
 
 model Subject {
@@ -379,6 +384,7 @@ model Subject {
   assessmentQuestions AssessmentQuestion[]
   assessmentDrafts AssessmentDraft[]
   assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
+  assessmentManualComponents AssessmentManualComponent[]
 }
 
 model TeacherClassSubjectAssignment {
@@ -412,6 +418,7 @@ model TeacherClassSubjectAssignment {
   @@index([schoolId, sessionId, status])
   assessmentQuestions AssessmentQuestion[]
   assessmentDrafts AssessmentDraft[]
+  assessmentManualComponents AssessmentManualComponent[]
 }
 
 model TeacherClassSubjectAssignmentEvent {
@@ -474,6 +481,7 @@ model AcademicSession {
   assessmentQuestions AssessmentQuestion[]
   assessmentDrafts AssessmentDraft[]
   assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
+  assessmentManualComponents AssessmentManualComponent[]
 }
 
 model AcademicTerm {
@@ -500,6 +508,7 @@ model AcademicTerm {
   assessmentQuestions AssessmentQuestion[]
   assessmentDrafts AssessmentDraft[]
   assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
+  assessmentManualComponents AssessmentManualComponent[]
 }
 
 model SchoolConfigurationEvent {
@@ -719,6 +728,7 @@ model StudentRecord {
   @@index([schoolId, status])
   accountLink StudentAccountLink?
   assessmentAttempts AssessmentAttempt[]
+  assessmentManualMarkProposals AssessmentManualMarkProposal[]
 }
 
 model StudentEnrollment {
@@ -745,6 +755,7 @@ model StudentEnrollment {
   @@index([schoolId, studentId, sessionId, status])
   @@index([schoolId, classId, sessionId, status])
   assessmentAttempts AssessmentAttempt[]
+  assessmentManualMarkProposals AssessmentManualMarkProposal[]
 }
 
 model StudentEvent {
@@ -1279,4 +1290,62 @@ model AssessmentGradingPolicyRevision {
 
   @@unique([schoolId, sessionId, termId, classId, subjectId, version], map: "AssessmentGradingPolicyRevision_context_version_key")
   @@index([schoolId, classId, subjectId, termId])
+}
+
+/** Immutable teacher-authored offline/written assessment definition. It is
+ * not CBT, teacher marking approval or official grade publication. */
+model AssessmentManualComponent {
+  id String @id
+  schoolId String
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  assignmentId String
+  teacherMembershipId String
+  teacherUserId String
+  kind AssessmentDraftKind
+  title String @db.VarChar(180)
+  maxPoints Int
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  session AcademicSession @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualComponent_session_fkey")
+  term AcademicTerm @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction, map: "AssessmentManualComponent_term_fkey")
+  schoolClass SchoolClass @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualComponent_class_fkey")
+  subject Subject @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualComponent_subject_fkey")
+  teacher Membership @relation(fields: [schoolId, teacherMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualComponent_teacher_fkey")
+  assignment TeacherClassSubjectAssignment @relation(fields: [schoolId, assignmentId, teacherMembershipId, classId, subjectId, sessionId], references: [schoolId, id, membershipId, classId, subjectId, sessionId], onDelete: NoAction, map: "AssessmentManualComponent_assignment_fkey")
+  marks AssessmentManualMarkProposal[]
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, id, classId, sessionId])
+  @@index([schoolId, classId, subjectId, termId])
+}
+
+/** Teacher's first score PROPOSAL for one student and manual component.
+ * A different proposal, correction or release requires a separate reviewed
+ * append-only decision design. Does NOT feed official or provisional grades. */
+model AssessmentManualMarkProposal {
+  id String @id
+  schoolId String
+  componentId String
+  studentId String
+  enrollmentId String
+  classId String
+  sessionId String
+  earnedPoints Int
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  component AssessmentManualComponent @relation(fields: [schoolId, componentId, classId, sessionId], references: [schoolId, id, classId, sessionId], onDelete: NoAction, map: "AssessmentManualMarkProposal_component_fkey")
+  student StudentRecord @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualMarkProposal_student_fkey")
+  enrollment StudentEnrollment @relation(fields: [schoolId, enrollmentId, studentId, classId, sessionId], references: [schoolId, id, studentId, classId, sessionId], onDelete: NoAction, map: "AssessmentManualMarkProposal_enrollment_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualMarkProposal_actor_fkey")
+
+  @@unique([schoolId, componentId, studentId])
+  @@index([schoolId, studentId, createdAt])
 }

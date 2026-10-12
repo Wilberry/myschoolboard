@@ -1,5 +1,14 @@
 # Milestone Checklist
 
+### Phase 7 written/offline manual marks: unapproved proposals (UNVERIFIED)
+
+- [ ] Run cumulative `20261012340000_phase7_manual_mark_proposals` on owner-confirmed disposable PostgreSQL; verify all exact school/assignment/student enrollment FK mappings, actor and point SQL triggers, concurrent duplicate proposals and immutable DML/truncate rules.
+- [ ] Execute real-session teacher/other teacher/school-admin/HM/Principal/student/foreign school denial, active assignment/term/class/subject revocation, student withdrawal/cross-class/multiple enrollment, over-max/negative/decimal marks, forged SQL actor and row-count caps.
+- [ ] Browser-test keyboard/a11y and last-query roster authorization; no unapproved marks in current objective class sheet or weighted preview, no public export/official result.
+- [ ] Next reviewed correction/teacher marking workflows: immutable reasoned change requests, verified exact-section HM/Principal approval, separate policy-governed adoption into approved gradebook, and controlled Phase 8 result/report publishing; never directly overwrite a teacher proposal.
+- [ ] Execute full local CI-equivalent and `npm audit --audit-level=high` without waivers, including all previous Phase 6/7 tests; do not merge or deploy until accepted.
+
+
 ### Phase 7 grading policy revision drafts and provisional preview (UNVERIFIED)
 
 - [ ] Validate additive `20261012330000_phase7_grading_policy_revisions` on explicitly disposable PostgreSQL after cumulative migrations: exact cross-tenant context FKs, SQL actor/role/active period, row-serialized versioning under concurrent requests, weights sum 100, immutable history, school deletion lifecycle.

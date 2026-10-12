@@ -11,6 +11,11 @@ import { readInternalCbtAttempt } from "@/src/modules/assessments/attempt-resume
 import { scoreInternalSubmittedAttempt } from "@/src/modules/assessments/objective-score-service";
 import { GET as CLASS_RECORDS_GET } from "@/app/api/schools/[schoolId]/assessment-class-records/route";
 import {
+  GET as MANUAL_COMPONENTS_GET, POST as MANUAL_COMPONENTS_POST,
+} from "@/app/api/schools/[schoolId]/assessment-manual-components/route";
+import { GET as MANUAL_STUDENTS_GET } from "@/app/api/schools/[schoolId]/assessment-manual-components/[componentId]/students/route";
+import { POST as MANUAL_PROPOSAL_POST } from "@/app/api/schools/[schoolId]/assessment-manual-proposals/route";
+import {
   GET as POLICIES_GET, POST as POLICIES_POST,
 } from "@/app/api/schools/[schoolId]/assessment-grading-policies/route";
 import { GET as SCORE_QUEUE } from "@/app/api/schools/[schoolId]/assessment-score-queue/route";
@@ -881,6 +886,120 @@ describe("Phase 7 exact-assignment private question bank", () => {
         where: { id: grant.id }, data: { verified: true },
       });
     }
+  });
+
+  it("records only an exact assigned teacher's immutable written mark proposal, never official scores", async () => {
+    const componentInput = {
+      assignmentId, termId, kind: "TEST",
+      title: "Synthetic written fraction assessment", maxPoints: 20,
+    };
+    const addComponent = (actor: string, value: unknown, schoolId = schoolA) =>
+      MANUAL_COMPONENTS_POST(req(actor, schoolId, "POST", value), {
+        params: Promise.resolve({ schoolId }),
+      });
+    const addProposal = (actor: string, value: unknown, schoolId = schoolA) =>
+      MANUAL_PROPOSAL_POST(req(actor, schoolId, "POST", value), {
+        params: Promise.resolve({ schoolId }),
+      });
+    for (const actor of ["", "other", "admin", "super", "head", "principal", "student", "foreign"]) {
+      expect((await addComponent(actor, componentInput)).status)
+        .toBe(actor === "" ? 401 : 404);
+    }
+    expect((await addComponent("teacher", componentInput, schoolB)).status).toBe(404);
+    expect((await addComponent("teacher", { ...componentInput, maxPoints: 101 })).status).toBe(400);
+    expect((await addComponent("teacher", {
+      ...componentInput, teacherUserId: users.teacher,
+    })).status).toBe(400);
+    const created = await addComponent("teacher", componentInput);
+    expect(created.status).toBe(201);
+    expect(created.headers.get("cache-control")).toBe("private, no-store");
+    const component = (await created.json()).component;
+    expect(component).toMatchObject({
+      kind: "TEST", classId, sessionId, termId, maxPoints: 20,
+    });
+    const list = await MANUAL_COMPONENTS_GET(req("teacher", schoolA, "GET"), {
+      params: Promise.resolve({ schoolId: schoolA }),
+    });
+    expect(list.status).toBe(200);
+    expect((await list.json()).components.some(
+      (c: { id: string }) => c.id === component.id,
+    )).toBe(true);
+    const roster = await MANUAL_STUDENTS_GET(req("teacher", schoolA, "GET"), {
+      params: Promise.resolve({ schoolId: schoolA, componentId: component.id }),
+    });
+    expect(roster.status).toBe(200);
+    expect((await roster.json()).students).toMatchObject([{
+      studentId: pupilId, proposed: false,
+    }]);
+    const deniedRoster = await MANUAL_STUDENTS_GET(req("other", schoolA, "GET"), {
+      params: Promise.resolve({ schoolId: schoolA, componentId: component.id }),
+    });
+    expect(deniedRoster.status).toBe(404);
+    const proposalInput = {
+      componentId: component.id, studentId: pupilId,
+      earnedPoints: 17, reason: "Synthetic written teacher marking note",
+    };
+    expect((await addProposal("student", proposalInput)).status).toBe(404);
+    expect((await addProposal("admin", proposalInput)).status).toBe(404);
+    expect((await addProposal("other", proposalInput)).status).toBe(404);
+    expect((await addProposal("teacher", {
+      ...proposalInput, earnedPoints: 21,
+    })).status).toBe(404);
+    expect((await addProposal("teacher", {
+      ...proposalInput, studentId: "unrelated-pupil",
+    })).status).toBe(404);
+    expect((await addProposal("teacher", proposalInput, schoolB)).status).toBe(404);
+    const proposal = await addProposal("teacher", proposalInput);
+    expect(proposal.status).toBe(201);
+    expect((await proposal.json()).status).toBe("UNAPPROVED_NOT_SCORED");
+    expect((await addProposal("teacher", proposalInput)).status).toBe(409);
+    const recorded = await prisma.assessmentManualMarkProposal.findFirstOrThrow({
+      where: { schoolId: schoolA, componentId: component.id, studentId: pupilId },
+    });
+    expect(recorded).toMatchObject({
+      earnedPoints: 17, enrollmentId,
+      actorMembershipId: members.teacher, actorUserId: users.teacher,
+    });
+    await expect(prisma.assessmentManualMarkProposal.update({
+      where: { id: recorded.id }, data: { earnedPoints: 19 },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentManualMarkProposal.delete({
+      where: { id: recorded.id },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentManualComponent.update({
+      where: { id: component.id }, data: { maxPoints: 100 },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentManualMarkProposal.create({
+      data: {
+        id: "forged-manual-mark-" + suffix, schoolId: schoolA,
+        componentId: component.id, studentId: "unrelated-pupil",
+        enrollmentId, classId, sessionId, earnedPoints: 10,
+        reason: "Forged actor role should be denied",
+        actorMembershipId: members.admin, actorUserId: users.admin,
+      },
+    })).rejects.toThrow();
+    const postRoster = await MANUAL_STUDENTS_GET(req("teacher", schoolA, "GET"), {
+      params: Promise.resolve({ schoolId: schoolA, componentId: component.id }),
+    });
+    expect((await postRoster.json()).students).toMatchObject([{
+      studentId: pupilId, proposed: true,
+    }]);
+    // Proposals are deliberately excluded from class record aggregates
+    // until independent academic review and correction controls exist.
+    const recordQuery = new URLSearchParams({
+      classId, sessionId, termId, subjectId,
+    });
+    const provisional = await CLASS_RECORDS_GET(new Request(
+      `http://localhost/api/schools/${schoolA}/assessment-class-records?${recordQuery}`,
+    ), { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(provisional.status).toBe(200);
+    const content = await provisional.json();
+    const own = content.sheet.students.find(
+      (value: { studentId: string }) => value.studentId === pupilId,
+    );
+    expect(own.assessments.some((a: { title: string }) =>
+      a.title === componentInput.title)).toBe(false);
+
   });
 
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
