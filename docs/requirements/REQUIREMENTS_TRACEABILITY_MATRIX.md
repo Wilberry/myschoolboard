@@ -1,5 +1,12 @@
 # Requirements Traceability Matrix
 
+## Phase 7 returned-original-mark correction remediation — AUTHORED, UNVERIFIED
+
+`feature/phase7-returned-manual-mark-remediation` resolves the returned-proposal dead end in the original manual grade review workflow. A **terminally RETURNED initial manual mark** may now be amended only through a new immutable reasoned `AssessmentManualCorrectionRequest` by its current exact assigned teacher, followed by the same independently verified PRIMARY HEAD_OF_SECTION or SECONDARY PRINCIPAL academic decision. SQL requires the original initial review to exist (APPROVED or RETURNED), the same active original teacher/enrollment/school and mark limits, a changed bounded value, and no already pending correction. It does **not** change or overwrite the original mark or returned decision.
+
+Current teacher correction context shows a returned original's approved value as **not yet approved**; the verified reviewer queue includes its correction request. The approved-only gradebook remains incomplete while returned initial marks or correction requests lack approval; when the first correction is independently APPROVED, its points become the reviewed effective mark even if the immutable initial decision remains RETURNED. New `RETURNED_CORRECTION_PENDING` status makes the interim state explicit. Synthetic returned-first/reviewed-correction flow authored; Node regression guard updated. No official/student result, CBT key or report publication. Actual SQL/Node/Vitest/full CI checks NOT RUN, Phase 6/7 acceptance BLOCKED. D-050/ADR-036.
+
+
 ## Phase 7 reviewed-only manual academic gradebook foundation — AUTHORED, NOT VERIFIED
 
 `feature/phase7-reviewed-manual-gradebook` implements a distinct private, read-only **ACADEMIC_APPROVED_PREVIEW_ONLY** teacher gradebook for exact school/session/term/class/subject. Final SQL binds actual signed-in current TEACHER to matching ACTIVE class/subject/session assignment, active school/class/section/subject/period/term, ENROLLED student and exact ACTIVE class/session enrollment; results bounded 500 students, 30 written components, 15,500 rows and fail closed for duplicate enrollment/ambiguous component rows. This reader does not join assessment answer keys or CBT answers.

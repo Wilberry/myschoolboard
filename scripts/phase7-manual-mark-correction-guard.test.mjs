@@ -25,8 +25,8 @@ test("manual mark revision requests and independent decisions remain immutable",
  assert.equal((sql.match(/RETURNS trigger AS \$\$/g)||[]).length,2);
  assert.equal((sql.match(/\$\$ LANGUAGE plpgsql/g)||[]).length,2);
 });
-test("only approved initial mark and true unreviewed next correction can enter ledger", () => {
- assert.match(sql,/original\."action"='APPROVED'/);
+test("independently reviewed original mark and no pending competing revision", () => {
+ assert.match(sql,/JOIN "AssessmentManualMarkDecision" original/);
  assert.match(sql,/NEW\."requesterMembershipId"/);
  assert.match(sql,/requester\."userId"=NEW\."requesterUserId"/);
  assert.match(sql,/requester\."role"='TEACHER'/);

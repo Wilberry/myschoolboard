@@ -1,5 +1,10 @@
 # Decision Log
 
+## D-050: Enable correction-based remediation of returned initial manual marks
+
+- Status: Authored; not executed. A returned initial manual mark must not strand the teacher. Permit a new reasoned bounded changed correction after either terminal initial review outcome; only an independently APPROVED correction may establish a first effective academic-approved mark after RETURNED, with originals/history never modified. Keep the gradebook INCOMPLETE until then. ADR-036.
+
+
 ## D-049: Derive effective reviewed manual marks without mutating grade history
 
 - Status: authored/unverified. Keep a teacher-only preview for matching active class/subject/session/term. Only independently APPROVED initial marks and latest APPROVED correction count; pending/RETURNED remain distinguished and final totals withheld until every manual component approved and corrections settled. No assumed CBT/manual merger or official report release. ADR-035.
