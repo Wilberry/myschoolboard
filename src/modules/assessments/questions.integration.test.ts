@@ -24,6 +24,9 @@ const subjectId = `asm-subject-${suffix}`;
 const sessionId = `asm-session-${suffix}`;
 const termId = `asm-term-${suffix}`;
 const assignmentId = `asm-assignment-${suffix}`;
+const secondarySectionId = `asm-section-secondary-${suffix}`;
+const secondaryClassId = `asm-class-secondary-${suffix}`;
+const secondaryAssignmentId = `asm-assignment-secondary-${suffix}`;
 const members: Record<string, string> = {};
 const users: Record<string, string> = {};
 const cookies: Record<string, string> = {};
@@ -96,6 +99,18 @@ describe("Phase 7 exact-assignment private question bank", () => {
     await prisma.schoolClass.create({
       data: { id: classId, schoolId: schoolA, sectionId, name: "Basic Six" },
     });
+    await prisma.schoolSection.create({
+      data: { id: secondarySectionId, schoolId: schoolA,
+        name: "Secondary", stage: "SECONDARY" },
+    });
+    await prisma.schoolClass.create({
+      data: { id: secondaryClassId, schoolId: schoolA,
+        sectionId: secondarySectionId, name: "Junior Secondary One" },
+    });
+    await prisma.scopeGrant.create({
+      data: { membershipId: members.principal, type: "SECTION",
+        scopeId: secondarySectionId, verified: true },
+    });
     await prisma.subject.create({
       data: { id: subjectId, schoolId: schoolA, name: "Mathematics" },
     });
@@ -114,6 +129,10 @@ describe("Phase 7 exact-assignment private question bank", () => {
     await prisma.teacherClassSubjectAssignment.create({
       data: { id: assignmentId, schoolId: schoolA, membershipId: members.teacher,
         classId, subjectId, sessionId, status: "ACTIVE" },
+    });
+    await prisma.teacherClassSubjectAssignment.create({
+      data: { id: secondaryAssignmentId, schoolId: schoolA, membershipId: members.teacher,
+        classId: secondaryClassId, subjectId, sessionId, status: "ACTIVE" },
     });
   });
   afterAll(async () => {
@@ -302,11 +321,14 @@ describe("Phase 7 exact-assignment private question bank", () => {
     const draftId = (await draftRes.json()).draft.id;
     for (const [actor, expected] of [
       ["", 401], ["teacher", 404], ["other", 404],
-      ["admin", 404], ["principal", 404], ["foreign", 404],
+      ["admin", 404], ["foreign", 404],
     ] as const) {
       expect((await queue(actor)).status).toBe(expected);
       expect((await decide(actor, draftId, "APPROVED")).status).toBe(expected);
     }
+    // Principal can view only their separate SECONDARY queue, never PRIMARY.
+    expect((await queue("principal")).status).toBe(200);
+    expect((await decide("principal", draftId, "APPROVED")).status).toBe(404);
     expect((await decide("head", draftId, "APPROVED", schoolB)).status).toBe(404);
     const allowed = await queue("head");
     expect(allowed.status).toBe(200);
@@ -343,6 +365,46 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect(await prisma.assessmentDraft.findUnique({
       where: { id: draftId }, select: { id: true },
     })).toBeTruthy();
+  });
+
+  it("permits Principal only for SECONDARY sealed assessment drafts", async () => {
+    const q = await create("teacher", {
+      ...payload(), assignmentId: secondaryAssignmentId,
+    });
+    expect(q.status).toBe(201);
+    const questionId = (await q.json()).question.id;
+    const startsAt = new Date(Date.now() + 120 * 60_000).toISOString();
+    const endsAt = new Date(Date.now() + 250 * 60_000).toISOString();
+    const draft = await POST_DRAFTS(req("teacher", schoolA, "POST", {
+      assignmentId: secondaryAssignmentId, termId, kind: "EXAM",
+      title: "Synthetic secondary examination draft",
+      startsAt, endsAt, durationMinutes: 45,
+      maxAttempts: 1, passPercent: 50,
+      questions: [{ questionId, points: 10 }],
+    }), { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(draft.status).toBe(201);
+    const draftId = (await draft.json()).draft.id;
+    const input = {
+      decision: "RETURNED", reason: "Synthetic secondary academic moderation",
+    };
+    for (const actor of ["head", "teacher", "admin"]) {
+      const denied = await REVIEW_DECISION(req(actor, schoolA, "POST", input),
+        { params: Promise.resolve({ schoolId: schoolA, draftId }) });
+      expect(denied.status).toBe(404);
+    }
+    const listed = await REVIEW_QUEUE(req("principal", schoolA, "GET"),
+      { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(listed.status).toBe(200);
+    const json = await listed.json();
+    expect(json.drafts.some((d: { id: string }) => d.id === draftId)).toBe(true);
+    const result = await REVIEW_DECISION(req("principal", schoolA, "POST", input),
+      { params: Promise.resolve({ schoolId: schoolA, draftId }) });
+    expect(result.status).toBe(201);
+    expect((await result.json()).event.decision).toBe("RETURNED");
+    expect(await prisma.assessmentReviewEvent.count({
+      where: { schoolId: schoolA, draftId },
+    })).toBe(1);
+    // A RETURNED immutable configuration cannot be edited: author new draft.
   });
 
   it("revoking exact verified section grant blocks new academic moderation", async () => {
