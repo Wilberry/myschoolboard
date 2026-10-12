@@ -172,6 +172,8 @@ describe("Phase 6 tenant-scoped attendance submission and review", () => {
     expect((await submit("form", formData(classA, enrollmentS))).status).toBe(409);
     expect((await submit("form", { ...formData(classA, enrollmentA), attendanceDate: "2026-02-31" })).status).toBe(400);
     expect((await submit("form", { ...formData(classA, enrollmentA), attendanceDate: "1990-01-01" })).status).toBe(404);
+    const futureDate = new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10);
+    expect((await submit("form", { ...formData(classA, enrollmentA), attendanceDate: futureDate })).status).toBe(400);
   });
 
   it("rejects revoked Form Teacher membership before submission", async () => {
