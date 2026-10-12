@@ -52,6 +52,10 @@ Run the timetable tests against an explicitly disposable PostgreSQL database wit
 
 Execute six real Better Auth / disposable PostgreSQL cases testing: unauthorized/foreign admin/teacher attempts and forged school/assignment/term IDs; exact same-school ACTIVE teacher assignment source; own-note list/detail with no other staff data; append-only revisions preserving content/history and rejecting stale expected revision; one-way DRAFT→SUBMITTED without student release or self-approval; SQL trigger rejection of audit/revision tampering; and teacher revocation/term closure removing further author reads/writes while preserving the historical record. Include concurrent revision/submit attempts and Next/browser cookie/accessibility coverage at the local verification checkpoint. These cases are **authored, not executed**, and do not complete LES-REQ-001 or Phase 6 acceptance.
 
+## Teacher lesson-note authoring UI (authored, pending local test)
+
+Four direct disposable-DB option-read integration cases are authored for own-school ACTIVE teacher/term/assignment options, foreign/admin denial, membership revocation and explicit last-query tenant/role predicate checks. The actual browser must verify signed-in navigation, term/assignment option narrowing, accessible labels, draft creation, reloaded note detail, optimistic revision conflict handling, on-screen history, submission confirmation, and no student/HM approval controls. None of these newly authored tests or the full exact-commit CI-equivalent suite has run.
+
 ## Required negative tests
 
 - Cross-tenant access

@@ -101,6 +101,14 @@ async function HomeContent() {
                 </div>
                 <div className="school-meta">
                   <span className="school-slug">{school.slug}</span>
+                  {role === "TEACHER" && (
+                    <Link
+                      href={`/schools/${school.id}/lesson-notes`}
+                      className="school-link"
+                    >
+                      My lesson notes
+                    </Link>
+                  )}
                   {canShowSchoolDetailLink(session.user.id, school.id, role) ? (
                     <Link href={`/schools/${school.id}`} className="school-link">
                       View details

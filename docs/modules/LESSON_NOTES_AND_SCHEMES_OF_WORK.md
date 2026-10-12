@@ -10,6 +10,12 @@ The active membership, class, subject, session, term and assignment are rechecke
 
 **HM/Principal section-scoped approval and revision-return, school-specific approval policy, schemes of work, student enrollment, and final release/visibility are NOT implemented.** Those require a verified school-owned Section/class relationship and reviewer scope; granting an HM/Principal school-wide note approval without it would contradict the access model. All SQL, route/database tests, actual Next/browser checks, and full CI-equivalent gates remain pending local verification.
 
+## Protected teacher lesson-planning workspace (draft; unverified)
+
+A teacher-facing page at `/schools/{schoolId}/lesson-notes` is linked from the home school card only for active `TEACHER` memberships and independently authenticates with Better Auth on the server. The `readLessonWritingOptions` query returns only the current teacher's ACTIVE session-backed class/subject teaching assignments and corresponding ACTIVE terms, repeating active membership/role/school ownership in each final collection query. The client editor creates DRAFT notes, opens the author's own immutable revision history, saves a new expected-version revision, and submits the current draft for a future reviewer through the already protected lesson-note API. The UI does **not** itself authorize content: every API call checks the real actor and resource, and stale/denied errors are generic.
+
+The editor caps form options at 100 terms and 200 assignments; note lists are capped at 100 and each note's revisions/events at 100 by the service. Keyboard, screen-reader, form-state, failed refresh and actual browser workflows remain to be checked. It has **no reviewer approval/return control, student release button, class announcement or public note URL**. Four synthetic disposable-DB read-isolation cases for teacher ownership/role/active membership/query predicates are authored but not executed.
+
 ## Scope
 
 Schemes, planned lessons, weekly topics, approval/revision history, release to class, and visibility management.

@@ -20,6 +20,10 @@ The `/schools/{schoolId}/timetable` page is linked from the separately authorize
 
 The client editor uses the existing `POST` room/slot/cancellation APIs instead of trusting the UI to enforce business rules. It offers accessible labels, school-local time inputs, role/period-aware assignment selection, safe error/status messages, and reasoned cancellation confirmation. The server/database remain authoritative for overlapping periods and cross-school authorization. **Five new disposable-DB read-isolation cases and real-browser tests are authored/pending respectively; the complete pipeline has not run.**
 
+## Teacher lesson authoring workspace (development-only)
+
+Authenticated teachers with active school membership may follow `My lesson notes` on their home school card to `/schools/{schoolId}/lesson-notes`. The target page independently checks role and active school, selecting only the signed-in teacher's exact ACTIVE subject/class/session assignments and corresponding ACTIVE academic terms; the action APIs reauthorize and never trust the UI link. The page exposes draft creation, own notes, immutable revision history, and submission, with explicit notice that submission does **not** approve or publish content. School administrators, Form Teachers without subject assignments, parents, and students do not gain this route through navigation. Four database-backed option-scope cases are authored; real browser/accessibility checks are pending.
+
 ## Platform Super Admin dashboard
 
 - Tenant status summary
