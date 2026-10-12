@@ -121,3 +121,9 @@
 - Status: Authored; PostgreSQL and CI unexecuted.
 - SchoolAttendanceDayRevision is a per-date append-only school administrator actor/reason history. A school row lock serializes designation and submission audit; INSERT trigger rejects a designation for dates already containing an attendance register, and event trigger rejects a new SUBMITTED event on the latest explicit non-teaching designation. Default undeclared day is teaching, not inferred from weekend/holiday calendars. Avoid reversing existing attendance/approval/correction history on a later calendar update. No student-level access or weakened role permission.
 
+
+## ADR-019: Independent, scoped lesson-note release event
+
+- Status: Unverified additive release design.
+- LessonNote APPROVED and corresponding immutable APPROVED LessonNoteEvent are prerequisites, never substitutes, for an immutable release event. A school-owned LessonReleaseEvent records RELEASED or WITHDRAWN with exact note/revision, actor user/membership, reason/time. The service transaction and SQL insert trigger both enforce current active assignment, term/session, class/section and reviewer membership with exact verified SECTION grant, HM PRIMARY or Principal SECONDARY. A unique event key and row locks block duplicate release/withdrawal. No student delivery without independently verified identity and enrollment. No historical LessonNoteRevision is updated. Local PostgreSQL, CI and browser verification mandatory.
+
