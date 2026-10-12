@@ -1,5 +1,13 @@
 # Milestone Checklist
 
+### Scoped attendance read and UI candidate — still pending verification
+
+- [ ] Validate the Form Teacher roster endpoint only returns enrollment/name/mark inputs for an active exact PRIMARY responsibility in the same school/session/class, with no teacher-wide access.
+- [ ] Validate pending-review queue excludes student PII and details require exact active, verified HM PRIMARY/Principal SECONDARY section ownership in each final SQL query.
+- [ ] Run the newly authored real-session database read-suite (including inactive membership, revoked ScopeGrant, empty unauthorized queues and server page choices) against the explicitly disposable PostgreSQL database.
+- [ ] Check browser navigation, full-roster marking, submit/duplicate/stale feedback, review detail, keyboard/focus and screen reader controls in local Next; run unchanged local CI-equivalent verification and audit gate.
+
+
 ### Attendance register candidate — pending Phase 6 exit checks
 
 - [ ] Review and apply the additive attendance migration on **only** the operator-confirmed disposable PostgreSQL test DB; verify schema drift, composite tenant relationships, trigger validation, deferred events and school-deletion cascade.
