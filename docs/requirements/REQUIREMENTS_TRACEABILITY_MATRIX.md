@@ -1,5 +1,13 @@
 # Requirements Traceability Matrix
 
+## Attendance school calendar and correction windows — ATT-REQ-001 / SCH-REQ-001 (authored, not verified)
+
+- `SchoolAttendancePolicyRevision` Prisma and `20261012210000_school_attendance_policy` additive migration: current school attendance configuration is the latest immutable verified-administrator revision, default UTC/7/30 for schools without revisions. SQL validates actor, revision, timezone, windows and immutable history.
+- `school-date-policy.ts`, `policy-service.ts`: school-local calendar-day validation using IANA timezone and conservative UTC upper bound; submission and correction-request mutations read current policy in their serializable school-locked transaction; SQL event/request triggers repeat eligibility without trusting browser input.
+- `app/api/schools/[schoolId]/attendance-policy`, `app/schools/[schoolId]/attendance-policy`: authenticated, active tenant `school:configure` admin editor and private POST with reasoned audit. Existing Form Teacher, HM and Principal permissions are not broadened.
+- `school-date-policy.test.ts` and `policy.integration.test.ts`: authored, NOT executed. Missing DB migration verification, full CI, browser, holiday/calendar exception policy and historical acceptance. ATT-REQ-001/SCH-REQ-001/SEC-REQ-001 remain **partially authored, incomplete**.
+
+
 ## Attendance SQL bypass hardening — ATT-REQ-001/T-ATT-001 (unverified)
 
 - Finding: prior DB SUBMITTED-event trigger verified original actor and **at least one** attendance entry, but did not require all active class/session enrolled pupils. API full-roster check was insufficient against bypassing the application using direct SQL.
