@@ -1,5 +1,10 @@
 # Current Status
 
+## Phase 6 student-linked lesson delivery and schemes of work (authored; UNVERIFIED)
+
+`feature/phase6-verified-student-lesson-access` adds school-admin-attested immutable StudentRecord→STUDENT Membership binding and terminal revocation, private student lesson list/detail with exact currently enrolled school/class/session and active academic term plus approved RELEASED / NOT WITHDRAWN current revision checks, a student page, and an administrator identity-link workspace. Adds typed SCHEME_OF_WORK documents with immutable week ranges (1–53) through existing exact assigned teacher drafts, immutable revisions, HM/Principal section approval and separate release workflows. Synthetic role, cross-class, revocation, term-close and scheme lifecycle tests plus read-only Node guards are **AUTHORED, NOT EXECUTED**. A limited 12/12 GitHub-fetched **static source-presence inspection** passed; this is neither Prisma validation nor database/Next execution. The release/security gate and Phase 6 status remain **BLOCKED** pending migrations, full local CI-equivalent, browser/accessibility, identity evidence and outstanding security audit findings. No merges, deployment, live data or broadened permissions.
+
+
 ## Phase 6 approved lesson-note release (authored, not verified)
 
 `feature/lesson-approved-release-foundation` extends the cumulative attendance/student/teacher/reviewer work with immutable reasoned RELEASED/WITHDRAWN events on approved lesson revisions. The exact current approved revision, active academic/teacher/section structure and verified HM PRIMARY/Principal SECONDARY scope are validated both transactionally and by additive PostgreSQL SQL; release is independent of review. A restricted reviewer queue and browser controls are authored, and synthetic real-session cases added to existing lesson-review suite for role/stage/duplicate/stale/withdraw/audit denials. **Tests and migration NOT EXECUTED.** No student content read is exposed without an authenticated verified account-to-enrollment mapping. LES-REQ-001 is partially authored, not complete.
