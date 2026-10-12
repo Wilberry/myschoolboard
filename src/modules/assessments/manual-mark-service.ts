@@ -193,8 +193,16 @@ export async function listOwnManualComponentStudents(
   `);
   if (!pupils.length) {
     const own = await prisma.assessmentManualComponent.findFirst({
-      where: { schoolId, id: componentId, teacherUserId: userId,
-        teacher: { role: "TEACHER", isActive: true } },
+      where: {
+        schoolId, id: componentId, teacherUserId: userId,
+        teacher: { userId, role: "TEACHER", isActive: true },
+        assignment: { status: "ACTIVE" },
+        session: { status: "ACTIVE" },
+        term: { status: "ACTIVE" },
+        schoolClass: { isActive: true, section: { isActive: true } },
+        subject: { isActive: true },
+        school: { isActive: true },
+      },
       select: { id: true },
     });
     if (!own) throw new AssessmentError("NOT_FOUND");
