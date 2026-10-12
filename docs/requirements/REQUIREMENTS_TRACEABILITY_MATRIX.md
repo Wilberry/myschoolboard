@@ -1,5 +1,10 @@
 # Requirements Traceability Matrix
 
+## Phase 6 calendar-day closure subset (ATT-REQ-001, SCH-REQ-001; unverified)
+
+`SchoolAttendanceDayRevision` schema, `20261012220000_attendance_school_days` SQL, `policy-service.ts`, `attendance-days` POST, school policy UI and submission-day guard introduce explicit immutable school-date closures. No inferred weekend rule; recorded attendance prevents retroactive redesignation. Tests authored in `policy.integration.test.ts`; all DB tests, migrations and acceptance gates remain **unexecuted**. LES-REQ-001 lesson release and authorized pupil-class/period visibility remain separately outstanding.
+
+
 ## Attendance school calendar and correction windows — ATT-REQ-001 / SCH-REQ-001 (authored, not verified)
 
 - `SchoolAttendancePolicyRevision` Prisma and `20261012210000_school_attendance_policy` additive migration: current school attendance configuration is the latest immutable verified-administrator revision, default UTC/7/30 for schools without revisions. SQL validates actor, revision, timezone, windows and immutable history.

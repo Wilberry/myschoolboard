@@ -6,6 +6,7 @@ const ctx = vi.hoisted(() => ({ headers: new Headers() }));
 vi.mock("next/headers", () => ({ headers: async () => ctx.headers }));
 
 import { POST } from "@/app/api/schools/[schoolId]/attendance-policy/route";
+import { POST as designateDay } from "@/app/api/schools/[schoolId]/attendance-days/route";
 import { readAttendancePolicyForAdmin } from "./policy-service";
 import { prisma } from "@/src/lib/db";
 import { auth } from "@/src/lib/auth";
@@ -157,6 +158,54 @@ describe("school-versioned attendance calendar policy", () => {
       'TRUNCATE TABLE "SchoolAttendancePolicyRevision"',
     )).rejects.toThrow();
   });
+  it("blocks unauthorised nonteaching-day edits and preserves immutable day revisions", async () => {
+    const attendanceDate = "2030-03-11"; // only synthetic future date
+    const payload = {
+      attendanceDate, isTeachingDay: false,
+      reason: "Synthetic pre-scheduled school closure",
+    };
+    async function designate(actor: string, body: unknown, schoolId = a) {
+      ctx.headers = new Headers(cookies[actor] ? { cookie: cookies[actor] } : {});
+      return designateDay(new Request(
+        `http://localhost/api/schools/${schoolId}/attendance-days`,
+        { method: "POST", body: JSON.stringify(body) },
+      ), { params: Promise.resolve({ schoolId }) });
+    }
+    expect((await designate("", payload)).status).toBe(401);
+    expect((await designate("teacher", payload)).status).toBe(404);
+    expect((await designate("foreign", payload)).status).toBe(404);
+    const first = await designate("admin", payload);
+    expect(first.status).toBe(201);
+    expect((await first.json()).day.revision).toBe(1);
+    const second = await designate("super", {
+      ...payload, isTeachingDay: true,
+      reason: "Synthetic revised planned opening",
+    });
+    expect(second.status).toBe(201);
+    expect((await second.json()).day.revision).toBe(2);
+    const rows = await prisma.schoolAttendanceDayRevision.findMany({
+      where: { schoolId: a }, orderBy: { revision: "asc" },
+    });
+    expect(rows.map(x => [x.revision, x.isTeachingDay])).toEqual([
+      [1, false], [2, true],
+    ]);
+    await expect(prisma.schoolAttendanceDayRevision.update({
+      where: { id: rows[0].id },
+      data: { isTeachingDay: true },
+    })).rejects.toThrow();
+    await expect(prisma.schoolAttendanceDayRevision.delete({
+      where: { id: rows[0].id },
+    })).rejects.toThrow();
+    await expect(prisma.schoolAttendanceDayRevision.create({
+      data: {
+        schoolId: a, attendanceDate: new Date("2030-03-12T00:00:00.000Z"),
+        revision: 1, isTeachingDay: false,
+        reason: "Synthetic direct forged administrator entry",
+        actorUserId: users.teacher, actorMembershipId: members.teacher,
+      },
+    })).rejects.toThrow();
+  });
+
   it("refuses revisions after the administrator membership is revoked", async () => {
     await prisma.membership.update({
       where: { id: members.admin }, data: { isActive: false },

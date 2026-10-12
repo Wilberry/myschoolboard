@@ -245,6 +245,7 @@ model School {
   attendanceCorrectionRequests AttendanceCorrectionRequest[]
   attendanceCorrectionDecisions AttendanceCorrectionDecision[]
   attendancePolicyRevisions SchoolAttendancePolicyRevision[]
+  attendanceDayRevisions SchoolAttendanceDayRevision[]
 }
 
 model Membership {
@@ -270,6 +271,7 @@ model Membership {
   attendanceCorrectionRequests AttendanceCorrectionRequest[] @relation("AttendanceCorrectionRequester")
   attendanceCorrectionDecisions AttendanceCorrectionDecision[] @relation("AttendanceCorrectionReviewer")
   attendancePolicyRevisions SchoolAttendancePolicyRevision[]
+  attendanceDayRevisions SchoolAttendanceDayRevision[]
 }
 
 model ScopeGrant {
@@ -833,4 +835,24 @@ model SchoolAttendancePolicyRevision {
 
   @@unique([schoolId, revision])
   @@index([schoolId, createdAt])
+}
+
+/** Audit-preserving per-school calendar-day designation, explicit by date.
+ * No automatic weekend/holiday assumptions; the latest recorded revision
+ * applies only to future submissions and never revises existing history. */
+model SchoolAttendanceDayRevision {
+  id String @id @default(cuid())
+  schoolId String
+  attendanceDate DateTime @db.Date
+  revision Int
+  isTeachingDay Boolean
+  reason String @db.VarChar(500)
+  actorUserId String
+  actorMembershipId String
+  createdAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  actorMembership Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "SchoolAttendanceDayRevision_actor_fkey")
+
+  @@unique([schoolId, attendanceDate, revision])
+  @@index([schoolId, attendanceDate, createdAt])
 }

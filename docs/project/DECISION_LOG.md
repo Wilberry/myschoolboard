@@ -1,5 +1,12 @@
 # Decision Log
 
+## D-032: Explicit, immutable school teaching-day calendar
+
+- Status: Development default; not production-verified.
+- Decision: Do not infer weekends or national public holidays for every school. Instead, an active School Administrator/Super Admin may append an actor-attributed revision designating a specific date teaching or closed. The latest designation controls only future SUBMITTED attendance events. Once attendance has been recorded for that date, deny any further designation changes to avoid silently rewriting academic history. Require school lock, reason, sequential date revision and independent SQL actor check. Corrections of already approved attendance remain governed by their immutable history and school correction window.
+- Consequences: School holiday import/feed, regional observances and calendar synchronization are not approved or implemented. Existing UTC/date, Form Teacher and section-scope checks remain strictly enforced. See ADR-018.
+
+
 ## D-031: Audited school calendar-day attendance policy (development default)
 
 - Status: Draft implementation; not business policy approval or executed validation.

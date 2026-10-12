@@ -115,3 +115,9 @@
 - Decision: Store policy revisions as school-owned immutable snapshots with actor user/member, reason, revision, timezone and two bounded calendar windows. Use school row lock and active school-admin principal for policy changes. Validate timezone in both Node Intl and PostgreSQL `pg_timezone_names`. Read the latest revision when submitting attendance or proposing correction; derive local YYYY-MM-DD via Intl.formatToParts and integer calendar-day comparison. SQL BEFORE INSERT triggers independently apply the same latest version and school lock to SUBMITTED audit events and correction requests. Keep prior UTC nonfuture guard as a stricter upper bound. No update to existing historic marks or reviews.
 - Trade-offs: Time-zone-ahead schools cannot submit tomorrow's local day before UTC reaches that day; the deliberate denial is preferable to silently widening previous authorization. Administrative change is versioned but can change future eligibility; prior event validity and corrections remain immutable. Full SQL concurrency/trigger order, Prisma drift, browser, DST/date boundaries, dependency audit and local CI-equivalent tests remain required.
 
+
+## ADR-018: Explicit calendar closure overlay over immutable attendance
+
+- Status: Authored; PostgreSQL and CI unexecuted.
+- SchoolAttendanceDayRevision is a per-date append-only school administrator actor/reason history. A school row lock serializes designation and submission audit; INSERT trigger rejects a designation for dates already containing an attendance register, and event trigger rejects a new SUBMITTED event on the latest explicit non-teaching designation. Default undeclared day is teaching, not inferred from weekend/holiday calendars. Avoid reversing existing attendance/approval/correction history on a later calendar update. No student-level access or weakened role permission.
+
