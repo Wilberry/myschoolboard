@@ -259,6 +259,8 @@ model School {
   lessonReleaseEvents LessonReleaseEvent[]
   studentAccountLinks StudentAccountLink[]
   studentAccountLinkRevocations StudentAccountLinkRevocation[]
+  assessmentQuestions AssessmentQuestion[]
+  assessmentQuestionKeys AssessmentQuestionKey[]
 }
 
 model Membership {
@@ -289,6 +291,7 @@ model Membership {
   studentAccountLink StudentAccountLink? @relation("LinkedStudentMembership")
   studentLinkAttestations StudentAccountLink[] @relation("StudentLinkAttestor")
   studentLinkRevocations StudentAccountLinkRevocation[] @relation("StudentLinkRevoker")
+  assessmentQuestions AssessmentQuestion[]
 }
 
 model ScopeGrant {
@@ -337,6 +340,7 @@ model SchoolClass {
   @@unique([schoolId, id])
   @@index([schoolId])
   @@index([schoolId, sectionId])
+  assessmentQuestions AssessmentQuestion[]
 }
 
 model Subject {
@@ -352,6 +356,7 @@ model Subject {
 
   @@unique([schoolId, id])
   @@index([schoolId])
+  assessmentQuestions AssessmentQuestion[]
 }
 
 model TeacherClassSubjectAssignment {
@@ -383,6 +388,7 @@ model TeacherClassSubjectAssignment {
   @@index([schoolId, membershipId, status])
   @@index([schoolId, classId, subjectId, status])
   @@index([schoolId, sessionId, status])
+  assessmentQuestions AssessmentQuestion[]
 }
 
 model TeacherClassSubjectAssignmentEvent {
@@ -442,6 +448,7 @@ model AcademicSession {
   @@unique([schoolId, id])
   @@unique([schoolId, name])
   @@index([schoolId, status])
+  assessmentQuestions AssessmentQuestion[]
 }
 
 model AcademicTerm {
@@ -465,6 +472,7 @@ model AcademicTerm {
   @@unique([schoolId, id])
   @@unique([schoolId, sessionId, id])
   @@index([schoolId, sessionId, status])
+  assessmentQuestions AssessmentQuestion[]
 }
 
 model SchoolConfigurationEvent {
@@ -937,4 +945,47 @@ model StudentAccountLinkRevocation {
   actor Membership @relation("StudentLinkRevoker", fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "StudentAccountLinkRevocation_actor_fkey")
 
   @@unique([schoolId, linkId])
+}
+
+/** A private, immutable subject-question snapshot. Correct answers are NEVER
+ * returned by the question metadata endpoint and live in a separate table. */
+model AssessmentQuestion {
+  id String @id @default(cuid())
+  schoolId String
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  assignmentId String
+  teacherMembershipId String
+  teacherUserId String
+  prompt String @db.VarChar(2000)
+  options Json
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  session AcademicSession @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
+  term AcademicTerm @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction)
+  schoolClass SchoolClass @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
+  subject Subject @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction)
+  teacherMembership Membership @relation(fields: [schoolId, teacherMembershipId], references: [schoolId, id], onDelete: NoAction)
+  assignment TeacherClassSubjectAssignment @relation(fields: [schoolId, assignmentId, teacherMembershipId, classId, subjectId, sessionId], references: [schoolId, id, membershipId, classId, subjectId, sessionId], onDelete: NoAction, map: "AssessmentQuestion_exact_assignment_fkey")
+  answerKey AssessmentQuestionKey?
+
+  @@unique([schoolId, id])
+  @@index([schoolId, classId, subjectId, termId])
+  @@index([schoolId, teacherMembershipId, createdAt])
+}
+
+/** Kept physically and permission-wise apart from question metadata.
+ * No route projects this model to students or before authorized marking. */
+model AssessmentQuestionKey {
+  questionId String @id
+  schoolId String
+  correctIndex Int
+  createdAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  question AssessmentQuestion @relation(fields: [schoolId, questionId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentQuestionKey_question_fkey")
+
+  @@unique([schoolId, questionId])
 }

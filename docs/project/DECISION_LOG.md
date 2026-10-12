@@ -1,5 +1,12 @@
 # Decision Log
 
+## D-036: Teacher-owned private question bank and separately guarded answer keys
+
+- Status: Phase 7 candidate authored but NOT tested against PostgreSQL or CI.
+- Decision: Require an active TEACHER membership and exact current school/class/subject/session/term subject assignment to author multiple-choice questions. Store immutable question text/options in AssessmentQuestion and the correct option index in an independently immutable AssessmentQuestionKey created atomically, never returning keys in teacher metadata GET or POST. Neither a Form Teacher responsibility, an independent CLASS/SUBJECT grant, a school-wide administrator nor platform support is an author override. PostgreSQL independently enforces the exact actor-assignment relationship, validates 2–6 distinct nonempty options and key index. No student endpoints, publication, scoring, grade sheets, key reveals or exam attempts in this foundation.
+- Constraints: Bounded metadata reads and private no-store HTTP; authoring UI defaults to four options while server supports 2–6. Updating a question requires a later separately audited versioned workflow, not mutation of historical key/text. Phase 6 and strict local CI/security gates remain blocked. See ADR-022.
+
+
 ## D-034: Administrator-attested, one-to-one student account ownership
 
 - Status: Conservative development implementation; identity evidence/business acceptance pending.

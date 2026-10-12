@@ -1,5 +1,13 @@
 # Requirements Traceability Matrix
 
+## ASM-REQ-001 / T-ASM-001 — Phase 7 question bank candidate (authored, UNVERIFIED)
+
+- `AssessmentQuestion` and separate `AssessmentQuestionKey`, migration `20261012260000_phase7_question_bank`: exact school/teacher membership/class/subject/session/term/assignment tuple, validated immutable MCQ prompt/options, secret-key composite FK, independent SQL actor/scope and key-index triggers, immutable UPDATE/DELETE/TRUNCATE protections.
+- `src/modules/assessments/question-service.ts`, school assessment-questions POST/GET, teacher question-bank page/editor: current exact ACTIVE TEACHER assignment, no role-only or combined scope access; metadata GET/POST never includes correctIndex or answerKey, capped to 100. **No student read/delivery route.**
+- `src/modules/assessments/questions.integration.test.ts` synthetic authenticated role/foreign/class/session/key-secrecy/immutability tests; `scripts/phase7-question-bank-guard.test.mjs` included in existing `npm test` and `verify:local:guards`. **AUTHORED, NOT EXECUTED**.
+- This slice implements question creation only; assessment configuration, attempt limits, scoring, grading, class records and proper key publication boundaries remain incomplete. Full local PostgreSQL/CI/audit acceptance and Phase 6 prerequisite also outstanding. ASM-REQ-001 remains **specified + partially authored, not tested/complete**.
+
+
 ## LES-REQ-001 — student identity, released lesson/term access and schemes (candidate, NOT VERIFIED)
 
 - Additive schemas/migrations: `StudentAccountLink`, `StudentAccountLinkRevocation`, school/member/student composite FKs, SQL actor/role/identity attestation and immutable delete/update/truncate guards; typed `LessonDocumentKind` and immutable `LessonNote.weekStart/weekEnd` with DB CHECK and unique exact scheme schedule.
