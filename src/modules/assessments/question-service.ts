@@ -157,10 +157,10 @@ export async function listOwnAssessmentQuestions(schoolId: string) {
   `);
   if (!allowed.length) throw new AssessmentError("NOT_FOUND");
   const rows = await prisma.$queryRaw<Array<{
-    id: string; classId: string; subjectId: string; sessionId: string;
+    id: string; assignmentId: string; classId: string; subjectId: string; sessionId: string;
     termId: string; prompt: string; options: unknown; createdAt: Date;
   }>>(Prisma.sql`
-    SELECT q."id", q."classId", q."subjectId", q."sessionId", q."termId",
+    SELECT q."id", q."assignmentId", q."classId", q."subjectId", q."sessionId", q."termId",
       q."prompt", q."options", q."createdAt"
     FROM "AssessmentQuestion" q
     JOIN "School" school ON school."id"=q."schoolId" AND school."isActive"=true

@@ -261,6 +261,9 @@ model School {
   studentAccountLinkRevocations StudentAccountLinkRevocation[]
   assessmentQuestions AssessmentQuestion[]
   assessmentQuestionKeys AssessmentQuestionKey[]
+  assessmentDrafts AssessmentDraft[]
+  assessmentDraftQuestions AssessmentDraftQuestion[]
+  assessmentDraftSeals AssessmentDraftSeal[]
 }
 
 model Membership {
@@ -292,6 +295,7 @@ model Membership {
   studentLinkAttestations StudentAccountLink[] @relation("StudentLinkAttestor")
   studentLinkRevocations StudentAccountLinkRevocation[] @relation("StudentLinkRevoker")
   assessmentQuestions AssessmentQuestion[]
+  assessmentDrafts AssessmentDraft[]
 }
 
 model ScopeGrant {
@@ -341,6 +345,7 @@ model SchoolClass {
   @@index([schoolId])
   @@index([schoolId, sectionId])
   assessmentQuestions AssessmentQuestion[]
+  assessmentDrafts AssessmentDraft[]
 }
 
 model Subject {
@@ -357,6 +362,7 @@ model Subject {
   @@unique([schoolId, id])
   @@index([schoolId])
   assessmentQuestions AssessmentQuestion[]
+  assessmentDrafts AssessmentDraft[]
 }
 
 model TeacherClassSubjectAssignment {
@@ -389,6 +395,7 @@ model TeacherClassSubjectAssignment {
   @@index([schoolId, classId, subjectId, status])
   @@index([schoolId, sessionId, status])
   assessmentQuestions AssessmentQuestion[]
+  assessmentDrafts AssessmentDraft[]
 }
 
 model TeacherClassSubjectAssignmentEvent {
@@ -449,6 +456,7 @@ model AcademicSession {
   @@unique([schoolId, name])
   @@index([schoolId, status])
   assessmentQuestions AssessmentQuestion[]
+  assessmentDrafts AssessmentDraft[]
 }
 
 model AcademicTerm {
@@ -473,6 +481,7 @@ model AcademicTerm {
   @@unique([schoolId, sessionId, id])
   @@index([schoolId, sessionId, status])
   assessmentQuestions AssessmentQuestion[]
+  assessmentDrafts AssessmentDraft[]
 }
 
 model SchoolConfigurationEvent {
@@ -975,6 +984,7 @@ model AssessmentQuestion {
   @@unique([schoolId, id])
   @@index([schoolId, classId, subjectId, termId])
   @@index([schoolId, teacherMembershipId, createdAt])
+  assessmentDraftQuestions AssessmentDraftQuestion[]
 }
 
 /** Kept physically and permission-wise apart from question metadata.
@@ -988,4 +998,78 @@ model AssessmentQuestionKey {
   question AssessmentQuestion @relation(fields: [schoolId, questionId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentQuestionKey_question_fkey")
 
   @@unique([schoolId, questionId])
+}
+
+enum AssessmentDraftKind {
+  QUIZ
+  TEST
+  EXAM
+}
+
+/** Draft configuration only. There is deliberately no publication flag,
+ * active attempt, CBT delivery, score or grading-result entity in this slice.
+ * A changed draft is a NEW immutable snapshot, never an UPDATE. */
+model AssessmentDraft {
+  id String @id @default(cuid())
+  schoolId String
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  assignmentId String
+  teacherMembershipId String
+  teacherUserId String
+  kind AssessmentDraftKind
+  title String @db.VarChar(180)
+  startsAt DateTime
+  endsAt DateTime
+  durationMinutes Int
+  maxAttempts Int
+  passPercent Int
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  session AcademicSession @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
+  term AcademicTerm @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction)
+  schoolClass SchoolClass @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
+  subject Subject @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction)
+  teacherMembership Membership @relation(fields: [schoolId, teacherMembershipId], references: [schoolId, id], onDelete: NoAction)
+  assignment TeacherClassSubjectAssignment @relation(fields: [schoolId, assignmentId, teacherMembershipId, classId, subjectId, sessionId], references: [schoolId, id, membershipId, classId, subjectId, sessionId], onDelete: NoAction, map: "AssessmentDraft_exact_assignment_fkey")
+  questions AssessmentDraftQuestion[]
+
+  @@unique([schoolId, id])
+  @@index([schoolId, teacherMembershipId, createdAt])
+  @@index([schoolId, classId, subjectId, termId])
+  seal AssessmentDraftSeal?
+}
+
+/** Snapshot of the chosen private question IDs and their positive marks.
+ * No future student renderer is permitted to query secret QuestionKey. */
+model AssessmentDraftQuestion {
+  id String @id @default(cuid())
+  schoolId String
+  draftId String
+  questionId String
+  position Int
+  points Int
+  createdAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  draft AssessmentDraft @relation(fields: [schoolId, draftId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentDraftQuestion_draft_fkey")
+  question AssessmentQuestion @relation(fields: [schoolId, questionId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentDraftQuestion_question_fkey")
+
+  @@unique([schoolId, draftId, position])
+  @@unique([schoolId, draftId, questionId])
+  @@index([schoolId, questionId])
+}
+
+/** Atomically seals the exact immutable DRAFT item snapshot. Only sealed
+ * drafts are visible to staff lists; sealing never publishes a student exam. */
+model AssessmentDraftSeal {
+  draftId String @id
+  schoolId String
+  sealedAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  draft AssessmentDraft @relation(fields: [schoolId, draftId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentDraftSeal_draft_fkey")
+
+  @@unique([schoolId, draftId])
 }

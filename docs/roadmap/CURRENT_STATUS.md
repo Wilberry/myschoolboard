@@ -1,5 +1,10 @@
 # Current Status
 
+## Phase 7 immutable assessment draft configuration (candidate; UNVERIFIED)
+
+`feature/phase7-assessment-draft-config` extends #50 question bank with review-only additive assessment DRAFT records for exact active school/class/subject/session/term TEACHER assignment, configurable UTC time windows, duration (5–180 minutes), max attempts (1–3), passPercent (0–100), and 1–50 positioned privately keyed questions (1–20 points). An immutable seal prevents future question attachments; only sealed drafts appear on private teacher metadata GET. API/UI are teacher-gated and do not provide student exams, keys, scoring or results. Synthetic authenticated database tests and read-only Node invariants **AUTHORED, NOT EXECUTED**. Both Phase 6 dependency and full Phase 7 CI-equivalent/security gates remain **BLOCKED**. No merge, deployment or live data.
+
+
 ## Phase 7 — initial assessment question bank foundation (draft; unverified)
 
 Based on Phase 6 cumulative `feature/phase6-verified-student-lesson-access` at `a71774ae4d1d9ad6bcfb5988fe7d9eaec19e0ba1`, `feature/phase7-question-bank-foundation` authors an additive exact-assignment school/class/subject/session/term MCQ question bank, separate secret and immutable answer keys, protected teacher-only create/metadata GET and authoring UI, synthetic role/tenant/key non-disclosure/immutability tests, and read-only schema invariant tests. **No Prisma migration, disposable DB test, Vitest, Node invariant test, browser, lint, typecheck, build or security audit has run.** Phase 6 remains unverified, so Phase 7 cannot be accepted or enabled for student delivery. ASM-REQ-001 is partially authored only. No merge/deploy/live data/security waiver.

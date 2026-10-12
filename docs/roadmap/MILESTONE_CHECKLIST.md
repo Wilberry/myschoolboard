@@ -1,5 +1,14 @@
 # Milestone Checklist
 
+### Phase 7 assessment draft configuration (unverified)
+
+- [ ] On confirmed disposable PostgreSQL, validate additive draft + seal migration, FK and SQL actor/term/question-key constraints after cumulative Phase 6 + question bank migrations; verify school deletion and rollback.
+- [ ] Execute synthetic authenticated teacher/foreign/admin/assignment-revocation, duplicate or foreign question, schedule outside term, duration/attempt/percentage/point range and forged SQL actor cases.
+- [ ] Verify create-with-items-and-seal atomicity; direct SQL post-seal insert/update/delete/truncate rejected and unsealed draft absent from metadata GET.
+- [ ] Perform teacher form keyboard accessibility and raw HTTP privacy checks: neither questions nor configured draft endpoints expose correct answer keys or student exam attempts.
+- [ ] Build a separately approved CBT assessment publication, verified active student enrollment, idempotent attempts/autosave/submit, per-attempt max and scoring/score validation before any live CBT/result exposure. Full unchanged local CI-equivalent and strict dependency audit remain mandatory.
+
+
 ### Phase 7 assessment question bank — unverified development checklist
 
 - [ ] Validate additive `20261012260000_phase7_question_bank` on approved disposable PostgreSQL against the full cumulative migrations and Prisma generate/validate/drift; verify new school/assignment composite foreign keys and actor triggers.

@@ -6,6 +6,9 @@ const context = vi.hoisted(() => ({ headers: new Headers() }));
 vi.mock("next/headers", () => ({ headers: async () => context.headers }));
 
 import { GET, POST } from "@/app/api/schools/[schoolId]/assessment-questions/route";
+import {
+  GET as GET_DRAFTS, POST as POST_DRAFTS,
+} from "@/app/api/schools/[schoolId]/assessment-drafts/route";
 import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
 import { env } from "@/src/lib/env";
@@ -170,6 +173,98 @@ describe("Phase 7 exact-assignment private question bank", () => {
       },
     })).rejects.toThrow();
   });
+  it("creates an immutable term-bound assessment draft and never exposes keys", async () => {
+    const question = await prisma.assessmentQuestion.findFirstOrThrow({
+      where: { schoolId: schoolA, teacherMembershipId: members.teacher },
+    });
+    const startsAt = new Date(Date.now() + 60 * 60_000).toISOString();
+    const endsAt = new Date(Date.now() + 3 * 60 * 60_000).toISOString();
+    const draftInput = {
+      assignmentId, termId, kind: "TEST" as const, title: "Synthetic Mathematics Test",
+      startsAt, endsAt, durationMinutes: 30, maxAttempts: 2,
+      passPercent: 50, questions: [{ questionId: question.id, points: 5 }],
+    };
+    function draft(actor: string, body: unknown, schoolId = schoolA) {
+      return POST_DRAFTS(req(actor, schoolId, "POST", body),
+        { params: Promise.resolve({ schoolId }) });
+    }
+    function drafts(actor: string, schoolId = schoolA) {
+      return GET_DRAFTS(req(actor, schoolId, "GET"),
+        { params: Promise.resolve({ schoolId }) });
+    }
+    for (const [actor, status] of [
+      ["", 401], ["other", 404], ["admin", 404], ["foreign", 404],
+    ] as const) {
+      expect((await draft(actor, draftInput)).status).toBe(status);
+      expect((await drafts(actor)).status).toBe(status);
+    }
+    for (const malformed of [
+      { ...draftInput, durationMinutes: 0 },
+      { ...draftInput, maxAttempts: 4 },
+      { ...draftInput, passPercent: 101 },
+      { ...draftInput, questions: [] },
+      { ...draftInput, questions: [draftInput.questions[0], draftInput.questions[0]] },
+      { ...draftInput, teacherUserId: users.teacher },
+      { ...draftInput, endsAt: new Date(Date.now() - 86400000).toISOString() },
+    ]) {
+      expect((await draft("teacher", malformed)).status).toBe(400);
+    }
+    expect((await draft("teacher", { ...draftInput,
+      questions: [{ questionId: "foreign-question", points: 5 }],
+    })).status).toBe(404);
+    expect((await draft("teacher", draftInput, schoolB)).status).toBe(404);
+    const result = await draft("teacher", draftInput);
+    expect(result.status).toBe(201);
+    expect(result.headers.get("cache-control")).toBe("private, no-store");
+    const created = (await result.json()).draft;
+    expect(created).toMatchObject({ kind: "TEST", maxAttempts: 2,
+      durationMinutes: 30, questionCount: 1, maxScore: 5, passPercent: 50 });
+    expect(JSON.stringify(created)).not.toContain("correctIndex");
+    const list = await drafts("teacher");
+    expect(list.status).toBe(200);
+    const payload = await list.json();
+    expect(payload.drafts.map((d: { id: string }) => d.id)).toContain(created.id);
+    expect(JSON.stringify(payload)).not.toContain("correctIndex");
+    expect(await prisma.assessmentDraftSeal.findUnique({
+      where: { draftId: created.id },
+    })).not.toBeNull();
+    const selected = await prisma.assessmentDraftQuestion.findFirstOrThrow({
+      where: { schoolId: schoolA, draftId: created.id },
+    });
+    expect(selected).toMatchObject({
+      questionId: question.id, position: 1, points: 5,
+    });
+    await expect(prisma.assessmentDraft.update({
+      where: { id: created.id }, data: { maxAttempts: 3 },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentDraftQuestion.update({
+      where: { id: selected.id }, data: { points: 10 },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentDraftQuestion.create({
+      data: {
+        schoolId: schoolA, draftId: created.id, questionId: question.id,
+        position: 2, points: 5,
+      },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentDraftSeal.delete({
+      where: { draftId: created.id },
+    })).rejects.toThrow();
+
+    await expect(prisma.assessmentDraftQuestion.delete({
+      where: { id: selected.id },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentDraft.create({
+      data: {
+        schoolId: schoolA, sessionId, termId, classId, subjectId,
+        assignmentId, teacherMembershipId: members.teacher,
+        teacherUserId: users.admin, kind: "QUIZ",
+        title: "Forged teacher authorship draft",
+        startsAt: new Date(startsAt), endsAt: new Date(endsAt),
+        durationMinutes: 30, maxAttempts: 1, passPercent: 50,
+      },
+    })).rejects.toThrow();
+  });
+
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
     await prisma.teacherClassSubjectAssignment.update({
       where: { id: assignmentId }, data: { status: "REVOKED" },

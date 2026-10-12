@@ -1,5 +1,13 @@
 # Requirements Traceability Matrix
 
+## ASM-REQ-001 / T-ASM-001 — assessment configuration subset (authored; NOT EXECUTED)
+
+- Models: `AssessmentDraft` QUIZ/TEST/EXAM UTC term-bound immutable config, `AssessmentDraftQuestion` (ordered exact assignment keyed question IDs and points), `AssessmentDraftSeal` (one-time complete snapshot). SQL guards enforce active TEACHER/school/class/subject/session/term and same-assignment question+key; CHECK: duration 5–180, maxAttempts 1–3, passPercent 0–100, item position 1–50/points 1–20, schedule contains duration; seal denies later additions.
+- Server/UI: `src/modules/assessments/draft-service.ts`, private `assessment-drafts` POST/GET, teacher-gated draft editor and school navigation. Uses serializable exact teacher assignment, 1–50 unique selected keyed questions; no key read, student CBT, scores, grading execution, publication or export.
+- Tests: extension of `questions.integration.test.ts` for role/tenant, invalid ranges, duplicate selection, sealed draft, forged actor and immutable snapshots; `scripts/phase7-assessment-draft-guard.test.mjs` included in existing Node + Vitest run. **Authored only, NOT executed**. Full local CI and audit blocked, Phase 6 unverified.
+- ASM-REQ-001 still partial, NOT accepted; attempt-limit enforcement must be independently implemented in future CBT attempt service, and passing-percent values are definitions only until validated score computation exists.
+
+
 ## ASM-REQ-001 / T-ASM-001 — Phase 7 question bank candidate (authored, UNVERIFIED)
 
 - `AssessmentQuestion` and separate `AssessmentQuestionKey`, migration `20261012260000_phase7_question_bank`: exact school/teacher membership/class/subject/session/term/assignment tuple, validated immutable MCQ prompt/options, secret-key composite FK, independent SQL actor/scope and key-index triggers, immutable UPDATE/DELETE/TRUNCATE protections.

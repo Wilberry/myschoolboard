@@ -1,5 +1,13 @@
 # Decision Log
 
+## D-037: Immutable draft-only assessment setup with post-creation seal
+
+- Status: Phase 7 development candidate, untested.
+- Decision: Teacher-owned assessments start as non-publishable immutable QUIZ/TEST/EXAM configuration snapshots, not active CBT assessments. Require exact active teacher assignment, school/class/subject/session/term, UTC window inside current active term, bounded duration/attempt/pass rule and 1–50 unique pre-keyed questions from the same owned assignment. Each selected item has explicit bounded points; these are future marking definitions, not released student results.
+- Direct SQL protection: School-locked insert validators enforce actor identity/resource and question eligibility; service inserts draft+items+one-time `AssessmentDraftSeal` inside serializable transaction. Any later item addition is rejected; both snapshot and seal are immutable and unsealed entries are not displayed. No student attempt, score, answer disclosure or publication handler is authorized.
+- Trade-off: UTC is explicit for initial internal schedule data; school-local exam delivery/window conversion, grading/attempt policies and moderation/approval are separate future work. Corrections create new audited drafts, not updates. Keep Phase 6/local CI/security gates blocked; see ADR-023.
+
+
 ## D-036: Teacher-owned private question bank and separately guarded answer keys
 
 - Status: Phase 7 candidate authored but NOT tested against PostgreSQL or CI.
