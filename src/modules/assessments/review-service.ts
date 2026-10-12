@@ -51,7 +51,7 @@ export async function listAssessmentReviewQueue(schoolId: string) {
   if (!allowed.length) throw new AssessmentError("NOT_FOUND");
   return prisma.$queryRaw<AssessmentReviewItem[]>(Prisma.sql`
     SELECT draft."id", draft."title", draft."kind",
-      class."name" AS "className", subject."name" AS "subjectName",
+      room."name" AS "className", subject."name" AS "subjectName",
       term."name" AS "termName", section."name" AS "sectionName",
       draft."startsAt", draft."endsAt", draft."durationMinutes",
       draft."maxAttempts", draft."passPercent",
@@ -66,10 +66,10 @@ export async function listAssessmentReviewQueue(schoolId: string) {
     JOIN "AcademicTerm" term ON term."schoolId"=draft."schoolId"
       AND term."sessionId"=draft."sessionId"
       AND term."id"=draft."termId" AND term."status"='ACTIVE'
-    JOIN "SchoolClass" class ON class."schoolId"=draft."schoolId"
-      AND class."id"=draft."classId" AND class."isActive"=true
+    JOIN "SchoolClass" room ON room."schoolId"=draft."schoolId"
+      AND room."id"=draft."classId" AND room."isActive"=true
     JOIN "SchoolSection" section ON section."schoolId"=draft."schoolId"
-      AND section."id"=class."sectionId" AND section."isActive"=true
+      AND section."id"=room."sectionId" AND section."isActive"=true
     JOIN "Subject" subject ON subject."schoolId"=draft."schoolId"
       AND subject."id"=draft."subjectId" AND subject."isActive"=true
     JOIN "Membership" author ON author."schoolId"=draft."schoolId"
@@ -100,7 +100,7 @@ export async function listAssessmentReviewQueue(schoolId: string) {
       )
       AND ((reviewer."role"='HEAD_OF_SECTION' AND section."stage"='PRIMARY')
         OR (reviewer."role"='PRINCIPAL' AND section."stage"='SECONDARY'))
-    GROUP BY draft."id", class."name", subject."name",
+    GROUP BY draft."id", room."name", subject."name",
       term."name", section."name"
     ORDER BY draft."startsAt" ASC, draft."id" ASC
     LIMIT 100
