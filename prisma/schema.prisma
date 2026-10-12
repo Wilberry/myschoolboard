@@ -121,6 +121,11 @@ enum AttendanceEventType {
   RETURNED
 }
 
+enum LessonDocumentKind {
+  LESSON_NOTE
+  SCHEME_OF_WORK
+}
+
 enum LessonNoteStatus {
   DRAFT
   SUBMITTED
@@ -578,6 +583,9 @@ model TimetableEvent {
 }
 
 model LessonNote {
+  kind LessonDocumentKind @default(LESSON_NOTE)
+  weekStart Int?
+  weekEnd Int?
   id                  String           @id @default(cuid())
   schoolId            String
   sessionId           String
