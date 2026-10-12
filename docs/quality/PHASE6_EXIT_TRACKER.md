@@ -30,5 +30,6 @@ Phase 6 (Attendance and lesson planning) covers ATT-REQ-001 and LES-REQ-001. Fea
 
 **Phase 6 status: IN DEVELOPMENT; NOT COMPLETE; NOT RELEASE-READY.** No production action, live data, merge, migration application or test-result fabrication.
 
-## Next safe implementation
-Complete controlled lesson-note release metadata and identity-bound, class/period verified read model if strict server-side student identity linkage is provable; otherwise deny student reads until linkage is explicitly implemented and validated. Author synthetic tests; retain local database checkpoint.
+## Next required gate
+
+No further Phase 6 feature is safe to declare accepted solely from authorship. The next checkpoint must execute the complete **existing** local CI-equivalent process on an owner-confirmed disposable PostgreSQL environment and remediate any schema/SQL/authorization/browser/audit failures. A production student-membership provisioning workflow, administrator evidence policy and documented correction/relink lifecycle remain open prerequisites/policy decisions; **do not infer or bulk-link pupils**. The Phase 6 gate remains BLOCKED until these are resolved and acceptance evidence is attached to the exact tested commit.
