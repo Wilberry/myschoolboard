@@ -1,5 +1,10 @@
 # Decision Log
 
+## D-048: Sequential audited teacher correction requests and independent section decisions
+
+- Status: Authored/unverified. After independent original approval, an active exact source teacher may append a reasoned changed score version; pending blocks further requests. HM PRIMARY/Principal SECONDARY with current exact verified SECTION grant approves/returns separately, and only approved correction becomes the derived effective academic mark. Never modify original teacher mark or prior decisions. No result publication or security bypass; ADR-034.
+
+
 ## D-047: Independent section approval for original written mark proposals
 
 - Status: Authored/unverified. The actual exact active section's verified HM (PRIMARY) or Principal (SECONDARY) may record a one-time immutable APPROVED/RETURNED reasoned decision, never the proposing teacher nor a broader school admin. No mark mutation or official report release. Corrections require separate append-only request/decision history. ADR-033.
