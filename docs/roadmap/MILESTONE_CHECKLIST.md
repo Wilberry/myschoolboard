@@ -34,6 +34,9 @@
 
 ## Phase 3 — Pending implementation work
 
+- [ ] Run and review platform lifecycle migration and transaction/audit tests on the explicitly disposable local database.
+- [ ] Finish platform-operator school management views, staff enrollment, subscription plans/entitlements and tenant recovery policies; onboarding lifecycle source alone does not complete PLAT-REQ-001/SUB-REQ-001.
+
 - [ ] School onboarding lifecycle
 - [ ] Subscription management
 - [ ] Platform admin operations

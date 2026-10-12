@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-12 — Platform school onboarding and lifecycle foundation (unverified)
+
+- Added a nullable legacy-safe School lifecycle status, dedicated append-only platform lifecycle event ledger and an additive SQL migration with actor validation and mutation/truncate protection triggers.
+- Authored platform-only Better Auth onboarding and school status transition services and POST handlers; create is Pending/inactive, and approved state changes update `isActive` atomically with lifecycle and event.
+- Added transition-policy unit cases and disposable-DB integration cases. Subscription plans, school staff invitation, tenant management UI, expired/suspended export policy and production verification are not implemented.
+- **No migration or application verification was run for this follow-up.** No change to `main`, CI audit gate, production credentials, or live tenant data.
+
 ## 2026-10-12 — D-020 school-scoped assignment administration reads (unverified)
 
 - Implemented draft `GET` list/detail handlers for teacher-assignment administration with `school:configure` membership checks and **final-query** active school/role revalidation; cross-school identifiers/cursors remain concealed.

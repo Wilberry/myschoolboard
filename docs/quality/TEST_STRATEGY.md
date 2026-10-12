@@ -20,6 +20,10 @@ The school workspace must not provide a functional school-details link to a memb
 
 The shared `authRequestSucceeded` helper is covered by unit cases for success, explicit provider errors, missing response bodies on fulfilled requests, and rejected transport calls. Sign-in and sign-out UI now use this result to avoid permanent loading states and to show generic, non-disclosing error messages; the sign-out UI only refreshes after a successful request. Unit tests await local CI, and **real browser event/keyboard/accessibility tests remain outstanding** before the authentication UI is treated as fully verified.
 
+## Platform onboarding lifecycle tests (authored, awaiting local DB)
+
+The Phase 3 platform foundation now includes a pure transition-policy test (including forbidden Closed-to-Active reopening) and a disposable PostgreSQL route integration suite: unauthenticated and non-platform actors cannot create schools; an authorized platform operator creates a Pending/inactive school; state changes are reasoned, event-audited and adjust `isActive`; duplicate slugs and forbidden transitions fail; direct audit event update/delete is denied by PostgreSQL triggers. The new SQL migration and tests are unexecuted and must not be treated as production evidence. Existing tenant records are intentionally not auto-backfilled to a guessed lifecycle status.
+
 ## Required negative tests
 
 - Cross-tenant access
