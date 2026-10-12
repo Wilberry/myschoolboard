@@ -138,6 +138,11 @@ enum LessonReleaseEventType {
   WITHDRAWN
 }
 
+enum LessonMaterialKind {
+  LESSON_NOTE
+  SCHEME_OF_WORK
+}
+
 enum LessonNoteEventType {
   CREATED
   REVISED
@@ -590,6 +595,7 @@ model LessonNote {
   classId             String
   subjectId           String
   topic               String
+  kind                LessonMaterialKind @default(LESSON_NOTE)
   status              LessonNoteStatus @default(DRAFT)
   currentRevision     Int              @default(1)
   createdAt           DateTime         @default(now())
@@ -619,6 +625,7 @@ model LessonNoteRevision {
   topic          String
   objectives     String
   content        String
+  weeklyPlan     Json?
   actorUserId    String
   createdAt      DateTime    @default(now())
   school         School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
