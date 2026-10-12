@@ -69,6 +69,10 @@ export async function submitAttendance(schoolId: string, input: unknown) {
   if (!parsed.success) throw new AttendanceError("INVALID_INPUT");
   const value = parsed.data;
   const attendanceDate = parseDate(value.attendanceDate);
+  // Conservative UTC development default until a school timezone is configured.
+  if (value.attendanceDate > new Date().toISOString().slice(0, 10)) {
+    throw new AttendanceError("INVALID_INPUT");
+  }
   const ids = value.marks.map((item) => item.enrollmentId);
   if (new Set(ids).size !== ids.length) {
     throw new AttendanceError("INVALID_INPUT");
