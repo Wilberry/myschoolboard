@@ -146,7 +146,9 @@ BEGIN
       USING ERRCODE='23503';
   END IF;
 
-  clock_now := clock_timestamp()::TIMESTAMP(3);
+  -- AssessmentDraft timestamps are UTC-by-convention timestamp(3);
+  -- compute against the server UTC clock regardless of DB session timezone.
+  clock_now := (clock_timestamp() AT TIME ZONE 'UTC')::TIMESTAMP(3);
   IF clock_now < draft_start OR clock_now >= draft_end THEN
     RAISE EXCEPTION 'Exam window is not open'
       USING ERRCODE='23514';
