@@ -1,5 +1,10 @@
 # Milestone Checklist
 
+## Phase 7 key-blind enrolled-student CBT resume (authored, NOT VERIFIED)
+
+Cumulative `feature/phase7-cbt-private-resume-reader` implements `readInternalCbtAttempt`: an **internal-only** single final SQL query for one exact signed-in, active STUDENT membership → unrevoked administrator-attested StudentAccountLink → ENROLLED StudentRecord and ACTIVE exact class/session StudentEnrollment → sealed, separately APPROVED and PUBLISHED/not WITHDRAWN assessment, current teacher assignment/class/section/subject/session/term, and an unsubmitted attempt strictly inside its server deadline. Returns bounded (up to 50) ordered question prompts/options/points and **only that student's latest saved answer option/revision** with an attempt's ID/number/title/server time bounds; no answer key, `correctIndex`, grade, other student, pupil PII or staff questions. After submission, expiry, revocation or withdrawal, the query returns NOT_FOUND. This foundation deliberately creates **no student-facing API or browser path** pending full Phase 6/student/DB security acceptance. Synthetic real-session test cases for owner/wrong actor/tenant/latest revision/after-submission and read-only Node guards are AUTHORED BUT NOT EXECUTED. All previous strict local CI/audit gates still required. See D-042 / ADR-028.
+
+
 ### Phase 7 CBT immutable autosave and submission (unverified)
 
 - [ ] Apply cumulative `20261012310000_phase7_cbt_answer_submission` only on approved disposable PostgreSQL and validate all composite FKs, PL/pgSQL lock order, trigger/row deletion lifecycle, Prisma drift and SQL parser.
