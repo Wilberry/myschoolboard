@@ -7,6 +7,7 @@ vi.mock("next/headers", () => ({ headers: async () => context.headers }));
 
 import { GET, POST } from "@/app/api/schools/[schoolId]/assessment-questions/route";
 import { GET as REVIEW_QUEUE } from "@/app/api/schools/[schoolId]/assessment-reviews/route";
+import { GET as REVIEW_DETAIL } from "@/app/api/schools/[schoolId]/assessment-reviews/[draftId]/route";
 import { POST as REVIEW_DECISION } from "@/app/api/schools/[schoolId]/assessment-reviews/[draftId]/decision/route";
 import {
   GET as GET_DRAFTS, POST as POST_DRAFTS,
@@ -336,6 +337,24 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect(json.drafts.some((v: { id: string }) => v.id === draftId)).toBe(true);
     expect(JSON.stringify(json)).not.toContain("correctIndex");
     expect(JSON.stringify(json)).not.toContain("answerKey");
+    const detail = await REVIEW_DETAIL(req("head", schoolA, "GET"), {
+      params: Promise.resolve({ schoolId: schoolA, draftId }),
+    });
+    expect(detail.status).toBe(200);
+    expect(detail.headers.get("cache-control")).toBe("private, no-store");
+    const detailBody = await detail.json();
+    expect(detailBody.items).toMatchObject([{
+      questionId, position: 1, points: 4,
+      prompt: payload().prompt,
+    }]);
+    expect(JSON.stringify(detailBody)).not.toContain("correctIndex");
+    expect(JSON.stringify(detailBody)).not.toContain("answerKey");
+    for (const actor of ["teacher", "principal", "admin", "foreign"]) {
+      const denied = await REVIEW_DETAIL(req(actor, schoolA, "GET"), {
+        params: Promise.resolve({ schoolId: schoolA, draftId }),
+      });
+      expect(denied.status).toBe(404);
+    }
     const decision = await decide("head", draftId, "APPROVED");
     expect(decision.status).toBe(201);
     const recorded = (await decision.json()).event;
@@ -397,6 +416,11 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect(listed.status).toBe(200);
     const json = await listed.json();
     expect(json.drafts.some((d: { id: string }) => d.id === draftId)).toBe(true);
+    const preview = await REVIEW_DETAIL(req("principal", schoolA, "GET"), {
+      params: Promise.resolve({ schoolId: schoolA, draftId }),
+    });
+    expect(preview.status).toBe(200);
+    expect(JSON.stringify(await preview.json())).not.toContain("correctIndex");
     const result = await REVIEW_DECISION(req("principal", schoolA, "POST", input),
       { params: Promise.resolve({ schoolId: schoolA, draftId }) });
     expect(result.status).toBe(201);
