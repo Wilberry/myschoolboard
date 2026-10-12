@@ -6,6 +6,7 @@ import { useEffect, useState, type FormEvent } from "react";
 interface ReviewSummary {
   id: string;
   topic: string;
+  kind: "LESSON_NOTE" | "SCHEME_OF_WORK";
   classId: string;
   className: string;
   sectionName: string;
@@ -19,6 +20,7 @@ interface ReviewRevision {
   topic: string;
   objectives: string;
   content: string;
+  weeklyPlan: Array<{ week: number; topic: string; objectives: string; activities: string }> | null;
   createdAt: string;
 }
 
@@ -189,6 +191,15 @@ export function LessonReviewWorkspace({
                 <strong>Revision {revision.revisionNumber} · {revision.topic}</strong>
                 <p><strong>Objectives:</strong> {revision.objectives}</p>
                 <p className="lesson-revision-content">{revision.content}</p>
+                {active.kind === "SCHEME_OF_WORK" && Array.isArray(revision.weeklyPlan) &&
+                  <ol aria-label="Scheme weekly topics">
+                    {revision.weeklyPlan.map(week =>
+                      <li key={week.week}>
+                        <strong>Week {week.week}: {week.topic}</strong>
+                        <p>Objectives: {week.objectives}</p>
+                        <p>Activities: {week.activities}</p>
+                      </li>)}
+                  </ol>}
               </li>
             ))}
           </ol>
