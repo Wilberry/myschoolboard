@@ -1,5 +1,13 @@
 # Milestone Checklist
 
+### Verified student lesson visibility — acceptance gate
+
+- [ ] Validate linked STUDENT membership to exact same-school StudentRecord and verified administrator actor on disposable DB, including forged actor, wrong school, two memberships claiming same pupil, race, revocation and immutable audit.
+- [ ] Execute authenticated student GET tests proving missing/revoked link, INACTIVE/ENDED enrollment, foreign school, class/session/term mismatch and role/section denials return no private content, and only approved plus RELEASED without WITHDRAWN is visible.
+- [ ] Validate independent school admin manual verification UX and student rendered page with keyboard/screen readers; do not use live identities until separate privacy/consent and provisioning approval.
+- [ ] Run all earlier lesson author/review/release and attendance suites, migrations, TypeScript, lint, Next build and strict high-severity npm audit as one local disposable-DB CI-equivalent checkpoint before Phase 6 exit.
+
+
 ### Phase 6 approved lesson release (unverified)
 
 - [ ] Apply only to disposable PostgreSQL and run release/withdrawal trigger and audit tamper tests, including concurrent reviewers, stage/scope revocation and stale approved revision.
