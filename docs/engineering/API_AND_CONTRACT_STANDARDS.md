@@ -42,6 +42,10 @@ All operations derive their actor from Better Auth, require active same-school `
 
 The default `allowCoFormTeachers` setting is false. Each successful mutation returns only minimum responsibility/policy state. No physical delete or student/child/subject access is granted. Responses include `Cache-Control: private, no-store`; invalid JSON/payloads are 400, absent session 401, denied/missing 404, duplicate/invalid state 409, and unexpected faults generic 500. Six new real-session/database tests are authored but not yet executed; actual HTTP/browser and concurrency behavior require verification.
 
+## Timetable administration APIs (authored, unverified)
+
+School-only `school:configure` operators may POST `/api/schools/{schoolId}/timetable/rooms` with `{name, reason}` (upper-case-normalized room); POST `/api/schools/{schoolId}/timetable/slots` with `{termId, assignmentId, roomId?, weekday, startMinute, endMinute, reason}` (ACTIVE term and session, exact session-bound teacher assignment); and POST `/api/schools/{schoolId}/timetable/slots/{slotId}/cancel` with `{reason}`. They use the current Better Auth actor, tenant-scoped serializable SQL checks, atomic insert-only audit events, private/no-store responses, generic `400`/`401`/`404`/`409`/`500` outcomes and no physical delete. The final database GiST exclusions block overlaps among ACTIVE teacher/class/room allocations. There is **no** timetable list, public calendar or student-data read API yet. None of the new migration or tests has been executed.
+
 ## Current status
 
 The teacher-assignment module records the four implemented mutation contracts plus newly authored, unverified D-020 administrative read handlers. Other API contracts remain future work and must follow these standards.

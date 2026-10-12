@@ -32,6 +32,10 @@ The `feature/session-aware-teacher-assignments` branch adds nullable academic-se
 
 The cumulative `feature/form-teacher-responsibility` branch introduces separate school-owned session/class Form Teacher responsibilities; unique active PRIMARY and teacher/class/session constraints; optional school-configured SUPPORT relationships (off by default); append-only auditable assignment, handover and end events; and a separately audited school policy toggle. Four protected routes and six DB-backed integration cases are authored. All changes preserve legacy/period teacher-subject assignments and do not automatically grant a Form Teacher access to pupil data or another subject. **No migration, new DB test, full CI, lint, typecheck, build or audit has been run** on this cumulative branch. The next roadmap slice is timetable-slot and conflict integrity, then attendance/lesson planning foundations. PR stays draft, no `main` merge/deploy/release.
 
+## Phase 5 timetable conflict foundation (awaiting local verification)
+
+The `feature/timetable-conflict-foundation` branch authors school-owned room/slot/event models and a migration with PostgreSQL `btree_gist` teacher/class/room overlap exclusions, plus three school-admin-only room/slot/cancellation POST routes and six database-backed regression cases. Scheduling requires the exact ACTIVE school-owned session/term teacher allocation, while cancelled slots remain audit history. **The migration, tests, lint, TypeScript, build, and CI-equivalent audit have not run.** Protected timetable read UI, room lifecycle, actual concurrent collision evidence and Phase 6 lesson attendance remain pending. No merge or deployment is authorized.
+
 ## Current evidence
 
 - Published development checkpoint: `checkpoint/phase1-tenant-safe-foundation`; `main` remains unchanged

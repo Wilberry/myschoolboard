@@ -52,6 +52,10 @@ The new list/detail GET handlers permit only Better Auth sessions with active sa
 
 Six new real Better Auth/disposable PostgreSQL integration cases exercise the Form Teacher administration and handover service: deny anonymous, teacher-self-service and foreign-school actors; reject forged class/membership IDs; maintain one active PRIMARY; hand over PRIMARY with an exact actor/reason audit trail; require school policy for SUPPORT; block disabling co-responsibility or ending PRIMARY while SUPPORT remains; end SUPPORT with historical audit preservation; deny direct audit-event update/delete; reject new responsibilities for CLOSED sessions. A currently active primary Form Teacher is separately tested to **not** gain subject academic access or child personal-data access without its own exact subject assignment/verified child relationship. The model enforces same-school FK ownership and unique active class/session assignments. All new cases remain unexecuted; concurrent transactions, HTTP transport and production acceptance remain separate gates.
 
+## Timetable identity, foreign resource, and overlap cases (authored)
+
+Six disposable-DB integration cases validate anonymous/teacher/foreign-school denial, forged academic term/assignment IDs, room normalization, overlapping teacher/class/room conflicts, adjacent and different-day slots, cancellation releasing the interval while preserving audit events, update/delete audit tamper rejection, and denial of new slots after term closure. Cross-school term/session/class/assignment and optional room FKs, active teacher membership and private/no-store responses are mandatory. PostgreSQL `btree_gist` exclusion constraints are the concurrency backstop; **actual migration and concurrent race tests remain pending local execution**.
+
 ## Requirement
 
 Security tests must be executed before release and must continue as part of regression checks.

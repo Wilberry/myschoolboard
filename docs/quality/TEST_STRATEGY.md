@@ -44,6 +44,10 @@ Existing assignment mutations retain legacy NULL-session behavior and permit an 
 
 Form Teacher assign/handover/end and co-responsibility policy mutations are backed by school/session/class/membership composite ownership; unique active PRIMARY and member-per-class/session guards; and actor-verified immutable audit events. The new six-case integration suite checks unauthorized and cross-school requests, duplicate primary, atomic replacement/old-row ending, inactive/closed academic session, school policy gating, prevention of orphaned SUPPORT, explicit reason/event capture, and no accidental access to academic subjects or child records. Tests and the migration have not run. Further concurrent handover/policy-toggle and PostgreSQL transaction rollback stress testing are acceptance requirements before any deployment.
 
+## Timetable conflict verification (authored, not executed)
+
+Run the timetable tests against an explicitly disposable PostgreSQL database with the `btree_gist` extension. Confirm exact same-school active session/term/assignment ownership, teacher/class/room no-overlap exclusions on active slots, adjacency, separate weekdays, invalid durations/weekdays, audit-only cancellation, and denied cross-school requests. Add concurrent overlapping inserts to prove the GiST constraints allow only one winner. Verify all previous tenant, teacher assignment and Form Teacher tests remain passing; do not infer their results from source inspection alone.
+
 ## Required negative tests
 
 - Cross-tenant access
