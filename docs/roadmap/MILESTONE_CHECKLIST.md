@@ -1,5 +1,14 @@
 # Milestone Checklist
 
+### Phase 7 restricted marking and class-sheet milestone (UNVERIFIED)
+
+- [ ] Execute cumulative `20261012320000_phase7_cbt_objective_scoring` in verified disposable DB; prove private SQL key-only marking from highest submitted response revision, unanswered zero, weighted score/pass percentage and immutable duplicate/race behavior.
+- [ ] Test teacher marking queue and POST actual signed-in exact assignment, no numeric client payload, foreign tenant/role denial, revocation/withdrawal, private no-store and no early solution exposure.
+- [ ] Test class sheet current teacher/class/subject/session/term, only active ENROLLED pupils, unscored pending distinct from zero, best scored submitted attempt per reviewed/published assessment, withdrawn exclusion, no duplicate school-enrollment counting, strict row caps/response privacy.
+- [ ] Browser/accessibility test private marking and class sheet workspaces. Confirm no student/parent/official grade endpoint or CSV export; resolve school-specific CA/exam weights, manual/theory marks, grade boundaries, approval and archival as separately audited future decisions.
+- [ ] Run unchanged full disposable PostgreSQL local CI-equivalent, strict `npm audit --audit-level=high`, all Phase 6 prerequisite suites and cumulative migrations. Do not mark ASM-REQ-001 complete or merge/deploy until verified.
+
+
 ## Phase 7 internal objective CBT auto-scoring (AUTHORED, NOT VERIFIED)
 
 `feature/phase7-cbt-objective-scoring` adds immutable `AssessmentAttemptScore` (one per exact school/attempt) with max/earned weighted marks, basis-point percentage, correct count, pass threshold and UTC timestamp. An authenticated current ACTIVE exact original TEACHER for the assessment class/subject/session invokes an **internal-only** serializable scoring function after a terminal submitted attempt on a sealed, APPROVED and PUBLISHED (not withdrawn) active assessment. SQL BEFORE INSERT repeats the exact actor/teacher/assignment/term/submission authorization and **computes all numeric results itself** by joining the private `AssessmentQuestionKey` in the database and selecting each question's highest accepted response revision, counting unanswered questions as zero. The service never selects keys or accepts numeric grades from the client. Score records cannot be updated/deleted/truncated or duplicated; idempotent calls return the one original snapshot. Student scoring/result endpoints and official report publication remain absent. Synthetic correct/latest-response, unauthorized scoring, replay and immutable audit tests plus Node guards AUTHORED BUT NOT EXECUTED; no migrations or full CI/e2e/audit run. This is objective marking only—manual theory marking, review and official results are separate. D-043/ADR-029. Phase 6 and Phase 7 exit BLOCKED.
