@@ -1,5 +1,10 @@
 # Current Status
 
+## Phase 6 attendance permission foundation (draft, not operational)
+
+The `feature/attendance-eligibility-policy` branch based on the unmerged student administrator workspace introduces testable pure predicates for exact student/class/session enrollment, current PRIMARY Form Teacher responsibility, and section-stage-specific verified HM/Principal approval. Authenticated transactional data loading, secure mutation routes, class/date duplicate prevention, immutable attendance submissions/decisions/corrections, UI and PostgreSQL authorization/concurrency tests are **not implemented**. Unit tests are **authored, not executed**; the cumulative branch is unverified and may not be merged or released until the agreed local CI-equivalent checkpoint and mandatory security gate are satisfied.
+
+
 ## Student administration workspace (draft; validation pending)
 
 From verified base `741f8eb028a3d41125b5a509292bd0ce8f6e3237`, `feature/student-admin-workspace` adds an administrator-only student register, bounded history read, and browser controls invoking the existing audited register/enroll/withdraw POST routes. An authenticated active same-school `school:configure` principal and per-query membership/tenant predicates gate all reads. Synthetic disposable-database isolation tests have been authored **but not run**. No migration, full CI-equivalent run or dependency-audit execution is claimed for this candidate. Phase 6 attendance entry, exact active class/session/student verification, Form Teacher permission, section-specific HM/Principal approval and immutable attendance events remain to implement; no attendance endpoint has been exposed. The existing security audit gate remains mandatory and the hosted GitHub Actions billing block remains unresolved.
