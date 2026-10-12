@@ -7,6 +7,9 @@ vi.mock("next/headers", () => ({ headers: async () => context.headers }));
 
 import { GET, POST } from "@/app/api/schools/[schoolId]/assessment-questions/route";
 import { reserveInternalCbtAttempt } from "@/src/modules/assessments/attempt-reservation-service";
+import {
+  saveInternalCbtAnswer, submitInternalCbtAttempt,
+} from "@/src/modules/assessments/attempt-answer-service";
 import { AssessmentError } from "@/src/modules/assessments/question-service";
 import { GET as REVIEW_QUEUE } from "@/app/api/schools/[schoolId]/assessment-reviews/route";
 import { GET as PUBLICATION_QUEUE } from "@/app/api/schools/[schoolId]/assessment-publications/route";
@@ -585,6 +588,81 @@ describe("Phase 7 exact-assignment private question bank", () => {
       studentId: pupilId, enrollmentId, studentMembershipId: members.student,
       linkId: link.id, classId, sessionId, attemptNumber: 1,
     });
+    // The exact attested student may append key-blind answer snapshots but
+    // cannot alter stored revisions or choose server timestamps/revisions.
+    context.headers = new Headers({ cookie: cookies.teacher });
+    const firstKey = "25a99854-3700-4d38-9b76-eed3b0f19f21";
+    await expect(saveInternalCbtAnswer(schoolA, rows[0].id, {
+      questionId, selectedIndex: 1, idempotencyKey: firstKey,
+    })).rejects.toBeInstanceOf(AssessmentError);
+    context.headers = new Headers({ cookie: cookies.student });
+    const input = { questionId, selectedIndex: 1, idempotencyKey: firstKey };
+    const first = await saveInternalCbtAnswer(schoolA, rows[0].id, input);
+    expect(first).toMatchObject({ questionId, revision: 1 });
+    expect(JSON.stringify(first)).not.toContain("correctIndex");
+    expect(JSON.stringify(first)).not.toContain("answerKey");
+    const replay = await saveInternalCbtAnswer(schoolA, rows[0].id, input);
+    expect(replay).toEqual(first);
+    await expect(saveInternalCbtAnswer(schoolA, rows[0].id, {
+      ...input, selectedIndex: 0,
+    })).rejects.toBeInstanceOf(AssessmentError);
+    const newKey = "25a99854-3700-4d38-9b76-eed3b0f19f22";
+    const second = await saveInternalCbtAnswer(schoolA, rows[0].id, {
+      ...input, selectedIndex: 2, idempotencyKey: newKey,
+    });
+    expect(second.revision).toBe(2);
+    expect(second.id).not.toBe(first.id);
+    await expect(saveInternalCbtAnswer(schoolA, rows[0].id, {
+      ...input, questionId: "not-an-assessment-question",
+      idempotencyKey: "25a99854-3700-4d38-9b76-eed3b0f19f23",
+    })).rejects.toBeInstanceOf(AssessmentError);
+    await expect(saveInternalCbtAnswer(schoolA, rows[0].id, {
+      ...input, selectedIndex: 5,
+      idempotencyKey: "25a99854-3700-4d38-9b76-eed3b0f19f24",
+    })).rejects.toBeInstanceOf(AssessmentError);
+    expect(await prisma.assessmentAttemptAnswerEvent.count({
+      where: { schoolId: schoolA, attemptId: rows[0].id },
+    })).toBe(2);
+    const stored = await prisma.assessmentAttemptAnswerEvent.findFirstOrThrow({
+      where: { schoolId: schoolA, attemptId: rows[0].id, questionId, revision: 1 },
+    });
+    expect(stored.actorMembershipId).toBe(members.student);
+    await expect(prisma.assessmentAttemptAnswerEvent.update({
+      where: { id: stored.id }, data: { selectedIndex: 0 },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentAttemptAnswerEvent.delete({
+      where: { id: stored.id },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentAttemptAnswerEvent.create({
+      data: { id: "forged-autosave-" + suffix, schoolId: schoolA,
+        attemptId: rows[0].id, questionId,
+        requestKey: "25a99854-3700-4d38-9b76-eed3b0f19f26",
+        selectedIndex: 0, actorMembershipId: members.admin,
+        actorUserId: users.admin },
+    })).rejects.toThrow();
+    const submitKey = "25a99854-3700-4d38-9b76-eed3b0f19f25";
+    const finalized = await submitInternalCbtAttempt(schoolA, rows[0].id, {
+      idempotencyKey: submitKey,
+    });
+    expect((await submitInternalCbtAttempt(schoolA, rows[0].id, {
+      idempotencyKey: submitKey,
+    }))).toEqual(finalized);
+    await expect(submitInternalCbtAttempt(schoolA, rows[0].id, {
+      idempotencyKey: "19f790cc-c4bf-4350-b5cf-325480cd874b",
+    })).rejects.toBeInstanceOf(AssessmentError);
+    await expect(saveInternalCbtAnswer(schoolA, rows[0].id, {
+      questionId, selectedIndex: 3,
+      idempotencyKey: "19f790cc-c4bf-4350-b5cf-325480cd874c",
+    })).rejects.toBeInstanceOf(AssessmentError);
+    const submissionRow = await prisma.assessmentAttemptSubmission.findFirstOrThrow({
+      where: { schoolId: schoolA, attemptId: rows[0].id },
+    });
+    await expect(prisma.assessmentAttemptSubmission.update({
+      where: { id: submissionRow.id }, data: { requestKey: firstKey },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentAttemptSubmission.delete({
+      where: { id: submissionRow.id },
+    })).rejects.toThrow();
     await expect(reserve("student", draftId)).rejects.toBeInstanceOf(AssessmentError);
     await expect(prisma.assessmentAttempt.update({
       where: { id: rows[0].id }, data: { attemptNumber: 2 },
