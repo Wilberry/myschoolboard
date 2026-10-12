@@ -17,6 +17,7 @@ export const createAssignmentBody = z
     teacherMembershipId: identifier,
     classId: identifier,
     subjectId: identifier,
+    sessionId: identifier.optional(),
   })
   .strict();
 

@@ -93,6 +93,49 @@ describe("server authorization policy", () => {
     ).toBe(false);
   });
 
+  it("requires the exact academic session for period-bound teaching", () => {
+    const periodTeacher = principal("TEACHER", {
+      teacherAssignments: [
+        {
+          classId: "class-a",
+          subjectId: "subject-a",
+          sessionId: "session-2026",
+        },
+      ],
+    });
+    const legacyTeacher = principal("TEACHER", {
+      teacherAssignments: [
+        { classId: "class-a", subjectId: "subject-a", sessionId: null },
+      ],
+    });
+    const pair = {
+      schoolId: "school-a",
+      classId: "class-a",
+      subjectId: "subject-a",
+    };
+
+    expect(
+      authorize(periodTeacher, "academic:read", {
+        ...pair,
+        sessionId: "session-2026",
+      }).allowed,
+    ).toBe(true);
+    expect(authorize(periodTeacher, "academic:read", pair).allowed).toBe(false);
+    expect(
+      authorize(periodTeacher, "academic:read", {
+        ...pair,
+        sessionId: "session-2027",
+      }).allowed,
+    ).toBe(false);
+    expect(authorize(legacyTeacher, "academic:read", pair).allowed).toBe(true);
+    expect(
+      authorize(legacyTeacher, "academic:read", {
+        ...pair,
+        sessionId: "session-2026",
+      }).allowed,
+    ).toBe(false);
+  });
+
   it.each([
     {
       type: "SECTION",

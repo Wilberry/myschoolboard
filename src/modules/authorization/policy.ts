@@ -36,7 +36,11 @@ export interface AuthorizationPrincipal {
     role: MembershipRole;
     isActive: boolean;
     scopes: ScopeGrant[];
-    teacherAssignments: { classId: string; subjectId: string }[];
+    teacherAssignments: {
+      classId: string;
+      subjectId: string;
+      sessionId?: string | null;
+    }[];
   } | null;
 }
 
@@ -45,6 +49,7 @@ export interface AuthorizationResource {
   sectionId?: string;
   classId?: string;
   subjectId?: string;
+  sessionId?: string;
   childUserId?: string;
   ownerUserId?: string;
 }
@@ -121,7 +126,8 @@ export function authorize(
       !membership.teacherAssignments.some(
         (assignment) =>
           assignment.classId === resource.classId &&
-          assignment.subjectId === resource.subjectId,
+          assignment.subjectId === resource.subjectId &&
+          (assignment.sessionId ?? null) === (resource.sessionId ?? null),
       ))
   ) {
     return { allowed: false, reason: "forbidden" };

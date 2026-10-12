@@ -226,6 +226,7 @@ describe("school-scoped teacher assignment administration reads", () => {
         "id",
         "membershipId",
         "schoolId",
+        "sessionId",
         "status",
         "subjectId",
       ]);

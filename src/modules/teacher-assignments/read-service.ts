@@ -12,6 +12,7 @@ const assignmentFields = {
   membershipId: true,
   classId: true,
   subjectId: true,
+  sessionId: true,
   status: true,
   createdAt: true,
 } as const;

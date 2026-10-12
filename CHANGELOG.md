@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-12 — Session-aware subject teacher assignments (unverified)
+
+- Extended teacher-class-subject assignments with nullable school-owned academic session references and a safe split between legacy NULL-session uniqueness and distinct period-based uniqueness; no historic period was guessed or backfilled.
+- Existing create/reactivate mutation services require any supplied session to be ACTIVE and owned by the target school. Tenant principal resolution excludes assignments attached to nonactive periods; teacher academic policy now requires an exact session match.
+- Updated administration GET to show nullable `sessionId`; added policy and database route regressions for period isolation and legacy coexistence. No migration, full test, typecheck, build or audit has yet been executed for this cumulative development candidate.
+
 ## 2026-10-12 — Academic period activation and closure (unverified)
 
 - Added reasoned session/term PLANNED→ACTIVE→CLOSED status transitions, with school-admin-only HTTP handlers, serializable membership revalidation, audit event types and stored justifications.
