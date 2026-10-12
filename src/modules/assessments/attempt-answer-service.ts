@@ -102,7 +102,7 @@ async function serializable<T>(work: (tx: Prisma.TransactionClient) => Promise<T
 /** INTERNAL ONLY. Append a server-timestamped, numbered answer snapshot.
  * An exact idempotencyKey + same question + same selectedIndex gets the
  * original acknowledgment, while changed retries fail closed.
- * No question contents, correctIndex, scores or answer-key records returned. */
+ * No question contents, marking keys, scores or sensitive solution records returned. */
 export async function saveInternalCbtAnswer(
   schoolId: string, attemptId: string, input: unknown,
 ): Promise<AnswerAck> {
