@@ -252,6 +252,8 @@ model School {
   attendancePolicyRevisions SchoolAttendancePolicyRevision[]
   attendanceDayRevisions SchoolAttendanceDayRevision[]
   lessonReleaseEvents LessonReleaseEvent[]
+  studentAccountLinks StudentAccountLink[]
+  studentAccountLinkRevocations StudentAccountLinkRevocation[]
 }
 
 model Membership {
@@ -279,6 +281,9 @@ model Membership {
   attendancePolicyRevisions SchoolAttendancePolicyRevision[]
   attendanceDayRevisions SchoolAttendanceDayRevision[]
   lessonReleaseEvents LessonReleaseEvent[]
+  studentAccountLink StudentAccountLink? @relation("LinkedStudentMembership")
+  studentLinkAttestations StudentAccountLink[] @relation("StudentLinkAttestor")
+  studentLinkRevocations StudentAccountLinkRevocation[] @relation("StudentLinkRevoker")
 }
 
 model ScopeGrant {
@@ -669,6 +674,7 @@ model StudentRecord {
   @@unique([schoolId, id])
   @@unique([schoolId, admissionNumber])
   @@index([schoolId, status])
+  accountLink StudentAccountLink?
 }
 
 model StudentEnrollment {
@@ -883,4 +889,44 @@ model LessonReleaseEvent {
 
   @@unique([schoolId, noteId, revisionNumber, eventType])
   @@index([schoolId, createdAt])
+}
+
+/** Explicit administrator-attested one-to-one identity binding. IDs are
+ * selected from existing STUDENT Membership and existing enrolled student,
+ * never derived from name, email or admission number. */
+model StudentAccountLink {
+  id String @id @default(cuid())
+  schoolId String
+  studentId String
+  studentMembershipId String
+  attestedByMembershipId String
+  attestedByUserId String
+  attestationReason String @db.VarChar(500)
+  createdAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student StudentRecord @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction, map: "StudentAccountLink_student_fkey")
+  studentMembership Membership @relation("LinkedStudentMembership", fields: [schoolId, studentMembershipId], references: [schoolId, id], onDelete: NoAction, map: "StudentAccountLink_student_member_fkey")
+  attestor Membership @relation("StudentLinkAttestor", fields: [schoolId, attestedByMembershipId], references: [schoolId, id], onDelete: NoAction, map: "StudentAccountLink_attestor_fkey")
+  revocation StudentAccountLinkRevocation?
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, studentId])
+  @@unique([schoolId, studentMembershipId])
+}
+
+/** Revocation is terminal; an identity cannot silently be reassigned.
+ * A new linking policy needs a separately reviewed historical lifecycle. */
+model StudentAccountLinkRevocation {
+  id String @id @default(cuid())
+  schoolId String
+  linkId String
+  actorMembershipId String
+  actorUserId String
+  reason String @db.VarChar(500)
+  createdAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  link StudentAccountLink @relation(fields: [schoolId, linkId], references: [schoolId, id], onDelete: NoAction, map: "StudentAccountLinkRevocation_link_fkey")
+  actor Membership @relation("StudentLinkRevoker", fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "StudentAccountLinkRevocation_actor_fkey")
+
+  @@unique([schoolId, linkId])
 }
