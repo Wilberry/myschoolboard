@@ -47,6 +47,19 @@ enum SchoolLifecycleEventType {
   REACTIVATED
 }
 
+enum AcademicPeriodStatus {
+  PLANNED
+  ACTIVE
+  CLOSED
+}
+
+enum SchoolConfigurationEventType {
+  ACADEMIC_SESSION_CREATED
+  ACADEMIC_TERM_CREATED
+  CLASS_CREATED
+  SUBJECT_CREATED
+}
+
 model User {
   id            String       @id
   name          String
@@ -119,6 +132,9 @@ model School {
   teacherClassSubjectAssignments      TeacherClassSubjectAssignment[]
   teacherClassSubjectAssignmentEvents TeacherClassSubjectAssignmentEvent[]
   lifecycleEvents                     SchoolLifecycleEvent[]
+  academicSessions                    AcademicSession[]
+  academicTerms                       AcademicTerm[]
+  configurationEvents                 SchoolConfigurationEvent[]
 }
 
 model Membership {
@@ -249,4 +265,55 @@ model SchoolLifecycleEvent {
 
   @@index([schoolId, createdAt])
   @@index([actorUserId, createdAt])
+}
+
+model AcademicSession {
+  id        String               @id @default(cuid())
+  schoolId  String
+  name      String
+  startsOn  DateTime             @db.Date
+  endsOn    DateTime             @db.Date
+  status    AcademicPeriodStatus @default(PLANNED)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  school    School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  terms     AcademicTerm[]
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, name])
+  @@index([schoolId, status])
+}
+
+model AcademicTerm {
+  id        String               @id @default(cuid())
+  schoolId  String
+  sessionId String
+  name      String
+  position  Int
+  startsOn  DateTime             @db.Date
+  endsOn    DateTime             @db.Date
+  status    AcademicPeriodStatus @default(PLANNED)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  school    School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  session   AcademicSession      @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
+
+  @@unique([schoolId, sessionId, name])
+  @@unique([schoolId, sessionId, position])
+  @@unique([schoolId, id])
+  @@index([schoolId, sessionId, status])
+}
+
+model SchoolConfigurationEvent {
+  id                String                       @id @default(cuid())
+  schoolId          String
+  actorUserId       String
+  actorMembershipId String
+  eventType         SchoolConfigurationEventType
+  resourceId        String
+  createdAt         DateTime                     @default(now())
+  school            School                       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId, createdAt])
+  @@index([schoolId, eventType, createdAt])
 }

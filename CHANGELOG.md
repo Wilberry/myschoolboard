@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-12 — Academic sessions, terms and catalogs (unverified)
+
+- Added additive, tenant-scoped `AcademicSession` and `AcademicTerm` models with date checks, uniqueness, one-active-period guards, and a dedicated append-only `SchoolConfigurationEvent` ledger.
+- Added four school-admin-only create endpoints for PLANNED sessions/terms and active class/subject catalogs, with school actor revalidation inside serializable transactions, contained term dates, and no silent period assignment to historic teacher rows.
+- Added five disposable-DB integration cases for authorization, tenant ownership, date validation, duplicates and audit integrity. These are **authored but not executed**; session activation/closure, school configuration UI, curriculum/sections and period-aware staffing remain subsequent roadmap tasks.
+- No production migration, `main` merge, deployment, CI audit bypass or dependency risk acceptance.
+
 ## 2026-10-12 — Platform school onboarding and lifecycle foundation (unverified)
 
 - Added a nullable legacy-safe School lifecycle status, dedicated append-only platform lifecycle event ledger and an additive SQL migration with actor validation and mutation/truncate protection triggers.

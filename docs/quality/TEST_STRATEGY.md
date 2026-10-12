@@ -24,6 +24,10 @@ The shared `authRequestSucceeded` helper is covered by unit cases for success, e
 
 The Phase 3 platform foundation now includes a pure transition-policy test (including forbidden Closed-to-Active reopening) and a disposable PostgreSQL route integration suite: unauthenticated and non-platform actors cannot create schools; an authorized platform operator creates a Pending/inactive school; state changes are reasoned, event-audited and adjust `isActive`; duplicate slugs and forbidden transitions fail; direct audit event update/delete is denied by PostgreSQL triggers. The new SQL migration and tests are unexecuted and must not be treated as production evidence. Existing tenant records are intentionally not auto-backfilled to a guessed lifecycle status.
 
+## Academic session and catalog safety (authored, awaiting local verification)
+
+Create-only academic session/term and class/subject handlers must use active `school:configure` membership, tenant-owned academic identifiers and serializable writes with append-only change events. Five database-backed integration tests were authored: deny anonymous/academic-only/foreign-school roles; create planned sessions/terms and events; reject term dates outside the session, bad dates and duplicate positions/names; enforce same-school class and subject records; reject an inactive school membership; and deny direct audit update/delete. The migration, these tests, full CI-equivalent pipeline and real Next transport have not run.
+
 ## Required negative tests
 
 - Cross-tenant access
