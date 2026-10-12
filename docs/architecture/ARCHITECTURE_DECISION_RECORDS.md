@@ -212,3 +212,7 @@
 - Status: Additive Phase 7 proposal; unverified. Separate AssessmentManualComponent teacher-owned exact assignment/term and AssessmentManualMarkProposal exact same-school component/class/session/ENROLLED pupil/ACTIVE enrollment with one initial reasoned bounded integer mark per student. SQL insert triggers lock School, independently verify current original TEACHER membership, active session/term/class/section/subject and enrollment/mark limits; normal update/delete/truncate rejected. A private final-query roster prevents wrong-class name access, with bounded 500 and duplicate-student conflict.
 - Crucially there is no marking/publishing activation, no teacher self-approved corrections, no use of these proposals in objective SQL scoring or weighted/official sheets. Future reviewed HM/Principal decisions must adopt or return proposals via separate immutable audit events before any revised gradebook results. Full disposable-DB, authenticated concurrency, CI and security audit required.
 
+
+## ADR-033: Terminal section-verified original manual mark approval
+
+- Status: Authored/unverified. One SQL append-only APPROVED/RETURNED decision per original proposed mark, enforced by active school row serialization, current original teacher and child enrollment, independent active PRIMARY section HM/SECONDARY section Principal with exact verified ScopeGrant and user/member. Self-review blocked, no in-place changes or official result publishing. D-047.
