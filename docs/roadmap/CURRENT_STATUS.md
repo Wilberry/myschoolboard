@@ -12,6 +12,10 @@ The new `feature/assignment-admin-read-api` branch adds an authenticated list/de
 
 On the cumulative `feature/platform-school-onboarding-lifecycle` branch, new schema and a review-only migration add nullable lifecycle state for existing schools and immutable platform lifecycle events. Platform-only transactional onboarding starts new schools as PENDING and inactive; state changes update lifecycle and the existing `isActive` tenant barrier together. A transition policy, two platform API POST handlers, unit and database integration tests have been added. **No migration, test suite, lint, typecheck, build or dependency audit has yet run for this branch.** Staff invitation, plans/subscriptions, tenant read-only/export policy, physical closure/retention and browser/admin UI remain incomplete. The new schema is a development-only additive design and is not deployed.
 
+## Phase 4 academic sessions, terms and class/subject configuration (pending verification)
+
+The cumulative `feature/academic-session-term-foundation` branch adds school-owned `AcademicSession`, `AcademicTerm` and append-only `SchoolConfigurationEvent` schema plus migration. Four create-only school-admin endpoints create PLANNED sessions/terms and active school-owned classes/subjects under transactional `school:configure`, preserving prior teacher-assignment histories. Date/term containment and same-school ownership are validated; five database-backed cases for role/tenant denials, duplicates, range validation and immutable events were authored. **The migrations, PostgreSQL tests, Next build, typecheck, lint and high-severity audit have not been executed on this cumulative candidate.** No UI, section/stream policies, academic session activation or published-record grading recalculation is claimed.
+
 ## Current evidence
 
 - Published development checkpoint: `checkpoint/phase1-tenant-safe-foundation`; `main` remains unchanged

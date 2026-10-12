@@ -32,6 +32,12 @@
 - [ ] Tenant isolation controls
 - [ ] Authorization audit tests
 
+## Phase 4 — Academic structure foundation authored, not yet verified
+
+- [ ] Apply academic session/term/configuration event migration on only a disposable PostgreSQL test DB; inspect FK ownership, date checks, unique positions and audit immutability.
+- [ ] Run new same-school administrator create tests, malformed date and term-range tests, cross-school denials and existing teacher-assignment regression suite.
+- [ ] Finish school configuration UI, current session activation/closure workflow, sections/streams, grading-policy versioning, and session-scoped teacher assignment evolution without fabricating legacy period mappings.
+
 ## Phase 3 — Pending implementation work
 
 - [ ] Run and review platform lifecycle migration and transaction/audit tests on the explicitly disposable local database.
