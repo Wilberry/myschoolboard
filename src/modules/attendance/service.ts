@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
-import { loadAttendanceDatePolicy } from "./policy-service";
+import { loadAttendanceDatePolicy, isSchoolTeachingDay } from "./policy-service";
 import { isAttendanceDateAllowed } from "./school-date-policy";
 import {
   canApproveRegister,
@@ -92,6 +92,9 @@ export async function submitAttendance(schoolId: string, input: unknown) {
       const datePolicy = await loadAttendanceDatePolicy(tx, schoolId);
       if (!isAttendanceDateAllowed(value.attendanceDate, datePolicy, "SUBMIT")) {
         throw new AttendanceError("INVALID_INPUT");
+      }
+      if (!await isSchoolTeachingDay(tx, schoolId, attendanceDate)) {
+        throw new AttendanceError("CONFLICT");
       }
       const actor = await tx.membership.findFirst({
         where: {
