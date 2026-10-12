@@ -90,6 +90,13 @@ async function SchoolDetailContent({
         )}
         {access.principal.membership?.role === "TEACHER" && (
           <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/assessment-drafts`} className="secondary-link">
+              Configure assessment drafts (development)
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "TEACHER" && (
+          <p className="setup-navigation">
             <Link href={`/schools/${schoolId}/assessment-questions`} className="secondary-link">
               My assessment question bank (development)
             </Link>
