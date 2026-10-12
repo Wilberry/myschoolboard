@@ -6,6 +6,9 @@ import type { LessonWritingOptions } from "@/src/modules/lesson-notes/read-optio
 interface NoteSummary {
   id: string;
   topic: string;
+  kind: "LESSON_NOTE" | "SCHEME_OF_WORK";
+  weekStart: number | null;
+  weekEnd: number | null;
   status: "DRAFT" | "SUBMITTED" | "APPROVED" | "RETURNED";
   currentRevision: number;
   termId: string;
@@ -41,6 +44,7 @@ export function LessonNoteEditor({
 }) {
   const base = `/api/schools/${encodeURIComponent(schoolId)}/lesson-notes`;
   const [termsId, setTermsId] = useState("");
+  const [kind, setKind] = useState<"LESSON_NOTE" | "SCHEME_OF_WORK">("LESSON_NOTE");
   const [notes, setNotes] = useState<NoteSummary[]>([]);
   const [activeNote, setActiveNote] = useState<NoteDetail | null>(null);
   const [pending, setPending] = useState(false);
@@ -155,10 +159,16 @@ export function LessonNoteEditor({
         topic: String(values.get("topic") ?? ""),
         objectives: String(values.get("objectives") ?? ""),
         content: String(values.get("content") ?? ""),
+        kind,
+        ...(kind === "SCHEME_OF_WORK" ? {
+          weekStart: Number(values.get("weekStart")),
+          weekEnd: Number(values.get("weekEnd")),
+        } : {}),
       });
       if (!result) return;
       form.reset();
       setTermsId("");
+      setKind("LESSON_NOTE");
       setSuccess("Draft saved. Only you can access it while your teaching assignment is active.");
       await loadList();
       setActiveNote(null);
@@ -239,7 +249,7 @@ export function LessonNoteEditor({
       {error && <p className="form-error" role="alert">{error}</p>}
       {success && <p className="setup-success" role="status">{success}</p>}
       <section className="setup-panel" aria-labelledby="new-lesson-heading">
-        <h2 id="new-lesson-heading">Create a lesson-note draft</h2>
+        <h2 id="new-lesson-heading">Create an academic planning draft</h2>
         <p>Choose an active academic term and an exact teaching assignment.</p>
         <form onSubmit={(event) => void create(event)}>
           <label>
@@ -267,6 +277,22 @@ export function LessonNoteEditor({
               ))}
             </select>
           </label>
+          <label>
+            Document type
+            <select name="kind" value={kind} onChange={event =>
+              setKind(event.target.value as "LESSON_NOTE" | "SCHEME_OF_WORK")}>
+              <option value="LESSON_NOTE">Lesson note</option>
+              <option value="SCHEME_OF_WORK">Scheme of work</option>
+            </select>
+          </label>
+          {kind === "SCHEME_OF_WORK" && <>
+            <label>First teaching week
+              <input name="weekStart" type="number" min={1} max={53} required />
+            </label>
+            <label>Last teaching week
+              <input name="weekEnd" type="number" min={1} max={53} required />
+            </label>
+          </>}
           <label>
             Topic
             <input name="topic" minLength={2} maxLength={180} required />
