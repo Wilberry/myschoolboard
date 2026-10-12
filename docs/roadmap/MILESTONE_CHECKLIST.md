@@ -1,5 +1,14 @@
 # Milestone Checklist
 
+### Phase 7 assessment question bank — unverified development checklist
+
+- [ ] Validate additive `20261012260000_phase7_question_bank` on approved disposable PostgreSQL against the full cumulative migrations and Prisma generate/validate/drift; verify new school/assignment composite foreign keys and actor triggers.
+- [ ] Execute synthetic real-session question POST and teacher-only list tests: foreign school, role-only teacher, revoked assignment, wrong term/session, malformed duplicate options, forged direct SQL actor, immutable question/key, no early key disclosure.
+- [ ] Browser-test authoring accessibility and review metadata-only projection; inspect raw HTTP responses/caches and ensure no question keys or student exam routes are exposed.
+- [ ] Build assessment configurations, bounded scoring/attempt rule definitions, and a separate future gated CBT delivery model before attempting a student release.
+- [ ] Run unchanged full local CI-equivalent and `npm audit --audit-level=high` on the owner-confirmed disposable test environment. Do not mark Phase 7 or Phase 6 completed based on draft code.
+
+
 ### Phase 6 learner visibility and schemes of work acceptance (UNVERIFIED)
 
 - [ ] On the owner-confirmed disposable PostgreSQL DB, apply all cumulative Phase 6 additive migrations in order, run Prisma drift comparison, confirm link/revocation FK and trigger validation, existing tenant lifecycle, typed scheme constraint and immutability.
