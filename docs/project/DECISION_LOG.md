@@ -1,5 +1,13 @@
 # Decision Log
 
+## D-029: Restricted correction read disclosure default (unverified)
+
+- Status: Development-only implementation direction; no user/live data access authorized.
+- Decision: Current active PRIMARY Form Teacher relationship permits viewing approved registers for exact school/class/session, including the immutable original and computed latest approved corrected mark of an individual historic pupil entry. Reviewers see a pending correction queue of register/class/date metadata **without** pupil name, mark or reason; reviewer detail adds minimum data only with a fresh exact stored section and verified stage-matched HM/Principal authority check. All reads are no-store and deny foreign IDs; server pages recheck roles.
+- Rationale: Distinguish correction evidence from retroactive overwriting while respecting verified staff/student/class relationships. Pending/returned proposals may never silently become official attendance or be disclosed to guardians/students.
+- Outstanding: operation must be tested on disposable DB; consent/privacy review, correction windows, school-specific timezone, historical closed-period policy and local CI-equivalent are release blockers, not authority to broaden data access.
+
+
 ## D-001: Documentation-first baseline
 
 - Status: Accepted
