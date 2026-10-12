@@ -1,5 +1,12 @@
 # Requirements Traceability Matrix
 
+## ATT-REQ-001 correction read/workspace extension — still unverified
+
+- `src/modules/attendance/corrections-read.ts` and `corrections-read-http.ts`: Form Teacher current-primary-responsibility approved-register/entry queries and exact HM/Principal active-section pending queue/detail; select originalMark alongside latest APPROVED revision effectiveMark. Pending and RETURNED proposals are excluded from corrected effective value.
+- `app/schools/[schoolId]/attendance-corrections` and `attendance-correction-reviews`: two separately server-restricted pages and client editors with explicit reasoned request/review interactions, bounded private projections.
+- `corrections.integration.test.ts`: extended synthetic disposable-DB cases on cross-tenant/role denial, queue lacking pupil data, per-item stage/grant checks, pending/returned/approved overlay status and original mark retention. **Authored; not executed**. Related security, lifecycle, timezone, complete browser and local CI-equivalent gates remain pending.
+
+
 ## Correction subset ATT-REQ-001 / T-ATT-001 — authored, unverified
 
 - `prisma/migrations/20261012190000_attendance_immutable_corrections/migration.sql`, schema models and actor/revision/immutability triggers: additive revisioned correction request + independent correction decision; never update original marks.
