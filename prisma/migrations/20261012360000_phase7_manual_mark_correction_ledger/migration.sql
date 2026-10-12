@@ -77,7 +77,6 @@ BEGIN
  JOIN "AssessmentManualMarkDecision" original
   ON original."schoolId"=proposal."schoolId"
   AND original."proposalId"=proposal."id"
-  AND original."action"='APPROVED'
  JOIN "AssessmentManualComponent" component
   ON component."schoolId"=proposal."schoolId"
   AND component."id"=proposal."componentId"
