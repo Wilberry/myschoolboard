@@ -925,15 +925,23 @@ describe("teacher assignment mutation routes", () => {
     expect(await events()).toHaveLength(0);
   }, 20_000);
 
-  it("does not export list, detail, or physical-delete handlers", async () => {
+  it("exports only intended administration read and mutation handlers", () => {
+    expect(Object.hasOwn(createRoute, "GET")).toBe(true);
+    expect(Object.hasOwn(createRoute, "POST")).toBe(true);
     for (const route of [
       createRoute,
       deactivateRoute,
       revokeRoute,
       reactivateRoute,
     ]) {
-      expect(Object.hasOwn(route, "GET")).toBe(false);
       expect(Object.hasOwn(route, "DELETE")).toBe(false);
+    }
+    for (const route of [
+      deactivateRoute,
+      revokeRoute,
+      reactivateRoute,
+    ]) {
+      expect(Object.hasOwn(route, "GET")).toBe(false);
     }
   });
 });

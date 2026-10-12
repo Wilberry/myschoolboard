@@ -25,6 +25,10 @@ The school-details GET and all teacher-assignment mutation responses are require
 
 For an authenticated school metadata read denied as `404`, the handler emits a best-effort structured diagnostic event containing only `event: school_read_denied` and a generated random `requestId`. It uses the same event type for absent and cross-tenant schools, and it omits any principal, tenant, resource, cookie, or request identifiers. The HTTP status and body remain generic even when logging fails. This diagnostic event is **not** a durable or immutable audit record; the eventual security audit pipeline requires a separate reviewed design. The implementation and associated integration tests await local verification.
 
+## Teacher-assignment administration reads (authored, not yet verified)
+
+The two D-020 `GET /api/schools/{schoolId}/teacher-assignments` (list) and `GET /api/schools/{schoolId}/teacher-assignments/{assignmentId}` (detail) endpoints now have draft handlers. Both require an authenticated active same-school `school:configure` membership; general `academic:read` and platform role by themselves are not sufficient. The final data fetch repeats school activity, authenticated reader, current active membership, matching role, and school-bound assignment constraints. Response fields are explicitly selected; no user names/emails, audit events or other relations are included. Collection pagination returns up to 50 assignments in ascending ID order with an optional accessible in-school cursor and `nextCursor` (otherwise null). Invalid filters/paths return `400`, no session `401`, denied/missing/cross-school resources and cursors a non-disclosing `404`, and failures generic `500`. Every response uses `Cache-Control: private, no-store`. No state changes or event writes occur. New integration tests are authored but await execution on the isolated local test DB.
+
 ## Current status
 
-The teacher-assignment module records the four implemented mutation contracts and the unresolved list/detail read proposal. Other API contracts remain future work and must follow these standards.
+The teacher-assignment module records the four implemented mutation contracts plus newly authored, unverified D-020 administrative read handlers. Other API contracts remain future work and must follow these standards.
