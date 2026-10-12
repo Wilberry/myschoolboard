@@ -1,5 +1,14 @@
 # Milestone Checklist
 
+### Phase 7 grading policy revision drafts and provisional preview (UNVERIFIED)
+
+- [ ] Validate additive `20261012330000_phase7_grading_policy_revisions` on explicitly disposable PostgreSQL after cumulative migrations: exact cross-tenant context FKs, SQL actor/role/active period, row-serialized versioning under concurrent requests, weights sum 100, immutable history, school deletion lifecycle.
+- [ ] Execute pure weight tests for missing required category, unscored component, zero-weight optional category, multiple assessment category average, integer/rounding and malformed weights.
+- [ ] Execute synthetic real-session school super admin vs teacher/HM/Principal/admin/foreign actor, immutable revisions, latest contextual teacher-only preview, no revision/no score PENDING, no answer key or official-result disclosure.
+- [ ] Review school-specific CA/exam marking policy, subjective/manual score corrections, teacher/head/principal validation, explicit official report-card policy and Phase 8 release separately; do NOT treat provisional preview as official.
+- [ ] Run all local CI-equivalent, Prisma, browser/a11y, SQL injection/tenant/migration and `npm audit --audit-level=high` checks; no release/merge until all dependencies pass.
+
+
 ### Phase 7 restricted marking and class-sheet milestone (UNVERIFIED)
 
 - [ ] Execute cumulative `20261012320000_phase7_cbt_objective_scoring` in verified disposable DB; prove private SQL key-only marking from highest submitted response revision, unanswered zero, weighted score/pass percentage and immutable duplicate/race behavior.

@@ -1,5 +1,10 @@
 # Authorization Rules
 
+## Phase 7 school grading profile drafts (NOT VERIFIED)
+
+Only an active same-school `SCHOOL_SUPER_ADMIN` may create or list school/session/term/class/subject grading preview revisions. PostgreSQL validates the true school/member/user, ACTIVE session/term/section/class/subject, and sums QUIZ+TEST+EXAM weights exactly 100; it allocates the next version under a school lock and preserves prior revisions. A TEACHER may **not** author the school policy; the teacher's private class-sheet query may see latest weights only for the teacher's exact active assigned class/subject/session/term, with no cross-class/student access. Policies are DRAFT_PREVIEW_ONLY; no student, guardian, teacher/admin privilege escalation to official grades/results, no assumption of standard weighting, no report publication. Local test/security gate pending. D-045/ADR-031.
+
+
 ## Phase 7 private teacher marking and provisional subject records (UNVERIFIED)
 
 An authenticated active TEACHER with current exact `TeacherClassSubjectAssignment` to the same school's class+subject+session is the only candidate for marking submitted objective attempts and viewing that assignment's provisional class record sheet in an ACTIVE term. The private query rejoins that same authorization at the final student/score row projection and only ACTIVE matching class/session StudentEnrollment and ENROLLED StudentRecord. Staff School Administrator, unrelated TEACHER, HM/Principal, support and other-school actor do not automatically gain these subject records. No guardian, student or report publication route. No key or raw-answer disclosure; objective grade is SQL-computed and immutable. Provisional best attempt per published/reviewed assessment and score-only denominators remain defaults pending school-specific policy and full CI acceptance. D-044 / ADR-030.

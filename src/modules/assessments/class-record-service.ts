@@ -1,6 +1,9 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/src/lib/db";
 import { AssessmentError, assessmentUserId } from "./question-service";
+import {
+  calculateWeightedPreview, type GradingWeights, type WeightedPreview,
+} from "./grading-policy";
 
 const valid = (s: string) => Boolean(s && s.length <= 128 && s.trim() === s);
 export interface ClassRecordRow {
@@ -18,6 +21,10 @@ export interface ClassRecordRow {
   percentBps: number | null;
   passed: boolean | null;
   scoredAt: Date | null;
+  gradingVersion: number | null;
+  quizWeight: number | null;
+  testWeight: number | null;
+  examWeight: number | null;
 }
 export interface ClassRecordStudent {
   studentId: string;
@@ -38,6 +45,7 @@ export interface ClassRecordStudent {
   possiblePoints: number;
   pendingAssessments: number;
   percentBps: number | null;
+  weightedPreview: WeightedPreview | null;
 }
 
 /** Private, provisional teacher subject record, not an official grade or
@@ -50,7 +58,8 @@ export async function readInternalTeacherClassRecord(
   schoolId: string, sessionId: string, termId: string,
   classId: string, subjectId: string,
 ): Promise<{ classId: string; subjectId: string; sessionId: string;
-  termId: string; students: ClassRecordStudent[] }> {
+  termId: string; students: ClassRecordStudent[];
+  gradingPolicy: (GradingWeights & { version: number; status: "DRAFT_PREVIEW_ONLY" }) | null }> {
   if (![schoolId, sessionId, termId, classId, subjectId].every(valid)) {
     throw new AssessmentError("INVALID_INPUT");
   }
@@ -86,7 +95,9 @@ export async function readInternalTeacherClassRecord(
       draft."title", draft."kind",
       tally."possiblePoints" AS "assessmentMaxPoints",
       best."attemptNumber", best."earnedPoints", best."maxPoints",
-      best."percentBps", best."passed", best."scoredAt"
+      best."percentBps", best."passed", best."scoredAt",
+      grading."version" AS "gradingVersion",
+      grading."quizWeight", grading."testWeight", grading."examWeight"
     FROM "School" school
     JOIN "Membership" teacher ON teacher."schoolId"=school."id"
       AND teacher."userId"=${userId}
@@ -179,6 +190,17 @@ export async function readInternalTeacherClassRecord(
         attempt."attemptNumber" ASC
       LIMIT 1
     ) best ON draft."id" IS NOT NULL
+    LEFT JOIN LATERAL (
+      SELECT policy."version", policy."quizWeight",
+        policy."testWeight", policy."examWeight"
+      FROM "AssessmentGradingPolicyRevision" policy
+      WHERE policy."schoolId"=school."id"
+        AND policy."sessionId"=period."id"
+        AND policy."termId"=term."id"
+        AND policy."classId"=room."id"
+        AND policy."subjectId"=subject."id"
+      ORDER BY policy."version" DESC LIMIT 1
+    ) grading ON true
     WHERE school."id"=${schoolId} AND school."isActive"=true
     ORDER BY pupil."admissionNumber", pupil."id", draft."id"
     LIMIT 15501
@@ -193,6 +215,7 @@ export async function readInternalTeacherClassRecord(
         givenName: row.givenName, familyName: row.familyName,
         assessments: [], assessedPoints: 0, possiblePoints: 0,
         pendingAssessments: 0, percentBps: null,
+      weightedPreview: null,
       };
       grouped.set(row.studentId, student);
     }
@@ -217,7 +240,25 @@ export async function readInternalTeacherClassRecord(
     }
     if (grouped.size > 500) throw new AssessmentError("CONFLICT");
   }
+  const first = rows[0];
+  const gradingPolicy: (GradingWeights & {
+    version: number; status: "DRAFT_PREVIEW_ONLY";
+  }) | null = first?.gradingVersion !== null &&
+    first?.gradingVersion !== undefined &&
+    first.quizWeight !== null && first.testWeight !== null &&
+    first.examWeight !== null
+    ? {
+      version: first.gradingVersion, quizWeight: first.quizWeight,
+      testWeight: first.testWeight, examWeight: first.examWeight,
+      status: "DRAFT_PREVIEW_ONLY",
+    } : null;
   for (const student of grouped.values()) {
+    if (gradingPolicy) {
+      student.weightedPreview = calculateWeightedPreview(gradingPolicy,
+        student.assessments.map(a => ({
+          kind: a.kind, percentBps: a.percentBps,
+        })));
+    }
     if (student.possiblePoints > 0) {
       student.percentBps = Math.round(
         student.assessedPoints * 10000 / student.possiblePoints,
@@ -225,5 +266,5 @@ export async function readInternalTeacherClassRecord(
     }
   }
   return { sessionId, termId, classId, subjectId,
-    students: Array.from(grouped.values()) };
+    gradingPolicy, students: Array.from(grouped.values()) };
 }

@@ -10,6 +10,8 @@ interface StudentRow {
   studentId: string; admissionNumber: string; givenName: string; familyName: string;
   assessments: ScoreRow[]; assessedPoints: number; possiblePoints: number;
   pendingAssessments: number; percentBps: number | null;
+  weightedPreview: { status: "READY" | "PENDING";
+    weightedPercentBps: number | null } | null;
 }
 export function AssessmentClassRecordWorkspace({
   schoolId, options,
@@ -17,13 +19,17 @@ export function AssessmentClassRecordWorkspace({
   const [assignmentId, setAssignmentId] = useState("");
   const [termId, setTermId] = useState("");
   const [students, setStudents] = useState<StudentRow[]>([]);
+  const [grading, setGrading] = useState<{
+    version: number; quizWeight: number; testWeight: number;
+    examWeight: number; status: "DRAFT_PREVIEW_ONLY";
+  } | null>(null);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const assignment = options.assignments.find(a => a.id === assignmentId);
   const terms = options.terms.filter(t => t.sessionId === assignment?.sessionId);
   async function load() {
     if (!assignment || !termId || loading) return;
-    setLoading(true); setStatus(""); setStudents([]);
+    setLoading(true); setStatus(""); setStudents([]); setGrading(null);
     try {
       const query = new URLSearchParams({
         classId: assignment.classId, sessionId: assignment.sessionId,
@@ -34,8 +40,11 @@ export function AssessmentClassRecordWorkspace({
         { cache: "no-store", credentials: "same-origin" },
       );
       if (!response.ok) throw Error();
-      const body = await response.json() as { sheet: { students: StudentRow[] } };
+      const body = await response.json() as { sheet: {
+        students: StudentRow[]; gradingPolicy: typeof grading;
+      } };
       setStudents(body.sheet.students);
+      setGrading(body.sheet.gradingPolicy);
       setStatus("Provisional records loaded. These are not approved report-card grades.");
     } catch { setStatus("Record sheet unavailable or access has changed."); }
     finally { setLoading(false); }
@@ -55,6 +64,11 @@ export function AssessmentClassRecordWorkspace({
       <option value="">Choose active term</option>
       {terms.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
     </select>
+    {grading && <p>Draft grading preview, revision {grading.version}:
+      Quiz {grading.quizWeight}%, Test {grading.testWeight}%,
+      Exam {grading.examWeight}%. This is not an adopted or official policy.</p>}
+    {!grading && <p>No school grading profile is configured for this exact class and term.
+      Weighted grades remain unavailable; raw scored marks are provisional.</p>}
     <button type="button" disabled={!assignment || !termId || loading}
       onClick={() => { void load(); }}>Load provisional class record</button>
     {students.length > 0 && <div style={{ overflowX: "auto" }}>
@@ -62,7 +76,9 @@ export function AssessmentClassRecordWorkspace({
         <caption>Confidential teacher-only provisional scores; best scored submitted attempt per published assessment</caption>
         <thead><tr><th scope="col">Admission number</th><th scope="col">Student</th>
           <th scope="col">Marks (scored assessments)</th>
-          <th scope="col">Percentage</th><th scope="col">Pending</th></tr></thead>
+          <th scope="col">Percentage</th>
+          <th scope="col">Draft weighted preview</th>
+          <th scope="col">Pending</th></tr></thead>
         <tbody>{students.map(student => <tr key={student.studentId}>
           <th scope="row">{student.admissionNumber}</th>
           <td>{student.givenName} {student.familyName}</td>
@@ -71,6 +87,10 @@ export function AssessmentClassRecordWorkspace({
             : "No scored assessments"}</td>
           <td>{student.percentBps === null
             ? "Pending" : `${(student.percentBps / 100).toFixed(2)}%`}</td>
+          <td>{student.weightedPreview?.weightedPercentBps === null ||
+            student.weightedPreview?.weightedPercentBps === undefined
+            ? "Pending / no complete policy"
+            : `${(student.weightedPreview.weightedPercentBps / 100).toFixed(2)}% (preview only)`}</td>
           <td>{student.pendingAssessments}</td>
         </tr>)}</tbody>
       </table>

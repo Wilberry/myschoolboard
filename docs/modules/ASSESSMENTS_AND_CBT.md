@@ -1,5 +1,14 @@
 # Assessments and CBT
 
+## Phase 7 versioned school grading profile drafts (AUTHORED; UNVERIFIED)
+
+`feature/phase7-grading-policy-revisions` adds `AssessmentGradingPolicyRevision` as an append-only **PREVIEW-ONLY** school+session+term+class+subject configuration record. An active same-school `SCHOOL_SUPER_ADMIN` may create a revision with explicitly entered 0–100 integer QUIZ/TEST/EXAM weights totaling **exactly 100** and a reason. SQL independently checks the actual actor user/member, active school/class/section/subject/academic session/term, serializes revision numbers with a school row lock, assigns server UTC createdAt, and rejects UPDATE/DELETE/TRUNCATE. There are no magic national/school weights, no status that activates the profile as official, and no score mutations/backfills.
+
+The private assigned-teacher class sheet reads only the latest revision matching its exact class/subject/session/term in the same final tenant-scoped query and adds a **separate weighted preview**, never changing objective earned/max marks or the existing raw score. Category weight applies to the average of scored per-assessment percentages in that category. A nonzero-weight category MUST have at least one published assessment AND all its applicable assessment marks completed; otherwise weighted preview is `PENDING`/null. Zero-weight categories do not count and never transform missing marks into zeros. No configured revision means weighted preview is unavailable, not an assumed 20/30/50 score. Example weights in the form are editable initial inputs, not adopted policy. Official grading, theory components, correction approval and result publication remain separate.
+
+Private school-super-admin-only no-store GET/POST and school-gated policy editor, school navigation, pure Vitest grade calculation tests and synthetic role/tenant/revision/immutable/pending-grade integration cases are **AUTHORED, NOT EXECUTED**. Strict CI, disposable PostgreSQL, Prisma validation and audit remain blocked. D-045/ADR-031; ASM-REQ-001 partial; phase 6 unverified.
+
+
 ## Phase 7 teacher-controlled scoring and provisional class record sheets (authored; UNVERIFIED)
 
 Cumulative `feature/phase7-private-class-record-sheets` provides active exact-assignment TEACHER-only submitted/unscored CBT queue and a **body-free** private POST that initiates the prior SQL-only objective scorer. The queue returns only attempt/draft/class/subject/student admission number and submission time, without selected answers or answer keys. Server and SQL repeat current school/teacher/assignment, published+approved+submitted safeguards and immutable one-score-per-attempt rules. A computed score is **PROVISIONAL** and never visible to students through a results route.
