@@ -1,5 +1,12 @@
 # Decision Log
 
+## D-046: Written/manual teacher marks begin as immutable unapproved proposals
+
+- Status: Phase 7 authored, NOT TESTED.
+- Decision: Make written/non-CBT assessment a separate teacher-owned immutable component (QUIZ/TEST/EXAM, bounded max points) and permit at most one reasoned initial unapproved whole-number mark proposal for each exact ACTIVE enrolled pupil in that class/session. Validate teacher actor, assignment, active term, mark bounds and enrollment again in SQL; append-only audit blocks edit/delete/truncate. A future correction is a different reasoned academic request with independent HM PRIMARY / Principal SECONDARY authorization, never an overwrite. Until independently adopted, manual proposals are invisible to provisional/official aggregates.
+- Rationale: Avoid smuggling uncontrolled manual marks into immutable CBT objective scoring or legally meaningful report cards while still building teacher workflows. Review/publication/security gates remain blocked. ADR-032.
+
+
 ## D-045: Explicit append-only school grading profile revisions, with fail-closed previews
 
 - Status: Phase 7 grading foundation authored; NOT EXECUTED.
