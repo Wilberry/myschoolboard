@@ -36,6 +36,7 @@
 
 **Actually executed, limited non-database source inspection:**
 - GitHub API read of the candidate schema, migrations, package script and guard-test file; ten simple string/static presence checks **passed** against fetched file contents before the final FK mapping addition.
+- A second GitHub-fetched-file inspection compared all nine explicitly mapped attendance/correction foreign-key names against their SQL migration constraints; all nine names were present in both schema and migrations. This remains limited static string inspection, not Prisma migration-drift validation.
 - This is **NOT** a run of the authored Node test file, PostgreSQL DDL, Vitest, Prisma validator, TypeScript, lint, Next build, CI-equivalent workflow or security audit. The GitHub API confirmed branch and file commits; those operations are not tests.
 
 **Not executed / not verified:**
