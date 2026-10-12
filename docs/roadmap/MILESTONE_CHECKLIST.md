@@ -1,5 +1,15 @@
 # Milestone Checklist
 
+### Phase 6 learner visibility and schemes of work acceptance (UNVERIFIED)
+
+- [ ] On the owner-confirmed disposable PostgreSQL DB, apply all cumulative Phase 6 additive migrations in order, run Prisma drift comparison, confirm link/revocation FK and trigger validation, existing tenant lifecycle, typed scheme constraint and immutability.
+- [ ] Execute synthetic authenticated STUDENT/Membership vs enrolled StudentRecord tests: unbound role, school/class/session/term mismatch, withdrawn or reclassified pupil, revoked link/membership, approved but not released, withdrawn release, stale revision, direct SQL forged link/actor and concurrency races.
+- [ ] Execute teacher-owned scheme week-bound, same-class subject/term assignment, return/revise/submit, exact HM PRIMARY/Principal SECONDARY stage/section approval and separate immutable release/withdrawal tests. Confirm no pupil access before explicit release.
+- [ ] Independently test admin attestation workflow and evidence, duplicate link and permanent terminal revocation; do not infer student linkage from names, email or admission-number string equivalence.
+- [ ] Execute Next browser/accessibility and all earlier student, teacher, attendance, corrections, calendar, lesson-review suites; mandatory local CI-equivalent including `npm audit --audit-level=high` without disabling existing security gates.
+- [ ] Mark ATT-REQ-001 and LES-REQ-001 complete only after executing and recording passing acceptance results against exact commit, including no outstanding high-severity audit blockers.
+
+
 ### Phase 6 approved lesson release (unverified)
 
 - [ ] Apply only to disposable PostgreSQL and run release/withdrawal trigger and audit tamper tests, including concurrent reviewers, stage/scope revocation and stale approved revision.
