@@ -87,7 +87,7 @@ ALTER TABLE "AssessmentDraftSeal" ADD CONSTRAINT "AssessmentDraftSeal_draft_fkey
  FOREIGN KEY ("schoolId","draftId") REFERENCES "AssessmentDraft"("schoolId","id")
  ON DELETE NO ACTION ON UPDATE CASCADE;
 
-CREATE FUNCTION "validate_assessment_draft"() RETURNS trigger AS $
+CREATE FUNCTION "validate_assessment_draft"() RETURNS trigger AS $$
 BEGIN
   PERFORM 1 FROM "School" school WHERE school."id"=NEW."schoolId"
     AND school."isActive"=true FOR UPDATE;
@@ -180,7 +180,7 @@ CREATE TRIGGER "AssessmentDraftQuestion_validate"
  BEFORE INSERT ON "AssessmentDraftQuestion"
  FOR EACH ROW EXECUTE FUNCTION "validate_assessment_draft_question"();
 
-CREATE FUNCTION "validate_assessment_draft_seal"() RETURNS trigger AS $
+CREATE FUNCTION "validate_assessment_draft_seal"() RETURNS trigger AS $$
 DECLARE entry_count INTEGER;
 BEGIN
   PERFORM 1 FROM "School" WHERE "id"=NEW."schoolId" AND "isActive"=true FOR UPDATE;
@@ -196,7 +196,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 CREATE TRIGGER "AssessmentDraftSeal_validate"
  BEFORE INSERT ON "AssessmentDraftSeal"
  FOR EACH ROW EXECUTE FUNCTION "validate_assessment_draft_seal"();
