@@ -1,5 +1,10 @@
 # Current Status
 
+## Phase 6 attendance roster DB-integrity hardening — draft/unverified
+
+Review identified that `validate_attendance_event_actor` in the earlier migration permits a direct SQL submission with a single individually valid mark, even where a class has additional active enrollments. New `feature/attendance-ledger-integrity-hardening` adds an additive SQL `BEFORE INSERT` submission-event guard with full current active roster counts, 500-entry cap and class/enrollment/pupil relationship comparisons, plus a direct-DB rollback integration test and read-only schema/migration consistency test integrated in standard `npm test`. The existing required full CI-equivalent command sequence and `npm audit --audit-level=high` remain unchanged. **The Postgres tests, Node test runner, migration, format/lint/typecheck/build, full CI, and audit have NOT run.** Ten limited GitHub fetched-file static presence checks passed; this is not proof that the migration works. ATT-REQ-001 and SEC/TEN requirements remain incomplete; no merge/deploy/live data.
+
+
 ## Attendance correction read and UI workspaces (new draft; UNVERIFIED)
 
 `feature/attendance-correction-review-workspaces` builds on the unmerged immutable correction ledger and adds exact Form Teacher-approved-register list/detail reads with original/effective marks, verified HM/Principal section correction queue/detail reads that omit pupil marks/names until authorized detail, private GET endpoints, server-protected request and independent-review browser workspaces, and school navigation. Synthetic real-session tests for authorized projection, stage/grant revocation, foreign-school concealment, PII-free queue and latest-approved overlay are **authored not executed**. The additive migration and all underlying attendance tests/build/audit remain **unexecuted**. No live data, merge, deployment or production disclosure is authorized. D-028/ADR-014 apply; ATT-REQ-001 remains partially authored and unverified.
