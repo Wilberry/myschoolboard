@@ -23,9 +23,11 @@ const classSecondary = `att-class-s-${tag}`;
 const personA = `att-student-a-${tag}`;
 const personC = `att-student-c-${tag}`;
 const personS = `att-student-s-${tag}`;
+const personD = `att-student-d-${tag}`;
 const enrollmentA = `att-enroll-a-${tag}`;
 const enrollmentC = `att-enroll-c-${tag}`;
 const enrollmentS = `att-enroll-s-${tag}`;
+const enrollmentD = `att-enroll-d-${tag}`;
 const responsibilityA = `att-form-a-${tag}`;
 const responsibilityC = `att-form-c-${tag}`;
 const responsibilityS = `att-form-s-${tag}`;
@@ -81,7 +83,7 @@ describe("Phase 6 tenant-scoped attendance submission and review", () => {
       if (!cookies[key]) throw new Error("Synthetic test session unavailable");
     }
     await prisma.school.createMany({ data: [
-      { id: a, name: "Synthetic Attendance A", slug: a },
+      { id: a, name: "Synthetic Attendance A", slug: a, allowCoFormTeachers: true },
       { id: b, name: "Synthetic Attendance B", slug: b },
     ] });
     for (const [key, role, schoolId] of [
@@ -112,11 +114,13 @@ describe("Phase 6 tenant-scoped attendance submission and review", () => {
     await prisma.studentRecord.createMany({ data: [
       { id: personA, schoolId: a, admissionNumber: "A-TEST", givenName: "Synthetic", familyName: "A", status: "ENROLLED" },
       { id: personC, schoolId: a, admissionNumber: "C-TEST", givenName: "Synthetic", familyName: "C", status: "ENROLLED" },
+      { id: personD, schoolId: a, admissionNumber: "D-TEST", givenName: "Synthetic", familyName: "D", status: "ENROLLED" },
       { id: personS, schoolId: a, admissionNumber: "S-TEST", givenName: "Synthetic", familyName: "S", status: "ENROLLED" },
     ] });
     await prisma.studentEnrollment.createMany({ data: [
       { id: enrollmentA, studentId: personA, schoolId: a, classId: classA, sessionId: session },
       { id: enrollmentC, studentId: personC, schoolId: a, classId: classC, sessionId: session },
+      { id: enrollmentD, studentId: personD, schoolId: a, classId: classC, sessionId: session },
       { id: enrollmentS, studentId: personS, schoolId: a, classId: classSecondary, sessionId: session },
     ] });
     await prisma.formTeacherResponsibility.createMany({ data: [
@@ -234,9 +238,19 @@ describe("Phase 6 tenant-scoped attendance submission and review", () => {
     expect((await approved.json()).register.status).toBe("RETURNED");
   });
 
+  it("refuses a partial class roster rather than defaulting a missing pupil to absent", async () => {
+    expect((await submit("form", formData(classC, enrollmentC))).status).toBe(409);
+    expect(await prisma.attendanceRegister.count({
+      where: { schoolId: a, classId: classC },
+    })).toBe(0);
+  });
+
   it("allows only one of two concurrent exact class/date submissions", async () => {
     context.headers = new Headers({ cookie: cookies.form });
-    const input = formData(classC, enrollmentC);
+    const input = { ...formData(classC, enrollmentC), marks: [
+      { enrollmentId: enrollmentC, mark: "PRESENT" },
+      { enrollmentId: enrollmentD, mark: "ABSENT" },
+    ] };
     const path = `/api/schools/${a}/attendance`;
     const make = () => submitRoute.POST(new Request(`http://localhost${path}`, {
       method: "POST", body: JSON.stringify(input),
