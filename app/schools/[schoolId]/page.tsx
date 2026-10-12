@@ -104,6 +104,13 @@ async function SchoolDetailContent({
         )}
         {access.principal.membership?.role === "TEACHER" && (
           <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/assessment-reviewed-manual-gradebook`} className="secondary-link">
+              Reviewed manual gradebook (private academic preview)
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "TEACHER" && (
+          <p className="setup-navigation">
             <Link href={`/schools/${schoolId}/assessment-manual-corrections`} className="secondary-link">
               Request corrections to approved written marks (development)
             </Link>
