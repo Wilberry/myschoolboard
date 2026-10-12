@@ -15,7 +15,8 @@ type Row = {
 export type ReviewedManualComponentStatus =
  | "PENDING_TEACHER_MARK" | "PENDING_ACADEMIC_REVIEW" | "RETURNED_NOT_APPROVED"
  | "APPROVED_INITIAL" | "APPROVED_CORRECTED"
- | "APPROVED_CORRECTION_PENDING" | "APPROVED_CORRECTION_RETURNED";
+ | "APPROVED_CORRECTION_PENDING" | "APPROVED_CORRECTION_RETURNED"
+ | "RETURNED_CORRECTION_PENDING";
 export interface ReviewedManualComponent {
  componentId: string; title: string; kind: "QUIZ"|"TEST"|"EXAM";
  maxPoints: number; originalPoints: number | null;
@@ -35,7 +36,11 @@ export interface ReviewedManualStudent {
 function status(row: Row): ReviewedManualComponentStatus {
  if (row.originalPoints === null) return "PENDING_TEACHER_MARK";
  if (row.initialAction === null) return "PENDING_ACADEMIC_REVIEW";
- if (row.initialAction === "RETURNED") return "RETURNED_NOT_APPROVED";
+ if (row.initialAction === "RETURNED" && row.approvedCorrectionRevision === null) {
+   if (row.latestCorrectionRevision !== null &&
+       row.latestCorrectionAction === null) return "RETURNED_CORRECTION_PENDING";
+   return "RETURNED_NOT_APPROVED";
+ }
  if (row.latestCorrectionRevision !== null &&
      row.latestCorrectionAction === null) return "APPROVED_CORRECTION_PENDING";
  if (row.latestCorrectionRevision !== null &&
@@ -87,8 +92,9 @@ export async function readInternalReviewedManualGradebook(
    component."id" AS "componentId",component."title",component."kind",
    component."maxPoints",mark."earnedPoints" AS "originalPoints",
    initial."action" AS "initialAction",
-   CASE WHEN initial."action"='APPROVED'
-     THEN COALESCE(corrected."proposedPoints",mark."earnedPoints")
+   CASE WHEN corrected."proposedPoints" IS NOT NULL
+     THEN corrected."proposedPoints"
+     WHEN initial."action"='APPROVED' THEN mark."earnedPoints"
      ELSE NULL END AS "approvedPoints",
    corrected."revision" AS "approvedCorrectionRevision",
    latest."revision" AS "latestCorrectionRevision",
@@ -204,7 +210,8 @@ export async function readInternalReviewedManualGradebook(
    student.totalPossiblePoints+=max;
    if(component.effectiveApprovedPoints===null)student.unapprovedComponents++;
    else student.approvedMarksSum+=component.effectiveApprovedPoints;
-   if(currentStatus==="APPROVED_CORRECTION_PENDING")student.pendingCorrections++;
+   if(currentStatus==="APPROVED_CORRECTION_PENDING" ||
+      currentStatus==="RETURNED_CORRECTION_PENDING")student.pendingCorrections++;
   }
   if(students.size>500)throw new AssessmentError("CONFLICT");
  }
