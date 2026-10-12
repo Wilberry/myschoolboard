@@ -40,6 +40,10 @@ The `feature/timetable-conflict-foundation` branch authors school-owned room/slo
 
 The cumulative `feature/school-admin-timetable-workspace` branch adds a protected, server-rendered weekly timetable view, a client editor for school-owned room/scheduling/cancellation POST flows, and a read helper that repeats active school-membership/role predicates for every selected record collection. An academic setup navigation link is visible only after server permission checks. Five database-backed isolation cases cover active school data, wrong-school and teacher denials, membership revocation, SQL query scopes, and cancelled-booking exclusion. **No new test, actual browser run, build, local PostgreSQL migration, or complete CI-equivalent audit has been executed.** Student timetables, room lifecycle, timetable editing, planned-term previews, capacity/stream allocation and Phase 6 attendance/lesson-note workflows remain open.
 
+## Phase 6 lesson-note author drafts, immutable revisions and submission (unverified)
+
+The cumulative `feature/lesson-note-drafts-and-submission` branch authors `LessonNote`, `LessonNoteRevision`, `LessonNoteEvent` schema and an additive SQL migration, a teacher-only transactional authoring service, five authenticated school-scoped HTTP operations, and six real-session database integration cases. Notes are bound by composite foreign keys to an ACTIVE same-school academic term/session and exact teacher/class/subject assignment. A teacher can create, list/view own notes, revise a DRAFT with a version check and submit it; content and audit events remain immutable. **SUBMITTED does not mean approved or published.** HM/Principal section-scoped review/return, release to verified enrolled students, schemes of work and attendance remain separate Phase 6 slices. No new migration, Vitest integration test, formatter/lint/typecheck/build or CI-equivalent dependency audit has run on this branch. No student data or production environment was accessed.
+
 ## Current evidence
 
 - Published development checkpoint: `checkpoint/phase1-tenant-safe-foundation`; `main` remains unchanged

@@ -48,6 +48,10 @@ Form Teacher assign/handover/end and co-responsibility policy mutations are back
 
 Run the timetable tests against an explicitly disposable PostgreSQL database with the `btree_gist` extension. Confirm exact same-school active session/term/assignment ownership, teacher/class/room no-overlap exclusions on active slots, adjacency, separate weekdays, invalid durations/weekdays, audit-only cancellation, and denied cross-school requests. Add concurrent overlapping inserts to prove the GiST constraints allow only one winner. Verify all previous tenant, teacher assignment and Form Teacher tests remain passing; do not infer their results from source inspection alone.
 
+## Lesson-note authoring and submission integrity (authored, pending database)
+
+Execute six real Better Auth / disposable PostgreSQL cases testing: unauthorized/foreign admin/teacher attempts and forged school/assignment/term IDs; exact same-school ACTIVE teacher assignment source; own-note list/detail with no other staff data; append-only revisions preserving content/history and rejecting stale expected revision; one-way DRAFT→SUBMITTED without student release or self-approval; SQL trigger rejection of audit/revision tampering; and teacher revocation/term closure removing further author reads/writes while preserving the historical record. Include concurrent revision/submit attempts and Next/browser cookie/accessibility coverage at the local verification checkpoint. These cases are **authored, not executed**, and do not complete LES-REQ-001 or Phase 6 acceptance.
+
 ## Required negative tests
 
 - Cross-tenant access
