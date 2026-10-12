@@ -40,7 +40,7 @@ export async function requestManualMarkCorrection(schoolId: string, input: unkno
             schoolClass: { isActive: true, section: { isActive: true } },
             subject: { isActive: true },
           },
-          decision: { is: { action: "APPROVED" } },
+          decision: { isNot: null },
           student: { status: "ENROLLED" },
           enrollment: { status: "ACTIVE" },
         },
@@ -110,20 +110,22 @@ export async function listOwnManualMarkCorrectionContext(schoolId: string) {
   if (!own) throw new AssessmentError("NOT_FOUND");
   return prisma.$queryRaw<Array<{
     proposalId: string; componentTitle: string; studentAdmission: string;
-    originalPoints: number; approvedPoints: number;
+    originalPoints: number; approvedPoints: number | null;
     maxPoints: number; latestRevision: number; pending: boolean;
   }>>(Prisma.sql`
     SELECT mark."id" AS "proposalId", component."title" AS "componentTitle",
       pupil."admissionNumber" AS "studentAdmission",
       mark."earnedPoints" AS "originalPoints",
-      COALESCE(approved."proposedPoints",mark."earnedPoints") AS "approvedPoints",
+      COALESCE(approved."proposedPoints",
+        CASE WHEN initial."action"='APPROVED'
+          THEN mark."earnedPoints" ELSE NULL END) AS "approvedPoints",
       component."maxPoints",
       COALESCE(latest."revision",0)::int AS "latestRevision",
       COALESCE(latest."pending",false) AS "pending"
     FROM "AssessmentManualMarkProposal" mark
     JOIN "AssessmentManualMarkDecision" initial
       ON initial."schoolId"=mark."schoolId"
-      AND initial."proposalId"=mark."id" AND initial."action"='APPROVED'
+      AND initial."proposalId"=mark."id"
     JOIN "AssessmentManualComponent" component
       ON component."schoolId"=mark."schoolId"
       AND component."id"=mark."componentId"
