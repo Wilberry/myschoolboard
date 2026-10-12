@@ -487,6 +487,94 @@ describe("section-scoped lesson note review and return", () => {
     })).rejects.toThrow();
   });
 
+  it("reviews a structured term scheme with immutable weekly versions before release", async () => {
+    const plan = [
+      { week: 1, topic: "Secondary algebra basics",
+        objectives: "Introduce algebraic notation", activities: "Use classroom algebra examples" },
+      { week: 3, topic: "Linear equations",
+        objectives: "Solve basic linear equations", activities: "Practice equations in groups" },
+    ];
+    const payload = {
+      kind: "SCHEME_OF_WORK", termId, assignmentId: secondaryAssignment,
+      topic: "Secondary Mathematics Scheme",
+      objectives: "Plan the term learning progression",
+      content: "Weekly mathematics learning sequence for the full term.",
+      weeklyPlan: plan,
+    };
+    const invalid = await author("teacher", "create", "", {
+      ...payload, weeklyPlan: [plan[1], plan[0]],
+    });
+    expect(invalid.status).toBe(400);
+    const created = await author("teacher", "create", "", payload);
+    expect(created.status).toBe(201);
+    const scheme = (await created.json()).note;
+    expect(scheme.kind).toBe("SCHEME_OF_WORK");
+    expect((await author("teacher", "create", "", payload)).status).toBe(409);
+    const detailResponse = await detailOwn(scheme.id);
+    expect(detailResponse.status).toBe(200);
+    const ownDetail = (await detailResponse.json()).note;
+    expect(ownDetail.revisions[0].weeklyPlan).toEqual(plan);
+    await expect(prisma.lessonNoteRevision.create({
+      data: {
+        schoolId: schoolA, noteId: scheme.id, revisionNumber: 2,
+        actorUserId: users.teacher, topic: "Forged scheme",
+        objectives: "Invalid direct scheme insert",
+        content: "Invalid direct scheme contents",
+        weeklyPlan: [{ week: 0, topic: "Invalid", objectives: "Invalid",
+          activities: "Invalid" }],
+      },
+    })).rejects.toThrow();
+    expect((await author("teacher", "submit", scheme.id,
+      { expectedRevision: 1 })).status).toBe(200);
+    const submitted = await detail("principal", scheme.id);
+    expect(submitted.status).toBe(200);
+    const reviewed = (await submitted.json()).note;
+    expect(reviewed.kind).toBe("SCHEME_OF_WORK");
+    expect(reviewed.revisions[0].weeklyPlan).toEqual(plan);
+    expect((await decide("head", scheme.id, "APPROVE")).status).toBe(404);
+    expect((await decide("principal", scheme.id, "RETURN")).status).toBe(200);
+    const updatedPlan = [...plan, { week: 4, topic: "Graph interpretation",
+      objectives: "Interpret linear graph patterns",
+      activities: "Sketch and compare simple graphs" }];
+    const revised = await author("teacher", "revise", scheme.id, {
+      expectedRevision: 1,
+      topic: "Secondary Mathematics Scheme Revised",
+      objectives: "Plan updated term learning progression",
+      content: "Updated week by week learning sequence for the term.",
+      weeklyPlan: updatedPlan,
+    });
+    expect(revised.status).toBe(200);
+    expect((await author("teacher", "submit", scheme.id,
+      { expectedRevision: 2 })).status).toBe(200);
+    expect((await decide("principal", scheme.id, "APPROVE", 2)).status).toBe(200);
+    expect((await releaseRoute(request("principal", "POST",
+      `/api/schools/${schoolA}/lesson-releases/${scheme.id}/decision`, {
+        action: "RELEASE", expectedRevision: 2,
+        reason: "Synthetic approved term scheme release",
+      }), { params: Promise.resolve({ schoolId: schoolA, noteId: scheme.id }) })).status).toBe(201);
+    expect((await linkStudentRoute(request("admin", "POST",
+      `/api/schools/${schoolA}/student-identity-links`, {
+        membershipId: verifiedStudentMember, studentId: verifiedStudentId,
+        action: "LINK", identityConfirmed: true,
+        reason: "Synthetic verified school scheme student identity",
+      }), { params: Promise.resolve({ schoolId: schoolA }) })).status).toBe(201);
+    const student = await studentLessonRoute(request("student", "GET",
+      `/api/schools/${schoolA}/released-lessons`),
+      { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(student.status).toBe(200);
+    const visible = (await student.json()).lessons;
+    expect(visible).toHaveLength(1);
+    expect(visible[0].kind).toBe("SCHEME_OF_WORK");
+    expect(visible[0].weeklyPlan).toEqual(updatedPlan);
+    expect(visible[0].revisionNumber).toBe(2);
+    expect((await linkStudentRoute(request("admin", "POST",
+      `/api/schools/${schoolA}/student-identity-links`, {
+        membershipId: verifiedStudentMember, studentId: verifiedStudentId,
+        action: "REVOKE", identityConfirmed: true,
+        reason: "Synthetic revocation after weekly scheme check",
+      }), { params: Promise.resolve({ schoolId: schoolA }) })).status).toBe(201);
+  });
+
   it("revoking verified section grant or section activity removes reviewer authority", async () => {
     await prisma.scopeGrant.update({
       where: { id: headScopeId },
@@ -551,6 +639,6 @@ describe("section-scoped lesson note review and return", () => {
     expect((await (await queue("head")).json()).notes).toEqual([]);
     expect((await (await queue("principal")).json()).notes).toEqual([]);
     expect(await prisma.lessonNote.count({ where: { schoolId: schoolA } }))
-      .toBe(3);
+      .toBe(4);
   });
 });
