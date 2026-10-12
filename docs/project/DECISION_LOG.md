@@ -1,5 +1,10 @@
 # Decision Log
 
+## D-049: Derive effective reviewed manual marks without mutating grade history
+
+- Status: authored/unverified. Keep a teacher-only preview for matching active class/subject/session/term. Only independently APPROVED initial marks and latest APPROVED correction count; pending/RETURNED remain distinguished and final totals withheld until every manual component approved and corrections settled. No assumed CBT/manual merger or official report release. ADR-035.
+
+
 ## D-048: Sequential audited teacher correction requests and independent section decisions
 
 - Status: Authored/unverified. After independent original approval, an active exact source teacher may append a reasoned changed score version; pending blocks further requests. HM PRIMARY/Principal SECONDARY with current exact verified SECTION grant approves/returns separately, and only approved correction becomes the derived effective academic mark. Never modify original teacher mark or prior decisions. No result publication or security bypass; ADR-034.

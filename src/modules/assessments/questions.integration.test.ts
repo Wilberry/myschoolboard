@@ -17,6 +17,7 @@ import { GET as MANUAL_STUDENTS_GET } from "@/app/api/schools/[schoolId]/assessm
 import { POST as MANUAL_PROPOSAL_POST } from "@/app/api/schools/[schoolId]/assessment-manual-proposals/route";
 import { GET as MANUAL_REVIEW_QUEUE } from "@/app/api/schools/[schoolId]/assessment-manual-reviews/route";
 import { POST as MANUAL_REVIEW_DECISION } from "@/app/api/schools/[schoolId]/assessment-manual-reviews/[proposalId]/decision/route";
+import { GET as REVIEWED_MANUAL_GRADEBOOK_GET } from "@/app/api/schools/[schoolId]/assessment-reviewed-manual-gradebook/route";
 import {
   GET as CORRECTIONS_GET, POST as CORRECTIONS_POST,
 } from "@/app/api/schools/[schoolId]/assessment-manual-corrections/route";
@@ -967,6 +968,29 @@ describe("Phase 7 exact-assignment private question bank", () => {
       earnedPoints: 17, enrollmentId,
       actorMembershipId: members.teacher, actorUserId: users.teacher,
     });
+    const reviewedGradebook = (actor: string, schoolId = schoolA) => {
+      context.headers = new Headers(cookies[actor] ? { cookie: cookies[actor] } : {});
+      const q = new URLSearchParams({ classId, sessionId, termId, subjectId });
+      return REVIEWED_MANUAL_GRADEBOOK_GET(new Request(
+        `http://localhost/api/schools/${schoolId}/assessment-reviewed-manual-gradebook?${q}`,
+      ), { params: Promise.resolve({ schoolId }) });
+    };
+    const beforeAcademicDecision = await reviewedGradebook("teacher");
+    expect(beforeAcademicDecision.status).toBe(200);
+    const beforeRows = (await beforeAcademicDecision.json()).gradebook.students;
+    const unapproved = beforeRows.find((x: { studentId: string }) => x.studentId === pupilId);
+    expect(unapproved).toMatchObject({
+      approvedMarksSum: 0, unapprovedComponents: 1,
+      completedPercentBps: null, readyForFurtherAcademicReview: false,
+    });
+    expect(unapproved.components[0]).toMatchObject({
+      originalPoints: 17, effectiveApprovedPoints: null,
+      status: "PENDING_ACADEMIC_REVIEW",
+    });
+    expect((await reviewedGradebook("student")).status).toBe(404);
+    expect((await reviewedGradebook("admin")).status).toBe(404);
+    expect((await reviewedGradebook("other")).status).toBe(404);
+    expect((await reviewedGradebook("teacher", schoolB)).status).toBe(404);
     const initialReview = (actor: string, input: unknown) =>
       MANUAL_REVIEW_DECISION(req(actor, schoolA, "POST", input), {
         params: Promise.resolve({ schoolId: schoolA, proposalId: recorded.id }),
@@ -988,6 +1012,16 @@ describe("Phase 7 exact-assignment private question bank", () => {
     });
     expect(decision.status).toBe(201);
     expect((await decision.json()).decision.action).toBe("APPROVED");
+    const initiallyApproved = await reviewedGradebook("teacher");
+    const initiallyApprovedPupil = (await initiallyApproved.json()).gradebook.students.find(
+      (x: { studentId: string }) => x.studentId === pupilId,
+    );
+    expect(initiallyApprovedPupil).toMatchObject({
+      approvedMarksSum: 17, unapprovedComponents: 0,
+      completedPercentBps: 8500, readyForFurtherAcademicReview: true,
+    });
+    expect(initiallyApprovedPupil.components[0].status).toBe("APPROVED_INITIAL");
+
     expect((await initialReview("head", {
       action: "RETURNED", reason: "Duplicate terminal decision should fail",
     })).status).toBe(409);
@@ -1053,6 +1087,18 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect(returnedCorrection.status).toBe(201);
     const correction2 = (await returnedCorrection.json()).request;
     expect(correction2.revision).toBe(2);
+    const withCorrectionPending = await reviewedGradebook("teacher");
+    const pendingPupil = (await withCorrectionPending.json()).gradebook.students.find(
+      (x: { studentId: string }) => x.studentId === pupilId,
+    );
+    expect(pendingPupil).toMatchObject({
+      approvedMarksSum: 18, pendingCorrections: 1,
+      completedPercentBps: null, readyForFurtherAcademicReview: false,
+    });
+    expect(pendingPupil.components[0]).toMatchObject({
+      effectiveApprovedPoints: 18, status: "APPROVED_CORRECTION_PENDING",
+    });
+
     expect((await correctionDecision("head", correction2.id, {
       action: "RETURNED", reason: "Synthetic reason lacked acceptable marking evidence",
     })).status).toBe(201);
@@ -1096,6 +1142,26 @@ describe("Phase 7 exact-assignment private question bank", () => {
       (x: { proposalId: string }) => x.proposalId === recorded.id,
     )).toMatchObject({ originalPoints: 17, approvedPoints: 16,
       latestRevision: 3, pending: false });
+    const finalGradebookResponse = await reviewedGradebook("teacher");
+    expect(finalGradebookResponse.status).toBe(200);
+    expect(finalGradebookResponse.headers.get("cache-control")).toBe("private, no-store");
+    const gradebookBody = await finalGradebookResponse.json();
+    expect(gradebookBody.gradebook.status).toBe("ACADEMIC_APPROVED_PREVIEW_ONLY");
+    expect(JSON.stringify(gradebookBody)).not.toContain("correctIndex");
+    expect(JSON.stringify(gradebookBody)).not.toContain("answerKey");
+    const finalPupil = gradebookBody.gradebook.students.find(
+      (x: { studentId: string }) => x.studentId === pupilId,
+    );
+    expect(finalPupil).toMatchObject({
+      approvedMarksSum: 16, totalPossiblePoints: 20,
+      completedPercentBps: 8000, unapprovedComponents: 0,
+      pendingCorrections: 0, readyForFurtherAcademicReview: true,
+    });
+    expect(finalPupil.components[0]).toMatchObject({
+      originalPoints: 17, effectiveApprovedPoints: 16,
+      approvedCorrectionRevision: 3, status: "APPROVED_CORRECTED",
+    });
+
 
 
     await expect(prisma.assessmentManualMarkProposal.update({
