@@ -1,5 +1,13 @@
 # Decision Log
 
+## D-040: Fail-closed CBT admission reservation is not student examination delivery
+
+- Status: Phase 7 candidate authored, PostgreSQL/runtime verification pending.
+- Decision: Persist exact-identity CBT attempt starts in an immutable AssessmentAttempt record with redundant school/class/session/student/enrollment/member/attestation link composite references. Require actual signed-in same-school STUDENT membership and unrevoked administrator-attested enrolled pupil; separate approved HM/Principal review and PUBLISHED without WITHDRAWN; current active school/class/section/teacher assignment/session/term. The DB admission trigger holds the existing shared school lock, assigns attempt numbers and trusted UTC start/deadline, enforces 1–3 configured attempts, disallows another unexpired reservation and retains all starts including abandoned. All direct UPDATE/DELETE/TRUNCATE rejected.
+- Engineering boundary: offer only an internal transactional reservation service and synthetic tests now; do **not** add student HTTP routes or deliver exam questions until independently audited idempotent resume, autosave, submission, scoring and current eligibility reads are implemented, Phase 6 identities verified and full local CI/audit exit succeeds.
+- Limitations: no submission/early-completion handling yet, so reservations remain active until deadline; school-timezone presentation and clock-skew/performance testing remain pending. See ADR-026.
+
+
 ## D-039: Independent School Super Admin assessment publication and terminal withdrawal
 
 - Status: Phase 7 additive development candidate, unexecuted.
