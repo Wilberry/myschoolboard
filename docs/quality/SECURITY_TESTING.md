@@ -16,6 +16,10 @@ New `SchoolSection` is a tenant-owned PRIMARY/SECONDARY resource; nullable `Scho
 
 Seven new real Better Auth/disposable-PostgreSQL scenarios cover anonymous/teacher/admin/foreign/no-grant denials; primary-only HEAD_OF_SECTION and secondary-only PRINCIPAL queues and details; refusal to review unclassified or unrelated-section notes; one RETURN per revision with reasoned immutable audit; new teacher revision before resubmission; approval without student release; verified SECTION grant revocation and section inactivity; forged reviewer event insertion, UPDATE and DELETE rejection; and no review of closed-term content. The reader joins the **actual class.sectionId** and the reviewer verified grant in one SQL statement. The mutation transaction locks/rechecks school, membership, note, class, active section and ScopeGrant and the SQL trigger validates reviewer role/stage/grant again. The schema adds a partial unique index on reviewed (note,revision) to prevent contradictory review outcomes. No test, migration, concurrency stress, browser, or full pipeline run has occurred.
 
+## Lesson-note reviewer UI boundary (authored, pending local/browser verification)
+
+A reviewer role is insufficient for a navigation link; the active school, reviewer membership, verified SECTION grant and required PRIMARY/SECONDARY stage must all match. The protected reviewer page uses the same owner-bound SQL filter as its underlying GET/POST API, so bypassing the link or editing client state cannot cross section boundaries. Four new disposable PostgreSQL navigation tests cover positive matching grants, teacher/foreign denials, grant revocation and final query scope with inactive section. Real Next browser session/cookie, keyboard, CSRF configuration, race/revocation, and HTTP response tests remain pending.
+
 ## Required areas
 
 - Tenant isolation tests

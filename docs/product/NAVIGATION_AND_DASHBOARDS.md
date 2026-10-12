@@ -28,6 +28,10 @@ Authenticated teachers with active school membership may follow `My lesson notes
 
 The active school administrator `/schools/{schoolId}/setup` page now includes PRIMARY/SECONDARY section creation and one-time placement of previously unclassified active classes. Section/class information is selected only via the existing server-guarded school configuration reader and school-admin POST APIs, with reasoned audit events. Foreign sections are never selectable and form filtering does not replace the backend checks. Reader DB and browser/keyboard tests are authored/pending; there is no student enrollment or HM/Principal approval button.
 
+## HM/Principal section-scoped lesson-note review interface (draft)
+
+Heads of Section with an active, verified PRIMARY school-section grant and Principals with an active, verified SECONDARY grant see a `Review submitted lesson notes` link from their school details page. The server also independently checks actual reviewer permissions when navigating directly to `/schools/{schoolId}/lesson-note-reviews`; no link or cookie alone grants authority. The page lists authorized pending SUBMITTED notes without content, allows opening one authorized note's numbered immutable revisions, and offers reasoned Approve or Return actions through the reviewed API. Invalid/revoked assignments, wrong-stage/unclassified sections and stale revisions are concealed or rejected by the server and PostgreSQL audit triggers. Four DB-backed navigation security tests are authored, not run. Approval is not student release.
+
 ## Platform Super Admin dashboard
 
 - Tenant status summary

@@ -73,6 +73,9 @@
 
 ## Phase 6 — Lesson notes and attendance (safe foundation under development)
 
+- [ ] Check the HM/Principal reviewer page via actual Next browser: verified section-only navigation, direct URL denial, pending queue and complete submitted revision, required reason/confirmation, successful approve/return, stale-status generic error and no student release.
+- [ ] Run four new school-section reviewer navigation DB cases together with seven reviewer service cases, earlier lesson teacher authoring cases, ScopeGrant tests and audit triggers on disposable PostgreSQL.
+
 - [ ] Migrate reviewer status/event enum values and review reason constraint on disposable PostgreSQL; confirm existing lesson-note author events remain valid, review-event triggers enforce stage/exact section and partial unique index rejects duplicate review decisions.
 - [ ] Run seven real-session reviewer DB scenarios plus earlier lesson authoring/section security tests; add concurrent stale-version reviewer races, revocation race and rollback evidence.
 - [ ] Verify returned-note re-edit permissions, APPROVED-not-released behavior, generic errors and private no-store responses through real Next HTTP, then add scoped reviewer UI and separate student-release controls only after verified enrollment.

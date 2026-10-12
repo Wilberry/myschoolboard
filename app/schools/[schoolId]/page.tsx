@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { auth } from "@/src/lib/auth";
 import { requireSchoolAccess } from "@/src/modules/tenancy/school-access";
 import { authorize } from "@/src/modules/authorization/policy";
+import { hasLessonReviewWorkspace } from "@/src/modules/lesson-notes/review-navigation";
 
 export default async function SchoolDetailPage({
   params,
@@ -34,6 +35,7 @@ async function SchoolDetailContent({
   if (!access) {
     notFound();
   }
+  const canReviewLessonNotes = await hasLessonReviewWorkspace(access.principal);
 
   return (
     <main className="workspace">
@@ -62,6 +64,13 @@ async function SchoolDetailContent({
           <p className="setup-navigation">
             <Link href={`/schools/${schoolId}/setup`} className="secondary-link">
               Configure academic structure
+            </Link>
+          </p>
+        )}
+        {canReviewLessonNotes && (
+          <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/lesson-note-reviews`} className="secondary-link">
+              Review submitted lesson notes
             </Link>
           </p>
         )}
