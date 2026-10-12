@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-12 — Form Teacher responsibility, co-teaching policy and handover (unverified)
+
+- Authored separate tenant/session/class scoped Form Teacher responsibilities (PRIMARY and optional SUPPORT) with PostgreSQL primary/duplicate-active constraints and a dedicated append-only event ledger.
+- Added school-admin-only assignment, handover, end-responsibility and school-specific co-responsibility policy APIs, with serializable authorization, active session/class/teacher membership checks and immutable actor/reason audit.
+- Added six disposable-DB integration cases, including dual Form Teacher/subject teacher permission separation, cross-school denials, historical handover, SUPPORT policy gating and event tamper rejection. **These cases and the migration have not yet run**.
+- No destructive update to historical teacher-subject allocations, academic publication, child access, `main` merge, deployment or audit bypass.
+
 ## 2026-10-12 — Session-aware subject teacher assignments (unverified)
 
 - Extended teacher-class-subject assignments with nullable school-owned academic session references and a safe split between legacy NULL-session uniqueness and distinct period-based uniqueness; no historic period was guessed or backfilled.

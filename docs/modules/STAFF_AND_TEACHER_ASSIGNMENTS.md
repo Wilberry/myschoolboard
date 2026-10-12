@@ -1,5 +1,15 @@
 # Staff and Teacher Assignments
 
+## Form Teacher responsibility and handover — authored, awaiting local verification
+
+The new `FormTeacherResponsibility` is independent of subject-teacher assignments. It references the **same school**, an **ACTIVE academic session**, an **active class**, and an **active TEACHER or FORM_TEACHER membership** through composite school-owned foreign keys. The relationship stores PRIMARY or SUPPORT, ACTIVE or ENDED, and the end timestamp; no user or school membership is duplicated. Subject-teacher `academic:read/edit/submit` and verified guardian/child rights remain **separate**. A Form Teacher relationship by itself does not authorize a subject or student's private data.
+
+School Admin / School Super Admin with active same-school `school:configure` may call `POST /api/schools/{schoolId}/form-teachers` to assign PRIMARY or configured SUPPORT responsibilities, `POST /api/schools/{schoolId}/form-teachers/{responsibilityId}/handover` to atomically end an existing PRIMARY and assign a replacement PRIMARY, or `POST /api/schools/{schoolId}/form-teachers/{responsibilityId}/end` to end an existing responsibility with a reason. `PATCH /api/schools/{schoolId}/settings/form-teachers` sets the school-specific `allowCoFormTeachers` policy with an audit reason. The default is **false**. SUPPORT requires an existing active PRIMARY, and no more than one PRIMARY or duplicate active membership/class/session responsibility is permitted by unique PostgreSQL indexes. The service refuses to disable co-responsibility while active SUPPORT relationships exist; ending a PRIMARY is blocked while SUPPORT exists, preventing orphaned co-responsibilities. Ending/handing over does not delete historical data.
+
+All mutations derive the actor from Better Auth, lock and recheck the active school-admin membership and relevant school-owned teacher/class/academic session inside a serializable transaction, and write **append-only** `FormTeacherEvent` records with actor, old/new responsibility and reason. Policy changes are written to the existing append-only `SchoolConfigurationEvent` ledger. No physical deletion, public list, student access or student portal is introduced. **Six DB-backed integration cases and the SQL migration have been authored but not executed**; actual concurrency, rollback, Prisma validation, lint and HTTP/browser verification remain outstanding.
+
+## Scope
+
 ## Scope
 
 Teacher profiles, subject assignments, class assignments, form-teacher responsibility, and authorization enforcement.

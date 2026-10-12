@@ -28,6 +28,10 @@ The `feature/academic-period-lifecycle` branch adds two protected academic perio
 
 The `feature/session-aware-teacher-assignments` branch adds nullable academic-session references to existing teacher assignments, preserving every legacy NULL-session row and its uniqueness in a partial index. A separate unique index permits the same teacher/class/subject in different school-owned academic sessions. New create requests may include a session ID, validated as ACTIVE and same-school in the serializable mutation; reactivation repeats this check. Principal resolution excludes closed-session assignments and teacher academic authorization requires the exact session, not a loosely related class/subject pair. The assignment administration GET includes nullable `sessionId`. Policy and database-route regression tests are authored; **the migration, tests and full CI-equivalent checks have not been run**. Form Teacher assignments and timetable constraints remain future Phase 5 work.
 
+## Phase 5 Form Teacher assignment, handover and co-responsibility (unverified)
+
+The cumulative `feature/form-teacher-responsibility` branch introduces separate school-owned session/class Form Teacher responsibilities; unique active PRIMARY and teacher/class/session constraints; optional school-configured SUPPORT relationships (off by default); append-only auditable assignment, handover and end events; and a separately audited school policy toggle. Four protected routes and six DB-backed integration cases are authored. All changes preserve legacy/period teacher-subject assignments and do not automatically grant a Form Teacher access to pupil data or another subject. **No migration, new DB test, full CI, lint, typecheck, build or audit has been run** on this cumulative branch. The next roadmap slice is timetable-slot and conflict integrity, then attendance/lesson planning foundations. PR stays draft, no `main` merge/deploy/release.
+
 ## Current evidence
 
 - Published development checkpoint: `checkpoint/phase1-tenant-safe-foundation`; `main` remains unchanged

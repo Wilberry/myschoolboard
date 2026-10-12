@@ -40,6 +40,10 @@ Period status endpoints use `school:configure` and server-derived Better Auth id
 
 Existing assignment mutations retain legacy NULL-session behavior and permit an optional, same-school ACTIVE academic session ID. New policy regression checks confirm exact session/class/subject authorization with separate legacy behavior; route integration cases cover duplicate protection within the same period, legacy/period-bound coexistence, foreign/planned/closed session rejection, and revocation plus session-closure removing teaching authority. The new migration and tests are authored but not executed, and real HTTP/browser academic resources remain outside this checkpoint.
 
+## Form Teacher scope and co-responsibility (authored, pending local database)
+
+Form Teacher assign/handover/end and co-responsibility policy mutations are backed by school/session/class/membership composite ownership; unique active PRIMARY and member-per-class/session guards; and actor-verified immutable audit events. The new six-case integration suite checks unauthorized and cross-school requests, duplicate primary, atomic replacement/old-row ending, inactive/closed academic session, school policy gating, prevention of orphaned SUPPORT, explicit reason/event capture, and no accidental access to academic subjects or child records. Tests and the migration have not run. Further concurrent handover/policy-toggle and PostgreSQL transaction rollback stress testing are acceptance requirements before any deployment.
+
 ## Required negative tests
 
 - Cross-tenant access
