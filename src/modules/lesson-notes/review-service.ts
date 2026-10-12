@@ -22,6 +22,7 @@ interface ReviewRow {
   className: string;
   subjectName: string;
   topic: string;
+  kind: "LESSON_NOTE" | "SCHEME_OF_WORK";
   currentRevision: number;
   submittedAt: Date;
   revisions: Array<{
@@ -29,6 +30,7 @@ interface ReviewRow {
     topic: string;
     objectives: string;
     content: string;
+    weeklyPlan: unknown;
     createdAt: string;
   }>;
 }
@@ -101,7 +103,7 @@ export async function readSubmittedLessonNotes(
         section."name" AS "sectionName",
         c."name" AS "className",
         subject."name" AS "subjectName",
-        n."topic", n."currentRevision", n."submittedAt",
+        n."topic", n."kind", n."currentRevision", n."submittedAt",
         CASE WHEN ${noteId !== undefined} THEN
           COALESCE((
             SELECT jsonb_agg(
@@ -110,12 +112,13 @@ export async function readSubmittedLessonNotes(
                 'topic', rev."topic",
                 'objectives', rev."objectives",
                 'content', rev."content",
+                'weeklyPlan', rev."weeklyPlan",
                 'createdAt', rev."createdAt"
               ) ORDER BY rev."revisionNumber" DESC
             )
             FROM (
               SELECT "revisionNumber", "topic", "objectives",
-                "content", "createdAt"
+                "content", "weeklyPlan", "createdAt"
               FROM "LessonNoteRevision"
               WHERE "schoolId" = n."schoolId" AND "noteId" = n."id"
               ORDER BY "revisionNumber" DESC
