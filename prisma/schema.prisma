@@ -53,6 +53,23 @@ enum AcademicPeriodStatus {
   CLOSED
 }
 
+enum FormTeacherKind {
+  PRIMARY
+  SUPPORT
+}
+
+enum FormTeacherStatus {
+  ACTIVE
+  ENDED
+}
+
+enum FormTeacherEventType {
+  ASSIGNED
+  HANDOVER_OUT
+  HANDOVER_IN
+  ENDED
+}
+
 enum SchoolConfigurationEventType {
   ACADEMIC_SESSION_CREATED
   ACADEMIC_TERM_CREATED
@@ -62,6 +79,7 @@ enum SchoolConfigurationEventType {
   ACADEMIC_TERM_CLOSED
   CLASS_CREATED
   SUBJECT_CREATED
+  FORM_TEACHER_POLICY_CHANGED
 }
 
 model User {
@@ -128,6 +146,7 @@ model School {
   slug                                String                               @unique
   isActive                            Boolean                              @default(true)
   lifecycleStatus                     SchoolLifecycleStatus?
+  allowCoFormTeachers                 Boolean                              @default(false)
   createdAt                           DateTime                             @default(now())
   updatedAt                           DateTime                             @updatedAt
   memberships                         Membership[]
@@ -139,6 +158,8 @@ model School {
   academicSessions                    AcademicSession[]
   academicTerms                       AcademicTerm[]
   configurationEvents                 SchoolConfigurationEvent[]
+  formTeacherResponsibilities         FormTeacherResponsibility[]
+  formTeacherEvents                   FormTeacherEvent[]
 }
 
 model Membership {
@@ -153,6 +174,7 @@ model Membership {
   school                         School                          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   scopes                         ScopeGrant[]
   teacherClassSubjectAssignments TeacherClassSubjectAssignment[]
+  formTeacherResponsibilities    FormTeacherResponsibility[]
 
   @@unique([schoolId, userId])
   @@unique([schoolId, id])
@@ -194,6 +216,7 @@ model SchoolClass {
   updatedAt                      DateTime                        @updatedAt
   school                         School                          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   teacherClassSubjectAssignments TeacherClassSubjectAssignment[]
+  formTeacherResponsibilities    FormTeacherResponsibility[]
 
   @@unique([schoolId, id])
   @@index([schoolId])
@@ -288,6 +311,7 @@ model AcademicSession {
   school    School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   terms     AcademicTerm[]
   teacherAssignments TeacherClassSubjectAssignment[]
+  formTeacherResponsibilities FormTeacherResponsibility[]
 
   @@unique([schoolId, id])
   @@unique([schoolId, name])
@@ -327,4 +351,43 @@ model SchoolConfigurationEvent {
 
   @@index([schoolId, createdAt])
   @@index([schoolId, eventType, createdAt])
+}
+
+model FormTeacherResponsibility {
+  id           String            @id @default(cuid())
+  schoolId     String
+  sessionId    String
+  classId      String
+  membershipId String
+  kind         FormTeacherKind   @default(PRIMARY)
+  status       FormTeacherStatus @default(ACTIVE)
+  createdAt    DateTime          @default(now())
+  endedAt      DateTime?
+  school       School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  session      AcademicSession   @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
+  schoolClass  SchoolClass       @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
+  membership   Membership        @relation(fields: [schoolId, membershipId], references: [schoolId, id], onDelete: NoAction)
+  events       FormTeacherEvent[]
+
+  @@unique([schoolId, id, membershipId])
+  @@unique([schoolId, id])
+  @@index([schoolId, sessionId, classId, status])
+  @@index([schoolId, membershipId, status])
+}
+
+model FormTeacherEvent {
+  id                  String               @id @default(cuid())
+  schoolId            String
+  responsibilityId    String
+  teacherMembershipId String
+  actorUserId         String
+  actorMembershipId   String
+  eventType           FormTeacherEventType
+  reason              String?
+  createdAt           DateTime             @default(now())
+  school              School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  responsibility      FormTeacherResponsibility @relation(fields: [schoolId, responsibilityId, teacherMembershipId], references: [schoolId, id, membershipId], onDelete: NoAction)
+
+  @@index([schoolId, responsibilityId, createdAt])
+  @@index([schoolId, actorUserId, createdAt])
 }

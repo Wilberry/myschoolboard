@@ -1,5 +1,11 @@
 # School Setup and Academic Structure
 
+## Configurable Form Teacher policy (draft, pending verification)
+
+A school-owned `allowCoFormTeachers` flag defaults to false; an authorized school administrator may change it through the separately authenticated `PATCH /api/schools/{schoolId}/settings/form-teachers` endpoint, giving a reason recorded in `SchoolConfigurationEvent`. Disabling the flag is rejected while any active SUPPORT responsibilities remain. PRIMARY Form Teacher responsibility is at most one teacher per class/session; any SUPPORT assignment requires an active PRIMARY. Responsibilities are separate from academic subject teaching and grant no student-data rights. The policy API and model are authored but **not yet validated on the local database**.
+
+## Scope
+
 ## Scope
 
 This module manages school identity, branding, academic sessions, terms, sections, classes, subject catalogs, grading configuration, and school-specific policies.

@@ -29,6 +29,19 @@ For an authenticated school metadata read denied as `404`, the handler emits a b
 
 The two D-020 `GET /api/schools/{schoolId}/teacher-assignments` (list) and `GET /api/schools/{schoolId}/teacher-assignments/{assignmentId}` (detail) endpoints now have draft handlers. Both require an authenticated active same-school `school:configure` membership; general `academic:read` and platform role by themselves are not sufficient. The final data fetch repeats school activity, authenticated reader, current active membership, matching role, and school-bound assignment constraints. Response fields are explicitly selected, including nullable `sessionId` to distinguish legacy period-free from new period-bound assignments; no user names/emails, audit events or other relations are included. Collection pagination returns up to 50 assignments in ascending ID order with an optional accessible in-school cursor and `nextCursor` (otherwise null). Invalid filters/paths return `400`, no session `401`, denied/missing/cross-school resources and cursors a non-disclosing `404`, and failures generic `500`. Every response uses `Cache-Control: private, no-store`. No state changes or event writes occur. New integration tests are authored but await execution on the isolated local test DB.
 
+## Form Teacher administration routes (draft, not yet database-verified)
+
+All operations derive their actor from Better Auth, require active same-school `school:configure` membership, recheck the requested school/member under a serializable transaction, conceal foreign or absent resources, and record reasoned append-only audit events. They are **not** teacher self-service APIs.
+
+| Method | Path | Action |
+| --- | --- | --- |
+| POST | `/api/schools/{schoolId}/form-teachers` | Assign a PRIMARY (unique per class/session) or school-configured SUPPORT teacher to an ACTIVE session/class |
+| POST | `/api/schools/{schoolId}/form-teachers/{responsibilityId}/handover` | End a PRIMARY and appoint a replacement in one audited transaction |
+| POST | `/api/schools/{schoolId}/form-teachers/{responsibilityId}/end` | Explicitly end an ACTIVE responsibility with a reason, preserving history |
+| PATCH | `/api/schools/{schoolId}/settings/form-teachers` | Enable/disable school-specific SUPPORT responsibility with a reason; disable is blocked while active SUPPORT responsibilities exist |
+
+The default `allowCoFormTeachers` setting is false. Each successful mutation returns only minimum responsibility/policy state. No physical delete or student/child/subject access is granted. Responses include `Cache-Control: private, no-store`; invalid JSON/payloads are 400, absent session 401, denied/missing 404, duplicate/invalid state 409, and unexpected faults generic 500. Six new real-session/database tests are authored but not yet executed; actual HTTP/browser and concurrency behavior require verification.
+
 ## Current status
 
 The teacher-assignment module records the four implemented mutation contracts plus newly authored, unverified D-020 administrative read handlers. Other API contracts remain future work and must follow these standards.
