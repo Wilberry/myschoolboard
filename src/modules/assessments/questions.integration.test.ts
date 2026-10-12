@@ -15,6 +15,8 @@ import {
 } from "@/app/api/schools/[schoolId]/assessment-manual-components/route";
 import { GET as MANUAL_STUDENTS_GET } from "@/app/api/schools/[schoolId]/assessment-manual-components/[componentId]/students/route";
 import { POST as MANUAL_PROPOSAL_POST } from "@/app/api/schools/[schoolId]/assessment-manual-proposals/route";
+import { GET as MANUAL_REVIEW_QUEUE } from "@/app/api/schools/[schoolId]/assessment-manual-reviews/route";
+import { POST as MANUAL_REVIEW_DECISION } from "@/app/api/schools/[schoolId]/assessment-manual-reviews/[proposalId]/decision/route";
 import {
   GET as POLICIES_GET, POST as POLICIES_POST,
 } from "@/app/api/schools/[schoolId]/assessment-grading-policies/route";
@@ -960,6 +962,40 @@ describe("Phase 7 exact-assignment private question bank", () => {
       earnedPoints: 17, enrollmentId,
       actorMembershipId: members.teacher, actorUserId: users.teacher,
     });
+    const initialReview = (actor: string, input: unknown) =>
+      MANUAL_REVIEW_DECISION(req(actor, schoolA, "POST", input), {
+        params: Promise.resolve({ schoolId: schoolA, proposalId: recorded.id }),
+      });
+    for (const actor of ["teacher", "admin", "student", "super", "principal", "other"]) {
+      expect((await initialReview(actor, {
+        action: "APPROVED", reason: "Synthetic wrong role or wrong section reviewer",
+      })).status).toBe(404);
+    }
+    const reviewerQueue = await MANUAL_REVIEW_QUEUE(req("head", schoolA, "GET"), {
+      params: Promise.resolve({ schoolId: schoolA }),
+    });
+    expect(reviewerQueue.status).toBe(200);
+    expect((await reviewerQueue.json()).proposals.some(
+      (p: { proposalId: string }) => p.proposalId === recorded.id,
+    )).toBe(true);
+    const decision = await initialReview("head", {
+      action: "APPROVED", reason: "Synthetic Primary Head verified original written marks",
+    });
+    expect(decision.status).toBe(201);
+    expect((await decision.json()).decision.action).toBe("APPROVED");
+    expect((await initialReview("head", {
+      action: "RETURNED", reason: "Duplicate terminal decision should fail",
+    })).status).toBe(409);
+    const immutableDecision = await prisma.assessmentManualMarkDecision.findFirstOrThrow({
+      where: { schoolId: schoolA, proposalId: recorded.id },
+    });
+    await expect(prisma.assessmentManualMarkDecision.update({
+      where: { id: immutableDecision.id }, data: { action: "RETURNED" },
+    })).rejects.toThrow();
+    await expect(prisma.assessmentManualMarkDecision.delete({
+      where: { id: immutableDecision.id },
+    })).rejects.toThrow();
+
     await expect(prisma.assessmentManualMarkProposal.update({
       where: { id: recorded.id }, data: { earnedPoints: 19 },
     })).rejects.toThrow();
