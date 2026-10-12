@@ -52,6 +52,10 @@ The cumulative `feature/teacher-lesson-planning-workspace` branch adds a Better 
 
 The cumulative `feature/verified-school-section-ownership` branch adds a school-owned PRIMARY/SECONDARY Section model, nullable same-school class section reference with no legacy inference, two school-admin section-configuration mutations with reasoned audit, and principal filtering of verified foreign/inactive SECTION IDs. Five real-session DB integration cases are authored; **no migration, test, format, lint, typecheck, build or full CI audit was run**. HM/Principal section-scoped review, timetable writes, student enrollments and attendance remain closed until exact class-to-section and stage checks are independently implemented.
 
+## School section/class configuration interface (awaiting local verification)
+
+The cumulative `feature/school-section-setup-workspace` branch extends the protected school admin academic setup reader/editor to list explicit primary/secondary sections and class mapping, create sections and assign unclassified classes through the previously authored audited school-owned APIs. Two new tenant-isolation DB tests are authored. **No migration, DB test, real browser, lint, typecheck, build or full CI-equivalent audit has run**. The new UI does not grant HM/Principal approval or attendance authority, nor reclassify old rows automatically.
+
 ## Current evidence
 
 - Published development checkpoint: `checkpoint/phase1-tenant-safe-foundation`; `main` remains unchanged

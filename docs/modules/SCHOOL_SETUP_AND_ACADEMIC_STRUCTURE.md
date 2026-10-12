@@ -1,5 +1,9 @@
 # School Setup and Academic Structure
 
+## School section configuration workspace (unverified)
+
+The protected existing school setup page now lists same-school PRIMARY/SECONDARY sections, shows each class's explicit section or Unclassified state, and presents forms to create sections and classify **active, unclassified** classes through the administrator-only server routes. Already-classified classes have no UI move action; moving them needs a separate historical reclassification review. The server `readSchoolSetup` selects at most 100 sections and classes, repeating active school administrator membership in the final Section query, and never trusts the form for tenant ownership. Two new database read-isolation scenarios and actual browser keyboard/POST/error handling checks remain **unexecuted**.
+
 ## Primary/secondary section ownership (draft, unverified)
 
 The additive `SchoolSection` model stores named, active, school-owned PRIMARY and SECONDARY sections; `SchoolClass.sectionId` is nullable, has a composite same-school foreign key, and is **not backfilled**. Unclassified historical classes are not assumed to belong to either stage. School Admin / School Super Admin may create sections with a reason via `POST /api/schools/{schoolId}/sections` and classify an active unclassified class via `POST /api/schools/{schoolId}/classes/{classId}/section`. Active membership is checked in a serializable transaction with resource locks and an append-only school configuration event. Changing an already assigned section is rejected until an explicit history-preserving reclassification workflow exists.

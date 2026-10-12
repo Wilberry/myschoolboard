@@ -24,6 +24,10 @@ The client editor uses the existing `POST` room/slot/cancellation APIs instead o
 
 Authenticated teachers with active school membership may follow `My lesson notes` on their home school card to `/schools/{schoolId}/lesson-notes`. The target page independently checks role and active school, selecting only the signed-in teacher's exact ACTIVE subject/class/session assignments and corresponding ACTIVE academic terms; the action APIs reauthorize and never trust the UI link. The page exposes draft creation, own notes, immutable revision history, and submission, with explicit notice that submission does **not** approve or publish content. School administrators, Form Teachers without subject assignments, parents, and students do not gain this route through navigation. Four database-backed option-scope cases are authored; real browser/accessibility checks are pending.
 
+## School section/class setup within academic configuration (draft)
+
+The active school administrator `/schools/{schoolId}/setup` page now includes PRIMARY/SECONDARY section creation and one-time placement of previously unclassified active classes. Section/class information is selected only via the existing server-guarded school configuration reader and school-admin POST APIs, with reasoned audit events. Foreign sections are never selectable and form filtering does not replace the backend checks. Reader DB and browser/keyboard tests are authored/pending; there is no student enrollment or HM/Principal approval button.
+
 ## Platform Super Admin dashboard
 
 - Tenant status summary
