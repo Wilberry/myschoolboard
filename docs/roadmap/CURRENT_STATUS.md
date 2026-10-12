@@ -1,5 +1,10 @@
 # Current Status
 
+## Phase 6 approved lesson-note release (authored, not verified)
+
+`feature/lesson-approved-release-foundation` extends the cumulative attendance/student/teacher/reviewer work with immutable reasoned RELEASED/WITHDRAWN events on approved lesson revisions. The exact current approved revision, active academic/teacher/section structure and verified HM PRIMARY/Principal SECONDARY scope are validated both transactionally and by additive PostgreSQL SQL; release is independent of review. A restricted reviewer queue and browser controls are authored, and synthetic real-session cases added to existing lesson-review suite for role/stage/duplicate/stale/withdraw/audit denials. **Tests and migration NOT EXECUTED.** No student content read is exposed without an authenticated verified account-to-enrollment mapping. LES-REQ-001 is partially authored, not complete.
+
+
 ## Phase 6 explicit teaching/non-teaching dates (development candidate)
 
 Draft branch `feature/attendance-nonteaching-calendar` builds on #45 and adds a school-owned immutable per-day designation ledger, calendar SQL insertion and audit guards, active administrator mutation API, guarded school policy UI, and denial of new attendance submissions on explicitly closed days. Existing real attendance days cannot be reclassified; default without school/day revision is teaching-day, with no inferred weekends or national holidays. Synthetic admin, role, history and direct-actor tests are **authored but not executed**; database migration and comprehensive local CI are pending. Phase 6 ATT-REQ-001 remains unfinished and unverified.

@@ -128,6 +128,11 @@ enum LessonNoteStatus {
   RETURNED
 }
 
+enum LessonReleaseEventType {
+  RELEASED
+  WITHDRAWN
+}
+
 enum LessonNoteEventType {
   CREATED
   REVISED
@@ -246,6 +251,7 @@ model School {
   attendanceCorrectionDecisions AttendanceCorrectionDecision[]
   attendancePolicyRevisions SchoolAttendancePolicyRevision[]
   attendanceDayRevisions SchoolAttendanceDayRevision[]
+  lessonReleaseEvents LessonReleaseEvent[]
 }
 
 model Membership {
@@ -272,6 +278,7 @@ model Membership {
   attendanceCorrectionDecisions AttendanceCorrectionDecision[] @relation("AttendanceCorrectionReviewer")
   attendancePolicyRevisions SchoolAttendancePolicyRevision[]
   attendanceDayRevisions SchoolAttendanceDayRevision[]
+  lessonReleaseEvents LessonReleaseEvent[]
 }
 
 model ScopeGrant {
@@ -593,6 +600,7 @@ model LessonNote {
   @@unique([schoolId, id])
   @@index([schoolId, termId, status])
   @@index([schoolId, teacherMembershipId, updatedAt])
+  releaseEvents LessonReleaseEvent[]
 }
 
 model LessonNoteRevision {
@@ -855,4 +863,24 @@ model SchoolAttendanceDayRevision {
 
   @@unique([schoolId, attendanceDate, revision])
   @@index([schoolId, attendanceDate, createdAt])
+}
+
+/** Release is separate from section approval: only append-only scoped
+ * publication/withdrawal decisions expose an approved immutable revision. */
+model LessonReleaseEvent {
+  id String @id @default(cuid())
+  schoolId String
+  noteId String
+  revisionNumber Int
+  eventType LessonReleaseEventType
+  reason String @db.VarChar(500)
+  actorUserId String
+  actorMembershipId String
+  createdAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  note LessonNote @relation(fields: [schoolId, noteId], references: [schoolId, id], onDelete: NoAction)
+  actorMembership Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "LessonReleaseEvent_actor_fkey")
+
+  @@unique([schoolId, noteId, revisionNumber, eventType])
+  @@index([schoolId, createdAt])
 }

@@ -1,5 +1,13 @@
 # Milestone Checklist
 
+### Phase 6 approved lesson release (unverified)
+
+- [ ] Apply only to disposable PostgreSQL and run release/withdrawal trigger and audit tamper tests, including concurrent reviewers, stage/scope revocation and stale approved revision.
+- [ ] Run teacher-author, HM/Principal reviewer and independent release suites against real authenticated synthetic sessions. Check no student/parent content endpoints are reachable from released metadata.
+- [ ] Implement explicit verified STUDENT membership → StudentRecord identity linkage and per-school/session/class/term enrollment reader with no inferred links.
+- [ ] Run full browser accessibility and unchanged local CI-equivalent verification and strict dependency audit; leave LES-REQ-001 incomplete until all acceptance cases pass.
+
+
 ### Phase 6 teaching-day calendar acceptance (all unverified)
 
 - [ ] Run additive SchoolAttendanceDayRevision migration on disposable PostgreSQL; test same-date write locking, forged membership, sequential revision, immutable history and no retroactive reclassification when any AttendanceRegister exists.

@@ -1,5 +1,10 @@
 # Requirements Traceability Matrix
 
+## LES-REQ-001 release workflow candidate (authored, not executed)
+
+`LessonReleaseEvent` immutable schema and `20261012230000_lesson_approved_release` additive SQL actor/scope/approval guards, `lesson-notes/release-service.ts`, release-read, private reviewer GET/POST routes and server-gated release page add separate approved-revision release and withdrawal. No user obtains learner content on approval alone; no student/guardian API is exposed. `review.integration.test.ts` adds synthetic wrong-role/stage, old revision, duplicate, withdrawal and tamper cases (**AUTHORED, NOT EXECUTED**). Actual verified student identity/enrollment visibility, browser tests and full CI remain open. LES-REQ-001 NOT COMPLETE.
+
+
 ## Phase 6 calendar-day closure subset (ATT-REQ-001, SCH-REQ-001; unverified)
 
 `SchoolAttendanceDayRevision` schema, `20261012220000_attendance_school_days` SQL, `policy-service.ts`, `attendance-days` POST, school policy UI and submission-day guard introduce explicit immutable school-date closures. No inferred weekend rule; recorded attendance prevents retroactive redesignation. Tests authored in `policy.integration.test.ts`; all DB tests, migrations and acceptance gates remain **unexecuted**. LES-REQ-001 lesson release and authorized pupil-class/period visibility remain separately outstanding.

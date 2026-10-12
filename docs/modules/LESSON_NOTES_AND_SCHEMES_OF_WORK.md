@@ -1,5 +1,12 @@
 # Lesson Notes and Schemes of Work
 
+## Approved lesson release / withdrawal candidate (LES-REQ-001; UNVERIFIED)
+
+The cumulative `feature/lesson-approved-release-foundation` adds a separate immutable `LessonReleaseEvent` ledger, with RELEASED/WITHDRAWN reason, reviewer user/membership, exact note and approved revision. A teacher submission or HM/Principal **approval is not a release**. Only a currently active Head of Section for the note's stored PRIMARY class section, or Principal for its stored SECONDARY class section, with exact currently verified SECTION scope may release or withdraw the exact APPROVED revision while school/session/term/assignment and school class/subject are active. The SQL insertion guard independently checks current actor role, verified stored section grant, actual immutable APPROVED decision and content revision. Release is allowed once; withdrawal is terminal for that revision and does not alter the original LessonNote, revision or approval. Nonexistent or revoked grants, wrong-stage reviewers, foreign school and teachers fail closed.
+
+Private GET reviewer queue lists approved notes without pupil identities; separate POST decision and a server-gated reviewer workspace with confirmation are authored. The ledger does not create a public/student/parent content reader. **An enrolled student account cannot be inferred from a STUDENT role, name, admission number or email.** LES-REQ-001 authorized student class/period visibility remains blocked until explicit, admin-verified exact student-account-to-record linkage and real-server security tests exist. These SQL migrations, tests and page are authored but not executed. See D-033/ADR-019.
+
+
 ## HM/Principal lesson-note review workspace (unverified)
 
 The restricted `/schools/{schoolId}/lesson-note-reviews` page independently authenticates with Better Auth and uses the section-bound reviewer SQL query for its initial pending-note list. The existing school-details page offers `Review submitted lesson notes` navigation only when the actor's active `HEAD_OF_SECTION` membership has a verified same-school active PRIMARY-section grant or `PRINCIPAL` has a verified same-school active SECONDARY grant; role alone is not a sufficient navigation hint. The page will return not-found for unauthorized direct navigation regardless of link visibility.

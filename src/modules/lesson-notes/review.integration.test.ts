@@ -10,6 +10,8 @@ vi.mock("next/headers", () => ({
 import { GET as queueRoute } from "@/app/api/schools/[schoolId]/lesson-note-reviews/route";
 import { GET as detailRoute } from "@/app/api/schools/[schoolId]/lesson-note-reviews/[noteId]/route";
 import { POST as decisionRoute } from "@/app/api/schools/[schoolId]/lesson-note-reviews/[noteId]/decision/route";
+import { POST as releaseRoute } from "@/app/api/schools/[schoolId]/lesson-releases/[noteId]/decision/route";
+import { GET as releaseQueueRoute } from "@/app/api/schools/[schoolId]/lesson-releases/route";
 import { POST as authorCreate } from "@/app/api/schools/[schoolId]/lesson-notes/route";
 import { POST as authorRevise } from "@/app/api/schools/[schoolId]/lesson-notes/[noteId]/revisions/route";
 import { POST as authorSubmit } from "@/app/api/schools/[schoolId]/lesson-notes/[noteId]/submit/route";
@@ -341,6 +343,50 @@ describe("section-scoped lesson note review and return", () => {
     expect((await decide("principal", primaryNoteId, "APPROVE", 2)).status)
       .toBe(404);
     expect((await detailOwn(secondaryNoteId)).status).toBe(200);
+  });
+
+  it("requires approved revision and exact HM/Principal section for separate release", async () => {
+    async function release(actor: string, noteId: string, action: "RELEASE" | "WITHDRAW",
+      expectedRevision: number) {
+      return releaseRoute(request(actor, "POST",
+        `/api/schools/${schoolA}/lesson-releases/${noteId}/decision`, {
+          action, expectedRevision, reason: "Synthetic separate approved-content release",
+        }), { params: Promise.resolve({ schoolId: schoolA, noteId }) });
+    }
+    async function releaseQueue(actor: string) {
+      return releaseQueueRoute(request(actor, "GET",
+        `/api/schools/${schoolA}/lesson-releases`),
+        { params: Promise.resolve({ schoolId: schoolA }) });
+    }
+    expect((await release("teacher", primaryNoteId, "RELEASE", 2)).status).toBe(404);
+    expect((await release("principal", primaryNoteId, "RELEASE", 2)).status).toBe(404);
+    expect((await release("head", unknownNoteId, "RELEASE", 1)).status).toBe(404);
+    expect((await release("head", primaryNoteId, "RELEASE", 1)).status).toBe(409);
+    expect((await releaseQueue("teacher")).status).toBe(404);
+    const queue = await releaseQueue("head");
+    expect(queue.status).toBe(200);
+    const rows = (await queue.json()).notes;
+    expect(rows.some((note: { id: string }) => note.id === primaryNoteId)).toBe(true);
+    expect(JSON.stringify(rows)).not.toContain("learner objectives");
+    const result = await release("head", primaryNoteId, "RELEASE", 2);
+    expect(result.status).toBe(201);
+    expect((await result.json()).event.eventType).toBe("RELEASED");
+    expect((await release("head", primaryNoteId, "RELEASE", 2)).status).toBe(409);
+    expect((await release("head", primaryNoteId, "WITHDRAW", 2)).status).toBe(201);
+    expect((await release("head", primaryNoteId, "WITHDRAW", 2)).status).toBe(409);
+    const original = await prisma.lessonNote.findUniqueOrThrow({ where: { id: primaryNoteId } });
+    expect(original.status).toBe("APPROVED");
+    const events = await prisma.lessonReleaseEvent.findMany({
+      where: { schoolId: schoolA, noteId: primaryNoteId },
+      orderBy: { createdAt: "asc" },
+    });
+    expect(events.map(e => e.eventType).sort()).toEqual(["RELEASED", "WITHDRAWN"]);
+    await expect(prisma.lessonReleaseEvent.update({
+      where: { id: events[0].id }, data: { reason: "Unauthorized overwrite" },
+    })).rejects.toThrow();
+    await expect(prisma.lessonReleaseEvent.delete({
+      where: { id: events[0].id },
+    })).rejects.toThrow();
   });
 
   it("revoking verified section grant or section activity removes reviewer authority", async () => {
