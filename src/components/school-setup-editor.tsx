@@ -75,6 +75,60 @@ export function SchoolSetupEditor({
     }
   }
 
+  async function transition(
+    event: FormEvent<HTMLFormElement>,
+    sessionId: string,
+    status: "ACTIVE" | "CLOSED",
+    termId?: string,
+  ) {
+    event.preventDefault();
+    if (pending) return;
+    if (
+      status === "CLOSED" &&
+      !window.confirm("Close this academic period? It cannot be reopened.")
+    ) {
+      return;
+    }
+    const form = event.currentTarget;
+    const reason = String(new FormData(form).get("reason") ?? "").trim();
+    setPending(true);
+    setError(null);
+    setSuccess(null);
+    const route = termId
+      ? `academic/sessions/${encodeURIComponent(sessionId)}/terms/${encodeURIComponent(termId)}/status`
+      : `academic/sessions/${encodeURIComponent(sessionId)}/status`;
+    try {
+      const result = await fetch(
+        `/api/schools/${encodeURIComponent(schoolId)}/${route}`,
+        {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status, reason }),
+          cache: "no-store",
+        },
+      );
+      if (!result.ok) {
+        setError(
+          result.status === 409
+            ? "This period cannot be changed yet. Close active and planned terms before closing its session."
+            : result.status === 401 || result.status === 404
+              ? "Your session or school permissions no longer allow this change."
+              : result.status === 400
+                ? "Provide a reason of at least five characters."
+                : "The period could not be changed.",
+        );
+        return;
+      }
+      setSuccess("Academic period updated and audit record saved.");
+      router.refresh();
+    } catch {
+      setError("Network connection failed. No status change has been confirmed.");
+    } finally {
+      setPending(false);
+    }
+  }
+
   return (
     <div className="setup-workspace">
       {error && <p className="form-error" role="alert">{error}</p>}
@@ -104,6 +158,36 @@ export function SchoolSetupEditor({
             <li key={item.id}>
               <strong>{item.name}</strong>
               <span>{item.startsOn} – {item.endsOn} · {item.status}</span>
+              {item.status !== "CLOSED" && (
+                <form
+                  className="setup-status-form"
+                  onSubmit={(event) =>
+                    void transition(
+                      event,
+                      item.id,
+                      item.status === "PLANNED" ? "ACTIVE" : "CLOSED",
+                    )
+                  }
+                >
+                  <label>
+                    Reason
+                    <input name="reason" minLength={5} maxLength={500} required />
+                  </label>
+                  <button
+                    type="submit"
+                    disabled={
+                      pending ||
+                      (item.status === "ACTIVE" &&
+                        snapshot.terms.some(
+                          (term) =>
+                            term.sessionId === item.id && term.status !== "CLOSED",
+                        ))
+                    }
+                  >
+                    {item.status === "PLANNED" ? "Activate session" : "Close session"}
+                  </button>
+                </form>
+              )}
             </li>
           ))}
           {snapshot.sessions.length === 0 && <li>No sessions configured yet.</li>}
@@ -148,6 +232,37 @@ export function SchoolSetupEditor({
             <li key={term.id}>
               <strong>{term.name} · Term {term.position}</strong>
               <span>{term.startsOn} – {term.endsOn} · {term.status}</span>
+              {term.status !== "CLOSED" && (
+                <form
+                  className="setup-status-form"
+                  onSubmit={(event) =>
+                    void transition(
+                      event,
+                      term.sessionId,
+                      term.status === "PLANNED" ? "ACTIVE" : "CLOSED",
+                      term.id,
+                    )
+                  }
+                >
+                  <label>
+                    Reason
+                    <input name="reason" minLength={5} maxLength={500} required />
+                  </label>
+                  <button
+                    type="submit"
+                    disabled={
+                      pending ||
+                      (term.status === "PLANNED" &&
+                        !snapshot.sessions.some(
+                          (session) =>
+                            session.id === term.sessionId && session.status === "ACTIVE",
+                        ))
+                    }
+                  >
+                    {term.status === "PLANNED" ? "Activate term" : "Close term"}
+                  </button>
+                </form>
+              )}
             </li>
           ))}
           {snapshot.terms.length === 0 && <li>No terms configured yet.</li>}

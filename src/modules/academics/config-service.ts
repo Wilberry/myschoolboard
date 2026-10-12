@@ -57,13 +57,13 @@ export function validateDateRange(
   return { startsOn, endsOn };
 }
 
-async function actorId(): Promise<string> {
+export async function actorId(): Promise<string> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) throw new AcademicConfigError("UNAUTHENTICATED");
   return session.user.id;
 }
 
-async function requireSchoolConfigActor(
+export async function requireSchoolConfigActor(
   tx: Prisma.TransactionClient,
   userId: string,
   schoolId: string,
@@ -104,7 +104,7 @@ async function requireSchoolConfigActor(
   return { membershipId: member.id };
 }
 
-function mapError(error: unknown): never {
+export function mapError(error: unknown): never {
   if (error instanceof AcademicConfigError) throw error;
   if (
     error &&

@@ -23,6 +23,12 @@ These routes are **create-only**, not general academic read authorization or pro
 
 A guarded school setup page at `/schools/{schoolId}/setup` uses active school `school:configure` authority to display the school's latest 100 sessions, terms, classes and subjects. Each final collection query repeats same-school active membership and role conditions, even after the initial principal resolution. Users can create new planned sessions/terms and class/subject catalog entries through the existing protected POST handlers. Only verified success refreshes the view; errors are generic. There is no general academic read endpoint, teacher access, grade history recalculation or period activation from this screen. Four new database-backed read regression tests and browser-level workflow checks are **not yet executed**.
 
+## Academic period activation and closure (new, unverified)
+
+School Administrators and School Super Admins can explicitly transition an academic session from PLANNED to ACTIVE and then CLOSED, and a term from PLANNED to ACTIVE and then CLOSED, through the protected session/term status POST APIs and reason-required controls in the academic setup workspace. All changes use serializable transactions, lock the school, administrator membership, academic session and term in a consistent order, and append a school-owned `SchoolConfigurationEvent` with the operator's justification. The database enforces at most one ACTIVE session per school and one ACTIVE term per session. A term cannot activate unless its parent session is ACTIVE, and a session cannot close while any of its terms remain PLANNED or ACTIVE. CLOSED is terminal; neither API changes dates or historical assignments, results or official records.
+
+The event type enum and nullable event reason are added through a separate additive migration. Existing configuration creation events keep a NULL reason. New policy-unit and disposable-database route tests are authored, not run. Real HTTP/browser behavior and migration verification remain outstanding.
+
 ## Important constraints
 
 - Academic configuration changes must not mutate previously published official records without an explicit correction workflow.
