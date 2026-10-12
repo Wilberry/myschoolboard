@@ -1,5 +1,12 @@
 # Decision Log
 
+## D-035: Term-based structured schemes share verified lesson approval and release
+
+- Status: Reversible engineering default authored, not production verified.
+- Decision: Represent a term scheme as a distinct immutable LESSON material kind, with one active scheme history per exact same-school academic term and TEACHER class/subject/session assignment. Every scheme revision snapshots 1–24 ordered weekly entries (week number, topic, outcomes and activities). Preserve existing LESSON_NOTE default and review/release actor-event history; do not create any alternate unrestricted scheme approval, material-kind relabeling or pupil read. Scheme publication requires the same HM PRIMARY/Principal SECONDARY review, independent release and exact LINKED student enrollment.
+- Caveats: Partial index and JSON validation reside in additive PostgreSQL SQL; full Prisma drift, concurrent revisions, browser accessibility and school-specific term-week configuration remain local acceptance items. See ADR-021.
+
+
 ## D-034: Explicit student identity verification before approved lesson disclosure (development default)
 
 - Status: Synthetic-development authorization only, unverified. Live account identity attestation/consent is a reserved owner/privacy decision.
