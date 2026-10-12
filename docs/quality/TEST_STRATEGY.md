@@ -28,6 +28,10 @@ The Phase 3 platform foundation now includes a pure transition-policy test (incl
 
 Create-only academic session/term and class/subject handlers must use active `school:configure` membership, tenant-owned academic identifiers and serializable writes with append-only change events. Five database-backed integration tests were authored: deny anonymous/academic-only/foreign-school roles; create planned sessions/terms and events; reject term dates outside the session, bad dates and duplicate positions/names; enforce same-school class and subject records; reject an inactive school membership; and deny direct audit update/delete. The migration, these tests, full CI-equivalent pipeline and real Next transport have not run.
 
+## School setup UI and read isolation (authored, awaiting local verification)
+
+The `readSchoolSetup` server helper revalidates `school:configure`, active school membership and per-collection school ownership. Four direct database integration cases check exact school data, cross-school and insufficient role denial, membership revocation, and the final Prisma predicate on academic-session reads. Browser end-to-end verification of the setup editor forms, refresh behavior, keyboard labels and denied navigation remains pending; server-rendered links are hints and may not replace authorization in the data-fetch service.
+
 ## Required negative tests
 
 - Cross-tenant access
