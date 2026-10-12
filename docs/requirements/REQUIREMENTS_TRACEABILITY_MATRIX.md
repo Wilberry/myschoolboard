@@ -1,5 +1,12 @@
 # Requirements Traceability Matrix
 
+## ASM-REQ-001 / T-ASM-001 — provisional teacher-written assessment mark proposals (PARTIAL / UNVERIFIED)
+
+- Additive `AssessmentManualComponent` and `AssessmentManualMarkProposal` with exact school/term/class/subject/teacher assignment; same-school class/session active student enrollment tuple; separate immutable first per-pupil component proposal, earned integer 0..max, reason and source actor. New SQL `20261012340000_phase7_manual_mark_proposals` validates active TEACHER actor and original assignment, school/term/class/section/subject and actual ENROLLED pupil/ACTIVE enrollment and denies UPDATE/DELETE/TRUNCATE, cross-tenant and duplicate writes.
+- Authenticated `manual-mark-service.ts`, private `assessment-manual-components` GET/POST, `[componentId]/students` private key-free exact-teacher roster and `assessment-manual-proposals` POST plus teacher editor/page. A proposal is explicitly UNAPPROVED_NOT_SCORED and **not** read by objective scorer, class-sheet/weighted grade or report APIs.
+- `questions.integration.test.ts` synthetic role/tenant, bounded input, component/pupil relation, duplicate, forged direct SQL actor, immutability and exclusion-from-class-sheet cases; `scripts/phase7-manual-mark-proposal-guard.test.mjs` retained in full tests. **Authored only, NOT executed.** Teacher score correction, independent HM/Principal approval and result publication remain open; ASM-REQ-001 partial, Phase 6/CI/security gate blocked.
+
+
 ## SCH-REQ-001 / ASM-REQ-001 / T-ASM-001 — immutable school grading preview profile (PARTIAL / UNVERIFIED)
 
 - Schema `AssessmentGradingPolicyRevision` and additive SQL `20261012330000_phase7_grading_policy_revisions`: school/session/term/class/subject and School Super Admin actor member exact composite FKs, 0–100 QUIZ/TEST/EXAM whole-number weights sum 100, reason, SQL-serialized per-context version, UTC timestamp, immutable UPDATE/DELETE/TRUNCATE protections. Only active same-school School Super Admin may author profiles; no default and no official status.
