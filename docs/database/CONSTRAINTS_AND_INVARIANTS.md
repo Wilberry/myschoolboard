@@ -1,5 +1,13 @@
 # Constraints and Invariants
 
+## Versioned attendance calendar and policy bounds (authored, unverified)
+
+- Each `SchoolAttendancePolicyRevision` row has an exact school and actor membership composite FK, a positive sequential per-school revision, IANA timezone, submissionBackdateDays 0–30, correctionWindowDays 0–365, reason and immutable actor/time history; POST and SQL trigger require active same-school School Administrator / School Super Admin and a valid timezone.
+- With no row, policy is `Etc/UTC, 7, 30`. SQL uses `CURRENT_TIMESTAMP AT TIME ZONE` to compute school-local calendar date and limits SUBMITTED events and new correction requests. School row locks serialize policy updates and attendance-write guards; original UTC upper bound remains, so later local days ahead of UTC cannot enlarge permission.
+- No update/delete/truncate of policy rows except existing explicit tenant deletion cascade convention. Prior AttendanceEntry and AttendanceEvent immutable audit, exact full-roster guard, section-scoped review and correction version ledger remain unchanged.
+- School holidays and local calendar exceptions, retrospective correction after CLOSED session and migration/runtime/lock tests are pending. **No DB migration or test executed yet.**
+
+
 ## Database submission-event exact roster guard (unexecuted)
 
 Additive migration `20261012200000_attendance_complete_roster_guard` strengthens direct SQL writes: to commit a `SUBMITTED` attendance event, entries must match **all** currently active `StudentEnrollment` + `ENROLLED` students for that exact school/session/class, not merely contain one valid student. Every entry must still be backed by active, same-class/session enrollment whose startedAt is not after the attendance date. The event refuses zero or over-500 marks, acquires a school lock, and rejects mismatches using SQLSTATE 23514; no original immutable table is modified. This is in addition to, not a replacement for, exact composite FKs, the per-entry insertion validator, the active owning PRIMARY Form Teacher event validator, the deferred register event constraint, and existing complete roster API checks. Transactional enrollment races and direct SQL writer edge cases remain part of the disposable-PostgreSQL acceptance gate. **Designed and authored, not executed.**
