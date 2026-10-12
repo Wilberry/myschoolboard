@@ -1,5 +1,10 @@
 # Current Status
 
+## Phase 6 verified student lesson visibility (authored, not executed)
+
+`feature/lesson-verified-student-release-read` builds on release PR #47 and adds an audited explicit School Administrator STUDENT membership-to-StudentRecord link/revocation model and private manual verification screen, plus a deny-by-default student content GET and lesson page. The final SQL projection requires latest linked exact student identity, ACTIVE started school/class/session enrollment, ACTIVE term/assignment, exact APPROVED lesson revision, independent RELEASED event and no WITHDRAWN event; original lesson and identity audit history remain immutable. Synthetic exact-class/role, unauthorized no-link, revoked link, enrollment end and withdrawal tests added to the lesson review suite. **Authored but NOT EXECUTED**, migration not applied; no live account link, merge, deployment or school policy adoption. Schemes-of-work development and full Phase 6 security/CI exit evidence remain open. D-034 / ADR-020.
+
+
 ## Phase 6 approved lesson-note release (authored, not verified)
 
 `feature/lesson-approved-release-foundation` extends the cumulative attendance/student/teacher/reviewer work with immutable reasoned RELEASED/WITHDRAWN events on approved lesson revisions. The exact current approved revision, active academic/teacher/section structure and verified HM PRIMARY/Principal SECONDARY scope are validated both transactionally and by additive PostgreSQL SQL; release is independent of review. A restricted reviewer queue and browser controls are authored, and synthetic real-session cases added to existing lesson-review suite for role/stage/duplicate/stale/withdraw/audit denials. **Tests and migration NOT EXECUTED.** No student content read is exposed without an authenticated verified account-to-enrollment mapping. LES-REQ-001 is partially authored, not complete.
