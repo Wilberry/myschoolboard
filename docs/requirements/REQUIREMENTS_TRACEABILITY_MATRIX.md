@@ -1,5 +1,13 @@
 # Requirements Traceability Matrix
 
+## ASM-REQ-001 / T-ASM-001 — controlled publication/withdrawal subset (authored; NOT VERIFIED)
+
+- `AssessmentPublicationAction`, `AssessmentPublicationEvent` Prisma + `20261012290000_phase7_assessment_publication` SQL: append-only school/draft/actor composite FK, school-Super-Admin-only current actor verification, prerequisite terminal HM/Principal APPROVED sealed draft, active school/class/section/subject/assignment/session/term and immutable PUBLISHED then optional terminal WITHDRAWN sequence. Cannot publish a RETURNED draft or silently republish withdrawn configuration.
+- `src/modules/assessments/publication-service.ts` and private `assessment-publications` routes/admin page: school-locked serializable separate admin reasoned publication/withdrawal, bounded approved metadata queue, no keys, question text, student attempts, scores, exports or automatic CBT visibility.
+- `questions.integration.test.ts` synthetic stage-approved vs returned, wrong role/foreign school, duplicate, forged role, terminal withdrawal and audit immutability tests; `scripts/phase7-publication-guard.test.mjs` included in `npm test` and `verify:local:guards`. All tests AUTHORED, NOT EXECUTED.
+- ASM-REQ-001 still PARTIALLY AUTHORED; Phase 6 verified student identity/enrollment, attempt limits, CBT delivery, autosave, scoring and class record sheets and full security audit remain open.
+
+
 ## ASM-REQ-001 / T-ASM-001 — section academic moderation and attempt planning (authored; unverified)
 
 - Add `AssessmentReviewDecision` APPROVED/RETURNED + `AssessmentReviewEvent` immutable one-decision-per-school/draft, new additive `20261012280000_phase7_assessment_review` composite FKs + SQL actor/verified SECTION/stage/session/term/teacher/seal validator. An HM reviews only PRIMARY and Principal only SECONDARY with exact stored section, not generic class/subject or school roles.
