@@ -1310,11 +1310,11 @@ model AssessmentManualComponent {
   createdAt DateTime @default(now())
 
   school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  session AcademicSession @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
-  term AcademicTerm @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction)
-  schoolClass SchoolClass @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
-  subject Subject @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction)
-  teacher Membership @relation(fields: [schoolId, teacherMembershipId], references: [schoolId, id], onDelete: NoAction)
+  session AcademicSession @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualComponent_session_fkey")
+  term AcademicTerm @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction, map: "AssessmentManualComponent_term_fkey")
+  schoolClass SchoolClass @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualComponent_class_fkey")
+  subject Subject @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualComponent_subject_fkey")
+  teacher Membership @relation(fields: [schoolId, teacherMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualComponent_teacher_fkey")
   assignment TeacherClassSubjectAssignment @relation(fields: [schoolId, assignmentId, teacherMembershipId, classId, subjectId, sessionId], references: [schoolId, id, membershipId, classId, subjectId, sessionId], onDelete: NoAction, map: "AssessmentManualComponent_assignment_fkey")
   marks AssessmentManualMarkProposal[]
 
