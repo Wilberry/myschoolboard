@@ -32,6 +32,20 @@ export default async function ReleasedLessonsPage({
         <h2>{note.topic}</h2>
         <p>{note.className} · {note.subjectName} · {note.termName}</p>
         <h3>Objectives</h3><p style={{ whiteSpace: "pre-wrap" }}>{note.objectives}</p>
+        {note.kind === "SCHEME_OF_WORK" && Array.isArray(note.weeklyPlan) && (
+          <section aria-label="Weekly scheme of work">
+            <h3>Weekly topics</h3>
+            <ol>{note.weeklyPlan.map((value, index) => {
+              const week = value as { week?: number; topic?: string;
+                objectives?: string; activities?: string };
+              return <li key={index}>
+                <strong>Week {week.week}: {week.topic}</strong>
+                <p>{week.objectives}</p>
+                <p>{week.activities}</p>
+              </li>;
+            })}</ol>
+          </section>
+        )}
         <h3>Lesson content</h3><p style={{ whiteSpace: "pre-wrap" }}>{note.content}</p>
       </article>)}
     </section>
