@@ -1,5 +1,10 @@
 # Current Status
 
+## Phase 7 school grading preview revisions (AUTHORED; NOT VERIFIED)
+
+`feature/phase7-grading-policy-revisions` adds append-only school/session/term/class/subject draft-only grading weights (QUIZ/TEST/EXAM integers sum exactly 100) with SQL current School Super Admin authorization, versioning, immutable history and no production activation. Private admin editor and current teacher-assigned provisional class sheet show latest matching profile and complete-only weighted preview. Missing/unscored categories with positive weight remain PENDING, never zero. Objective scores, historical audit and official results remain unchanged. Synthetic and pure tests authored but NOT EXECUTED; Phase 6 prerequisite, full local CI-equivalent and strict dependency audit BLOCKED.
+
+
 ## Phase 7 teacher marking and provisional class sheets (authored; UNVERIFIED)
 
 `feature/phase7-private-class-record-sheets` adds a private exact-teacher unscored submitted-attempt queue, key-free bodyless marking action linked to SQL-calculated immutable objective scores, and provisional per-student class/subject/term record sheets (best scored attempt per approved, published and not-withdrawn assessment; pending distinct from zero). The final query reauthorizes exact assigned TEACHER/school/session/term/class/subject and returns only currently active student enrollments. Capped 500 active students, 30 assessments and 15,500 result rows with duplicate enrollment rejection; no student marks/results publication, parent access or export. Synthetic tests and source guards AUTHORED not EXECUTED. Phase 6/Phase 7 local CI, DB and security audit BLOCKED; no production release.
