@@ -131,6 +131,26 @@ export async function readPendingAttendanceReviews(
   validateId(schoolId);
   if (registerId !== undefined) validateId(registerId);
   const userId = await currentUser();
+  // A reviewer with no currently verified in-school section is denied even
+  // when the queue is empty. The main query still independently scopes rows.
+  const permitted = await prisma.$queryRaw<Array<{ allowed: boolean }>>(Prisma.sql`
+    SELECT true AS "allowed" FROM "School" school
+    JOIN "Membership" reviewer ON reviewer."schoolId" = school."id"
+      AND reviewer."userId" = ${userId} AND reviewer."isActive" = true
+      AND reviewer."role" IN ('HEAD_OF_SECTION', 'PRINCIPAL')
+    JOIN "ScopeGrant" grant ON grant."membershipId" = reviewer."id"
+      AND grant."type" = 'SECTION' AND grant."verified" = true
+    JOIN "SchoolSection" section ON section."schoolId" = school."id"
+      AND section."id" = grant."scopeId" AND section."isActive" = true
+    WHERE school."id" = ${schoolId} AND school."isActive" = true
+      AND (
+        (reviewer."role" = 'HEAD_OF_SECTION' AND section."stage" = 'PRIMARY')
+        OR (reviewer."role" = 'PRINCIPAL' AND section."stage" = 'SECONDARY')
+      )
+    LIMIT 1
+  `);
+  if (permitted.length !== 1) throw new AttendanceError("NOT_FOUND");
+
   const rows = await prisma.$queryRaw<ReviewRow[]>(Prisma.sql`
     SELECT register."id", register."schoolId", register."classId",
       c."name" AS "className", section."name" AS "sectionName",
