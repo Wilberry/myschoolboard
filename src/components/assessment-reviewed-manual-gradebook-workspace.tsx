@@ -31,7 +31,7 @@ export function AssessmentReviewedManualGradebookWorkspace({
     termId,subjectId:assignment.subjectId,
    });
    const response=await fetch(
-    `/api/schools/${encodeURIComponent(schoolId)}/assessment-reviewed-manual-gradebook?${q`,
+    `/api/schools/${encodeURIComponent(schoolId)}/assessment-reviewed-manual-gradebook?${q}`,
     {cache:"no-store",credentials:"same-origin"});
    if(!response.ok)throw Error();
    const data=await response.json() as {gradebook:{
