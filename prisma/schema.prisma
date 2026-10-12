@@ -530,7 +530,7 @@ model TimetableSlot {
   school       School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   session      AcademicSession     @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
   term         AcademicTerm        @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction)
-  assignment   TeacherClassSubjectAssignment @relation(fields: [schoolId, assignmentId, membershipId, classId, sessionId], references: [schoolId, id, membershipId, classId, sessionId], onDelete: NoAction)
+  assignment   TeacherClassSubjectAssignment @relation(fields: [schoolId, assignmentId, membershipId, classId, sessionId], references: [schoolId, id, membershipId, classId, sessionId], onDelete: NoAction, map: "AttendanceRegister_form_teacher_exact_fkey")
   membership   Membership          @relation(fields: [schoolId, membershipId], references: [schoolId, id], onDelete: NoAction)
   schoolClass  SchoolClass         @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
   room         TimetableRoom?      @relation(fields: [schoolId, roomId], references: [schoolId, id], onDelete: NoAction)
@@ -736,8 +736,8 @@ model AttendanceEntry {
   mark         AttendanceMark
   createdAt    DateTime           @default(now())
   school       School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  register     AttendanceRegister @relation(fields: [schoolId, registerId, sessionId, classId], references: [schoolId, id, sessionId, classId], onDelete: NoAction)
-  enrollment   StudentEnrollment  @relation(fields: [schoolId, enrollmentId, studentId, classId, sessionId], references: [schoolId, id, studentId, classId, sessionId], onDelete: NoAction)
+  register     AttendanceRegister @relation(fields: [schoolId, registerId, sessionId, classId], references: [schoolId, id, sessionId, classId], onDelete: NoAction, map: "AttendanceEntry_register_exact_fkey")
+  enrollment   StudentEnrollment  @relation(fields: [schoolId, enrollmentId, studentId, classId, sessionId], references: [schoolId, id, studentId, classId, sessionId], onDelete: NoAction, map: "AttendanceEntry_enrollment_exact_fkey")
 
   @@unique([schoolId, registerId, studentId])
   @@index([schoolId, studentId, createdAt])
@@ -754,7 +754,7 @@ model AttendanceEvent {
   reason            String?
   createdAt         DateTime            @default(now())
   school            School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  register          AttendanceRegister  @relation(fields: [schoolId, registerId], references: [schoolId, id], onDelete: NoAction)
+  register          AttendanceRegister  @relation(fields: [schoolId, registerId], references: [schoolId, id], onDelete: NoAction, map: "AttendanceEvent_actor_membership_fkey")
   actorMembership   Membership          @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction)
 
   @@unique([schoolId, registerId, eventType])
