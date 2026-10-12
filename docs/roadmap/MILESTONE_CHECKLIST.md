@@ -1,5 +1,13 @@
 # Milestone Checklist
 
+### Phase 6 schemes-of-work validation (all unchecked)
+
+- [ ] Apply additive kind/weeklyPlan migration to disposable PostgreSQL, verify LESSON_NOTE defaults preserve existing notes, immutable scheme kind, partial unique same-assignment/term index, JSONB type/week-order checks and no historical rewrite.
+- [ ] Execute synthetic term scheme creation, duplicate prevention, invalid unordered weeks/direct SQL tamper, returned/revised/resubmitted/current revision approval and separate release lifecycle under exact verified HM/Principal scope.
+- [ ] Test teacher scheme editor, reviewer weekly plan projection, and enrollment-bound student weekly view in real HTTP/browser with keyboard/screen reader; ensure parents/students never see draft, submitted, returned, approved-only or withdrawn plans.
+- [ ] Execute all cumulative Phase 2–6 tests and unchanged full local disposable-PostgreSQL CI-equivalent, build and strict dependency audit. Do not mark LES-REQ-001 or Phase 6 complete until test evidence exists.
+
+
 ### Verified student lesson visibility — acceptance gate
 
 - [ ] Validate linked STUDENT membership to exact same-school StudentRecord and verified administrator actor on disposable DB, including forged actor, wrong school, two memberships claiming same pupil, race, revocation and immutable audit.
