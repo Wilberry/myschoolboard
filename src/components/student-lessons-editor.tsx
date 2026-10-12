@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-interface Lesson { id: string; topic: string; subjectName: string;
+interface Lesson { id: string; topic: string; kind: "LESSON_NOTE" | "SCHEME_OF_WORK"; weekStart: number | null; weekEnd: number | null; subjectName: string;
   className: string; termName: string; revisionNumber: number;
   objectives?: string; content?: string }
 export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
@@ -33,7 +33,7 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
     <h2 id="my-lessons">Released class lessons</h2>
     <p>Only lessons approved and explicitly released for your currently verified class and academic term appear here.</p>
     <ul>{lessons.map(item => <li key={item.id}>
-      {item.subjectName}: {item.topic} — {item.className}, {item.termName}
+      {item.kind === "SCHEME_OF_WORK" ? "Scheme of work" : "Lesson note"} · {item.subjectName}: {item.topic} — {item.className}, {item.termName}{item.weekStart ? ` · Weeks ${item.weekStart}–${item.weekEnd}` : ""}
       <button type="button" disabled={working} onClick={() => open(item.id)}>Open lesson</button>
     </li>)}</ul>
     {active && <article><h3>{active.topic}</h3>
