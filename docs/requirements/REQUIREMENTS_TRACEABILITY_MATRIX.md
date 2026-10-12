@@ -1,5 +1,14 @@
 # Requirements Traceability Matrix
 
+## LES-REQ-001 — student identity, released lesson/term access and schemes (candidate, NOT VERIFIED)
+
+- Additive schemas/migrations: `StudentAccountLink`, `StudentAccountLinkRevocation`, school/member/student composite FKs, SQL actor/role/identity attestation and immutable delete/update/truncate guards; typed `LessonDocumentKind` and immutable `LessonNote.weekStart/weekEnd` with DB CHECK and unique exact scheme schedule.
+- Server: `src/modules/students/account-link-service.ts` administrator verified-identity attestation/revocation (no string-derived child link); `src/modules/lesson-notes/student-reader.ts` single-query exact active school/student membership/unrevoked student record/enrollment/class/session/term and separate approved/released/not-withdrawn revision; student and administrator private route/page/view.
+- Existing author/reviewer/release workflow: schemes use the same school-owned exact teacher class/subject/session term assignment, immutable content revisions, HM PRIMARY / Principal SECONDARY approval and separate release/withdrawal event. Ordinary existing notes default to LESSON_NOTE.
+- T-LES student disclosure & scheme: `src/modules/lesson-notes/review.integration.test.ts` extended with synthetic real-session student binding, duplicate, no-link, wrong class, terminal revoke, role revoke, term close, typed scheme week guard, creation, review and release; `scripts/phase6-identity-release-guard.test.mjs` authored and included in unchanged `npm test` + `verify:local:guards`. **Not executed.**
+- Status: **Substantial authored implementation, unverified**. Open: operator-confirmed disposable-DB schema/SQL/concurrency tests, actual identity-verification policy/evidence safeguards, accessibility/browser, full local CI-equivalent and dependency security gate. LES-REQ-001 not complete/accepted.
+
+
 ## LES-REQ-001 release workflow candidate (authored, not executed)
 
 `LessonReleaseEvent` immutable schema and `20261012230000_lesson_approved_release` additive SQL actor/scope/approval guards, `lesson-notes/release-service.ts`, release-read, private reviewer GET/POST routes and server-gated release page add separate approved-revision release and withdrawal. No user obtains learner content on approval alone; no student/guardian API is exposed. `review.integration.test.ts` adds synthetic wrong-role/stage, old revision, duplicate, withdrawal and tamper cases (**AUTHORED, NOT EXECUTED**). Actual verified student identity/enrollment visibility, browser tests and full CI remain open. LES-REQ-001 NOT COMPLETE.
