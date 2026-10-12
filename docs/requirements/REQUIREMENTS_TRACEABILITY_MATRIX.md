@@ -1,5 +1,13 @@
 # Requirements Traceability Matrix
 
+## Attendance reviewer and Form Teacher workspaces — ATT-REQ-001 (additional unverified evidence)
+
+- `src/modules/attendance/read-service.ts`: one-statement authenticated active PRIMARY Form Teacher roster; verified-stored-section Head/Principal queue and detail; bounded 500-pupil view and 100-item queue, generic unauthorized denials; private GET handlers in `app/api/schools/[schoolId]/attendance/roster` and `attendance-reviews`.
+- `src/modules/attendance/navigation.ts` and `app/schools/[schoolId]/attendance*`: independently restricted server page options and client submission/review editors. No default pupil mark and no broad student record visibility.
+- T-ATT-001 additional evidence: `reads.integration.test.ts` covers active-role exact class access, unauthorized subject-teacher denial, HM/Principal stage and verified scope, queue projection, detail minimization, revocation, query validation and server-page navigation. **Authored, NOT executed**.
+- ATT-REQ-001 remains **partially authored and unverified** because corrections, configuration and full CI/browser acceptance are missing; SEC/TEN release gates unchanged.
+
+
 ## Phase 6 attendance mutation candidate — ATT-REQ-001 (unverified)
 
 - Data: `AttendanceRegister`, `AttendanceEntry`, `AttendanceEvent`, composite school/student/enrollment/class/session FKs and SQL append-only audit/decision constraints in `20261012180000_attendance_register_ledger` (migration **authored, not run**).
