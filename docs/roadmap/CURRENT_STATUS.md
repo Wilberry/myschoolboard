@@ -4,6 +4,10 @@
 
 The project is no longer documentation-only. A verified local Phase 1 foundation has been implemented in the working tree and validated against the repository’s auth, tenancy, migration, and build workflow. The implementation remains local-only and is not a production deployment.
 
+## D-020 teacher-assignment administration read implementation (pending local verification)
+
+The new `feature/assignment-admin-read-api` branch adds an authenticated list/detail teacher-assignment administration API using the D-020/D-023 conservative `school:configure` reader permission. Each final assignment SQL query rechecks active school, membership, authenticated actor and role. List results use selected fields with a 50-record cap and tenant-validated cursor; reads are non-cacheable, generic on denial/error, and never return audit events. Eleven new disposable-PostgreSQL integration cases and a revised mutation-route negative-export check were authored. **No full CI-equivalent database test, lint, typecheck, build, or audit run has been performed on the changed branch.** New code remains an unmerged draft and does not complete TEN-REQ-001, SEC-REQ-001 or TCH-REQ-001.
+
 ## Current evidence
 
 - Published development checkpoint: `checkpoint/phase1-tenant-safe-foundation`; `main` remains unchanged

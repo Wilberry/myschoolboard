@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-12 — D-020 school-scoped assignment administration reads (unverified)
+
+- Implemented draft `GET` list/detail handlers for teacher-assignment administration with `school:configure` membership checks and **final-query** active school/role revalidation; cross-school identifiers/cursors remain concealed.
+- Added limited-field, non-cacheable read responses and 50-record cursor pagination; no audit-event read route or physical deletion was exposed.
+- Authored eleven database-backed integration cases and reconciled the mutation-route export regression test for the added collection GET.
+- No schema migration, production auth-policy expansion, CI workflow adjustment, merge or deployment. Local database tests and complete CI-equivalent verification are **pending** under the owner's agreed local-run process.
+
 ## 2026-10-12 — Standing roadmap-led development governance (documentation only)
 
 - The Project Owner authorized D-023 and [Standing Development Mandate](docs/project/STANDING_DEVELOPMENT_MANDATE.md) to remove per-feature/per-branch approval loops for routine work already specified in the charter, requirements, and roadmap.

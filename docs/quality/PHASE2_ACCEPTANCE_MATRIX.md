@@ -19,6 +19,12 @@ Evidence labels: **authored** means source or test is present but unexecuted on 
 | P2-09 Immutable operational security audit | SEC-REQ-001 | Assignment event triggers and tenant-aware service tests; school denial diagnostics | Confirm immutable event integrity/retention/access controls for in-scope actions; distinguish diagnostic logs from protected audit records | Partial assignment audit only; general security audit blocked |
 | P2-10 Pipeline and dependency security | SEC-REQ-001, OPS-REQ-001 | `.github/workflows/ci.yml`, `scripts/verify-local.mjs`, [runbook](LOCAL_CI_RUNBOOK.md) | Run same workflow command sequence locally, on disposable DB, recording exact results; `npm audit --audit-level=high` must pass without exception/bypass | **Blocked:** 8 high audit findings; hosted runners billing-blocked |
 
+## Additional teacher-assignment administrator read acceptance gate (authored)
+
+| Gate | Requirement | Reviewable source/test | Pass evidence needed | Status |
+| --- | --- | --- | --- | --- |
+| P2-11 Teacher assignment administration read isolation | TCH-REQ-001, TEN-REQ-001, SEC-REQ-001 | `src/modules/teacher-assignments/read-service.ts`; `read-http.ts`; `reads.integration.test.ts` | Real Better Auth + disposable PostgreSQL tests confirm school-admin-only reads, final-query tenant membership, minimized fields, bounded same-tenant pagination, no-cache, error concealment, revoked sessions/roles and no mutation/audit writes. Verify actual Next HTTP transport separately. | Authored; new tests and full local CI pending |
+
 ## New tenant-scope validation in this development follow-up
 
 `ScopeGrant.scopeId` is not a database foreign key to a class or subject and a `verified` flag by itself cannot establish a tenant boundary. `resolveSchoolPrincipal` now filters CLASS and SUBJECT grants against **active** class/subject records owned by the requested school. Query only IDs from the server-derived active school membership, never a client-supplied membership or tenant identifier. Added integration cases intentionally create verified school-A grants pointing to school-B class/subject IDs and verify those invalid links are removed before the shared policy executes. A separate test deactivates the valid school-A resources and verifies their scoped permissions no longer resolve.

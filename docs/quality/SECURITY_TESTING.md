@@ -44,6 +44,10 @@ Protected school metadata GET and all four teacher-assignment mutation POST hand
 
 The server policy must treat a section, class, or subject `ScopeGrant` with `verified: false` as untrusted and **deny** the corresponding resource-specific academic read. Unit regression cases cover all three scope types with both unverified and verified grants; an otherwise verified grant for another resource also remains denied. Parent-child verification checks and the exact teacher class-subject assignment rule remain unchanged. These cases are authored but not executed on the cumulative branch. The rule is a tightening of least-privilege behavior, not authorization to add scope-grant management routes or broaden school access. Review existing data before migration/release to identify any workflows relying on unverified grants.
 
+## D-020 assignment-administration reader isolation (pending local verification)
+
+The new list/detail GET handlers permit only Better Auth sessions with active same-school `school:configure`, and the **final** assignment query repeats the reader's active membership and school role, not just the earlier principal check. The list caps responses at 50, verifies cursor ownership before pagination, denies forged/missing/cross-school cursors identically, and rejects unexpected filters. Detail reads conceal foreign/missing IDs. Responses return only minimum assignment identifiers/status/time, include private/no-store, and never disclose users or audit events. Eleven new direct-handler/database integration cases cover positive admin/Super Admin reads, academic-only/teacher/platform/other-school denial, inactive school/membership, revocation, pagination, missing/cross-tenant identifiers, malformed input, final-query predicate, and logger/DB failure. The old negative export test was updated to allow only the new intended GET while retaining no DELETE handlers. **These tests are authored but unexecuted**; real Next HTTP/browser tests and the full CI-equivalent run remain pending.
+
 ## Requirement
 
 Security tests must be executed before release and must continue as part of regression checks.
