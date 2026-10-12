@@ -1,5 +1,12 @@
 # Requirements Traceability Matrix
 
+## LES-REQ-001 released student identity/class/term projection (authored; UNVERIFIED)
+
+- `StudentIdentityLinkEvent` + additive `20261012231000_student_identity_links` SQL: latest LINKED/REVOKED account-to-school-student mapping, exact same-school STUDENT membership/StudentRecord FKs, authorized School Admin/Super Admin verification and immutable actor history; no automatic identity inference.
+- `student-links.ts`, `student-release-read.ts`, GET `released-lessons`, admin identity POST and private student/admin pages: final content query requires authenticated exact LINKED actor, active pupil enrollment class/session/term, approved immutable revision and RELEASED without withdrawal.
+- T-LES-001 / synthetic `review.integration.test.ts` extended with no-link/foreign/wrong role/approved-only/withdrawn/enrollment-ended/revoked/forged SQL cases (**AUTHORED, NOT EXECUTED**). Live identity proof/consent, scheme planning, migration/tests/browser/CI remain pending. LES-REQ-001 and Phase 6 NOT COMPLETE.
+
+
 ## LES-REQ-001 release workflow candidate (authored, not executed)
 
 `LessonReleaseEvent` immutable schema and `20261012230000_lesson_approved_release` additive SQL actor/scope/approval guards, `lesson-notes/release-service.ts`, release-read, private reviewer GET/POST routes and server-gated release page add separate approved-revision release and withdrawal. No user obtains learner content on approval alone; no student/guardian API is exposed. `review.integration.test.ts` adds synthetic wrong-role/stage, old revision, duplicate, withdrawal and tamper cases (**AUTHORED, NOT EXECUTED**). Actual verified student identity/enrollment visibility, browser tests and full CI remain open. LES-REQ-001 NOT COMPLETE.

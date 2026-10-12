@@ -127,3 +127,10 @@
 - Status: Unverified additive release design.
 - LessonNote APPROVED and corresponding immutable APPROVED LessonNoteEvent are prerequisites, never substitutes, for an immutable release event. A school-owned LessonReleaseEvent records RELEASED or WITHDRAWN with exact note/revision, actor user/membership, reason/time. The service transaction and SQL insert trigger both enforce current active assignment, term/session, class/section and reviewer membership with exact verified SECTION grant, HM PRIMARY or Principal SECONDARY. A unique event key and row locks block duplicate release/withdrawal. No student delivery without independently verified identity and enrollment. No historical LessonNoteRevision is updated. Local PostgreSQL, CI and browser verification mandatory.
 
+
+## ADR-020: Deny-by-default released lesson visibility via verified pupil identity
+
+- Status: Author-only development design, no executed migration/CI.
+- Use append-only StudentIdentityLinkEvent school/member/pupil/actor audit. SQL actor verifier is active School Admin/Super Admin, subject is active same-school STUDENT membership and enrollment identity is actual StudentRecord; latest LINKED event is required to view, REVOKED immediately denies. Concurrent link changes serialize on School row lock. No mutable association or guessed email/admission mapping.
+- Release content SELECT repeats server session user, exact link and active enrolled student/class/session plus current lesson class/term, teacher assignment, immutable APPROVED revision, RELEASED and not WITHDRAWN markers inside the final SQL projection; unrelated actors yield zero content. No public URL, exports or parent read. A two-step minimal authorization query returns concealed 404 for unlinked users; every sensitive content query independently rechecks all relationships. Operator-authorized live identity attestation and account lifecycle remain unresolved production gates.
+

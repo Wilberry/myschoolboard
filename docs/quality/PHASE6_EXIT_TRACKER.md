@@ -12,11 +12,11 @@ Phase 6 (Attendance and lesson planning) covers ATT-REQ-001 and LES-REQ-001. Fea
 | ATT explicitly configured teaching/holiday days | New #46 candidate | Additive per-date non-teaching school-admin revision, SQL guard, UI, synthetic tests authored; none executed |
 | LES teacher authoring/immutable revisions | Earlier unmerged cumulative lesson notes | Complete integration/browser/DB verification outstanding |
 | LES HM/Principal review | Earlier unmerged cumulative section review | Complete integration/browser/DB verification outstanding |
-| LES approved note release | **Pending development** | No verified release ledger/student delivery yet |
-| LES authorized pupil/class/period viewing | **Blocked pending explicit verified student identity link** | Never derive student identity from matching name, admission number, email or child grant alone |
+| LES approved note release | #47 immutable approved-revision release and withdrawal ledger, exact reviewer UI/API | Tests/migration **authored, unexecuted** |
+| LES authorized pupil/class/period viewing | #48 explicit school-admin attested and revocable student account link + exact active enrollment/released note reader and private STUDENT page | Authored only; production identity proof/consent policy and executed security tests outstanding |
 | Phase 6 quality gate | Full unchanged local CI-equivalent, audit and real HTTP/browser verification | GitHub Actions blocked by billing; no disposable PostgreSQL supplied to this GitHub-only execution context |
 
 **Phase 6 status: IN DEVELOPMENT; NOT COMPLETE; NOT RELEASE-READY.** No production action, live data, merge, migration application or test-result fabrication.
 
 ## Next safe implementation
-Complete controlled lesson-note release metadata and identity-bound, class/period verified read model if strict server-side student identity linkage is provable; otherwise deny student reads until linkage is explicitly implemented and validated. Author synthetic tests; retain local database checkpoint.
+Review and validate synthetic lesson release + verified student link implementation, then complete schemes-of-work planning/version/approval/release and the full Phase 6 disposable-database local CI-equivalent checkpoint. Student content is denied without explicit school-admin-attested current LINKED event and active exact enrollment.

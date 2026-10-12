@@ -1,5 +1,12 @@
 # Decision Log
 
+## D-034: Explicit student identity verification before approved lesson disclosure (development default)
+
+- Status: Synthetic-development authorization only, unverified. Live account identity attestation/consent is a reserved owner/privacy decision.
+- Decision: NEVER infer a school student's account from matching email, name, admission number, an unverified CHILD grant or generic STUDENT role. Require a separate same-school, school-administrator verified and reasoned immutable LINKED event between a current STUDENT membership and exact StudentRecord, with REVOKED history. PostgreSQL checks role/tenant/actor, next event sequence and one current membership per pupil. Latest link plus ACTIVE exact StudentEnrollment(classId,sessionId) and ACTIVE academic period is required in final content query. Lesson note must have APPROVED event and independent RELEASED event for exact revision, and no WITHDRAWN event. No guardian or cross-school read.
+- Next: disposable-DB synthetic tests, browser accessibility, authenticated live identity/proofing design and approval, schemes of work, mandatory CI gate. See ADR-020.
+
+
 ## D-033: Explicit lesson release distinct from approval (development default)
 
 - Status: Authored, not executed or released.
