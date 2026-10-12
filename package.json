@@ -11,7 +11,7 @@
     "format": "prettier --write app src prisma scripts *.ts *.mjs *.json *.yml",
     "format:check": "prettier --check app src prisma scripts *.ts *.mjs *.json *.yml",
     "typecheck": "tsc --noEmit",
-    "test": "node --test scripts/attendance-ledger-guard.test.mjs scripts/phase6-identity-release-guard.test.mjs && vitest run",
+    "test": "node --test scripts/attendance-ledger-guard.test.mjs scripts/phase6-identity-release-guard.test.mjs scripts/phase7-question-bank-guard.test.mjs && vitest run",
     "test:watch": "vitest",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
@@ -20,7 +20,7 @@
     "db:reset": "tsx scripts/db-reset.ts",
     "verify:local": "node scripts/verify-local.mjs",
     "verify:local:preflight": "node scripts/verify-local.mjs --preflight",
-    "verify:local:guards": "node --test scripts/verify-local.test.mjs scripts/attendance-ledger-guard.test.mjs scripts/phase6-identity-release-guard.test.mjs"
+    "verify:local:guards": "node --test scripts/verify-local.test.mjs scripts/attendance-ledger-guard.test.mjs scripts/phase6-identity-release-guard.test.mjs scripts/phase7-question-bank-guard.test.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
