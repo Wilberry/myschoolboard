@@ -14,6 +14,13 @@ test("assessment configurations are immutable DRAFT-ONLY without delivery fields
   assert.doesNotMatch(schema.match(/model AssessmentDraft \{[\s\S]*?\n\}/)?.[0] ?? "", /isPublished|PUBLISHED|releasedAt|attempts\s+AssessmentAttempt/);
   assert.match(migration, /"AssessmentDraft_immutable"/);
   assert.match(migration, /"AssessmentDraftQuestion_immutable"/);
+  assert.match(migration, /"AssessmentDraftSeal_validate"/);
+  assert.match(migration, /"AssessmentDraftSeal_immutable"/);
+  assert.match(migration, /"AssessmentDraftSeal_no_truncate"/);
+  assert.match(migration, /"A sealed assessment draft cannot accept new items"/);
+  assert.match(service, /tx\.assessmentDraftSeal\.create/);
+  assert.match(service, /JOIN "AssessmentDraftSeal" seal/);
+
   assert.match(migration, /"AssessmentDraft_no_truncate"/);
   assert.match(migration, /"AssessmentDraftQuestion_no_truncate"/);
 });
