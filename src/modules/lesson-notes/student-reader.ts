@@ -8,6 +8,9 @@ const validId = (v: string) => Boolean(v && v === v.trim() && v.length <= 128);
 interface PupilLesson {
   id: string;
   topic: string;
+  kind: "LESSON_NOTE" | "SCHEME_OF_WORK";
+  weekStart: number | null;
+  weekEnd: number | null;
   className: string;
   subjectName: string;
   termName: string;
@@ -33,7 +36,7 @@ export async function readPupilReleasedLessons(
     ? Prisma.sql`, revision."objectives", revision."content"`
     : Prisma.empty;
   const rows = await prisma.$queryRaw<PupilLesson[]>(Prisma.sql`
-    SELECT DISTINCT n."id", n."topic", c."name" AS "className",
+    SELECT DISTINCT n."id", n."topic", n."kind", n."weekStart", n."weekEnd", c."name" AS "className",
       subject."name" AS "subjectName", term."name" AS "termName",
       n."currentRevision" AS "revisionNumber" ${projection}
     FROM "School" school
