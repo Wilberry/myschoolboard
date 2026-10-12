@@ -224,3 +224,7 @@
 ## ADR-035: Private approved-only manual gradebook is a derived read, not result publication
 
 - Status: authored/unverified. Final SQL exact teacher/academic enrollment joins a manual component with initial immutable APPROVED mark and latest independently APPROVED correction; pending, returned or absent marks remain explicitly unapproved. No grades published or mutated. Completion requires all components approved and no pending correction. Strict bounded no-key no-export reader. D-049. Phase 8 official reports separate.
+
+## ADR-036: Returned initial marks are recoverable by independently approved correction
+
+- Status: Authored/unverified. Permit an original teacher to request a changed audited mark after either terminal APPROVED or terminal RETURNED initial academic decision. PostgreSQL still requires exact assignment/enrollment, one pending revision and independent current verified-section reviewer approval. Effective grade stays null for returned initial until a correction is approved; immutable original RETURNED decision persists. No official grade publication. D-050.
