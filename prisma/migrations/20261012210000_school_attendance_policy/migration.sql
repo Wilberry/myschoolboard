@@ -90,6 +90,16 @@ BEGIN
     RETURN NEW;
   END IF;
 
+  -- Serialize policy edits and direct attendance/correction writes on the
+  -- existing school lock, including writers that bypass the Next API.
+  PERFORM 1 FROM "School" school
+    WHERE school."id" = NEW."schoolId" AND school."isActive" = true
+    FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Active school required for attendance calendar checks'
+      USING ERRCODE = '23503';
+  END IF;
+
   SELECT policy."timeZone", policy."submissionBackdateDays",
          policy."correctionWindowDays"
     INTO zone_name, submit_days, correction_days
@@ -113,14 +123,7 @@ BEGIN
         USING ERRCODE = '23514';
     END IF;
   ELSE
-    SELECT r."attendanceDate" INTO record_date
-      FROM "AttendanceCorrectionRequest" correction
-      JOIN "AttendanceRegister" r
-        ON r."id" = correction."registerId"
-        AND r."schoolId" = correction."schoolId"
-      WHERE correction."id" = NEW."id"
-        AND correction."schoolId" = NEW."schoolId";
-    -- BEFORE INSERT: NEW has not been persisted; use its referenced register.
+    -- BEFORE INSERT: reference the existing register, not the new request row.
     SELECT r."attendanceDate" INTO record_date
       FROM "AttendanceRegister" r
       WHERE r."id" = NEW."registerId"
