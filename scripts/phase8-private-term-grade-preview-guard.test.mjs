@@ -42,7 +42,7 @@ test("all subjects use an existing atomic audited SQL reader; partial failures r
   assert.ok(service.includes("for (const item of selected)"));
   assert.ok(service.includes('"read_private_owner_one_pupil_grade_preview"('));
   assert.ok(service.includes("${randomUUID()},${reason}"));
-  assert.ok(service.includes("result.audit?.status"));
+  assert.ok(service.includes("result?.audit?.status"));
   assert.ok(service.includes('throw new AssessmentError("CONFLICT")'));
   assert.ok(service.includes("subjects.length !== expected.length"));
   assert.ok(service.includes(
