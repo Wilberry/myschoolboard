@@ -20,6 +20,11 @@ import { POST as MANUAL_REVIEW_DECISION } from "@/app/api/schools/[schoolId]/ass
 import { GET as REVIEWED_MANUAL_GRADEBOOK_GET } from "@/app/api/schools/[schoolId]/assessment-reviewed-manual-gradebook/route";
 import { GET as RESULT_PREP_GET } from "@/app/api/schools/[schoolId]/result-preparation/route";
 import {
+  GET as RESULT_EVIDENCE_GET, POST as RESULT_EVIDENCE_POST,
+} from "@/app/api/schools/[schoolId]/result-sheet-evidence/route";
+import { GET as RESULT_REVIEW_QUEUE } from "@/app/api/schools/[schoolId]/result-sheet-reviews/route";
+import { POST as RESULT_REVIEW_POST } from "@/app/api/schools/[schoolId]/result-sheet-reviews/[evidenceId]/decision/route";
+import {
   GET as ADOPTIONS_GET, POST as ADOPTIONS_POST,
 } from "@/app/api/schools/[schoolId]/result-grading-adoptions/route";
 import {
@@ -1219,6 +1224,25 @@ describe("Phase 7 exact-assignment private question bank", () => {
       (x: { proposalId: string }) => x.proposalId === recorded.id,
     )).toMatchObject({ originalPoints: 17, approvedPoints: 16,
       latestRevision: 3, pending: false });
+    // Phase 8 requires a separately adopted school policy, immutable source
+    // manifest and independent section review. The exam-only adoption above
+    // cannot satisfy the absence of EXAM evidence in this synthetic case.
+    const createFrozen = (actor: string, input: unknown, id = schoolA) =>
+      RESULT_EVIDENCE_POST(req(actor, id, "POST", input), {
+        params: Promise.resolve({ schoolId: id }),
+      });
+    const freezeInput = {
+      assignmentId, termId, reason: "Synthetic immutable result source preparation",
+    };
+    for (const actor of ["student", "admin", "head", "principal", "super", "other"]) {
+      expect((await createFrozen(actor, freezeInput)).status).toBe(404);
+    }
+    expect((await createFrozen("teacher", freezeInput, schoolB)).status).toBe(404);
+    expect((await createFrozen("teacher", {
+      ...freezeInput, sourceManifest: [{ studentId: pupilId, earnedPoints: 100 }],
+    })).status).toBe(400);
+    const frozenUnderExamOnly = await createFrozen("teacher", freezeInput);
+    expect(frozenUnderExamOnly.status).not.toBe(201);
     const finalGradebookResponse = await reviewedGradebook("teacher");
     expect(finalGradebookResponse.status).toBe(200);
     expect(finalGradebookResponse.headers.get("cache-control")).toBe("private, no-store");
