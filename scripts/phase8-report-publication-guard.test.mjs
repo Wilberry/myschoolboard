@@ -14,6 +14,7 @@ const acknowledgmentRoute = read("../app/api/schools/[schoolId]/published-report
 const tests = read("../src/modules/assessments/questions.integration.test.ts");
 const ownerUI = read("../src/components/report-release-workspace.tsx");
 const recipientUI = read("../src/components/published-report-workspace.tsx");
+const home = read("../app/page.tsx");
 
 test("policy, immutable independent release, and per-child acknowledgment have three exact-school ledgers", () => {
   for (const mode of ["SCHOOL_ONLY","STUDENT_ONLY","GUARDIAN_ONLY","GUARDIAN_FIRST_ACK"]) {
@@ -95,6 +96,11 @@ test("owner release is confirmation-gated and report readers are independently t
   assert.ok(http.includes("noindex, noarchive, nosnippet"));
   assert.ok(ownerUI.includes("I have inspected the frozen grades"));
   assert.ok(recipientUI.includes("window.print()"));
+  // Academic school-detail navigation deliberately excludes guardians/pupils.
+  // Recipient portal must be reachable separately without an academic:read grant.
+  assert.ok(home.includes('role === "STUDENT" || role === "PARENT"'));
+  assert.ok(home.includes('/published-reports'));
+
 });
 
 test("authenticated tests cover visibility revision changes, replay, role, revocation, parent's explicit receipt", () => {
