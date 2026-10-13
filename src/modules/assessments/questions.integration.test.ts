@@ -2206,6 +2206,13 @@ describe("Phase 7 exact-assignment private question bank", () => {
       })));
     }
     await expect(prisma.$queryRaw`
+      SELECT "build_private_official_report_cards"(
+        ${"[]"}::jsonb, ${null}::integer,
+        ${7}::integer, ${20}::integer, ${30}::integer, ${50}::integer,
+        ${"POOLED_CATEGORY_POINTS"}, ${"HALF_UP"},
+        ${JSON.stringify(scale.bands)}::jsonb, ${scale.decimalPlaces}::integer,
+        ${scale.roundingMode}, ${scale.bandBasis})`).rejects.toThrow();
+    await expect(prisma.$queryRaw`
       SELECT "round_report_fraction"(${1}::numeric, ${0}::numeric,
         ${"HALF_UP"})`).rejects.toThrow();
     await expect(prisma.$queryRaw`
