@@ -226,7 +226,7 @@ $$ LANGUAGE plpgsql;
 CREATE FUNCTION "assert_result_sheet_weighted_categories"(
  p_manifest JSONB, p_quiz_weight INTEGER, p_test_weight INTEGER,
  p_exam_weight INTEGER
-) RETURNS BOOLEAN AS $
+) RETURNS BOOLEAN AS $$
 BEGIN
  IF EXISTS (
    SELECT 1 FROM jsonb_array_elements(p_manifest) AS student(value)
@@ -249,9 +249,9 @@ BEGIN
  END IF;
  RETURN true;
 END;
-$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
-CREATE FUNCTION "validate_result_sheet_evidence"() RETURNS trigger AS $
+CREATE FUNCTION "validate_result_sheet_evidence"() RETURNS trigger AS $$
 DECLARE current_adoption RECORD;
 DECLARE previous RECORD;
 DECLARE next_revision INT;
