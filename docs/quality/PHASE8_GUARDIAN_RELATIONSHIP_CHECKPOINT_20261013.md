@@ -25,3 +25,8 @@
 4. No sensitive data deployment, report release, live access or merge until original Phase 6–8 and Phase 12 exit criteria are met.
 
 **Status: implementation candidate only / security and delivery exit BLOCKED.**
+
+## Additional static integrity evidence
+
+- After re-fetch: 64 Prisma models identified with **no duplicate model names**; both new guardian models have no duplicate field names under the basic source scanner. New migration uses two paired `$$` PL/pgSQL bodies. These are **not** a substitute for `prisma validate` or PostgreSQL parser/trigger execution.
+- Final source-guard replay **3/3 passed**, and **three in-memory negative mutations**—removing active PARENT condition, replacing administrator's exact user binding, and removing terminal revocation immutability trigger—each caused the source guard to fail. The new guard remains registered in both unchanged cumulative test chains.
