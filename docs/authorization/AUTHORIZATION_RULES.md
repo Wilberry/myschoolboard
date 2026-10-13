@@ -1,5 +1,9 @@
 # Authorization Rules
 
+## Phase 8 final owner approval evidence (AUTHORED; NOT VERIFIED)
+
+POST `/api/schools/[schoolId]/result-final-publication-decisions` accepts only `evidenceId` and a 5–500 character audit reason, with authenticated active exact same-school `SCHOOL_SUPER_ADMIN` membership determined server-side, SERIALIZABLE transaction and active school row lock. A PostgreSQL INSERT trigger independently invokes `assert_result_publication_readiness`, thereby rechecking current independent HM/Principal verified actual SECTION approval, latest evidence/policy and byte-equivalent complete assessment sources, and sets trusted context/version/ordinal/time. Other roles and schools concealed. GET is owner-only metadata history with repeated SQL owner joins, `Cache-Control: private, no-store`, 100 record limit; no pupil data, grade/export, student/guardian access or report release. Immovable evidence can only be superseded with a new audited source/approval version. Status is `APPROVED_AWAITING_RELEASE`, NOT public. D-056/ADR-042; exit BLOCKED.
+
 ## Phase 8 SQL final publication readiness authorization (AUTHORED; NOT VERIFIED)
 
 A **future final owner publication transaction** must repeat `assert_result_publication_readiness` under school lock and SERIALIZABLE isolation. The SQL-only function requires exact active same-school `SCHOOL_SUPER_ADMIN` user and membership, original exact active teacher and academic scope, independently APPROVED result evidence by current verified PRIMARY Head of Section or SECONDARY Principal distinct from the teacher, latest school-adopted grading policy and immutable evidence revision, unchanged currently rebuilt pupil source, and positive-weight per-pupil assessment completeness. A previous private owner preflight GET or direct predicate success alone is never a release decision. No API, publication event, official grade, pupil/guardian visibility or production permission is implemented. D-055/ADR-041.
