@@ -1,5 +1,11 @@
 # Decision Log
 
+## D-061: School Super Admin confidential grade preview (no recipient release)
+
+- **Status:** authored / not yet runtime verified (2026-10-13).
+- **Decision:** permit only the current active same-school School Super Admin to explicitly inspect individual pupil grades already frozen in a `PrivateOfficialReportComposition`; this follows the School Super Admin's existing academic-data read scope and does not broaden school roles or student/guardian permissions. Enforce role, user, active membership, school and exact composition in the final SQL query. Join current same-school StudentRecord solely for identifying labels; return allowlisted calculated grade fields only. Reject partial/invalid/duplicate rows, minimize caching, and show an obvious `NOT RELEASED` label. No public release, PDF/export, recipient route, regrading or live pupil linkage inferred. Full cumulative acceptance gate remains blocked. See ADR-047.
+
+
 ## D-060: Freeze internal official report composition, not recipient publication
 
 - **Status: authored, not accepted.** A current exact school owner may request one PRIVATE immutable official-grade composition for an already frozen, final-approved report-card source packet, explicitly choosing the school's **current** adopted aggregation revision and grading-scale revision. PostgreSQL independently locks the school, reruns complete current result readiness, verifies each selected exact school policy revision, independently calculates each pupil's score and grade band from frozen CBT/independently reviewed written points using school-adopted weights, then derives immutable evidence context, policy IDs/versions, count, timestamp and internal non-released status. No client scores, pupils or grade payload can be submitted. One composition per frozen packet prevents retroactive overwrites; academic corrections require fresh teacher/reviewer/owner approvals, new source packet and a new composition. Composed pupil-level grade evidence is **private JSONB, never returned by owner API**, and is not public result publication, report-card download or guardian/student visibility. Full PostgreSQL/CI/security acceptance and independently audited recipient-release decisions remain mandatory. ADR-046.
