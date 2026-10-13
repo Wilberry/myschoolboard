@@ -23,6 +23,13 @@ enum MembershipRole {
   STUDENT
 }
 
+enum ReportVisibilityMode {
+  SCHOOL_ONLY
+  STUDENT_ONLY
+  GUARDIAN_ONLY
+  GUARDIAN_FIRST_ACK
+}
+
 enum ScopeType {
   SECTION
   CLASS
@@ -286,6 +293,9 @@ model School {
   reportGradeScaleRevisions ReportGradeScaleRevision[]
   reportAggregationRuleRevisions ReportAggregationRuleRevision[]
   privateOfficialReportCompositions PrivateOfficialReportComposition[]
+  reportVisibilityPolicies ReportVisibilityPolicyRevision[]
+  reportRecipientReleases ReportRecipientRelease[]
+  reportGuardianAcknowledgments ReportGuardianAcknowledgment[]
 }
 
 model Membership {
@@ -341,6 +351,9 @@ model Membership {
   reportGradeScaleRevisions ReportGradeScaleRevision[]
   reportAggregationRuleRevisions ReportAggregationRuleRevision[]
   privateOfficialReportCompositions PrivateOfficialReportComposition[]
+  reportVisibilityAdoptions ReportVisibilityPolicyRevision[]
+  reportRecipientReleaseActions ReportRecipientRelease[]
+  reportGuardianAcknowledgments ReportGuardianAcknowledgment[]
 }
 
 model ScopeGrant {
@@ -756,6 +769,7 @@ model StudentRecord {
   @@index([schoolId, status])
   accountLink StudentAccountLink?
   guardianStudentLinks GuardianStudentLink[]
+  reportGuardianAcknowledgments ReportGuardianAcknowledgment[]
   assessmentAttempts AssessmentAttempt[]
   assessmentManualMarkProposals AssessmentManualMarkProposal[]
 }
@@ -1039,6 +1053,7 @@ model GuardianStudentLink {
   @@unique([schoolId, id])
   @@unique([schoolId, studentId, guardianMembershipId])
   @@index([schoolId, guardianMembershipId, createdAt])
+  reportAcknowledgments ReportGuardianAcknowledgment[]
 }
 
 /** A guardian link revocation is terminal, immutable and school-owned. */
@@ -1732,4 +1747,78 @@ model PrivateOfficialReportComposition {
   @@unique([schoolId, id])
   @@unique([schoolId, sourcePacketId])
   @@index([schoolId, composedAt])
+  recipientReleases ReportRecipientRelease[]
+}
+
+
+/** Explicit owner-adopted four-mode tenant policy. No revision => deny all. */
+model ReportVisibilityPolicyRevision {
+  id String @id
+  schoolId String
+  version Int @default(1)
+  mode ReportVisibilityMode
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  adoptedAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction)
+  releases ReportRecipientRelease[]
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, version])
+}
+
+/** Independently approved immutable release of one frozen subject composition.
+ * New ordinal per exact academic context supersedes older visible versions.
+ */
+model ReportRecipientRelease {
+  id String @id
+  schoolId String
+  compositionId String
+  visibilityPolicyId String
+  visibilityPolicyVersion Int @default(1)
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  releaseOrdinal Int @default(1)
+  studentCount Int @default(0)
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  releasedAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  composition PrivateOfficialReportComposition @relation(fields: [schoolId, compositionId], references: [schoolId, id], onDelete: NoAction)
+  visibilityPolicy ReportVisibilityPolicyRevision @relation(fields: [schoolId, visibilityPolicyId], references: [schoolId, id], onDelete: NoAction)
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction)
+  acknowledgments ReportGuardianAcknowledgment[]
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, compositionId, visibilityPolicyId])
+  @@unique([schoolId, sessionId, termId, classId, subjectId, releaseOrdinal])
+  @@index([schoolId, sessionId, termId, classId, releasedAt])
+}
+
+/** A guardian's explicit receipt of one exact released version for one child.
+ * This is an audit fact, never a parent->child permission grant by itself.
+ */
+model ReportGuardianAcknowledgment {
+  id String @id
+  schoolId String
+  releaseId String
+  studentId String
+  guardianLinkId String
+  guardianMembershipId String
+  actorUserId String
+  acknowledgedAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  release ReportRecipientRelease @relation(fields: [schoolId, releaseId], references: [schoolId, id], onDelete: NoAction)
+  student StudentRecord @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction)
+  guardianLink GuardianStudentLink @relation(fields: [schoolId, guardianLinkId], references: [schoolId, id], onDelete: NoAction)
+  guardian Membership @relation(fields: [schoolId, guardianMembershipId], references: [schoolId, id], onDelete: NoAction)
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, releaseId, studentId, guardianMembershipId])
+  @@index([schoolId, studentId, acknowledgedAt])
 }
