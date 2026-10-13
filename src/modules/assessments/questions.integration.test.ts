@@ -30,6 +30,7 @@ import { GET as REPORT_SCALE_GET, POST as REPORT_SCALE_POST } from "@/app/api/sc
 import { GET as AGGREGATION_RULE_GET, POST as AGGREGATION_RULE_POST } from "@/app/api/schools/[schoolId]/report-aggregation-rules/route";
 import { GET as COMPOSITION_GET, POST as COMPOSITION_POST } from "@/app/api/schools/[schoolId]/private-official-report-compositions/route";
 import { GET as VISIBILITY_POLICY_GET, POST as VISIBILITY_POLICY_POST } from "@/app/api/schools/[schoolId]/report-visibility-policies/route";
+import { GET as RELEASE_PREFLIGHT_GET, POST as RELEASE_PREFLIGHT_POST } from "@/app/api/schools/[schoolId]/report-release-preflights/route";
 import { simulatePrivateReportComposition, type PrivatePacketStudent } from "@/src/modules/results/report-composition-simulation";
 import { POST as RESULT_REVIEW_POST } from "@/app/api/schools/[schoolId]/result-sheet-reviews/[evidenceId]/decision/route";
 import {
@@ -2333,6 +2334,119 @@ describe("Phase 7 exact-assignment private question bank", () => {
         where: { id: members.super }, data: { isActive: true },
       });
     }
+  });
+
+  it("records private report release readiness without publishing or granting any recipient", async () => {
+    const record = (actor: string, input: unknown, targetSchool = schoolA) =>
+      RELEASE_PREFLIGHT_POST(req(actor, targetSchool, "POST", input), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const history = (actor: string, targetSchool = schoolA) =>
+      RELEASE_PREFLIGHT_GET(req(actor, targetSchool, "GET"), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const composition = await prisma.privateOfficialReportComposition.findFirstOrThrow({
+      where: { schoolId: schoolA }, orderBy: { composedAt: "desc" },
+    });
+    const currentVisibility = await prisma.reportVisibilityPolicyRevision.findFirstOrThrow({
+      where: { schoolId: schoolA }, orderBy: { version: "desc" },
+    });
+    expect(currentVisibility.recipientMode).not.toBe("ASSESSMENT_ONLY");
+    const payload = {
+      compositionId: composition.id,
+      visibilityPolicyId: currentVisibility.id,
+      reason: "Synthetic private release audit of school academic readiness",
+    };
+    for (const actor of ["teacher", "student", "head", "principal", "admin", "other"]) {
+      expect((await record(actor, payload)).status).toBe(404);
+      expect((await history(actor)).status).toBe(404);
+    }
+    expect((await record("super", payload, schoolB)).status).toBe(404);
+    expect((await history("super", schoolB)).status).toBe(404);
+    for (const forged of [
+      { ...payload, actorUserId: users.super },
+      { ...payload, studentId: pupilId },
+      { ...payload, isPublished: true },
+      { ...payload, recipientMode: "GUARDIAN_AFTER_RELEASE" },
+      { ...payload, gradePercent: 100 },
+      { ...payload, reportStatus: "PUBLISHED" },
+      { ...payload, reason: "x" },
+    ]) expect((await record("super", forged)).status).toBe(400);
+
+    const olderVisibility = await prisma.reportVisibilityPolicyRevision.findFirst({
+      where: { schoolId: schoolA, version: { lt: currentVisibility.version } },
+      orderBy: { version: "asc" },
+    });
+    if (olderVisibility) {
+      expect((await record("super", {
+        ...payload, visibilityPolicyId: olderVisibility.id,
+      })).status).toBe(409);
+    }
+    const reviewerScope = await prisma.scopeGrant.findFirstOrThrow({
+      where: { membershipId: members.head, type: "SECTION", scopeId: sectionId },
+    });
+    await prisma.scopeGrant.update({
+      where: { id: reviewerScope.id }, data: { verified: false },
+    });
+    try {
+      expect((await record("super", payload)).status).toBe(409);
+    } finally {
+      await prisma.scopeGrant.update({
+        where: { id: reviewerScope.id }, data: { verified: true },
+      });
+    }
+
+    const result = await record("super", payload);
+    expect(result.status).toBe(201);
+    expect(result.headers.get("cache-control")).toBe("private, no-store");
+    const response = await result.json();
+    expect(response.status).toBe("INTERNAL_PREFLIGHT_ONLY_NOT_AUTHORIZED_OR_RELEASED");
+    expect(response.preflight).toMatchObject({
+      compositionId: composition.id,
+      visibilityPolicyId: currentVisibility.id,
+      visibilityPolicyVersion: currentVisibility.version,
+      recipientMode: currentVisibility.recipientMode,
+      evidenceId: composition.evidenceId,
+      sourcePacketId: composition.sourcePacketId,
+      finalDecisionId: composition.finalDecisionId,
+      studentCount: composition.studentCount,
+      status: "INTERNAL_RELEASE_PREFLIGHT_ONLY_NOT_AUTHORIZATION",
+    });
+    expect((await record("super", payload)).status).toBe(409);
+    const saved = await prisma.resultReleasePreflightAttestation.findFirstOrThrow({
+      where: { schoolId: schoolA, compositionId: composition.id },
+    });
+    expect(saved.status).toBe("INTERNAL_RELEASE_PREFLIGHT_ONLY_NOT_AUTHORIZATION");
+    const ownerHistory = await history("super");
+    expect(ownerHistory.status).toBe(200);
+    expect(ownerHistory.headers.get("cache-control")).toBe("private, no-store");
+    const metadata = JSON.stringify(await ownerHistory.json());
+    for (const secret of [
+      pupilId, "composedStudentCards", "studentSourceCards", "rawPercentBps",
+      "earnedPoints", "effectivePoints", "gradeCode",
+    ]) expect(metadata).not.toContain(secret);
+    await expect(prisma.resultReleasePreflightAttestation.update({
+      where: { id: saved.id }, data: { status: "PUBLISHED" },
+    })).rejects.toThrow();
+    await expect(prisma.resultReleasePreflightAttestation.delete({
+      where: { id: saved.id },
+    })).rejects.toThrow();
+    await expect(prisma.$executeRaw`TRUNCATE "ResultReleasePreflightAttestation"`)
+      .rejects.toThrow();
+    await prisma.membership.update({
+      where: { id: members.super }, data: { isActive: false },
+    });
+    try {
+      expect((await record("super", payload)).status).toBe(404);
+      expect((await history("super")).status).toBe(404);
+    } finally {
+      await prisma.membership.update({
+        where: { id: members.super }, data: { isActive: true },
+      });
+    }
+    expect(await prisma.privateOfficialReportComposition.count({
+      where: { schoolId: schoolA },
+    })).toBeGreaterThan(0);
   });
 
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
