@@ -1390,6 +1390,40 @@ describe("Phase 7 exact-assignment private question bank", () => {
     })).toMatchObject({ action: "RETURNED" });
   });
 
+  it("rejects partial per-pupil coverage even when the class has every adopted category", async () => {
+    // The original class-wide check incorrectly accepted a QUIZ-only pupil and
+    // an EXAM-only pupil for a 50/50 QUIZ/EXAM policy. Exercise actual PG code.
+    const disjoint = JSON.stringify([
+      { studentId: "quiz-only", cbt: [{ kind: "QUIZ" }], manual: [] },
+      { studentId: "exam-only", cbt: [], manual: [{ kind: "EXAM" }] },
+    ]);
+    await expect(prisma.$queryRaw`
+      SELECT "assert_result_sheet_weighted_categories"(
+        ${disjoint}::jsonb, ${50}::integer, ${0}::integer, ${50}::integer)
+        AS "valid"
+    `).rejects.toThrow();
+    const complete = JSON.stringify([
+      { studentId: "pupil-one", cbt: [{ kind: "QUIZ" }], manual: [{ kind: "EXAM" }] },
+      { studentId: "pupil-two", cbt: [{ kind: "EXAM" }], manual: [{ kind: "QUIZ" }] },
+    ]);
+    const passed = await prisma.$queryRaw<Array<{ valid: boolean }>>`
+      SELECT "assert_result_sheet_weighted_categories"(
+        ${complete}::jsonb, ${50}::integer, ${0}::integer, ${50}::integer)
+        AS "valid"
+    `;
+    expect(passed).toEqual([{ valid: true }]);
+    const quizOnly = JSON.stringify([
+      { studentId: "pupil-one", cbt: [{ kind: "QUIZ" }], manual: [] },
+      { studentId: "pupil-two", cbt: [{ kind: "QUIZ" }], manual: [] },
+    ]);
+    const zeroWeighted = await prisma.$queryRaw<Array<{ valid: boolean }>>`
+      SELECT "assert_result_sheet_weighted_categories"(
+        ${quizOnly}::jsonb, ${100}::integer, ${0}::integer, ${0}::integer)
+        AS "valid"
+    `;
+    expect(zeroWeighted).toEqual([{ valid: true }]);
+  });
+
   it("prepares DB-frozen single-subject evidence, independently reviews it and versions later changes", async () => {
     // Dedicated exact subject avoids relying on unrelated CBT attempt state.
     const newSubjectId = "res-review-subject-" + suffix;
