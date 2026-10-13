@@ -284,6 +284,7 @@ model School {
   reportGradeScaleRevisions ReportGradeScaleRevision[]
   reportAggregationRuleRevisions ReportAggregationRuleRevision[]
   privateOfficialReportCompositions PrivateOfficialReportComposition[]
+  reportVisibilityPolicyRevisions ReportVisibilityPolicyRevision[]
 }
 
 model Membership {
@@ -336,6 +337,7 @@ model Membership {
   reportGradeScaleRevisions ReportGradeScaleRevision[]
   reportAggregationRuleRevisions ReportAggregationRuleRevision[]
   privateOfficialReportCompositions PrivateOfficialReportComposition[]
+  reportVisibilityPolicyRevisions ReportVisibilityPolicyRevision[]
 }
 
 model ScopeGrant {
@@ -1686,4 +1688,26 @@ model PrivateOfficialReportComposition {
   @@unique([schoolId, id])
   @@unique([schoolId, sourcePacketId])
   @@index([schoolId, composedAt])
+}
+
+/** School-owned immutable report audience configuration for FUTURE RELEASE ONLY.
+ * Explicit adoption does not publish reports or authorize any read by pupils
+ * or guardians. The recipient release and verified-relationship controls
+ * remain separate, blocked Phase 8 milestones. */
+model ReportVisibilityPolicyRevision {
+  id String @id
+  schoolId String
+  version Int @default(1)
+  recipientMode String @db.VarChar(48)
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  adoptedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ReportVisibilityPolicyRevision_actor_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, version])
+  @@index([schoolId, adoptedAt])
 }
