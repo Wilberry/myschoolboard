@@ -1,5 +1,19 @@
 # Configuration Catalog
 
+## Phase 8 report visibility — four explicit school-selected modes (D-063; development candidate)
+
+**Safe absence:** No `ReportVisibilityPolicyRevision` means no release and no recipient access. Even an adopted policy is **not** a published grade. A School Super Admin must separately record an immutable `ReportRecipientRelease` referencing one explicitly frozen and revalidated official composition. Default deployment switches `PHASE8_REPORT_RELEASE_ENABLED=false` and `PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED=false` deny publication/delivery until cumulative tests and deployment review.
+
+| School-selected mode | Verified student access | Currently linked guardian access | Receipt behavior |
+| --- | --- | --- | --- |
+| `SCHOOL_ONLY` | Never | Never | Internal release ledger only; no recipients |
+| `STUDENT_ONLY` | Yes, with current same-school, active `STUDENT` membership, unrevoked `StudentAccountLink`, exact active enrollment | Never | No guardian receipt |
+| `GUARDIAN_ONLY` | Never | Yes, with current same-school, active `PARENT` membership, unrevoked `GuardianStudentLink`, child's exact active enrollment | No receipt required |
+| `GUARDIAN_FIRST_ACK` | Only **after** at least one **currently valid guardian** records an immutable receipt for **that exact child and released subject version**, and student's own current link/enrollment remains valid | Yes, for the linked child and exact currently published release | Explicit `ReportGuardianAcknowledgment`; no auto-ack on open |
+
+The active revision is **the highest school version**. A new adoption **suspends** all older-policy recipient reads until School Super Admin releases an exact approved composition again under the new version; a release pins that policy and is **never rewritten**. A corrected and independently reapproved result yields a newly composed artifact and higher release ordinal for the same school/session/term/class/subject; only the newest release may be disclosed. Historical evidence and older receipts remain immutable. No universal score bands, national grade thresholds, parental notification consent, public report URLs or cross-tenant relationship inference are implied. These four modes and explicit receipt semantics operationalize Phase 8 P-004 as configurable **school choice**, not a silently imposed parent-first school default. Actual authorization acceptance remains blocked pending disposable Postgres, TypeScript/Next/browser/security-audit verification.
+
+
 ## Attendance school calendar policy (development-only implementation default)
 
 | Setting | Default (no revision) | Scope / editor | Constraints | Audit / enforcement |
@@ -20,7 +34,7 @@ This catalog lists the major configurable policies that must be supported at the
 | Academic session policy | Active session required | Tenant | School Super Admin | Session dates must be valid and non-overlapping | Versioned | Academic structure |
 | Grading scale | School-defined | Tenant | School Super Admin | Must align with result rules and published history | Required for result history | Results |
 | Score weighting | School-defined | Tenant | HM / Principal / School Super Admin | Weight totals must be valid and cannot silently affect historical results | Required | Results, assessment |
-| Student report-card visibility | Assessment-only access | Tenant | School Super Admin | Must be one of four supported values | Versioned | Results, portal |
+| Student report-card visibility | No adopted revision = no release/recipient access | Tenant | School Super Admin | Exactly SCHOOL_ONLY, STUDENT_ONLY, GUARDIAN_ONLY, GUARDIAN_FIRST_ACK; current exact policy must pin release | Immutable revisions | Results, portal |
 | Attendance approval policy | Required for official visibility | Tenant | School Super Admin | Must define who can approve | Versioned | Attendance |
 | Lesson-note release policy | Approved notes only | Tenant | HM / Principal / School Super Admin | Only approved notes may be released | Versioned | Lesson notes |
 | Fee policy and currency | Nigeria default; configurable | Tenant | School Super Admin | Currency and period must be valid | Versioned | Finance |
