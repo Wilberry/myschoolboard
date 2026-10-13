@@ -1,5 +1,10 @@
 # Decision Log
 
+## D-052: School Super Admin separately adopts versioned grading policy before result preparation
+
+- Status: authored/unverified. Grading draft creation is not academic policy adoption, and adoption is not result-sheet review or official report release. Adoption is append-only, exact school/class/subject/session/term, actor and reason. Snapshot evidence later pins one adoption ID. No automatic cross-school defaults or historical rewriting. ADR-038.
+
+
 ## D-051: Begin results with private reconciliation, not automatic grades or publication
 
 - Status: Authored/unverified. Phase 8 starts with a teacher-only, source-reconciled preflight; independently authorized CBT and written-mark sources must agree on each enrolled pupil. Missing marks/academic review and unadopted DRAFT grading rules block result readiness. No invented combined percentages, student report, HM/Principal approval or School Super Admin publication. Future result snapshot, verified section approval, policy adoption and final release require separate versioned immutable design. ADR-037.
