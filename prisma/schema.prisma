@@ -283,6 +283,7 @@ model School {
   resultReportCardSourcePackets ResultReportCardSourcePacket[]
   reportGradeScaleRevisions ReportGradeScaleRevision[]
 
+  reportAggregationRuleRevisions ReportAggregationRuleRevision[]
 }
 
 model Membership {
@@ -334,6 +335,7 @@ model Membership {
   resultReportCardSourcePackets ResultReportCardSourcePacket[]
   reportGradeScaleRevisions ReportGradeScaleRevision[]
 
+  reportAggregationRuleRevisions ReportAggregationRuleRevision[]
 }
 
 model ScopeGrant {
@@ -1613,6 +1615,29 @@ model ReportGradeScaleRevision {
 
   school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ReportGradeScaleRevision_actor_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, version])
+  @@index([schoolId, adoptedAt])
+}
+
+/** School-adopted, immutable assessment-category aggregation semantics.
+ * A report grading scale is a separate version and must be explicitly pinned
+ * when a later official private composition artifact is authored. Neither
+ * adopting this rule nor simulating its math publishes a pupil grade. */
+model ReportAggregationRuleRevision {
+  id String @id
+  schoolId String
+  version Int @default(1)
+  categoryMethod String @db.VarChar(32)
+  precisionMode String @db.VarChar(16)
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  adoptedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ReportAggregationRuleRevision_actor_fkey")
 
   @@unique([schoolId, id])
   @@unique([schoolId, version])
