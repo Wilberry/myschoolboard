@@ -2867,6 +2867,33 @@ describe("Phase 7 exact-assignment private question bank", () => {
     await expect(prisma.$executeRaw`TRUNCATE "ResultPrivateGradePreviewAudit"`)
       .rejects.toThrow();
 
+    const reviewer = await prisma.scopeGrant.findFirstOrThrow({
+      where: { membershipId: members.head, type: "SECTION", scopeId: sectionId },
+    });
+    await prisma.scopeGrant.update({
+      where: { id: reviewer.id }, data: { verified: false },
+    });
+    try {
+      expect((await preview("super", payload)).status).toBe(409);
+    } finally {
+      await prisma.scopeGrant.update({
+        where: { id: reviewer.id }, data: { verified: true },
+      });
+    }
+    await prisma.studentEnrollment.update({
+      where: { id: enrollmentId }, data: { status: "ENDED" },
+    });
+    try {
+      expect((await preview("super", payload)).status).toBe(409);
+    } finally {
+      await prisma.studentEnrollment.update({
+        where: { id: enrollmentId }, data: { status: "ACTIVE" },
+      });
+    }
+    expect(await prisma.resultPrivateGradePreviewAudit.count({
+      where: { schoolId: schoolA, compositionId: composition.id },
+    })).toBe(before + 1);
+
     await prisma.membership.update({
       where: { id: members.super }, data: { isActive: false },
     });
