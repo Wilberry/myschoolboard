@@ -239,7 +239,7 @@ export async function previewPrivateOwnerStudentTerm(
         auditedSubjectCount: subjects.length,
         subjects,
       };
-    }, { isolationLevel: "Serializable" });
+    }, { isolationLevel: "Serializable", maxWait: 5000, timeout: 30000 });
   } catch (error) {
     mapFailure(error);
   }
