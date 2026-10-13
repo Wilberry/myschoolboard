@@ -47,7 +47,7 @@ CREATE FUNCTION "read_private_owner_one_pupil_grade_preview"(
  p_school TEXT,p_composition TEXT,p_student TEXT,
  p_owner_membership TEXT,p_owner_user TEXT,
  p_audit_id TEXT,p_audit_reason TEXT
-) RETURNS JSONB AS $
+) RETURNS JSONB AS $$
 DECLARE
  comp RECORD;
  packet RECORD;
@@ -218,7 +218,7 @@ BEGIN
       'status',audit_row."status",
       'viewedAt',audit_row."viewedAt"));
 END;
-$ LANGUAGE plpgsql VOLATILE;
+$$ LANGUAGE plpgsql VOLATILE;
 
 CREATE FUNCTION "validate_private_grade_preview_audit"()
  RETURNS trigger AS $$
