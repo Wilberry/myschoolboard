@@ -57,7 +57,7 @@ ALTER TABLE "ResultReportCardSourcePacket"
 CREATE FUNCTION "validate_report_card_source_packet"() RETURNS trigger AS $$
 DECLARE
  snapshot RECORD;
- policy RECORD;
+ adopted_policy RECORD;
  cards JSONB;
 BEGIN
  -- Re-check under the same active school row lock as all prior Phase 8
@@ -91,15 +91,15 @@ BEGIN
    RAISE EXCEPTION 'Frozen source packet already prepared for this decision'
     USING ERRCODE='23505';
  END IF;
- SELECT policy."version",policy."quizWeight",policy."testWeight",
-   policy."examWeight" INTO policy
+ SELECT grade."version",grade."quizWeight",grade."testWeight",
+   grade."examWeight" INTO adopted_policy
  FROM "ResultGradingAdoption" adoption
- JOIN "AssessmentGradingPolicyRevision" policy
-   ON policy."schoolId"=adoption."schoolId"
-   AND policy."id"=adoption."policyId"
+ JOIN "AssessmentGradingPolicyRevision" grade
+   ON grade."schoolId"=adoption."schoolId"
+   AND grade."id"=adoption."policyId"
  WHERE adoption."schoolId"=NEW."schoolId"
    AND adoption."id"=snapshot."adoptionId";
- IF policy."version" IS NULL THEN
+ IF adopted_policy."version" IS NULL THEN
    RAISE EXCEPTION 'Exact adopted grade weights required'
     USING ERRCODE='23503';
  END IF;
@@ -133,10 +133,10 @@ BEGIN
      ) ORDER BY item.value->>'componentId')
      FROM jsonb_array_elements(pupil.value->'manual') AS item(value)
    ),'[]'::jsonb),
-   'adoptedWeightVersion',policy."version",
-   'quizWeight',policy."quizWeight",
-   'testWeight',policy."testWeight",
-   'examWeight',policy."examWeight",
+   'adoptedWeightVersion',adopted_policy."version",
+   'quizWeight',adopted_policy."quizWeight",
+   'testWeight',adopted_policy."testWeight",
+   'examWeight',adopted_policy."examWeight",
    'reportStatus','INTERNAL_SOURCE_ONLY_NOT_RELEASED'
  ) ORDER BY pupil.value->>'studentId'),'[]'::jsonb) INTO cards
  FROM jsonb_array_elements(snapshot."sourceManifest") AS pupil(value);
