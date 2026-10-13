@@ -2179,6 +2179,41 @@ describe("Phase 7 exact-assignment private question bank", () => {
         remark: frozenPupil!.remark,
         categoryPercentBps: frozenPupil!.categoryPercentBps,
       });
+    const frozenIdentity = (source.studentSourceCards as Array<{
+      studentId: string; admissionNumber: string;
+      givenName: string; familyName: string;
+    }>).find(row => row.studentId === pupilId);
+    expect(frozenIdentity).toBeDefined();
+    expect(payloadPreview.students.find((row: { studentId: string }) =>
+      row.studentId === pupilId)).toMatchObject({
+        admissionNumber: frozenIdentity!.admissionNumber,
+        givenName: frozenIdentity!.givenName,
+        familyName: frozenIdentity!.familyName,
+      });
+    // Later roster corrections must never silently rewrite historical
+    // pupil identification in a previously frozen composition preview.
+    const presentIdentity = await prisma.studentRecord.findFirstOrThrow({
+      where: { schoolId: schoolA, id: pupilId },
+      select: { givenName: true },
+    });
+    await prisma.studentRecord.update({
+      where: { id: pupilId },
+      data: { givenName: "LaterCorrectedIdentity" },
+    });
+    try {
+      const historical = await preview("super");
+      expect(historical.status).toBe(200);
+      const historicalRows = (await historical.json()).preview.students as Array<{
+        studentId: string; givenName: string;
+      }>;
+      expect(historicalRows.find(row => row.studentId === pupilId)?.givenName)
+        .toBe(frozenIdentity!.givenName);
+      expect(frozenIdentity!.givenName).not.toBe("LaterCorrectedIdentity");
+    } finally {
+      await prisma.studentRecord.update({
+        where: { id: pupilId }, data: { givenName: presentIdentity.givenName },
+      });
+    }
     const serializedPreview = JSON.stringify(payloadPreview);
     for (const secret of ["studentSourceCards", "composedStudentCards",
       "correctIndex", "effectivePoints", "earnedPoints", "markId", "attemptId"]) {
