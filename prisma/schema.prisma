@@ -280,7 +280,8 @@ model School {
   resultSheetEvidences ResultSheetEvidence[]
   resultSheetReviews ResultSheetReview[]
   resultFinalPublicationDecisions ResultFinalPublicationDecision[]
-  resultReportCardSourcePackets ResultReportCardSourcePacket[]
+  resultReportCardSourcePackets ResultReportCardSourcePacket[]  reportGradeScaleRevisions ReportGradeScaleRevision[]
+
 }
 
 model Membership {
@@ -329,7 +330,8 @@ model Membership {
   resultSheetEvidences ResultSheetEvidence[]
   resultSheetReviews ResultSheetReview[]
   resultFinalPublicationDecisions ResultFinalPublicationDecision[]
-  resultReportCardSourcePackets ResultReportCardSourcePacket[]
+  resultReportCardSourcePackets ResultReportCardSourcePacket[]  reportGradeScaleRevisions ReportGradeScaleRevision[]
+
 }
 
 model ScopeGrant {
@@ -1589,4 +1591,28 @@ model ResultReportCardSourcePacket {
   @@unique([schoolId, id])
   @@unique([schoolId, finalDecisionId])
   @@index([schoolId, preparedAt])
+}
+
+/** School-specific, append-only report grade-label and display rounding adoption.
+ * Separate from assessment category weights and from report release. No default
+ * grade bands; owner must explicitly adopt an exhaustive scale. */
+model ReportGradeScaleRevision {
+  id String @id
+  schoolId String
+  version Int @default(1)
+  bands Json
+  decimalPlaces Int
+  roundingMode String @db.VarChar(16)
+  bandBasis String @db.VarChar(16)
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  adoptedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ReportGradeScaleRevision_actor_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, version])
+  @@index([schoolId, adoptedAt])
 }
