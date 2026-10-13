@@ -45,8 +45,9 @@ ALTER TABLE "ResultPrivateGradePreviewAudit"
 -- as the audit insertion. Full classroom grade JSON remains inside the DB.
 CREATE FUNCTION "read_private_owner_one_pupil_grade_preview"(
  p_school TEXT,p_composition TEXT,p_student TEXT,
- p_owner_membership TEXT,p_owner_user TEXT
-) RETURNS JSONB AS $$
+ p_owner_membership TEXT,p_owner_user TEXT,
+ p_audit_id TEXT,p_audit_reason TEXT
+) RETURNS JSONB AS $
 DECLARE
  comp RECORD;
  packet RECORD;
@@ -57,6 +58,7 @@ DECLARE
  recomputed JSONB;
  matching JSONB;
  grade JSONB;
+ audit_row RECORD;
 BEGIN
  SELECT c."schoolId",c."evidenceId",c."sourcePacketId",
    c."adoptionId",c."sessionId",c."termId",c."classId",c."subjectId",
@@ -176,9 +178,20 @@ BEGIN
      USING ERRCODE='23505';
  END IF;
  grade:=matching->0;
- -- Explicit allowlist. Never return studentId, other classmates, raw
- -- marks, answer keys, correction details, source JSON or report download.
+ -- The grade result cannot be returned without successfully recording its
+ -- own immutable audit. A direct SQL invocation is audited as well; the
+ -- application must commit this same transaction before sending the result.
+ INSERT INTO "ResultPrivateGradePreviewAudit" (
+   "id","schoolId","compositionId","studentId",
+   "actorMembershipId","actorUserId","reason"
+ ) VALUES (
+   p_audit_id,p_school,p_composition,p_student,
+   p_owner_membership,p_owner_user,p_audit_reason
+ ) RETURNING "id","evidenceRevision","viewedAt","status" INTO audit_row;
+ -- Explicit allowlist. No classmates, source JSON, correction details,
+ -- answer keys or downloaded report, even when invoked directly via SQL.
  RETURN jsonb_build_object(
+   'preview',jsonb_build_object(
    'status','PRIVATE_OWNER_PREVIEW_NOT_RELEASED',
    'student',jsonb_build_object(
       'givenName',pupil."givenName",'familyName',pupil."familyName",
@@ -198,9 +211,14 @@ BEGIN
    'remark',grade->'remark',
    'evidenceRevision',comp."evidenceRevision",
    'gradeScaleVersion',comp."gradeScaleVersion",
-   'aggregationRuleVersion',comp."aggregationRuleVersion");
+   'aggregationRuleVersion',comp."aggregationRuleVersion"),
+   'audit',jsonb_build_object(
+      'id',audit_row."id",
+      'evidenceRevision',audit_row."evidenceRevision",
+      'status',audit_row."status",
+      'viewedAt',audit_row."viewedAt"));
 END;
-$$ LANGUAGE plpgsql VOLATILE;
+$ LANGUAGE plpgsql VOLATILE;
 
 CREATE FUNCTION "validate_private_grade_preview_audit"()
  RETURNS trigger AS $$
