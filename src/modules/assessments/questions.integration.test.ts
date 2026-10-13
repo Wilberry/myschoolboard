@@ -34,6 +34,7 @@ import { GET as RELEASE_PREFLIGHT_GET, POST as RELEASE_PREFLIGHT_POST } from "@/
 import { GET as GUARDIAN_EVENTS_GET, POST as GUARDIAN_EVENTS_POST } from "@/app/api/schools/[schoolId]/guardian-relationships/route";
 import { POST as GUARDIAN_RELATIONSHIP_INSPECT_POST } from "@/app/api/schools/[schoolId]/guardian-relationships/inspect/route";
 import { GET as RECIPIENT_ELIGIBILITY_GET, POST as RECIPIENT_ELIGIBILITY_POST } from "@/app/api/schools/[schoolId]/private-recipient-eligibility/route";
+import { POST as OWNER_PRIVATE_GRADE_PREVIEW } from "@/app/api/schools/[schoolId]/private-owner-grade-previews/route";
 import { simulatePrivateReportComposition, type PrivatePacketStudent } from "@/src/modules/results/report-composition-simulation";
 import { POST as RESULT_REVIEW_POST } from "@/app/api/schools/[schoolId]/result-sheet-reviews/[evidenceId]/decision/route";
 import {
@@ -2767,6 +2768,118 @@ describe("Phase 7 exact-assignment private question bank", () => {
       });
     }
     expect(parentProof.status).toBe("INTERNAL_RECIPIENT_RELATIONSHIP_ONLY_NOT_ACCESS");
+  });
+
+  it("privately previews exactly one approved pupil grade for current owner with immutable access audit", async () => {
+    const preview = (actor: string, body: unknown, targetSchool = schoolA) =>
+      OWNER_PRIVATE_GRADE_PREVIEW(req(actor, targetSchool, "POST", body), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const composition = await prisma.privateOfficialReportComposition.findFirstOrThrow({
+      where: { schoolId: schoolA }, orderBy: { composedAt: "desc" },
+    });
+    const payload = {
+      compositionId: composition.id,
+      studentId: pupilId,
+      reason: "Audit synthetic head-office private grade preview review",
+    };
+    for (const actor of [
+      "teacher", "student", "parent", "head", "principal", "admin", "other",
+    ]) {
+      expect((await preview(actor, payload)).status).toBe(404);
+    }
+    expect((await preview("super", payload, schoolB)).status).toBe(404);
+    for (const forged of [
+      { ...payload, studentId: "wrong-school-pupil" },
+    ]) expect((await preview("super", forged)).status).toBe(409);
+    for (const forged of [
+      { ...payload, recipientMembershipId: members.parent },
+      { ...payload, release: true },
+      { ...payload, status: "PUBLISHED" },
+      { ...payload, actorUserId: users.super },
+      { ...payload, gradeCode: "A" },
+      { ...payload, rawPercentBps: 10000 },
+      { ...payload, reason: "x" },
+    ]) expect((await preview("super", forged)).status).toBe(400);
+    // The route rejects cross-origin browser requests independent of cookies.
+    req("super", schoolA, "POST", payload);
+    const crossOrigin = new Request(
+      `http://localhost/api/schools/${schoolA}/private-owner-grade-previews`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: "https://evil.example" },
+        body: JSON.stringify(payload),
+      },
+    );
+    expect((await OWNER_PRIVATE_GRADE_PREVIEW(crossOrigin, {
+      params: Promise.resolve({ schoolId: schoolA }),
+    })).status).toBe(400);
+    const before = await prisma.resultPrivateGradePreviewAudit.count({
+      where: { schoolId: schoolA, compositionId: composition.id },
+    });
+    const granted = await preview("super", payload);
+    expect(granted.status).toBe(200);
+    expect(granted.headers.get("cache-control")).toBe("private, no-store");
+    const body = await granted.json();
+    expect(body.preview).toMatchObject({
+      status: "PRIVATE_OWNER_PREVIEW_NOT_RELEASED",
+      evidenceRevision: composition.evidenceRevision,
+      gradeScaleVersion: composition.gradeScaleVersion,
+      aggregationRuleVersion: composition.aggregationRuleVersion,
+    });
+    expect(typeof body.preview.student.givenName).toBe("string");
+    expect(typeof body.preview.student.admissionNumber).toBe("string");
+    expect(typeof body.preview.displayPercent).toBe("string");
+    expect(typeof body.preview.gradeCode).toBe("string");
+    expect(body.preview.academic).toMatchObject({
+      session: expect.any(String), term: expect.any(String),
+      class: expect.any(String), subject: expect.any(String),
+    });
+    const safe = JSON.stringify(body);
+    for (const forbidden of [
+      '"studentId"', "recipientMembershipId", "sourcePacketId",
+      "correctIndex", "answerEvents", "composedStudentCards",
+      "studentSourceCards", "draftId", "markId", "effectivePoints",
+      "maxPoints", "originalPoints",
+    ]) expect(safe).not.toContain(forbidden);
+    expect(body.audit).toMatchObject({
+      evidenceRevision: composition.evidenceRevision,
+      status: "INTERNAL_OWNER_PREVIEW_NOT_RELEASED",
+    });
+    expect(await prisma.resultPrivateGradePreviewAudit.count({
+      where: { schoolId: schoolA, compositionId: composition.id },
+    })).toBe(before + 1);
+    const audit = await prisma.resultPrivateGradePreviewAudit.findUniqueOrThrow({
+      where: { id: body.audit.id },
+    });
+    expect(audit).toMatchObject({
+      schoolId: schoolA, compositionId: composition.id,
+      studentId: pupilId, actorMembershipId: members.super,
+      actorUserId: users.super,
+      status: "INTERNAL_OWNER_PREVIEW_NOT_RELEASED",
+    });
+    await expect(prisma.resultPrivateGradePreviewAudit.update({
+      where: { id: audit.id }, data: { status: "PUBLISHED" },
+    })).rejects.toThrow();
+    await expect(prisma.resultPrivateGradePreviewAudit.delete({
+      where: { id: audit.id },
+    })).rejects.toThrow();
+    await expect(prisma.$executeRaw`TRUNCATE "ResultPrivateGradePreviewAudit"`)
+      .rejects.toThrow();
+
+    await prisma.membership.update({
+      where: { id: members.super }, data: { isActive: false },
+    });
+    try {
+      expect((await preview("super", payload)).status).toBe(404);
+    } finally {
+      await prisma.membership.update({
+        where: { id: members.super }, data: { isActive: true },
+      });
+    }
+    expect((await prisma.privateOfficialReportComposition.findUniqueOrThrow({
+      where: { id: composition.id },
+    })).status).toBe("INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED");
   });
 
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
