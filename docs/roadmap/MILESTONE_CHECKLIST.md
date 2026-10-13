@@ -1,5 +1,15 @@
 # Milestone Checklist
 
+## Phase 8 internal result release preflight (NO PUBLICATION) — [ ] AUTHORED / BLOCKED
+
+- [x] Same-school immutable `ResultReleasePreflightAttestation`, linked to exact internal composed report and explicit currently adopted visibility policy, only one attestation per composition/policy revision.
+- [x] PostgreSQL reruns locked current owner, original teacher, independent verified proper-section academic review, latest adopted assessment, unchanged enrolled roster/sources; checks exact packet/owner decision and current grading/aggregation/visibility policy; recalculates all private grade cards for parity.
+- [x] Deny `ASSESSMENT_ONLY`, missing policy, expired policy/grade scale/aggregation, changed approval or any malformed private score; trusted DB count/version/status/timestamp and audit immutability.
+- [x] Current exact owner private no-store GET/POST, server-gated page/nav, no per-pupil grades or release control; accepted POST is internal-only historical evidence.
+- [x] Authored synthetic cross-role/tenant/forged-request/reviewer and owner revocation/duplicate and immutable history tests plus Node structural guard registered in existing verification gates.
+- [ ] Run disposable PostgreSQL cumulative Phase 6–8 migrations, integration, concurrency/rollback tests; real Node/Vitest/Prisma validation, lint/types/build, strict dependency audit and acceptance.
+- [ ] Only after acceptance: separate immutable administrator **recipient publication decision**, current policy pin, P-004 parent-first acknowledgment and exact verified student/guardian relationship checks before any report-card readers/files/exports.
+
 ## Phase 8 school report visibility configuration (future intent only) — [ ] AUTHORED, BLOCKED
 
 - [x] Additive immutable School Super Admin-adopted school report recipient policy, no default and four explicit choices, versioned with exact school/owner audit evidence.
