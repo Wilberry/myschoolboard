@@ -1390,6 +1390,146 @@ describe("Phase 7 exact-assignment private question bank", () => {
     })).toMatchObject({ action: "RETURNED" });
   });
 
+  it("prepares DB-frozen single-subject evidence, independently reviews it and versions later changes", async () => {
+    // Dedicated exact subject avoids relying on unrelated CBT attempt state.
+    const newSubjectId = "res-review-subject-" + suffix;
+    const newAssignmentId = "res-review-assignment-" + suffix;
+    await prisma.subject.create({
+      data: { id: newSubjectId, schoolId: schoolA, name: "Synthetic Result Review Subject" },
+    });
+    await prisma.teacherClassSubjectAssignment.create({
+      data: { id: newAssignmentId, schoolId: schoolA,
+        membershipId: members.teacher, classId, subjectId: newSubjectId,
+        sessionId, status: "ACTIVE" },
+    });
+    const draftPolicy = await POLICIES_POST(req("super", schoolA, "POST", {
+      sessionId, termId, classId, subjectId: newSubjectId,
+      quizWeight: 0, testWeight: 100, examWeight: 0,
+      reason: "Synthetic adopted written-only subject policy",
+    }), { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(draftPolicy.status).toBe(201);
+    const policy = (await draftPolicy.json()).policy;
+    const adopted = await ADOPTIONS_POST(req("super", schoolA, "POST", {
+      policyId: policy.id, reason: "Synthetic approved school grading policy version",
+    }), { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(adopted.status).toBe(201);
+    const adoptionId = (await adopted.json()).adoption.id;
+    const componentResponse = await MANUAL_COMPONENTS_POST(
+      req("teacher", schoolA, "POST", {
+        assignmentId: newAssignmentId, termId,
+        kind: "TEST", title: "Synthetic reviewed algebra essay", maxPoints: 10,
+      }), { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(componentResponse.status).toBe(201);
+    const componentId = (await componentResponse.json()).component.id;
+    const proposalResponse = await MANUAL_PROPOSAL_POST(
+      req("teacher", schoolA, "POST", {
+        componentId, studentId: pupilId,
+        earnedPoints: 8, reason: "Synthetic initial marking evidence",
+      }), { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(proposalResponse.status).toBe(201);
+    const proposalId = (await proposalResponse.json()).proposal.id;
+    const input = {
+      assignmentId: newAssignmentId, termId,
+      reason: "Synthetic complete and teacher-prepared source snapshot",
+    };
+    const prepare = (actor: string, value: unknown) =>
+      RESULT_EVIDENCE_POST(req(actor, schoolA, "POST", value), {
+        params: Promise.resolve({ schoolId: schoolA }),
+      });
+    expect((await prepare("teacher", input)).status).not.toBe(201); // still unapproved
+    const originalApproval = await MANUAL_REVIEW_DECISION(
+      req("head", schoolA, "POST", {
+        action: "APPROVED", reason: "Synthetic independently reviewed essay mark",
+      }), { params: Promise.resolve({ schoolId: schoolA, proposalId }) });
+    expect(originalApproval.status).toBe(201);
+    for (const actor of ["student","admin","super","head","principal","other"]) {
+      expect((await prepare(actor, input)).status).toBe(404);
+    }
+    const first = await prepare("teacher", input);
+    expect(first.status).toBe(201);
+    expect(first.headers.get("cache-control")).toBe("private, no-store");
+    const firstId = (await first.json()).evidence.id;
+    const firstRow = await prisma.resultSheetEvidence.findFirstOrThrow({
+      where: { schoolId: schoolA, id: firstId },
+    });
+    expect(firstRow).toMatchObject({
+      revision: 1, studentCount: 1, adoptionId,
+    });
+    const manifest = firstRow.sourceManifest as Array<{
+      studentId: string; cbt: unknown[]; manual: Array<{
+        kind: string; effectivePoints: number; maxPoints: number;
+      }>;
+    }>;
+    expect(manifest).toMatchObject([{
+      studentId: pupilId, cbt: [],
+      manual: [{ kind: "TEST", effectivePoints: 8, maxPoints: 10 }],
+    }]);
+    expect((await prepare("teacher", input)).status).toBe(409);
+    const queue = (actor: string) =>
+      RESULT_REVIEW_QUEUE(req(actor, schoolA, "GET"), {
+        params: Promise.resolve({ schoolId: schoolA }),
+      });
+    const headQueue = await queue("head");
+    expect(headQueue.status).toBe(200);
+    expect((await headQueue.json()).candidates.some(
+      (x: { id: string }) => x.id === firstId,
+    )).toBe(true);
+    const principalQueue = await queue("principal");
+    expect(principalQueue.status).toBe(200);
+    expect((await principalQueue.json()).candidates.some(
+      (x: { id: string }) => x.id === firstId,
+    )).toBe(false);
+    const decide = (actor: string, evidenceId: string, action: string) =>
+      RESULT_REVIEW_POST(req(actor, schoolA, "POST", {
+        action, reason: "Synthetic verified independent academic decision",
+      }), { params: Promise.resolve({ schoolId: schoolA, evidenceId }) });
+    expect((await decide("principal", firstId, "APPROVED")).status).toBe(404);
+    expect((await decide("teacher", firstId, "APPROVED")).status).toBe(404);
+    const approved = await decide("head", firstId, "APPROVED");
+    expect(approved.status).toBe(201);
+    expect((await approved.json()).status).toBe("ACADEMIC_REVIEW_ONLY_NOT_PUBLISHED");
+    expect((await decide("head", firstId, "RETURNED")).status).toBe(409);
+    const oldReview = await prisma.resultSheetReview.findFirstOrThrow({
+      where: { schoolId: schoolA, evidenceId: firstId },
+    });
+    await expect(prisma.resultSheetEvidence.update({
+      where: { id: firstId }, data: { reason: "Altered teacher evidence" },
+    })).rejects.toThrow();
+    await expect(prisma.resultSheetReview.update({
+      where: { id: oldReview.id }, data: { action: "RETURNED" },
+    })).rejects.toThrow();
+    // A later independently approved mark correction requires a NEW sheet.
+    const correction = await CORRECTIONS_POST(req("teacher", schoolA, "POST", {
+      proposalId, proposedPoints: 9,
+      reason: "Synthetic evidence-based algebra marking correction",
+    }), { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(correction.status).toBe(201);
+    const correctedId = (await correction.json()).request.id;
+    const review = await CORRECTION_REVIEW(req("head", schoolA, "POST", {
+      action: "APPROVED", reason: "Synthetic approved changed algebra mark",
+    }), { params: Promise.resolve({ schoolId: schoolA, requestId: correctedId }) });
+    expect(review.status).toBe(201);
+    const second = await prepare("teacher", {
+      ...input, reason: "Synthetic amended source marks after academic correction",
+    });
+    expect(second.status).toBe(201);
+    const secondId = (await second.json()).evidence.id;
+    const newer = await prisma.resultSheetEvidence.findFirstOrThrow({
+      where: { schoolId: schoolA, id: secondId },
+    });
+    expect(newer.revision).toBe(2);
+    expect(newer.sourceManifest).not.toEqual(firstRow.sourceManifest);
+    expect((await decide("head", secondId, "APPROVED")).status).toBe(201);
+    const teacherHistory = await RESULT_EVIDENCE_GET(
+      req("teacher", schoolA, "GET"),
+      { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(teacherHistory.status).toBe(200);
+    expect((await teacherHistory.json()).snapshots).toHaveLength(2);
+    expect((await RESULT_EVIDENCE_GET(req("student", schoolA, "GET"), {
+      params: Promise.resolve({ schoolId: schoolA }),
+    })).status).toBe(404);
+  });
+
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
     await prisma.teacherClassSubjectAssignment.update({
       where: { id: assignmentId }, data: { status: "REVOKED" },
