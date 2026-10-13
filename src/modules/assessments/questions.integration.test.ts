@@ -2582,6 +2582,17 @@ describe("Phase 7 exact-assignment private question bank", () => {
       expect(firstPolicy.status).toBe(201);
       const policy3 = (await firstPolicy.json()).policy;
       expect((await (await published("parent2")).json()).reports).toHaveLength(0);
+      await expect(prisma.reportRecipientRelease.create({
+        data: {
+          id: randomUUID(), schoolId: schoolA,
+          compositionId: composition.id, visibilityPolicyId: policy3.id,
+          sessionId: composition.sessionId, termId: composition.termId,
+          classId: composition.classId, subjectId: composition.subjectId,
+          studentCount: composition.studentCount,
+          actorMembershipId: members.super, actorUserId: users.parent2,
+          reason: "Forged owner identity directly submitted to SQL",
+        },
+      })).rejects.toThrow();
       const third = await postRelease("super", payload(policy3.id));
       expect(third.status).toBe(201);
       const release3 = (await third.json()).release;
@@ -2602,6 +2613,19 @@ describe("Phase 7 exact-assignment private question bank", () => {
       expect((await receipt("parent2", release2.id, pupilId, {
         acknowledge: true,
       })).status).toBe(404);
+      const currentParentLink = await prisma.guardianStudentLink.findFirstOrThrow({
+        where: { schoolId: schoolA, studentId: pupilId,
+          guardianMembershipId: members.parent2, revocation: null },
+      });
+      await expect(prisma.reportGuardianAcknowledgment.create({
+        data: {
+          id: randomUUID(), schoolId: schoolA,
+          releaseId: release3.id, studentId: pupilId,
+          guardianLinkId: currentParentLink.id,
+          guardianMembershipId: members.parent2,
+          actorUserId: users.student,
+        },
+      })).rejects.toThrow();
       const acknowledgmentRace = await Promise.all([
         receipt("parent2", release3.id, pupilId, { acknowledge: true }),
         receipt("parent2", release3.id, pupilId, { acknowledge: true }),
