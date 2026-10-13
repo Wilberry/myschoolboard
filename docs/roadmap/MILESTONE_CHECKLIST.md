@@ -1,5 +1,14 @@
 # Milestone Checklist
 
+## Phase 8 private class-term subject metadata coverage — [ ] AUTHORED / RUNTIME BLOCKED
+
+- [x] Read-only, School Super Admin-only exact school/session/term/class coverage diagnostic; active session-specific assignment, current teacher membership and subject required.
+- [x] Latest subject teacher result evidence revision, independent academic reviewer record, immutable owner decision, private composition existence and current scale/aggregation metadata surfaced as distinct **diagnostic states only**.
+- [x] No class roster, student grades, parent/member IDs, pupil names, answer keys or raw CBT/manual source marks projected. No result release, download, public report, rank, average or P-004 acknowledgment.
+- [x] Strict scoped no-store GET, private server-guarded administrative page, school navigation and source-level guard registered in both existing test commands. Authored tenant/role/param/missing-scope/revoked-owner/no-leak integration cases.
+- [ ] Real PostgreSQL/Prisma/Node/Vitest, full lint/typecheck/build, security audit and cumulative Phase 6–8 acceptance remain blocked.
+- [ ] Define an explicitly school-adopted complete subject/curriculum inventory before claiming report-card subject completeness; NULL-session teacher assignments do not silently become session assignments. Full report release/recipient access remains blocked until verified separately and P-004 resolved.
+
 ## Phase 8 audited owner-only one-pupil grade preview — [ ] AUTHORED / RUNTIME BLOCKED
 
 - [x] Current exact School Super Admin private POST and server-gated workspace; no student/guardian GET, report-file export, final publication button or QR.
