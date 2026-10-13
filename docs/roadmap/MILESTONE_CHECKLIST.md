@@ -1,5 +1,14 @@
 # Milestone Checklist
 
+## Phase 8 final School Super Admin approval audit — [ ] AUTHORED, BLOCKED
+
+- [x] SQL-locked immutable per-evidence `APPROVED_AWAITING_RELEASE` record with exact frozen academic context and versioned per-context ordinal, actor/reason/trusted timestamp.
+- [x] Mandatory final readiness rerun, current exact school-owner user+membership and independently verified section review; immutable audit UPDATE/DELETE/TRUNCATE guards.
+- [x] School-owner private no-store approval POST (evidence ID + reason only), bounded metadata-only ledger GET, school-gated page and navigation.
+- [x] Tests authored for role/tenant denial, duplicate/replayed approval, reviewer revocation, later policy adoption, second independent approval and immutable history.
+- [ ] Apply/check migrations on disposable loopback PostgreSQL and execute full unchanged security, tests, quality and audit gates. CI failure cause unresolved.
+- [ ] Complete official report-card calculation, explicitly configured visibility, a separately audited *release* decision, and versioned corrections after verification. No student/guardian result exposure.
+
 ## Phase 8 protected final publication readiness predicate — [ ] AUTHORED, BLOCKED
 
 - [x] Reusable additive SQL-only lock-and-recheck helper for future School Super Admin final release transaction.

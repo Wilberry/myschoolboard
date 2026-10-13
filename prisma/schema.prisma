@@ -279,6 +279,7 @@ model School {
   resultGradingAdoptions ResultGradingAdoption[]
   resultSheetEvidences ResultSheetEvidence[]
   resultSheetReviews ResultSheetReview[]
+  resultFinalPublicationDecisions ResultFinalPublicationDecision[]
 }
 
 model Membership {
@@ -326,6 +327,7 @@ model Membership {
   resultGradingAdoptions ResultGradingAdoption[]
   resultSheetEvidences ResultSheetEvidence[]
   resultSheetReviews ResultSheetReview[]
+  resultFinalPublicationDecisions ResultFinalPublicationDecision[]
 }
 
 model ScopeGrant {
@@ -1463,6 +1465,7 @@ model ResultGradingAdoption {
   @@unique([schoolId, sessionId, termId, classId, subjectId, ordinal], map: "ResultGradingAdoption_context_ordinal_key")
   @@index([schoolId, classId, subjectId, termId])
   resultSheetEvidences ResultSheetEvidence[]
+  resultFinalPublicationDecisions ResultFinalPublicationDecision[]
 }
 
 /** Teacher-prepared frozen evidence. SourceManifest is ALWAYS computed
@@ -1490,6 +1493,7 @@ model ResultSheetEvidence {
   assignment TeacherClassSubjectAssignment @relation(fields: [schoolId, assignmentId, teacherMembershipId, classId, subjectId, sessionId], references: [schoolId, id, membershipId, classId, subjectId, sessionId], onDelete: NoAction, map: "ResultSheetEvidence_assignment_fkey")
   adoption ResultGradingAdoption @relation(fields: [schoolId, adoptionId], references: [schoolId, id], onDelete: NoAction, map: "ResultSheetEvidence_adoption_fkey")
   review ResultSheetReview?
+  finalPublicationDecision ResultFinalPublicationDecision?
 
   @@unique([schoolId, id])
   @@unique([schoolId, sessionId, termId, classId, subjectId, revision], map: "ResultSheetEvidence_context_revision_key")
@@ -1513,4 +1517,36 @@ model ResultSheetReview {
 
   @@unique([schoolId, evidenceId])
   @@index([schoolId, reviewedAt])
+}
+
+/** Append-only final School Super Admin academic release authorization.
+ * Not a public report card, disclosure, grade computation or recipient access.
+ * The database trigger repeats current owner/section/source eligibility under
+ * the school lock and assigns its contextual ordinal/timestamp itself. */
+model ResultFinalPublicationDecision {
+  id String @id
+  schoolId String
+  evidenceId String
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  adoptionId String
+  evidenceRevision Int
+  ordinal Int @default(1)
+  status String @default("APPROVED_AWAITING_RELEASE") @db.VarChar(40)
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  decidedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  evidence ResultSheetEvidence @relation(fields: [schoolId, evidenceId], references: [schoolId, id], onDelete: NoAction, map: "ResultFinalPublicationDecision_evidence_fkey")
+  adoption ResultGradingAdoption @relation(fields: [schoolId, adoptionId], references: [schoolId, id], onDelete: NoAction, map: "ResultFinalPublicationDecision_adoption_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ResultFinalPublicationDecision_actor_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, evidenceId])
+  @@unique([schoolId, sessionId, termId, classId, subjectId, ordinal], map: "ResultFinalPublicationDecision_context_ordinal_key")
+  @@index([schoolId, decidedAt])
 }
