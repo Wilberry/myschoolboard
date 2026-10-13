@@ -1,5 +1,15 @@
 # Milestone Checklist
 
+## Phase 8 adopted aggregation and private report composition mathematics — [ ] AUTHORED, BLOCKED
+
+- [x] Owner-adopted, append-only, explicit per-school assessment-category aggregation semantics and integer precision, without fallback method.
+- [x] School-row-locked SQL owner authorization, duplicate exclusion, trusted version/timestamp, UPDATE/DELETE/TRUNCATE audit immutability.
+- [x] Private metadata GET and policy POST with strict validated inputs, no-store, same-school owner check and owner-only workspace/navigation.
+- [x] Private pure composition using explicit source packet, frozen adopted category weights and pinned aggregation/grade-scale revisions; rejects missing category, mismatched grades and corrupt marks; never publishes.
+- [x] Authored synthetic role/tenant/replay/immutable policy integration, pure arithmetic edge/unit tests and structural guard, added without reducing earlier suites.
+- [ ] Execute cumulative isolated PostgreSQL/Prisma, full Node/Vitest, format/lint/types/Next build, security audit and CI.
+- [ ] Next: SQL-revalidated immutable per-student official composition artifact pinning source packet + exact policy revisions, followed separately by authenticated audited recipient release and versioned correction/visibility safeguards.
+
 ## Phase 8 adopted report grading-scale rules — [ ] AUTHORED, BLOCKED
 
 - [x] Immutable active School Super Admin grade-scale adoption, no school-wide hard-coded default.
