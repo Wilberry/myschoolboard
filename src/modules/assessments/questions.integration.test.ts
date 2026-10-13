@@ -29,6 +29,7 @@ import { GET as SOURCE_PACKET_GET, POST as SOURCE_PACKET_POST } from "@/app/api/
 import { GET as REPORT_SCALE_GET, POST as REPORT_SCALE_POST } from "@/app/api/schools/[schoolId]/report-grade-scales/route";
 import { GET as AGGREGATION_RULE_GET, POST as AGGREGATION_RULE_POST } from "@/app/api/schools/[schoolId]/report-aggregation-rules/route";
 import { GET as COMPOSITION_GET, POST as COMPOSITION_POST } from "@/app/api/schools/[schoolId]/private-official-report-compositions/route";
+import { GET as PRIVATE_GRADE_PREVIEW_GET } from "@/app/api/schools/[schoolId]/private-official-report-compositions/[compositionId]/preview/route";
 import { simulatePrivateReportComposition, type PrivatePacketStudent } from "@/src/modules/results/report-composition-simulation";
 import { POST as RESULT_REVIEW_POST } from "@/app/api/schools/[schoolId]/result-sheet-reviews/[evidenceId]/decision/route";
 import {
@@ -2142,6 +2143,49 @@ describe("Phase 7 exact-assignment private question bank", () => {
     for (const row of expected.students) {
       expect(composed.find(item => item.studentId === row.studentId)).toMatchObject({
         ...row, reportStatus: "INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED",
+      });
+    }
+    // The explicitly requested private read is available only to the current
+    // same-school owner, and only for this already frozen nonreleased version.
+    const preview = (actor: string, targetSchool = schoolA,
+      compositionId = frozen.id) =>
+      PRIVATE_GRADE_PREVIEW_GET(req(actor, targetSchool, "GET"), {
+        params: Promise.resolve({ schoolId: targetSchool, compositionId }),
+      });
+    for (const actor of ["teacher", "student", "head", "principal", "admin", "other"])
+      expect((await preview(actor)).status).toBe(404);
+    expect((await preview("super", schoolB)).status).toBe(404);
+    expect((await preview("super", schoolA, "nonexistent-composition")).status)
+      .toBe(404);
+    const ownerPreview = await preview("super");
+    expect(ownerPreview.status).toBe(200);
+    expect(ownerPreview.headers.get("cache-control")).toBe("private, no-store");
+    expect(ownerPreview.headers.get("x-robots-tag")).toContain("noindex");
+    const payloadPreview = (await ownerPreview.json()).preview;
+    expect(payloadPreview.status).toBe("PRIVATE_GRADE_PREVIEW_NOT_RELEASED");
+    expect(payloadPreview.studentCount).toBe(source.studentCount);
+    expect(payloadPreview.students).toHaveLength(source.studentCount);
+    expect(payloadPreview.students.find((row: { studentId: string }) =>
+      row.studentId === pupilId)).toMatchObject({
+        studentId: pupilId,
+        ...((({ rawPercentBps, displayPercent, gradeCode, remark,
+          categoryPercentBps }) => ({
+          rawPercentBps, displayPercent, gradeCode, remark, categoryPercentBps,
+        }))(composed.find(row => row.studentId === pupilId)!)),
+      });
+    const serializedPreview = JSON.stringify(payloadPreview);
+    for (const secret of ["studentSourceCards", "composedStudentCards",
+      "correctIndex", "effectivePoints", "earnedPoints", "markId", "attemptId"]) {
+      expect(serializedPreview).not.toContain(secret);
+    }
+    await prisma.membership.update({
+      where: { id: members.super }, data: { isActive: false },
+    });
+    try {
+      expect((await preview("super")).status).toBe(404);
+    } finally {
+      await prisma.membership.update({
+        where: { id: members.super }, data: { isActive: true },
       });
     }
     expect(JSON.stringify(composed)).not.toContain("correctIndex");
