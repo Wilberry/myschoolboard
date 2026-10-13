@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { PrivateGradePreview } from "./private-grade-preview";
 
 type Packet = { id: string; evidenceRevision: number; finalDecisionOrdinal: number;
   studentCount: number; };
@@ -15,6 +16,7 @@ export function PrivateOfficialCompositionWorkspace({ schoolId }: { schoolId: st
   const [scales, setScales] = useState<Scale[]>([]);
   const [rules, setRules] = useState<Rule[]>([]);
   const [history, setHistory] = useState<Composition[]>([]);
+  const [previewId, setPreviewId] = useState("");
   const [sourcePacketId, setSourcePacketId] = useState("");
   const [gradeScaleId, setGradeScaleId] = useState("");
   const [aggregationRuleId, setAggregationRuleId] = useState("");
@@ -60,6 +62,7 @@ export function PrivateOfficialCompositionWorkspace({ schoolId }: { schoolId: st
           aggregationRuleId, reason }),
       });
       if (!response.ok) throw new Error("Composition rejected");
+      setPreviewId("");
       setMessage("Private report evidence frozen. No student or guardian result has been released.");
       setSourcePacketId(""); setGradeScaleId(""); setAggregationRuleId("");
       setReason(""); setRefresh(v => v + 1);
@@ -112,7 +115,12 @@ export function PrivateOfficialCompositionWorkspace({ schoolId }: { schoolId: st
       Evidence revision {h.evidenceRevision}, {h.studentCount} pupils;
       aggregation revision {h.aggregationRuleVersion},
       scale revision {h.gradeScaleVersion} — {h.status}
+      <button type="button" onClick={() => setPreviewId(h.id)}>
+        Inspect private grades (not released)
+      </button>
     </li>)}</ul>
+    {previewId && <PrivateGradePreview key={previewId} schoolId={schoolId}
+      compositionId={previewId} onClose={() => setPreviewId("")} />}
     <p role="status" aria-live="polite">{message}</p>
   </section>;
 }
