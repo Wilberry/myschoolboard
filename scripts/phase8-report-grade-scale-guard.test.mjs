@@ -8,6 +8,7 @@ const service = read("../src/modules/results/report-grade-scale-service.ts");
 const route = read("../app/api/schools/[schoolId]/report-grade-scales/route.ts");
 const page = read("../app/schools/[schoolId]/report-grade-scales/page.tsx");
 const simulation = read("../src/modules/results/report-grade-scale.ts");
+const workspace = read("../src/components/report-grade-scale-workspace.tsx");
 const specs = read("../src/modules/results/report-grade-scale.test.ts");
 const integration = read("../src/modules/assessments/questions.integration.test.ts");
 test("adopted grade scale has no defaults, SQL validates bands and preserves immutable revisions", () => {
@@ -52,4 +53,14 @@ test("rounding and threshold evaluation remain school-selected and simulation-on
   assert.ok(specs.includes("resolves all 0..10000 basis-point threshold edges"));
   assert.ok(specs.includes("raw-vs-displayed grade-band classification"));
   assert.equal(simulation.includes("OFFICIAL_REPORT_PUBLISHED"), false);
+});
+
+test("school must actively choose rounding, precision and grade-band basis before adoption", () => {
+  assert.ok(workspace.includes('useState<0 | 1 | 2 | null>(null)'));
+  assert.ok(workspace.includes('useState<"HALF_UP" | "FLOOR" | "CEILING" | "">("")'));
+  assert.ok(workspace.includes('useState<"RAW_BPS" | "DISPLAY_ROUNDED_BPS" | "">("")'));
+  assert.ok(workspace.includes('Choose display precision'));
+  assert.ok(workspace.includes('Choose rounding mode'));
+  assert.ok(workspace.includes('Choose the threshold basis'));
+  assert.ok(workspace.includes('disabled={busy || !policy || reason.trim().length < 5}'));
 });
