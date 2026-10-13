@@ -1,5 +1,12 @@
 # Blockers and Open Questions
 
+## Phase 8 guardian relationship data acceptance (2026-10-13)
+
+- The guardian-link foundation is an authored non-release Phase 8 dependency, **not** a new permission for any guardian/student report. The guardian relationship evidence must be validated on disposable PostgreSQL with current active membership/enrollment, exact school, revocation, SQL actor-forgery and concurrent duplicate attempt tests, as well as full cumulative Phase 6–8 gates.
+- `P-004` parent-first acknowledgment and the unlisted four report visibility options are still unresolved. No release controls or child results are enabled by the link table; current school identity roles are not automatically convertible to guardian roles. Routine safe verification and modular development can continue.
+- No GitHub Actions have been run or rerun for this guardian foundation.
+
+
 ## Phase 8 recipient visibility configuration and private preview verification (2026-10-13)
 
 - **Private grade preview source authored:** current active exact-school School Super Admin read-only preview of frozen unreleased grades and same-school pupil identity with no-store response. Full PostgreSQL, Prisma, Vitest, browser, lint/types/build and security-audit acceptance have NOT run; historical Phase 6–8 unmerged drafts remain an upstream release blocker. No recipient route or report release.
