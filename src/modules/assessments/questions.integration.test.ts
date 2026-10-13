@@ -30,6 +30,10 @@ import { GET as REPORT_SCALE_GET, POST as REPORT_SCALE_POST } from "@/app/api/sc
 import { GET as AGGREGATION_RULE_GET, POST as AGGREGATION_RULE_POST } from "@/app/api/schools/[schoolId]/report-aggregation-rules/route";
 import { GET as COMPOSITION_GET, POST as COMPOSITION_POST } from "@/app/api/schools/[schoolId]/private-official-report-compositions/route";
 import { GET as GUARDIAN_GET, POST as GUARDIAN_POST } from "@/app/api/schools/[schoolId]/guardian-links/route";
+import { GET as REPORT_VISIBILITY_GET, POST as REPORT_VISIBILITY_POST } from "@/app/api/schools/[schoolId]/report-visibility-policies/route";
+import { GET as REPORT_RELEASE_GET, POST as REPORT_RELEASE_POST } from "@/app/api/schools/[schoolId]/report-recipient-releases/route";
+import { GET as PUBLISHED_REPORT_GET } from "@/app/api/schools/[schoolId]/published-reports/route";
+import { POST as REPORT_ACK_POST } from "@/app/api/schools/[schoolId]/published-reports/acknowledgments/[releaseId]/[studentId]/route";
 import { POST as GUARDIAN_REVOKE } from "@/app/api/schools/[schoolId]/guardian-links/[linkId]/revoke/route";
 import { GET as PRIVATE_GRADE_PREVIEW_GET } from "@/app/api/schools/[schoolId]/private-official-report-compositions/[compositionId]/preview/route";
 import { simulatePrivateReportComposition, type PrivatePacketStudent } from "@/src/modules/results/report-composition-simulation";
@@ -2442,6 +2446,195 @@ describe("Phase 7 exact-assignment private question bank", () => {
       .rejects.toThrow();
     await expect(prisma.$executeRaw`TRUNCATE "GuardianStudentLinkRevocation"`)
       .rejects.toThrow();
+  });
+
+  it("adopts exact report visibility, independently publishes, gates linked recipients, and records guardian-first receipt", async () => {
+    const postPolicy = (actor: string, body: unknown, schoolId = schoolA) =>
+      REPORT_VISIBILITY_POST(req(actor, schoolId, "POST", body),
+        { params: Promise.resolve({ schoolId }) });
+    const listPolicy = (actor: string, schoolId = schoolA) =>
+      REPORT_VISIBILITY_GET(req(actor, schoolId, "GET"),
+        { params: Promise.resolve({ schoolId }) });
+    const postRelease = (actor: string, body: unknown, schoolId = schoolA) =>
+      REPORT_RELEASE_POST(req(actor, schoolId, "POST", body),
+        { params: Promise.resolve({ schoolId }) });
+    const listRelease = (actor: string, schoolId = schoolA) =>
+      REPORT_RELEASE_GET(req(actor, schoolId, "GET"),
+        { params: Promise.resolve({ schoolId }) });
+    const published = (actor: string, schoolId = schoolA) =>
+      PUBLISHED_REPORT_GET(req(actor, schoolId, "GET"),
+        { params: Promise.resolve({ schoolId }) });
+    const receipt = (actor: string, releaseId: string, childId: string, body: unknown,
+      schoolId = schoolA) =>
+      REPORT_ACK_POST(req(actor, schoolId, "POST", body),
+        { params: Promise.resolve({ schoolId, releaseId, studentId: childId }) });
+    const composition = await prisma.privateOfficialReportComposition.findFirstOrThrow({
+      where: { schoolId: schoolA, classId, subjectId },
+    });
+    const schoolOnly = { mode: "SCHOOL_ONLY",
+      reason: "Synthetic school only verified mode" };
+    expect((await listPolicy("anonymous")).status).toBe(401);
+    for (const actor of ["teacher", "head", "principal", "admin", "student", "parent"]) {
+      expect((await listPolicy(actor)).status).toBe(404);
+      expect((await postPolicy(actor, schoolOnly)).status).toBe(404);
+    }
+    expect((await listPolicy("super", schoolB)).status).toBe(404);
+    expect((await postPolicy("super", schoolOnly, schoolB)).status).toBe(404);
+    expect((await postPolicy("super", {
+      mode: "ANYONE", reason: "Invalid school visibility",
+    })).status).toBe(400);
+    expect((await postPolicy("super", {
+      ...schoolOnly, studentCanSeeWithoutPublication: true,
+    })).status).toBe(400);
+    const first = await postPolicy("super", schoolOnly);
+    expect(first.status).toBe(201);
+    const policy1 = (await first.json()).policy;
+    expect(policy1.version).toBe(1);
+    expect(policy1.mode).toBe("SCHOOL_ONLY");
+    expect((await listPolicy("super")).status).toBe(200);
+    const payload = (visibilityPolicyId: string) => ({
+      visibilityPolicyId, compositionId: composition.id,
+      reason: "Synthetic independent owner-approved recipient release",
+      confirmRecipientRelease: true,
+    });
+    // Branch gates are OFF by default and must reject release or recipient reads.
+    expect((await postRelease("super", payload(policy1.id))).status).toBe(404);
+    expect((await published("student")).status).toBe(404);
+    const savedReleaseGate = process.env.PHASE8_REPORT_RELEASE_ENABLED;
+    const savedRecipientGate = process.env.PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED;
+    process.env.PHASE8_REPORT_RELEASE_ENABLED = "true";
+    process.env.PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED = "true";
+    try {
+      expect((await postRelease("anonymous", payload(policy1.id))).status).toBe(401);
+      for (const actor of ["teacher", "head", "principal", "admin", "student", "parent"])
+        expect((await postRelease(actor, payload(policy1.id))).status).toBe(404);
+      expect((await postRelease("super", payload(policy1.id), schoolB)).status).toBe(404);
+      expect((await postRelease("super", {
+        ...payload(policy1.id), confirmRecipientRelease: false,
+      })).status).toBe(400);
+      const released1 = await postRelease("super", payload(policy1.id));
+      expect(released1.status).toBe(201);
+      const release1 = (await released1.json()).release;
+      expect(release1.releaseOrdinal).toBe(1);
+      expect((await listRelease("super")).status).toBe(200);
+      expect((await listRelease("parent")).status).toBe(404);
+      expect((await published("teacher")).status).toBe(404);
+      expect((await published("student")).status).toBe(200);
+      expect((await (await published("student")).json()).reports).toHaveLength(0);
+      // Separate guardian identity attestation does not lift a SCHOOL_ONLY release.
+      const attest = await GUARDIAN_POST(req("admin", schoolA, "POST", {
+        guardianMembershipId: members.parent2,
+        studentId: pupilId, identityVerified: true,
+        reason: "Second guardian independently verified for receipt tests",
+      }), { params: Promise.resolve({ schoolId: schoolA }) });
+      expect(attest.status).toBe(201);
+      const guardianLinkId = (await attest.json()).link.id as string;
+      expect((await (await published("parent2")).json()).reports).toHaveLength(0);
+      const parentOnlyPolicy = await postPolicy("super", {
+        mode: "GUARDIAN_ONLY", reason: "Verified parent only versioned delivery",
+      });
+      expect(parentOnlyPolicy.status).toBe(201);
+      const policy2 = (await parentOnlyPolicy.json()).policy;
+      expect(policy2.version).toBe(2);
+      // New policy immediately blocks old releases until owner re-approves it.
+      expect((await (await published("parent2")).json()).reports).toHaveLength(0);
+      const second = await postRelease("super", payload(policy2.id));
+      expect(second.status).toBe(201);
+      const release2 = (await second.json()).release;
+      expect(release2.releaseOrdinal).toBe(2);
+      const view = await published("parent2");
+      expect(view.status).toBe(200);
+      expect(view.headers.get("cache-control")).toContain("no-store");
+      const rows = (await view.json()).reports;
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        studentId: pupilId, subjectId,
+        releaseId: release2.id, releaseOrdinal: 2,
+        recipientRole: "PARENT", policyMode: "GUARDIAN_ONLY",
+      });
+      const serialized = JSON.stringify(rows);
+      for (const secret of ["composedStudentCards", "studentSourceCards",
+        "correctIndex", "earnedPoints", "attemptId", "markId"]) {
+        expect(serialized).not.toContain(secret);
+      }
+      expect((await (await published("parent")).json()).reports).toHaveLength(0);
+      expect((await (await published("student")).json()).reports).toHaveLength(0);
+      expect((await postRelease("super", payload(policy2.id))).status).toBe(409);
+      await prisma.membership.update({
+        where: { id: members.parent2 }, data: { isActive: false },
+      });
+      try {
+        expect((await published("parent2")).status).toBe(404);
+      } finally {
+        await prisma.membership.update({
+          where: { id: members.parent2 }, data: { isActive: true },
+        });
+      }
+      const firstPolicy = await postPolicy("super", {
+        mode: "GUARDIAN_FIRST_ACK",
+        reason: "Parent first explicitly acknowledged per released version",
+      });
+      expect(firstPolicy.status).toBe(201);
+      const policy3 = (await firstPolicy.json()).policy;
+      expect((await (await published("parent2")).json()).reports).toHaveLength(0);
+      const third = await postRelease("super", payload(policy3.id));
+      expect(third.status).toBe(201);
+      const release3 = (await third.json()).release;
+      expect(release3.releaseOrdinal).toBe(3);
+      const parentRead = (await (await published("parent2")).json()).reports;
+      expect(parentRead).toHaveLength(1);
+      expect(parentRead[0].policyMode).toBe("GUARDIAN_FIRST_ACK");
+      expect(parentRead[0].guardianHasAcknowledged).toBe(false);
+      expect((await receipt("student", release3.id, pupilId, {
+        acknowledge: true,
+      })).status).toBe(404);
+      expect((await receipt("parent2", release3.id, "foreign-child", {
+        acknowledge: true,
+      })).status).toBe(404);
+      expect((await receipt("parent2", release3.id, pupilId, {
+        acknowledge: false,
+      })).status).toBe(400);
+      expect((await receipt("parent2", release2.id, pupilId, {
+        acknowledge: true,
+      })).status).toBe(404);
+      const acknowledged = await receipt("parent2", release3.id, pupilId, {
+        acknowledge: true,
+      });
+      expect(acknowledged.status).toBe(201);
+      const receiptId = (await acknowledged.json()).receipt.id as string;
+      expect((await receipt("parent2", release3.id, pupilId, {
+        acknowledge: true,
+      })).status).toBe(409);
+      const after = (await (await published("parent2")).json()).reports;
+      expect(after[0].guardianHasAcknowledged).toBe(true);
+      // Student account link was intentionally revoked in prior CBT test.
+      // A valid guardian receipt must NOT override independent student-link revocation.
+      expect((await (await published("student")).json()).reports).toHaveLength(0);
+      await expect(prisma.reportVisibilityPolicyRevision.update({
+        where: { id: policy3.id }, data: { reason: "Tamper visibility audit" },
+      })).rejects.toThrow();
+      await expect(prisma.reportRecipientRelease.delete({
+        where: { id: release3.id },
+      })).rejects.toThrow();
+      await expect(prisma.reportGuardianAcknowledgment.update({
+        where: { id: receiptId }, data: { actorUserId: users.student },
+      })).rejects.toThrow();
+      await expect(prisma.$executeRaw`TRUNCATE "ReportRecipientRelease"`)
+        .rejects.toThrow();
+      const linkRevoked = await GUARDIAN_REVOKE(
+        req("admin", schoolA, "POST", {
+          reason: "Synthetic guardian revocation after signed acknowledgement",
+        }), { params: Promise.resolve({ schoolId: schoolA, linkId: guardianLinkId }) });
+      expect(linkRevoked.status).toBe(201);
+      expect((await (await published("parent2")).json()).reports).toHaveLength(0);
+      expect((await (await published("student")).json()).reports).toHaveLength(0);
+    } finally {
+      if (savedReleaseGate === undefined) delete process.env.PHASE8_REPORT_RELEASE_ENABLED;
+      else process.env.PHASE8_REPORT_RELEASE_ENABLED = savedReleaseGate;
+      if (savedRecipientGate === undefined)
+        delete process.env.PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED;
+      else process.env.PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED = savedRecipientGate;
+    }
   });
 
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
