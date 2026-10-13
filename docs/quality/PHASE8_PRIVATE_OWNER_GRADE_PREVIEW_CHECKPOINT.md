@@ -1,0 +1,35 @@
+# Phase 8 — Audited Single-Pupil Private School-Owner Grade Preview
+
+**Date:** 2026-10-13
+**Branch:** `feature/phase8-private-owner-grade-preview`
+**Base:** `feature/phase8-private-recipient-eligibility-evidence` at `781aaa0ccde32a0c429e6d04ce9cb57a871367f5` (unmerged).
+**Scope:** RES-REQ-001 partial; SEC-REQ-001 and TEN-REQ-001 partial; P-004 parent-first acknowledgment remains **unresolved**.
+**Exit:** SOURCE/AUTHORSHIP ONLY, RUNTIME/RELEASE BLOCKED.
+
+## Roadmap rationale
+
+The immutable teacher/CBT source, independent Head of Section/Principal review, School Super Admin final evidence, school-configurable grading scale and aggregation, and private composed grade cards already exist on cumulative draft branches, but there has been **no owner-facing view of a calculated pupil result**. A locked School Super Admin-only **one-pupil private preview** is independently useful before the unresolved P-004 parent-first recipient-acknowledgment policy and public result publication are finalized. A confidential preview is NOT an official result release or a student/guardian report.
+
+## Authored implementation
+
+- New additive `20261013220000_phase8_private_owner_one_pupil_preview` migration (no applied historical migration edits). SQL SECURITY INVOKER-by-default `read_private_owner_one_pupil_grade_preview(school,composition,pupil,ownerMembership,ownerUser)` is VOLATILE; called in a SERIALIZABLE active-School-row-locked transaction. It invokes locked `assert_result_publication_readiness` for current active same-school School Super Admin, original assigned teacher, independent verified exact-section Head of Section/Principal, current academic approval, adopted weights, unchanged roster and immutable source.
+- Requires current exact school aggregation and adopted grading-scale revisions, exact composition/source-packet session/term/class/subject/evidence/adoption identity, and recomputes all frozen class grades in PostgreSQL. The recomputed full JSONB must match the immutable `PrivateOfficialReportComposition.composedStudentCards`. **Only the requested pupil** can be selected; StudentRecord must be ENROLLED with ACTIVE StudentEnrollment in the composition's exact school, class and session and occur **exactly once** in recomputed grades. No bulk class roster is returned.
+- SQL returns a narrowly allowlisted one-pupil owner preview: student name and admission number, school, session/term/class/subject labels, adopted QUIZ/TEST/EXAM weights, category percentages, total percentage, grade code/remark and policy/evidence revisions. It never returns another pupil, answer keys, raw CBT/manual source marks, correction evidence, question drafts or full grade/source JSON. Status is `PRIVATE_OWNER_PREVIEW_NOT_RELEASED`.
+- `ResultPrivateGradePreviewAudit` append-only metadata-only audit stores exact school/composition/pupil/current owner, audit reason, original evidence revision and trusted time, **no grade values**. BEFORE INSERT independently rechecks current exact School Super Admin, same school composition, ENROLLED pupil with ACTIVE matching class/session, and exactly one occurrence of the pupil inside the frozen result. UPDATE/DELETE/TRUNCATE blocked. The service inserts the audit **in the same transaction after computing the preview and before returning it**; any audit failure rolls back the request.
+- Strict `POST /api/schools/[schoolId]/private-owner-grade-previews` accepts only `compositionId`, `studentId` and 5–500 character reason; session provides the verified owner user and exact membership. Reject supplied foreign browser Origin, query string and wrong media type; `Cache-Control: private, no-store`. No GET, export, link sharing, PDF, student or guardian preview route. A server-gated School Super Admin page and navigation show one grade at a time, with prominent **PRIVATE PREVIEW — NOT RELEASED** watermark and no download button.
+- Added synthetic authenticated PostgreSQL/Vitest integration scenarios for TEACHER/STUDENT/PARENT/Head/Principal/Admin/foreign-school denials, unauthorized IDs, invented grades/publication fields, foreign Origin, private single-card shape, audit count/identity/immutability, reviewer-grant revocation, terminated enrollment, inactive owner and preservation of non-released composition. Registered `scripts/phase8-private-owner-grade-preview-guard.test.mjs` in both existing `npm test` and `verify:local:guards` without removing any earlier checks.
+- Decision D-065 / ADR-051, authorization, result module specification, requirements traceability, milestone and status docs updated.
+
+## Verification evidence and strict limits
+
+- **Executed:** GitHub connector source writes and focused review against freshly fetched blobs. Initial V8 replay of exact new structural guard with mocked Node filesystem: **4/4 cases passed**. After audit exact-enrollment hardening and added negative scenarios, re-replayed updated guard: **4/4 passed**.
+- Source-level SQL projection/role/grade/audit checks were conducted, but **these are NOT actual PostgreSQL function syntax validation, migration, execution, transaction/rollback, authorization concurrency or data privacy tests**.
+- **Not executed:** cumulative Phase 6–8 migrations on disposable PostgreSQL; Prisma validate/generate; actual Node --test/Vitest; Prettier, lint, typecheck, Next build, dependency audit; browser session/security tests. No school/student database was accessed.
+- **Owner instruction:** DO NOT run or inspect GitHub Actions. Only GitHub code/branch operations; no new PR, `main` merge, workflow edit, build/deployment, publication, student/guardian access or export.
+- Any future actual release or parent/student read must repeat current identity, exact relationship, visibility policy, owner release and P-004 acknowledgment checks. Preview audit IDs and owner preview content are **not access tokens**.
+
+## Next safe roadmap work
+
+First complete the cumulative code/SQL/runtime verification and strict security audit in the previously documented owner-confirmed disposable local PostgreSQL environment (without Actions until user permits). Separately resolve P-004 parent-first acknowledgment semantics and design a **version-pinned current School Super Admin publication ledger**; recipient reads must reauthorize the actual active student/guardian on every request, never using an internal preflight/preview/eligibility event as a grant.
+
+**End state: authenticated owner-only private preview AUTHORED. Official report publication, student/guardian grades, public exports, main merge and deployment DISABLED.**
