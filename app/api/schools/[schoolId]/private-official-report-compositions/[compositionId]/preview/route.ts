@@ -1,6 +1,10 @@
 import { readPrivateGradePreview } from "@/src/modules/results/private-grade-preview-service";
 import { manualError, manualHeaders } from "@/src/modules/assessments/manual-http";
 
+// Authenticated pupil grades must never be pre-rendered or ISR-cached.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const previewHeaders = {
   ...manualHeaders,
   "Pragma": "no-cache",
