@@ -1,5 +1,12 @@
 # Blockers and Open Questions
 
+## Phase 8 publication code complete candidate; validation remains a release blocker (2026-10-13)
+
+- Four school-selected visibility modes and optional guardian-first exact-release acknowledgment are now **defined and authored** in D-063/ADR-049 and the configuration catalog. This resolves prior absence of *engineering semantics* for P-004 without silently choosing a school policy. Individual school adoption remains an explicit audited owner decision. Existing earlier checkpoint sections are historical.
+- All Phase 8 core source deliverables are now authored, including final independent release, recipient authorization, report-card print and versioned corrections. **Not verified in PostgreSQL**. Cumulative unmerged Phase 6–8 dependencies, Postgres checksum/migrations, SQL/Prisma, positive student recipient fixture, TypeScript, lint/format, Next build, browser/a11y, audit and CI remain blockers. Separate security/product approval required to turn on live release/recipient switches; both default OFF and cannot be inferred from source presence.
+- No GitHub Actions initiated, rerun, enabled, or PR opened. No deployment, student/guardian results accessed, published or exported.
+
+
 ## Phase 8 guardian relationship data acceptance (2026-10-13)
 
 - The guardian-link foundation is an authored non-release Phase 8 dependency, **not** a new permission for any guardian/student report. The guardian relationship evidence must be validated on disposable PostgreSQL with current active membership/enrollment, exact school, revocation, SQL actor-forgery and concurrent duplicate attempt tests, as well as full cumulative Phase 6–8 gates.
