@@ -70,10 +70,6 @@ export async function recordInternalReportReleasePreflight(
             reason: parsed.data.reason,
             actorMembershipId: owner.id,
             actorUserId: userId,
-            evidenceId: "",
-            finalDecisionId: "",
-            sourcePacketId: "",
-            recipientMode: "ASSESSMENT_ONLY",
           },
           select: {
             id: true,
