@@ -1,5 +1,15 @@
 # Milestone Checklist
 
+## Phase 8 immutable private report-card source foundation — [ ] AUTHORED, BLOCKED
+
+- [x] Additive, server-built one-per-final-decision private pupil source snapshot with exact school/academic/policy/evidence version.
+- [x] PostgreSQL reruns locked final owner readiness; binds current owner and valid latest independent academic approval and marks before accepting preparation.
+- [x] Allowlist stored pupil/source marks and adopted QUIZ/TEST/EXAM weights; explicitly **do not** invent final grades, thresholds, rounding or visibility settings.
+- [x] Immutable, duplicate-proof packet history; private same-school School Super Admin GET/POST returns only bounded non-pupil metadata and prevents forged source inputs.
+- [x] Authored tests covering roles, tenant isolation, duplicate/revision change, tampering, no pupil data leakage and fresh owner approval requirement; registered structural guard.
+- [ ] Run cumulative disposable PostgreSQL migrations, authenticated Vitest, Node guards, Prisma, formatting, lint, typecheck, build, security audit and CI-equivalent.
+- [ ] Implement adopted grade-scale/rubric, frozen official report-card calculation/presentation, independently audited release and student/guardian relationship visibility. No official report is yet released.
+
 ## Phase 8 final School Super Admin approval audit — [ ] AUTHORED, BLOCKED
 
 - [x] SQL-locked immutable per-evidence `APPROVED_AWAITING_RELEASE` record with exact frozen academic context and versioned per-context ordinal, actor/reason/trusted timestamp.
