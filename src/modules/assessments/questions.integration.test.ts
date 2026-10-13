@@ -2538,7 +2538,12 @@ describe("Phase 7 exact-assignment private question bank", () => {
       expect(policy2.version).toBe(2);
       // New policy immediately blocks old releases until owner re-approves it.
       expect((await (await published("parent2")).json()).reports).toHaveLength(0);
-      const second = await postRelease("super", payload(policy2.id));
+      const releaseRace = await Promise.all([
+        postRelease("super", payload(policy2.id)),
+        postRelease("super", payload(policy2.id)),
+      ]);
+      expect(releaseRace.map(r => r.status).sort()).toEqual([201, 409]);
+      const second = releaseRace.find(r => r.status === 201)!;
       expect(second.status).toBe(201);
       const release2 = (await second.json()).release;
       expect(release2.releaseOrdinal).toBe(2);
@@ -2597,9 +2602,12 @@ describe("Phase 7 exact-assignment private question bank", () => {
       expect((await receipt("parent2", release2.id, pupilId, {
         acknowledge: true,
       })).status).toBe(404);
-      const acknowledged = await receipt("parent2", release3.id, pupilId, {
-        acknowledge: true,
-      });
+      const acknowledgmentRace = await Promise.all([
+        receipt("parent2", release3.id, pupilId, { acknowledge: true }),
+        receipt("parent2", release3.id, pupilId, { acknowledge: true }),
+      ]);
+      expect(acknowledgmentRace.map(r => r.status).sort()).toEqual([201, 409]);
+      const acknowledged = acknowledgmentRace.find(r => r.status === 201)!;
       expect(acknowledged.status).toBe(201);
       const receiptId = (await acknowledged.json()).receipt.id as string;
       expect((await receipt("parent2", release3.id, pupilId, {
