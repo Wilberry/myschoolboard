@@ -108,7 +108,7 @@ async function list(actor: string, schoolId = schoolA) {
 
 describe("Phase 7 exact-assignment private question bank", () => {
   beforeAll(async () => {
-    for (const name of ["teacher", "other", "admin", "foreign", "head", "principal", "super", "student", "parent"]) {
+    for (const name of ["teacher", "other", "admin", "foreign", "head", "principal", "super", "student", "parent", "parent2"]) {
       const email = `asm-${name}-${suffix}@example.test`;
       const registered = await auth.api.signUpEmail({
         body: { name: `Synthetic ${name}`, email, password },
@@ -136,6 +136,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
       ["super", "SCHOOL_SUPER_ADMIN", schoolA],
       ["student", "STUDENT", schoolA],
       ["parent", "PARENT", schoolA],
+      ["parent2", "PARENT", schoolA],
     ] as const) {
       const member = await prisma.membership.create({
         data: { userId: users[name], schoolId, role },
@@ -2373,17 +2374,18 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect((await requestGuardianLink("admin", {
       ...input, studentId: "missing-pupil",
     })).status).toBe(404);
-    // Current active enrollment is mandatory, not a matching name or email.
-    await prisma.studentEnrollment.update({
-      where: { id: enrollmentId }, data: { status: "ENDED" },
+    // Registered-but-unenrolled children must fail without mutating the
+    // existing enrolled pupil or breaking historical enrollment integrity.
+    const unenrolledId = `unlinked-registered-${suffix}`;
+    await prisma.studentRecord.create({
+      data: { id: unenrolledId, schoolId: schoolA,
+        admissionNumber: `PENDING-${suffix}`,
+        givenName: "Unenrolled", familyName: "Synthetic",
+        status: "REGISTERED" },
     });
-    try {
-      expect((await requestGuardianLink("admin", input)).status).toBe(404);
-    } finally {
-      await prisma.studentEnrollment.update({
-        where: { id: enrollmentId }, data: { status: "ACTIVE" },
-      });
-    }
+    expect((await requestGuardianLink("admin", {
+      ...input, studentId: unenrolledId,
+    })).status).toBe(404);
     const created = await requestGuardianLink("admin", input);
     expect(created.status).toBe(201);
     expect(created.headers.get("cache-control")).toBe("private, no-store");
@@ -2403,7 +2405,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
     await expect(prisma.guardianStudentLink.create({
       data: {
         schoolId: schoolA, studentId: pupilId,
-        guardianMembershipId: members.parent,
+        guardianMembershipId: members.parent2,
         attestedByMembershipId: members.admin,
         attestedByUserId: users.parent,
         attestationReason: "Forged actor SQL identity",
