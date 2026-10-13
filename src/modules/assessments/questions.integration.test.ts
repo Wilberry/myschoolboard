@@ -1517,6 +1517,22 @@ describe("Phase 7 exact-assignment private question bank", () => {
       RESULT_REVIEW_POST(req(actor, schoolA, "POST", {
         action, reason: "Synthetic verified independent academic decision",
       }), { params: Promise.resolve({ schoolId: schoolA, evidenceId }) });
+    // A previously eligible reviewer loses BOTH list and decision access
+    // immediately when the verified SECTION grant is revoked.
+    const reviewerGrant = await prisma.scopeGrant.findFirstOrThrow({
+      where: { membershipId: members.head, type: "SECTION", scopeId: sectionId },
+    });
+    await prisma.scopeGrant.update({
+      where: { id: reviewerGrant.id }, data: { verified: false },
+    });
+    try {
+      expect((await queue("head")).status).toBe(404);
+      expect((await decide("head", firstId, "APPROVED")).status).toBe(404);
+    } finally {
+      await prisma.scopeGrant.update({
+        where: { id: reviewerGrant.id }, data: { verified: true },
+      });
+    }
     expect((await decide("principal", firstId, "APPROVED")).status).toBe(404);
     expect((await decide("teacher", firstId, "APPROVED")).status).toBe(404);
     const approved = await decide("head", firstId, "APPROVED");
