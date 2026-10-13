@@ -2154,6 +2154,9 @@ describe("Phase 7 exact-assignment private question bank", () => {
       });
     for (const actor of ["teacher", "student", "head", "principal", "admin", "other"])
       expect((await preview(actor)).status).toBe(404);
+    const anonymous = await preview("anonymous");
+    expect(anonymous.status).toBe(401);
+    expect(anonymous.headers.get("cache-control")).toBe("private, no-store");
     expect((await preview("super", schoolB)).status).toBe(404);
     expect((await preview("super", schoolA, "nonexistent-composition")).status)
       .toBe(404);
