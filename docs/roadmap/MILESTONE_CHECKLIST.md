@@ -1,5 +1,15 @@
 # Milestone Checklist
 
+## Phase 8 private multi-subject term preview (not official report) — [ ] AUTHORED / RUNTIME BLOCKED
+
+- [x] Current active same-school School Super Admin private POST and server-gated UI with strict session/term/class/pupil/reason request, no student/guardian/download routes.
+- [x] School-row-locked SERIALIZABLE transaction checks exact enrolled pupil and class/term, derives distinct active exact-session assigned subjects (bounded internal scope), rejects missing/ambiguous latest subject composition.
+- [x] Invoke existing fully recomputed, SQL-atomic-audited exact-pupil private preview for each subject; any stale grade, teacher/HM/Principal review revocation or missing subject rolls back entire transaction and per-subject audit inserts.
+- [x] Explicit provisional assignment-based coverage label, no school-defined official subject completeness, position, overall average, pass/promotion, PDF or release.
+- [x] Authored missing-subject audit rollback, current owner/tenant/recipient forgery denial and no-leak integration scenarios, plus registered local source guard while preserving prior guards.
+- [ ] Run actual disposable PostgreSQL migrations/integration, Prisma validate/generate, Node/Vitest, format/lint/typecheck/build, strict dependency security audit and cumulative acceptance (GitHub Actions excluded per owner instruction).
+- [ ] Separately define an immutable **school-adopted official report subject coverage/completeness policy** before any future full term report-card release. P-004 and recipient publication/access remain unresolved and disabled.
+
 ## Phase 8 audited owner-only one-pupil grade preview — [ ] AUTHORED / RUNTIME BLOCKED
 
 - [x] Current exact School Super Admin private POST and server-gated workspace; no student/guardian GET, report-file export, final publication button or QR.
