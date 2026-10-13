@@ -254,7 +254,7 @@ CREATE UNIQUE INDEX "ReportGuardianAcknowledgment_schoolId_id_key"
  ON "ReportGuardianAcknowledgment"("schoolId","id");
 CREATE UNIQUE INDEX "ReportGuardianAcknowledgment_exact_receipt_key"
  ON "ReportGuardianAcknowledgment"("schoolId","releaseId","studentId","guardianMembershipId");
-CREATE INDEX "ReportGuardianAcknowledgment_schoolId_studentId_acknowledgedAt_idx"
+CREATE INDEX "ReportGuardianAck_school_student_time_idx"
  ON "ReportGuardianAcknowledgment"("schoolId","studentId","acknowledgedAt");
 ALTER TABLE "ReportGuardianAcknowledgment" ADD CONSTRAINT
  "ReportGuardianAcknowledgment_schoolId_fkey" FOREIGN KEY ("schoolId")
