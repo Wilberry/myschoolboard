@@ -400,3 +400,12 @@ Cumulative `feature/phase7-cbt-private-resume-reader` implements `readInternalCb
 ## Future phases
 
 All subsequent phases remain pending until their entry criteria and required product decisions are satisfied. The completed local Phase 1 foundation does not imply that Phase 2 or later requirements are implemented or complete.
+
+## Phase 8 verification/remediation first — [ ] BLOCKED
+
+- [x] Found missing/null JSON status fail-closed bug in the SQL private result composer and authored a **new forward-only** `20261013170000_phase8_private_composition_source_status_hardening` migration, without editing prior migration.
+- [x] Authored PostgreSQL negative scenarios for missing, JSON-null, empty and changed source status, plus registered Node source guard; exact source-diff checks 10/10 passed (NOT database/runtime tested).
+- [x] Inspected failed CI run `38391897336`: about two seconds, zero step details, log blob 404, two check annotations inaccessible. Root cause NOT verified.
+- [ ] Obtain CI check annotation/root cause and successful full job evidence without weakening the workflow.
+- [ ] Run all cumulative migrations and DB identity/approval/policy/score tests against confirmed disposable loopback PostgreSQL, then Prisma, Node/Vitest, Prettier, lint, typecheck, build and strict dependency audit.
+- [ ] Implement recipient publication only after verification and separate current School Super Admin release/relationship/visibility safeguards.
