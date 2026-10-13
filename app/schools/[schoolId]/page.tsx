@@ -62,6 +62,13 @@ async function SchoolDetailContent({
 
         {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
           <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/private-subject-coverage`} className="secondary-link">
+              Review class/term subject evidence coverage (not publication)
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
+          <p className="setup-navigation">
             <Link href={`/schools/${schoolId}/private-grade-previews`} className="secondary-link">
               Preview one pupil&apos;s private result (audited, not released)
             </Link>
