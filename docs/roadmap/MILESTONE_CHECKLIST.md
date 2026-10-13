@@ -1,5 +1,15 @@
 # Milestone Checklist
 
+## Phase 8 confidential owner grade preview — [ ] AUTHORED / VALIDATION BLOCKED
+
+- [x] Explicit School Super Admin-only GET for an exact, privately frozen composition, with tenant/user/current active role reverified in the SQL SELECT and nonreleased status required.
+- [x] Allowlisted per-pupil category/raw/display scores, grade labels and same-school pupil names/admission identifiers; reject incomplete, duplicate, invalid or stale membership result sets; zero source marks, raw JSONB, keys or receiver linkage.
+- [x] Private no-store/noindex GET, deliberate reveal/hide within owner-only workspace, no student/guardian, download/export, publication or mutation routes.
+- [x] Authored cumulative synthetic authenticated PostgreSQL role/tenant/revocation/complete-grade/privacy tests and registered source guard, without relaxing older checks.
+- [ ] Execute disposable local PostgreSQL + all migrations, SQL/TS parity and real authenticated tests, Node/Vitest, Prisma, lint/format/typecheck/Next build and high-severity dependency audit; browser accessibility and no-disclosure verification.
+- [ ] Next: separate school-selected visibility policy and independently audited release with verified recipient relationships, only after security/release gates pass; keep all recipient access DISABLED.
+
+
 ## Phase 8 privately composed official-result evidence — [ ] AUTHORED / BLOCKED
 
 - [x] Append-only exact-school private `PrivateOfficialReportComposition`, with composite FK references to frozen packet, final owner approval and pinned adopted aggregation/grade scale.
