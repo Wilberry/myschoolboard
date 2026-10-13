@@ -2319,6 +2319,20 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect(await prisma.privateOfficialReportComposition.count({
       where: { schoolId: schoolA },
     })).toBe(before);
+    await prisma.membership.update({
+      where: { id: members.super }, data: { isActive: false },
+    });
+    try {
+      expect((await adopt("super", {
+        recipientMode: "ASSESSMENT_ONLY",
+        reason: "Synthetic refusal while owner membership is revoked",
+      })).status).toBe(404);
+      expect((await history("super")).status).toBe(404);
+    } finally {
+      await prisma.membership.update({
+        where: { id: members.super }, data: { isActive: true },
+      });
+    }
   });
 
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
