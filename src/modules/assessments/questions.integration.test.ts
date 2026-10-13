@@ -2976,9 +2976,13 @@ describe("Phase 7 exact-assignment private question bank", () => {
         subjectId: expect.any(String),
         subjectName: expect.any(String),
         state: expect.stringMatching(/^(MISSING_TEACHER_RESULT_EVIDENCE|AWAITING_ACADEMIC_REVIEW|AWAITING_OWNER_DECISION|AWAITING_PRIVATE_COMPOSITION|PRIVATE_COMPOSITION_POLICY_SUPERSEDED|PRIVATE_COMPOSITION_METADATA_PRESENT_NOT_RELEASED)$/),
-        evidenceRevision: expect.anything(),
-        pupilCount: expect.anything(),
+        evidenceRevision: item.evidenceRevision,
+        pupilCount: item.pupilCount,
       });
+      expect(item.evidenceRevision === null || Number.isInteger(item.evidenceRevision))
+        .toBe(true);
+      expect(item.pupilCount === null || Number.isInteger(item.pupilCount))
+        .toBe(true);
     }
     const safe = JSON.stringify(payload);
     for (const forbidden of [
