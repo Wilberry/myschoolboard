@@ -78,7 +78,7 @@ BEGIN
    SELECT 1 FROM "Membership" guardian
    WHERE guardian."schoolId"=NEW."schoolId"
      AND guardian."id"=NEW."guardianMembershipId"
-     AND guardian."role"='PARENT'
+     AND (NEW."action"='REVOKE' OR guardian."role"='PARENT')
  ) OR NOT EXISTS (
    SELECT 1 FROM "StudentRecord" student
    WHERE student."schoolId"=NEW."schoolId"
@@ -168,7 +168,10 @@ BEGIN
  WHERE comp."schoolId"=p_school
    AND comp."id"=p_composition
    AND comp."status"='INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED';
- IF NOT FOUND OR NOT EXISTS (
+ IF NOT FOUND THEN
+   RETURN 'NO_VERIFIED_RELATIONSHIP_OR_POLICY';
+ END IF;
+ IF NOT EXISTS (
    SELECT 1 FROM "StudentRecord" student
    JOIN "StudentEnrollment" enrollment
      ON enrollment."schoolId"=student."schoolId"
