@@ -228,3 +228,7 @@
 ## ADR-036: Returned initial marks are recoverable by independently approved correction
 
 - Status: Authored/unverified. Permit an original teacher to request a changed audited mark after either terminal APPROVED or terminal RETURNED initial academic decision. PostgreSQL still requires exact assignment/enrollment, one pending revision and independent current verified-section reviewer approval. Effective grade stays null for returned initial until a correction is approved; immutable original RETURNED decision persists. No official grade publication. D-050.
+
+## ADR-037: Phase 8 preparation reconciles private sources but cannot imply result approval
+
+- Status: Authored unverified. Existing separately exact teacher-scoped CBT and academically reviewed manual read models feed a fail-closed identity/counter reconciliation. It never combines objective/manual scores without an adopted versioned policy, never persists a report or authorizes student/parent visibility; full HM/Principal and School Super Admin two-stage official results workflow remains separate. D-051.
