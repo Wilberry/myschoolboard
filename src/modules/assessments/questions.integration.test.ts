@@ -1569,12 +1569,40 @@ describe("Phase 7 exact-assignment private question bank", () => {
     });
     expect(newer.revision).toBe(2);
     expect(newer.sourceManifest).not.toEqual(firstRow.sourceManifest);
-    expect((await decide("head", secondId, "APPROVED")).status).toBe(201);
+    // An adoption made AFTER teacher preparation invalidates that exact
+    // revision. Reviewer may RETURN it, but must not approve stale policy.
+    const changedPolicy = await POLICIES_POST(req("super", schoolA, "POST", {
+      sessionId, termId, classId, subjectId: newSubjectId,
+      quizWeight: 0, testWeight: 100, examWeight: 0,
+      reason: "Synthetic later adopted grading policy revision",
+    }), { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(changedPolicy.status).toBe(201);
+    const adoptedNext = await ADOPTIONS_POST(req("super", schoolA, "POST", {
+      policyId: (await changedPolicy.json()).policy.id,
+      reason: "Synthetic explicit subsequent grading policy adoption",
+    }), { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(adoptedNext.status).toBe(201);
+    const adoptionNextId = (await adoptedNext.json()).adoption.id;
+    expect(adoptionNextId).not.toBe(adoptionId);
+    expect((await decide("head", secondId, "APPROVED")).status).toBe(409);
+    expect((await decide("head", secondId, "RETURNED")).status).toBe(201);
+    const preparedAgain = await prepare("teacher", {
+      ...input, reason: "Synthetic refreshed source evidence after adoption change",
+    });
+    expect(preparedAgain.status).toBe(201);
+    const thirdId = (await preparedAgain.json()).evidence.id;
+    const thirdRow = await prisma.resultSheetEvidence.findFirstOrThrow({
+      where: { schoolId: schoolA, id: thirdId },
+    });
+    expect(thirdRow.revision).toBe(3);
+    expect(thirdRow.adoptionId).toBe(adoptionNextId);
+    expect(thirdRow.sourceManifest).toEqual(newer.sourceManifest);
+    expect((await decide("head", thirdId, "APPROVED")).status).toBe(201);
     const teacherHistory = await RESULT_EVIDENCE_GET(
       req("teacher", schoolA, "GET"),
       { params: Promise.resolve({ schoolId: schoolA }) });
     expect(teacherHistory.status).toBe(200);
-    expect((await teacherHistory.json()).snapshots).toHaveLength(2);
+    expect((await teacherHistory.json()).snapshots).toHaveLength(3);
     expect((await RESULT_EVIDENCE_GET(req("student", schoolA, "GET"), {
       params: Promise.resolve({ schoolId: schoolA }),
     })).status).toBe(404);
