@@ -49,7 +49,7 @@ export async function previewPrivateOwnerStudentGrade(
   schoolId: string,
   input: unknown,
 ): Promise<{ preview: OwnerGradePreview; audit: {
-  id: string; evidenceRevision: number; viewedAt: Date; status: string;
+  id: string; evidenceRevision: number; viewedAt: string; status: string;
 } }> {
   if (!identifier.safeParse(schoolId).success) {
     throw new AssessmentError("INVALID_INPUT");
@@ -71,33 +71,27 @@ export async function previewPrivateOwnerStudentGrade(
       });
       if (!owner) throw new AssessmentError("NOT_FOUND");
 
-      // Call only the audited SQL allowlist. The DB never emits classmates,
-      // answer keys, raw marks or another pupil's data.
-      const rows = await tx.$queryRaw<Array<{ preview: OwnerGradePreview }>>`
+      // The same SQL call validates, selects EXACTLY ONE pupil and writes
+      // its immutable audit row before returning. Never separate preview
+      // and audit, including on direct database function invocation.
+      const rows = await tx.$queryRaw<Array<{
+        result: { preview: OwnerGradePreview; audit: {
+          id: string; evidenceRevision: number; viewedAt: string; status: string;
+        } };
+      }>>`
         SELECT "read_private_owner_one_pupil_grade_preview"(
           ${schoolId},${parsed.data.compositionId},${parsed.data.studentId},
-          ${owner.id},${userId}) AS "preview"`;
-      const preview = rows[0]?.preview;
-      if (!preview || preview.status !== "PRIVATE_OWNER_PREVIEW_NOT_RELEASED") {
+          ${owner.id},${userId},${randomUUID()},${parsed.data.reason}
+        ) AS "result"`;
+      const result = rows[0]?.result;
+      if (
+        !result ||
+        result.preview?.status !== "PRIVATE_OWNER_PREVIEW_NOT_RELEASED" ||
+        result.audit?.status !== "INTERNAL_OWNER_PREVIEW_NOT_RELEASED"
+      ) {
         throw new AssessmentError("CONFLICT");
       }
-      // Append a grade-free audit before returning the preview; rollback
-      // the preview request if its audit record cannot be written.
-      const audit = await tx.resultPrivateGradePreviewAudit.create({
-        data: {
-          id: randomUUID(),
-          schoolId,
-          compositionId: parsed.data.compositionId,
-          studentId: parsed.data.studentId,
-          actorMembershipId: owner.id,
-          actorUserId: userId,
-          reason: parsed.data.reason,
-        },
-        select: {
-          id: true, evidenceRevision: true, viewedAt: true, status: true,
-        },
-      });
-      return { preview, audit };
+      return result;
     }, { isolationLevel: "Serializable" });
   } catch (error) {
     mapError(error);
