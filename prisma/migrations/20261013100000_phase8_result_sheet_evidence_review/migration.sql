@@ -189,8 +189,9 @@ BEGIN
    NOT BETWEEN 1 AND 500 THEN
    RAISE EXCEPTION 'Bounded enrolled result roster required' USING ERRCODE='23514';
  END IF;
- IF (SELECT count(*) FROM jsonb_array_elements(p_manifest) v)
-   <> (SELECT count(DISTINCT v->>'studentId') FROM jsonb_array_elements(p_manifest) v)
+ IF (SELECT count(*) FROM jsonb_array_elements(p_manifest) AS elem(value))
+   <> (SELECT count(DISTINCT elem.value->>'studentId')
+       FROM jsonb_array_elements(p_manifest) AS elem(value))
  THEN RAISE EXCEPTION 'Duplicate active enrollment' USING ERRCODE='23514'; END IF;
  FOR pupil IN SELECT value FROM jsonb_array_elements(p_manifest) LOOP
    FOR score IN SELECT value FROM jsonb_array_elements(pupil->'cbt') LOOP
@@ -284,6 +285,27 @@ BEGIN
   NEW."schoolId",NEW."sessionId",NEW."termId",
   NEW."classId",NEW."subjectId",NEW."assignmentId");
  PERFORM "assert_result_sheet_manifest_complete"(frozen);
+ -- A positively weighted category is mandatory academic evidence. No
+ -- synthetic zeros, including for categories omitted by teachers.
+ IF (current_adoption."quizWeight">0 AND NOT EXISTS (
+   SELECT 1 FROM jsonb_array_elements(frozen) AS student(value)
+    CROSS JOIN LATERAL jsonb_array_elements(
+     (student.value->'cbt')||(student.value->'manual')) AS item(value)
+   WHERE item.value->>'kind'='QUIZ'
+ )) OR (current_adoption."testWeight">0 AND NOT EXISTS (
+   SELECT 1 FROM jsonb_array_elements(frozen) AS student(value)
+    CROSS JOIN LATERAL jsonb_array_elements(
+     (student.value->'cbt')||(student.value->'manual')) AS item(value)
+   WHERE item.value->>'kind'='TEST'
+ )) OR (current_adoption."examWeight">0 AND NOT EXISTS (
+   SELECT 1 FROM jsonb_array_elements(frozen) AS student(value)
+    CROSS JOIN LATERAL jsonb_array_elements(
+     (student.value->'cbt')||(student.value->'manual')) AS item(value)
+   WHERE item.value->>'kind'='EXAM'
+ )) THEN
+   RAISE EXCEPTION 'Missing category required by adopted policy'
+     USING ERRCODE='23514';
+ END IF;
  NEW."sourceManifest":=frozen;
  NEW."studentCount":=jsonb_array_length(frozen);
  NEW."revision":=next_revision;
