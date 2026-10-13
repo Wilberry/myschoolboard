@@ -1746,11 +1746,53 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect((await staleOwnerList.json()).candidates.some(
       (item: { evidenceId: string }) => item.evidenceId === thirdId,
     )).toBe(false);
+    // A newer authorized version cannot rewrite or delete historical owner
+    // approval. It must follow new teacher evidence and new HM approval.
+    const fourthPrepared = await prepare("teacher", {
+      ...input, reason: "Synthetic fourth frozen evidence after new adopted policy",
+    });
+    expect(fourthPrepared.status).toBe(201);
+    const fourthId = (await fourthPrepared.json()).evidence.id;
+    const fourthEvidence = await prisma.resultSheetEvidence.findFirstOrThrow({
+      where: { schoolId: schoolA, id: fourthId },
+    });
+    expect(fourthEvidence.revision).toBe(4);
+    expect((await decide("head", fourthId, "APPROVED")).status).toBe(201);
+    const finalScope = await prisma.scopeGrant.findFirstOrThrow({
+      where: { membershipId: members.head, type: "SECTION", scopeId: sectionId },
+    });
+    await prisma.scopeGrant.update({
+      where: { id: finalScope.id }, data: { verified: false },
+    });
+    try {
+      expect((await finalDecision("super", {
+        evidenceId: fourthId, reason: "Unauthorized final approval after section grant revoked",
+      })).status).toBe(409);
+    } finally {
+      await prisma.scopeGrant.update({
+        where: { id: finalScope.id }, data: { verified: true },
+      });
+    }
+    const subsequentApproval = await finalDecision("super", {
+      evidenceId: fourthId, reason: "Synthetic renewed independently reviewed final approval",
+    });
+    expect(subsequentApproval.status).toBe(201);
+    const laterDecision = await prisma.resultFinalPublicationDecision.findFirstOrThrow({
+      where: { schoolId: schoolA, evidenceId: fourthId },
+    });
+    expect(laterDecision).toMatchObject({
+      ordinal: 2, evidenceRevision: 4, status: "APPROVED_AWAITING_RELEASE",
+    });
+    expect(await prisma.resultFinalPublicationDecision.findFirstOrThrow({
+      where: { schoolId: schoolA, evidenceId: thirdId },
+    })).toMatchObject({
+      ordinal: 1, evidenceRevision: 3, status: "APPROVED_AWAITING_RELEASE",
+    });
     const teacherHistory = await RESULT_EVIDENCE_GET(
       req("teacher", schoolA, "GET"),
       { params: Promise.resolve({ schoolId: schoolA }) });
     expect(teacherHistory.status).toBe(200);
-    expect((await teacherHistory.json()).snapshots).toHaveLength(3);
+    expect((await teacherHistory.json()).snapshots).toHaveLength(4);
     expect((await RESULT_EVIDENCE_GET(req("student", schoolA, "GET"), {
       params: Promise.resolve({ schoolId: schoolA }),
     })).status).toBe(404);
