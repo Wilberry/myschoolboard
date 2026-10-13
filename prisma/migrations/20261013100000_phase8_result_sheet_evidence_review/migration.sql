@@ -220,7 +220,38 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE FUNCTION "validate_result_sheet_evidence"() RETURNS trigger AS $$
+-- Every ENROLLED pupil must have a source for EACH adopted positive-weight
+-- category; class-wide coverage is insufficient (one pupil cannot supply
+-- another pupil's missing QUIZ/TEST/EXAM evidence).
+CREATE FUNCTION "assert_result_sheet_weighted_categories"(
+ p_manifest JSONB, p_quiz_weight INTEGER, p_test_weight INTEGER,
+ p_exam_weight INTEGER
+) RETURNS BOOLEAN AS $
+BEGIN
+ IF EXISTS (
+   SELECT 1 FROM jsonb_array_elements(p_manifest) AS student(value)
+   WHERE (p_quiz_weight>0 AND NOT EXISTS (
+     SELECT 1 FROM jsonb_array_elements(
+       (student.value->'cbt')||(student.value->'manual')) AS item(value)
+     WHERE item.value->>'kind'='QUIZ'
+   )) OR (p_test_weight>0 AND NOT EXISTS (
+     SELECT 1 FROM jsonb_array_elements(
+       (student.value->'cbt')||(student.value->'manual')) AS item(value)
+     WHERE item.value->>'kind'='TEST'
+   )) OR (p_exam_weight>0 AND NOT EXISTS (
+     SELECT 1 FROM jsonb_array_elements(
+       (student.value->'cbt')||(student.value->'manual')) AS item(value)
+     WHERE item.value->>'kind'='EXAM'
+   ))
+ ) THEN
+   RAISE EXCEPTION 'Missing category required by adopted policy for an enrolled pupil'
+     USING ERRCODE='23514';
+ END IF;
+ RETURN true;
+END;
+$ LANGUAGE plpgsql;
+
+CREATE FUNCTION "validate_result_sheet_evidence"() RETURNS trigger AS $
 DECLARE current_adoption RECORD;
 DECLARE previous RECORD;
 DECLARE next_revision INT;
@@ -296,27 +327,10 @@ BEGIN
    previous."adoptionId"=NEW."adoptionId"
  THEN RAISE EXCEPTION 'Identical source and adoption cannot create a new revision'
   USING ERRCODE='23505'; END IF;
- -- A positively weighted category is mandatory academic evidence. No
- -- synthetic zeros, including for categories omitted by teachers.
- IF (current_adoption."quizWeight">0 AND NOT EXISTS (
-   SELECT 1 FROM jsonb_array_elements(frozen) AS student(value)
-    CROSS JOIN LATERAL jsonb_array_elements(
-     (student.value->'cbt')||(student.value->'manual')) AS item(value)
-   WHERE item.value->>'kind'='QUIZ'
- )) OR (current_adoption."testWeight">0 AND NOT EXISTS (
-   SELECT 1 FROM jsonb_array_elements(frozen) AS student(value)
-    CROSS JOIN LATERAL jsonb_array_elements(
-     (student.value->'cbt')||(student.value->'manual')) AS item(value)
-   WHERE item.value->>'kind'='TEST'
- )) OR (current_adoption."examWeight">0 AND NOT EXISTS (
-   SELECT 1 FROM jsonb_array_elements(frozen) AS student(value)
-    CROSS JOIN LATERAL jsonb_array_elements(
-     (student.value->'cbt')||(student.value->'manual')) AS item(value)
-   WHERE item.value->>'kind'='EXAM'
- )) THEN
-   RAISE EXCEPTION 'Missing category required by adopted policy'
-     USING ERRCODE='23514';
- END IF;
+ -- Enforce mandatory adopted categories for EACH pupil, not merely the class.
+ PERFORM "assert_result_sheet_weighted_categories"(
+  frozen,current_adoption."quizWeight",current_adoption."testWeight",
+  current_adoption."examWeight");
  NEW."sourceManifest":=frozen;
  NEW."studentCount":=jsonb_array_length(frozen);
  NEW."revision":=next_revision;
@@ -330,7 +344,7 @@ CREATE TRIGGER "ResultSheetEvidence_validate"
 
 CREATE FUNCTION "validate_result_sheet_review"() RETURNS trigger AS $$
 DECLARE snapshot RECORD;
-DECLARE current_adoption TEXT;
+DECLARE current_adoption RECORD;
 DECLARE current_evidence TEXT;
 DECLARE now_manifest JSONB;
 BEGIN
@@ -380,8 +394,11 @@ BEGIN
       OR (reviewer."role"='PRINCIPAL' AND snapshot."stage"='SECONDARY'))
  ) THEN RAISE EXCEPTION 'Independent verified exact-section result reviewer required'
   USING ERRCODE='23503'; END IF;
- SELECT adoption."id" INTO current_adoption
+ SELECT adoption."id",policy."quizWeight",policy."testWeight",
+  policy."examWeight" INTO current_adoption
  FROM "ResultGradingAdoption" adoption
+ JOIN "AssessmentGradingPolicyRevision" policy
+   ON policy."schoolId"=adoption."schoolId" AND policy."id"=adoption."policyId"
  WHERE adoption."schoolId"=NEW."schoolId"
   AND adoption."sessionId"=snapshot."sessionId"
   AND adoption."termId"=snapshot."termId"
@@ -402,7 +419,7 @@ BEGIN
  -- Stale source or policy must never be APPROVED. An authorized reviewer can
  -- still RETURN stale evidence so the teacher may submit a corrected revision.
  IF NEW."action"='APPROVED' THEN
-   IF current_adoption IS DISTINCT FROM snapshot."adoptionId" THEN
+   IF current_adoption."id" IS DISTINCT FROM snapshot."adoptionId" THEN
      RAISE EXCEPTION 'Adopted grading policy changed since preparation'
        USING ERRCODE='23505';
    END IF;
@@ -410,6 +427,9 @@ BEGIN
     snapshot."schoolId",snapshot."sessionId",snapshot."termId",
     snapshot."classId",snapshot."subjectId",snapshot."assignmentId");
    PERFORM "assert_result_sheet_manifest_complete"(now_manifest);
+   PERFORM "assert_result_sheet_weighted_categories"(
+     now_manifest,current_adoption."quizWeight",current_adoption."testWeight",
+     current_adoption."examWeight");
    IF now_manifest IS DISTINCT FROM snapshot."sourceManifest" THEN
      RAISE EXCEPTION 'Source marks or student roster changed since preparation'
        USING ERRCODE='23505';
