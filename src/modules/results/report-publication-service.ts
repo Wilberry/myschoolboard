@@ -48,6 +48,8 @@ export async function adoptReportVisibilityPolicy(schoolId: string, input: unkno
     return await prisma.$transaction(async tx => {
       await tx.$queryRaw`SELECT "id" FROM "School" WHERE "id"=${schoolId}
         AND "isActive"=true FOR UPDATE`;
+      await tx.$queryRaw`SELECT "id" FROM "Membership"
+        WHERE "schoolId"=${schoolId} AND "userId"=${userId} FOR UPDATE`;
       const owner = await tx.membership.findFirst({
         where: {
           schoolId, userId, role: "SCHOOL_SUPER_ADMIN",
@@ -106,6 +108,8 @@ export async function releaseOfficialComposition(schoolId: string, input: unknow
     return await prisma.$transaction(async tx => {
       await tx.$queryRaw`SELECT "id" FROM "School" WHERE "id"=${schoolId}
         AND "isActive"=true FOR UPDATE`;
+      await tx.$queryRaw`SELECT "id" FROM "Membership"
+        WHERE "schoolId"=${schoolId} AND "userId"=${userId} FOR UPDATE`;
       const owner = await tx.membership.findFirst({
         where: {
           schoolId, userId, role: "SCHOOL_SUPER_ADMIN", isActive: true,
