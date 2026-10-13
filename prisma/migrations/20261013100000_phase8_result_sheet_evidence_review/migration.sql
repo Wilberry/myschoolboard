@@ -184,6 +184,7 @@ RETURNS VOID AS $$
 DECLARE pupil JSONB;
 DECLARE score JSONB;
 DECLARE any_source BOOLEAN := false;
+DECLARE pupil_has_source BOOLEAN;
 BEGIN
  IF jsonb_typeof(p_manifest)<>'array' OR jsonb_array_length(p_manifest)
    NOT BETWEEN 1 AND 500 THEN
@@ -194,19 +195,24 @@ BEGIN
        FROM jsonb_array_elements(p_manifest) AS elem(value))
  THEN RAISE EXCEPTION 'Duplicate active enrollment' USING ERRCODE='23514'; END IF;
  FOR pupil IN SELECT value FROM jsonb_array_elements(p_manifest) LOOP
+   pupil_has_source:=false;
    FOR score IN SELECT value FROM jsonb_array_elements(pupil->'cbt') LOOP
-     any_source:=true;
+     any_source:=true; pupil_has_source:=true;
      IF score->>'attemptId' IS NULL OR score->>'earnedPoints' IS NULL
      THEN RAISE EXCEPTION 'CBT attempt not scored and submitted'
        USING ERRCODE='23514'; END IF;
    END LOOP;
    FOR score IN SELECT value FROM jsonb_array_elements(pupil->'manual') LOOP
-     any_source:=true;
+     any_source:=true; pupil_has_source:=true;
      IF score->>'markId' IS NULL OR score->>'effectivePoints' IS NULL
        OR score->>'pendingCorrection'='true'
      THEN RAISE EXCEPTION 'Manual mark not independently approved'
        USING ERRCODE='23514'; END IF;
    END LOOP;
+   IF NOT pupil_has_source THEN
+     RAISE EXCEPTION 'Every pupil requires an assessment source'
+       USING ERRCODE='23514';
+   END IF;
  END LOOP;
  IF NOT any_source THEN
   RAISE EXCEPTION 'No assessment source available' USING ERRCODE='23514';
@@ -264,7 +270,7 @@ BEGIN
  IF current_adoption."id" IS NULL OR current_adoption."id"<>NEW."adoptionId"
  THEN RAISE EXCEPTION 'Latest adopted exact academic grading policy required'
   USING ERRCODE='23503'; END IF;
- SELECT prior."id",review."action" INTO previous
+ SELECT prior."id",prior."sourceManifest",prior."adoptionId",review."action" INTO previous
  FROM "ResultSheetEvidence" prior
  LEFT JOIN "ResultSheetReview" review
   ON review."schoolId"=prior."schoolId" AND review."evidenceId"=prior."id"
@@ -274,8 +280,8 @@ BEGIN
   AND prior."classId"=NEW."classId"
   AND prior."subjectId"=NEW."subjectId"
  ORDER BY prior."revision" DESC LIMIT 1;
- IF previous."id" IS NOT NULL AND previous."action" IS DISTINCT FROM 'RETURNED'
- THEN RAISE EXCEPTION 'New evidence only after reviewed RETURNED snapshot'
+ IF previous."id" IS NOT NULL AND previous."action" IS NULL
+ THEN RAISE EXCEPTION 'Existing result evidence is awaiting independent review'
   USING ERRCODE='23505'; END IF;
  SELECT COALESCE(MAX(e."revision"),0)::int+1 INTO next_revision
  FROM "ResultSheetEvidence" e WHERE e."schoolId"=NEW."schoolId"
@@ -285,6 +291,11 @@ BEGIN
   NEW."schoolId",NEW."sessionId",NEW."termId",
   NEW."classId",NEW."subjectId",NEW."assignmentId");
  PERFORM "assert_result_sheet_manifest_complete"(frozen);
+ IF previous."id" IS NOT NULL AND
+   previous."sourceManifest"=frozen AND
+   previous."adoptionId"=NEW."adoptionId"
+ THEN RAISE EXCEPTION 'Identical source and adoption cannot create a new revision'
+  USING ERRCODE='23505'; END IF;
  -- A positively weighted category is mandatory academic evidence. No
  -- synthetic zeros, including for categories omitted by teachers.
  IF (current_adoption."quizWeight">0 AND NOT EXISTS (
@@ -385,17 +396,24 @@ BEGIN
   AND evidence."classId"=snapshot."classId"
   AND evidence."subjectId"=snapshot."subjectId"
  ORDER BY evidence."revision" DESC LIMIT 1;
- IF current_adoption IS DISTINCT FROM snapshot."adoptionId"
-  OR current_evidence IS DISTINCT FROM snapshot."id"
- THEN RAISE EXCEPTION 'Stale result preparation policy or revision'
-  USING ERRCODE='23505'; END IF;
- now_manifest:="build_result_sheet_source_manifest"(
-  snapshot."schoolId",snapshot."sessionId",snapshot."termId",
-  snapshot."classId",snapshot."subjectId",snapshot."assignmentId");
- PERFORM "assert_result_sheet_manifest_complete"(now_manifest);
- IF now_manifest IS DISTINCT FROM snapshot."sourceManifest" THEN
-  RAISE EXCEPTION 'Source marks or student roster changed since preparation'
-    USING ERRCODE='23505';
+ IF current_evidence IS DISTINCT FROM snapshot."id" THEN
+  RAISE EXCEPTION 'Only the latest result evidence revision may be decided'
+    USING ERRCODE='23505'; END IF;
+ -- Stale source or policy must never be APPROVED. An authorized reviewer can
+ -- still RETURN stale evidence so the teacher may submit a corrected revision.
+ IF NEW."action"='APPROVED' THEN
+   IF current_adoption IS DISTINCT FROM snapshot."adoptionId" THEN
+     RAISE EXCEPTION 'Adopted grading policy changed since preparation'
+       USING ERRCODE='23505';
+   END IF;
+   now_manifest:="build_result_sheet_source_manifest"(
+    snapshot."schoolId",snapshot."sessionId",snapshot."termId",
+    snapshot."classId",snapshot."subjectId",snapshot."assignmentId");
+   PERFORM "assert_result_sheet_manifest_complete"(now_manifest);
+   IF now_manifest IS DISTINCT FROM snapshot."sourceManifest" THEN
+     RAISE EXCEPTION 'Source marks or student roster changed since preparation'
+       USING ERRCODE='23505';
+   END IF;
  END IF;
  NEW."reviewedAt":=(clock_timestamp() AT TIME ZONE 'UTC')::TIMESTAMP(3);
  RETURN NEW;
