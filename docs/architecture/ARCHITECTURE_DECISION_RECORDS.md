@@ -1,5 +1,10 @@
 # Architecture Decision Records
 
+## ADR-047: Private owner-only grade evidence preview without grade publication
+
+- **Status:** AUTHORED / UNVERIFIED. Phase 8's immutable `PrivateOfficialReportComposition` holds sensitive per-pupil grade JSONB that is deliberately absent from all metadata APIs. Implement a distinct GET for one explicit composition ID, restricted by the signed-in user's current active same-school `SCHOOL_SUPER_ADMIN` membership directly in the SQL result query. Project a minimal named-pupil school-held identification and category/raw/displayed score/label fields, never the entire grade JSONB, CBT/manual inputs, private answer keys or source packets. Verify the expected complete pupil count, parsed score bounds and unique pupil IDs before returning any rows; failure becomes NOT_FOUND, not a partial disclosure. Use no-store/noindex and render only when the owner explicitly opens a preview. This reader never grants academic publication, recipient visibility, release, export, downloading or student/guardian access. The next security step is verified cumulative SQL/runtime acceptance, then separately scoped versioned school visibility policy and independently audited recipient-release controls. D-061.
+
+
 ## ADR-001: Modular domain design
 
 - Status: Approved
