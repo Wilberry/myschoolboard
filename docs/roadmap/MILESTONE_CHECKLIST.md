@@ -1,5 +1,20 @@
 # Milestone Checklist
 
+## Phase 8 publication and official subject report candidate — [ ] CODE AUTHORED / ACCEPTANCE BLOCKED
+
+- [x] School-selected four named visibility modes, immutable owner-only policy revisions, no default release and current-version read enforcement.
+- [x] Distinct, reasoned, confirmed School Super Admin subject composition release with in-transaction SQL school lock and current approved frozen source/grade recalculation, append-only versioned history.
+- [x] Return only newest independently released context ordinal; later policy adoption prevents accidental visibility widening or restoration of old version without a new owner release.
+- [x] Enforce current exact active school/role, student/guardian link, unrevoked relationship, same-school child enrollment in recipient final SQL; never trust URL-supplied child IDs, names, emails or class roster.
+- [x] Parent-first guardian acknowledgment ledger and exact release receipt; no inferred consent on view; current valid guardian receipt **plus** student link needed for student access.
+- [x] Private no-store/noindex owner/admin/recipient APIs, owner publication workspace, guardian verification workflow, linked pupil/guardian printable subject report UI.
+- [x] Additive migration, Prisma mapping, authenticated real-session integration scenarios and both cumulative Node guard script registrations.
+- [x] Both new release/disclosure env switches OFF by default; no GitHub Actions, PR trigger, deployment or actual pupil records.
+- [ ] Run `npm run verify:local` on disposal-only localhost:5434/myschoolboard_test after checksum preflight and environment setup: `npm ci`, Prisma generate/deploy, full real-session PostgreSQL tests, Node guards, format/lint/typecheck/Next build and strict `npm audit --audit-level=high`.
+- [ ] Add passing positive student-linked recipient test with separate nonrevoked independently linked school fixture; retest currently revoked guardian/student status, concurrent receipts, latest corrections/policy version, browser print and no-cache.
+- [ ] Independent security/privacy review of live configuration, guardian acknowledgment, report card visuals, backup/retention/publication operations and safe deployment before enabling report switches.
+
+
 ## Phase 8 verified guardian relationship foundation — [ ] AUTHORED / BLOCKED
 
 - [x] Add school-owned immutable existing PARENT membership / existing ENROLLED child relationship, school-keyed FK and unique school-pupil-guardian pair; allow multiple guardians per child and multiple children per guardian.
