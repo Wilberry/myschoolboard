@@ -80,6 +80,10 @@ test("owner release is confirmation-gated and report readers are independently t
     'guardianLinkId: link.id',
     'acknowledge: z.literal(true)',
   ]) assert.ok(recipient.includes(token), token);
+  // There are two independent guardian-revocation boundaries: parent view
+  // and student post-acknowledgment, and two exact receipt projections.
+  assert.ok(recipient.split('"GuardianStudentLinkRevocation"').length >= 3);
+  assert.ok(recipient.split('"ReportGuardianAcknowledgment" receipt').length >= 3);
   assert.equal(recipient.includes("AssessmentQuestionKey"), false);
   assert.ok(policyRoute.includes("adoptReportVisibilityPolicy"));
   assert.ok(releaseRoute.includes("releaseOfficialComposition"));
