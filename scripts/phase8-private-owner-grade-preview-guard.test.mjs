@@ -15,6 +15,11 @@ const integration = read("../src/modules/assessments/questions.integration.test.
 
 test("database preview recomputes all exact school grades but returns only one enrolled pupil", () => {
   assert.ok(sql.includes('CREATE FUNCTION "read_private_owner_one_pupil_grade_preview"'));
+  assert.equal((sql.match(/\$\$/gu) ?? []).length, 4,
+    "Both private preview PL/pgSQL function bodies must have paired $$ delimiters");
+  assert.ok(sql.includes(") RETURNS JSONB AS $$\\nDECLARE".replace("\\n", "\n")));
+  assert.ok(sql.includes("$$ LANGUAGE plpgsql VOLATILE;"));
+  assert.ok(sql.includes("$$ LANGUAGE plpgsql;"));
   assert.ok(sql.includes('PERFORM "assert_result_publication_readiness"('));
   assert.ok(sql.includes('"build_private_official_report_cards"('));
   assert.ok(sql.includes('recomputed IS DISTINCT FROM comp."composedStudentCards"'));
