@@ -1,5 +1,14 @@
 # Milestone Checklist
 
+## Phase 8 school report visibility configuration (future intent only) — [ ] AUTHORED, BLOCKED
+
+- [x] Additive immutable School Super Admin-adopted school report recipient policy, no default and four explicit choices, versioned with exact school/owner audit evidence.
+- [x] Database school-row lock, same-school current active owner check, actor FK, sequential version, duplicate-denial and immutable UPDATE/DELETE/TRUNCATE history.
+- [x] Strict owner-only private no-store GET/POST, authenticated page, explicit choice/reason UI and school navigation; NO report-grade, pupil, guardian, release or export API.
+- [x] Authored integration tests for role/cross-school denial, spoofed source/release inputs, duplicate adoption, immutable history and unchanged composed report evidence; local Node structural guard registered without dropping earlier guards.
+- [ ] Execute PostgreSQL/Prisma and full Node/Vitest, format, lint/typecheck/build, dependency audit and cumulative Phase 6–8 gates.
+- [ ] Decide P-004 parent-first acknowledgment policy and verify individual student/guardian links; independently approve and version-pin a future release. No report disclosure, public verification or export until fully accepted.
+
 ## Phase 8 privately composed official-result evidence — [ ] AUTHORED / BLOCKED
 
 - [x] Append-only exact-school private `PrivateOfficialReportComposition`, with composite FK references to frozen packet, final owner approval and pinned adopted aggregation/grade scale.
