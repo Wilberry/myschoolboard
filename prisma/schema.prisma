@@ -1726,10 +1726,10 @@ model ResultReleasePreflightAttestation {
   compositionId String
   visibilityPolicyId String
   visibilityPolicyVersion Int @default(1)
-  recipientMode String @db.VarChar(48)
-  evidenceId String
-  finalDecisionId String
-  sourcePacketId String
+  recipientMode String @default("INTERNAL_UNSET") @db.VarChar(48)
+  evidenceId String @default("")
+  finalDecisionId String @default("")
+  sourcePacketId String @default("")
   studentCount Int @default(0)
   status String @default("INTERNAL_RELEASE_PREFLIGHT_ONLY_NOT_AUTHORIZATION") @db.VarChar(64)
   reason String @db.VarChar(500)
