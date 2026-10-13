@@ -18,6 +18,7 @@ import { POST as MANUAL_PROPOSAL_POST } from "@/app/api/schools/[schoolId]/asses
 import { GET as MANUAL_REVIEW_QUEUE } from "@/app/api/schools/[schoolId]/assessment-manual-reviews/route";
 import { POST as MANUAL_REVIEW_DECISION } from "@/app/api/schools/[schoolId]/assessment-manual-reviews/[proposalId]/decision/route";
 import { GET as REVIEWED_MANUAL_GRADEBOOK_GET } from "@/app/api/schools/[schoolId]/assessment-reviewed-manual-gradebook/route";
+import { GET as RESULT_PREP_GET } from "@/app/api/schools/[schoolId]/result-preparation/route";
 import {
   GET as CORRECTIONS_GET, POST as CORRECTIONS_POST,
 } from "@/app/api/schools/[schoolId]/assessment-manual-corrections/route";
@@ -975,6 +976,29 @@ describe("Phase 7 exact-assignment private question bank", () => {
         `http://localhost/api/schools/${schoolId}/assessment-reviewed-manual-gradebook?${q}`,
       ), { params: Promise.resolve({ schoolId }) });
     };
+    const preparation = (actor: string, schoolId = schoolA) => {
+      context.headers = new Headers(cookies[actor] ? { cookie: cookies[actor] } : {});
+      const query = new URLSearchParams({ classId, sessionId, termId, subjectId });
+      return RESULT_PREP_GET(new Request(
+        `http://localhost/api/schools/${schoolId}/result-preparation?${query}`,
+      ), { params: Promise.resolve({ schoolId }) });
+    };
+    const beforePreparation = await preparation("teacher");
+    expect(beforePreparation.status).toBe(200);
+    expect(beforePreparation.headers.get("cache-control")).toBe("private, no-store");
+    const prepBody = await beforePreparation.json();
+    expect(prepBody.preparation.status).toBe("PRIVATE_PREPARATION_ONLY");
+    const prepPupil = prepBody.preparation.students.find(
+      (x: { studentId: string }) => x.studentId === pupilId,
+    );
+    expect(prepPupil.blockers).toContain("MANUAL_REVIEW_PENDING");
+    expect(prepPupil.blockers).toContain("GRADING_POLICY_NOT_ADOPTED");
+    expect(JSON.stringify(prepBody)).not.toContain("correctIndex");
+    expect(JSON.stringify(prepBody)).not.toContain("answerKey");
+    expect((await preparation("student")).status).toBe(404);
+    expect((await preparation("other")).status).toBe(404);
+    expect((await preparation("admin")).status).toBe(404);
+    expect((await preparation("teacher", schoolB)).status).toBe(404);
     const beforeAcademicDecision = await reviewedGradebook("teacher");
     expect(beforeAcademicDecision.status).toBe(200);
     const beforeRows = (await beforeAcademicDecision.json()).gradebook.students;
@@ -1021,6 +1045,12 @@ describe("Phase 7 exact-assignment private question bank", () => {
       completedPercentBps: 8500, readyForFurtherAcademicReview: true,
     });
     expect(initiallyApprovedPupil.components[0].status).toBe("APPROVED_INITIAL");
+    const afterSourceReview = await preparation("teacher");
+    expect(afterSourceReview.status).toBe(200);
+    expect((await afterSourceReview.json()).preparation.students.find(
+      (x: { studentId: string }) => x.studentId === pupilId,
+    ).blockers).not.toContain("MANUAL_REVIEW_PENDING");
+
 
     expect((await initialReview("head", {
       action: "RETURNED", reason: "Duplicate terminal decision should fail",
@@ -1098,6 +1128,11 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect(pendingPupil.components[0]).toMatchObject({
       effectiveApprovedPoints: 18, status: "APPROVED_CORRECTION_PENDING",
     });
+    const pendingSourceReview = await preparation("teacher");
+    expect((await pendingSourceReview.json()).preparation.students.find(
+      (x: { studentId: string }) => x.studentId === pupilId,
+    ).blockers).toContain("MANUAL_CORRECTION_PENDING");
+
 
     expect((await correctionDecision("head", correction2.id, {
       action: "RETURNED", reason: "Synthetic reason lacked acceptable marking evidence",

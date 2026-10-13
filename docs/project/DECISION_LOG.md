@@ -1,5 +1,10 @@
 # Decision Log
 
+## D-051: Begin results with private reconciliation, not automatic grades or publication
+
+- Status: Authored/unverified. Phase 8 starts with a teacher-only, source-reconciled preflight; independently authorized CBT and written-mark sources must agree on each enrolled pupil. Missing marks/academic review and unadopted DRAFT grading rules block result readiness. No invented combined percentages, student report, HM/Principal approval or School Super Admin publication. Future result snapshot, verified section approval, policy adoption and final release require separate versioned immutable design. ADR-037.
+
+
 ## D-050: Enable correction-based remediation of returned initial manual marks
 
 - Status: Authored; not executed. A returned initial manual mark must not strand the teacher. Permit a new reasoned bounded changed correction after either terminal initial review outcome; only an independently APPROVED correction may establish a first effective academic-approved mark after RETURNED, with originals/history never modified. Keep the gradebook INCOMPLETE until then. ADR-036.
