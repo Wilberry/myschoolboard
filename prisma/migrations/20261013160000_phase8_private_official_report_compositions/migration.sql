@@ -40,6 +40,10 @@ ALTER TABLE "PrivateOfficialReportComposition"
  FOREIGN KEY ("schoolId","sourcePacketId")
  REFERENCES "ResultReportCardSourcePacket"("schoolId","id") ON DELETE NO ACTION ON UPDATE CASCADE;
 ALTER TABLE "PrivateOfficialReportComposition"
+ ADD CONSTRAINT "PrivateOfficialReportComposition_decision_fkey"
+ FOREIGN KEY ("schoolId","finalDecisionId")
+ REFERENCES "ResultFinalPublicationDecision"("schoolId","id") ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE "PrivateOfficialReportComposition"
  ADD CONSTRAINT "PrivateOfficialReportComposition_aggregation_fkey"
  FOREIGN KEY ("schoolId","aggregationRuleId")
  REFERENCES "ReportAggregationRuleRevision"("schoolId","id") ON DELETE NO ACTION ON UPDATE CASCADE;
