@@ -1599,6 +1599,28 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect(thirdRow.adoptionId).toBe(adoptionNextId);
     expect(thirdRow.sourceManifest).toEqual(newer.sourceManifest);
     expect((await decide("head", thirdId, "APPROVED")).status).toBe(201);
+    // Server-only future publication readiness predicate: validates active
+    // original assignment, distinct current academic reviewer, exact policy,
+    // frozen source and the current School Super Admin under a school lock.
+    // It creates NO publication or student-visible result.
+    const finalReady = (targetSchool: string, targetEvidence: string,
+      actorMembership: string, actorUser: string) => prisma.$queryRaw<
+      Array<{ ready: boolean }>
+    >`SELECT "assert_result_publication_readiness"(
+      ${targetSchool}, ${targetEvidence}, ${actorMembership}, ${actorUser})
+      AS "ready"`;
+    expect(await finalReady(schoolA, thirdId, members.super, users.super))
+      .toEqual([{ ready: true }]);
+    await expect(finalReady(schoolA, thirdId, members.head, users.head))
+      .rejects.toThrow();
+    await expect(finalReady(schoolA, thirdId, members.super, users.head))
+      .rejects.toThrow();
+    await expect(finalReady(schoolB, thirdId, members.super, users.super))
+      .rejects.toThrow();
+    await expect(finalReady(schoolA, firstId, members.super, users.super))
+      .rejects.toThrow();
+    await expect(finalReady(schoolA, secondId, members.super, users.super))
+      .rejects.toThrow();
     const ownerPreflight = (actor: string, inspectedSchool = schoolA) =>
       RESULT_OWNER_PREFLIGHT(req(actor, inspectedSchool, "GET"), {
         params: Promise.resolve({ schoolId: inspectedSchool }),
@@ -1636,6 +1658,8 @@ describe("Phase 7 exact-assignment private question bank", () => {
       where: { id: scope.id }, data: { verified: false },
     });
     try {
+      await expect(finalReady(schoolA, thirdId, members.super, users.super))
+        .rejects.toThrow();
       const revoked = await ownerPreflight("super");
       expect(revoked.status).toBe(200);
       expect((await revoked.json()).candidates.some(
@@ -1656,6 +1680,8 @@ describe("Phase 7 exact-assignment private question bank", () => {
       policyId: (await newerAdoption.json()).policy.id,
       reason: "Synthetic subsequent owner preflight policy adoption",
     }), { params: Promise.resolve({ schoolId: schoolA }) })).status).toBe(201);
+    await expect(finalReady(schoolA, thirdId, members.super, users.super))
+      .rejects.toThrow();
     const staleOwnerList = await ownerPreflight("super");
     expect(staleOwnerList.status).toBe(200);
     expect((await staleOwnerList.json()).candidates.some(
