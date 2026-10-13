@@ -35,3 +35,9 @@
 4. The configuration catalog mentions *four supported visibility values* but does **not name or define all four**; P-004 parent-first acknowledgment semantics remain unresolved. Do not invent school policy choices, silently use `Assessment-only access` to grant results, or expose a recipient route. This precise release-policy ambiguity blocks only recipient disclosure; routine independent development/verification continues under D-023.
 
 **Exit gate: BLOCKED.** No merge, deployment, release, print/export or data sharing. Next release acceptance must include actual PostgreSQL, Node/Vitest, lint/types/build, audit, browser and working CI evidence.
+
+## Final source-check hardening
+
+- Fresh GitHub-source isolated V8 replay: **3/3** preview structural guard cases passed; `package.json` contains the new guard in both full `test` and `verify:local:guards` commands.
+- **3/3 deliberate negative mutations** were rejected by the guard: removing exact owner role, removing active membership revocation check, and removing full class-count validation. This demonstrates guard sensitivity to these source edits; it does **not** establish the correctness of the PostgreSQL query at runtime.
+- The private GET route is explicitly `force-dynamic` with `revalidate = 0` as well as private/no-store/noindex response headers. No PR or Actions run was started.
