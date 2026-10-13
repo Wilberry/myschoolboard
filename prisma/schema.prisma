@@ -285,6 +285,7 @@ model School {
   reportAggregationRuleRevisions ReportAggregationRuleRevision[]
   privateOfficialReportCompositions PrivateOfficialReportComposition[]
   reportVisibilityPolicyRevisions ReportVisibilityPolicyRevision[]
+  releasePreflightAttestations ResultReleasePreflightAttestation[]
 }
 
 model Membership {
@@ -338,6 +339,7 @@ model Membership {
   reportAggregationRuleRevisions ReportAggregationRuleRevision[]
   privateOfficialReportCompositions PrivateOfficialReportComposition[]
   reportVisibilityPolicyRevisions ReportVisibilityPolicyRevision[]
+  releasePreflightAttestations ResultReleasePreflightAttestation[]
 }
 
 model ScopeGrant {
@@ -1688,6 +1690,7 @@ model PrivateOfficialReportComposition {
   @@unique([schoolId, id])
   @@unique([schoolId, sourcePacketId])
   @@index([schoolId, composedAt])
+  releasePreflightAttestations ResultReleasePreflightAttestation[]
 }
 
 /** School-owned immutable report audience configuration for FUTURE RELEASE ONLY.
@@ -1710,4 +1713,36 @@ model ReportVisibilityPolicyRevision {
   @@unique([schoolId, id])
   @@unique([schoolId, version])
   @@index([schoolId, adoptedAt])
+  releasePreflightAttestations ResultReleasePreflightAttestation[]
+}
+
+/** Immutable INTERNAL release preflight evidence only.
+ * Neither an official publication nor a grant to any report recipient.
+ * Future publication MUST repeat current readiness and recipient checks.
+ */
+model ResultReleasePreflightAttestation {
+  id String @id
+  schoolId String
+  compositionId String
+  visibilityPolicyId String
+  visibilityPolicyVersion Int @default(1)
+  recipientMode String @db.VarChar(48)
+  evidenceId String
+  finalDecisionId String
+  sourcePacketId String
+  studentCount Int @default(0)
+  status String @default("INTERNAL_RELEASE_PREFLIGHT_ONLY_NOT_AUTHORIZATION") @db.VarChar(64)
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  checkedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  composition PrivateOfficialReportComposition @relation(fields: [schoolId, compositionId], references: [schoolId, id], onDelete: NoAction, map: "ResultReleasePreflightAttestation_composition_fkey")
+  visibilityPolicy ReportVisibilityPolicyRevision @relation(fields: [schoolId, visibilityPolicyId], references: [schoolId, id], onDelete: NoAction, map: "ResultReleasePreflightAttestation_visibility_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ResultReleasePreflightAttestation_actor_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, compositionId, visibilityPolicyId])
+  @@index([schoolId, checkedAt])
 }
