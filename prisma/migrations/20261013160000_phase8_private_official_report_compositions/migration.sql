@@ -60,7 +60,8 @@ CREATE FUNCTION "round_report_fraction"(
 DECLARE result NUMERIC;
 BEGIN
  IF numerator IS NULL OR numerator<0 OR denominator IS NULL
-   OR denominator<=0 OR precision_mode NOT IN ('HALF_UP','FLOOR','CEILING') THEN
+   OR denominator<=0 OR precision_mode IS NULL
+   OR precision_mode NOT IN ('HALF_UP','FLOOR','CEILING') THEN
    RAISE EXCEPTION 'Invalid report fraction' USING ERRCODE='23514';
  END IF;
  IF precision_mode='FLOOR' THEN result:=floor(numerator/denominator);
@@ -119,13 +120,18 @@ BEGIN
    OR expected_count NOT BETWEEN 1 AND 500
    OR jsonb_array_length(source_cards)<>expected_count
    OR weight_version IS NULL OR weight_version<1
+   OR quiz_weight IS NULL OR test_weight IS NULL OR exam_weight IS NULL
    OR quiz_weight NOT BETWEEN 0 AND 100 OR test_weight NOT BETWEEN 0 AND 100
    OR exam_weight NOT BETWEEN 0 AND 100
    OR quiz_weight+test_weight+exam_weight<>100
+   OR method IS NULL
    OR method NOT IN ('EQUAL_ASSESSMENT_BPS','POOLED_CATEGORY_POINTS')
+   OR precision_mode IS NULL
    OR precision_mode NOT IN ('HALF_UP','FLOOR','CEILING')
-   OR decimal_places NOT BETWEEN 0 AND 2
+   OR decimal_places IS NULL OR decimal_places NOT BETWEEN 0 AND 2
+   OR rounding_mode IS NULL
    OR rounding_mode NOT IN ('HALF_UP','FLOOR','CEILING')
+   OR band_basis IS NULL
    OR band_basis NOT IN ('RAW_BPS','DISPLAY_ROUNDED_BPS') THEN
     RAISE EXCEPTION 'Complete explicit report policies required'
       USING ERRCODE='23514';
@@ -182,7 +188,7 @@ BEGIN
      END IF;
      max_text:=mark->>'maxPoints';
      IF mark_id IN ('CBT:','MANUAL:') OR mark_id=ANY(source_ids)
-       OR mark->>'kind' NOT IN ('QUIZ','TEST','EXAM')
+       OR coalesce(mark->>'kind','') NOT IN ('QUIZ','TEST','EXAM')
        OR jsonb_typeof(mark->'maxPoints') IS DISTINCT FROM 'number'
        OR earned_text IS NULL OR earned_text !~ '^[0-9]{1,10}$'
        OR max_text IS NULL OR max_text !~ '^[0-9]{1,10}$' THEN
