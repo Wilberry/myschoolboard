@@ -283,6 +283,7 @@ model School {
   resultReportCardSourcePackets ResultReportCardSourcePacket[]
   reportGradeScaleRevisions ReportGradeScaleRevision[]
   reportAggregationRuleRevisions ReportAggregationRuleRevision[]
+  privateOfficialReportCompositions PrivateOfficialReportComposition[]
 }
 
 model Membership {
@@ -334,6 +335,7 @@ model Membership {
   resultReportCardSourcePackets ResultReportCardSourcePacket[]
   reportGradeScaleRevisions ReportGradeScaleRevision[]
   reportAggregationRuleRevisions ReportAggregationRuleRevision[]
+  privateOfficialReportCompositions PrivateOfficialReportComposition[]
 }
 
 model ScopeGrant {
@@ -1593,6 +1595,7 @@ model ResultReportCardSourcePacket {
   @@unique([schoolId, id])
   @@unique([schoolId, finalDecisionId])
   @@index([schoolId, preparedAt])
+  privateOfficialReportComposition PrivateOfficialReportComposition?
 }
 
 /** School-specific, append-only report grade-label and display rounding adoption.
@@ -1617,6 +1620,7 @@ model ReportGradeScaleRevision {
   @@unique([schoolId, id])
   @@unique([schoolId, version])
   @@index([schoolId, adoptedAt])
+  privateOfficialReportCompositions PrivateOfficialReportComposition[]
 }
 
 /** School-adopted, immutable assessment-category aggregation semantics.
@@ -1640,4 +1644,44 @@ model ReportAggregationRuleRevision {
   @@unique([schoolId, id])
   @@unique([schoolId, version])
   @@index([schoolId, adoptedAt])
+  privateOfficialReportCompositions PrivateOfficialReportComposition[]
+}
+
+/** Per-class/subject/term immutable INTERNAL official-result composition
+ * evidence, built exclusively from DB-frozen reviewed source marks and exact
+ * adopted aggregation/grade scale revisions. NOT released to recipients.
+ * No API exposes composedStudentCards; public results remain disabled. */
+model PrivateOfficialReportComposition {
+  id String @id
+  schoolId String
+  sourcePacketId String
+  finalDecisionId String
+  evidenceId String
+  adoptionId String
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  evidenceRevision Int @default(1)
+  aggregationRuleId String
+  aggregationRuleVersion Int @default(1)
+  gradeScaleId String
+  gradeScaleVersion Int @default(1)
+  studentCount Int @default(0)
+  composedStudentCards Json @default("[]")
+  status String @default("INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED") @db.VarChar(64)
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  composedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  sourcePacket ResultReportCardSourcePacket @relation(fields: [schoolId, sourcePacketId], references: [schoolId, id], onDelete: NoAction, map: "PrivateOfficialReportComposition_packet_fkey")
+  aggregationRule ReportAggregationRuleRevision @relation(fields: [schoolId, aggregationRuleId], references: [schoolId, id], onDelete: NoAction, map: "PrivateOfficialReportComposition_aggregation_fkey")
+  gradeScale ReportGradeScaleRevision @relation(fields: [schoolId, gradeScaleId], references: [schoolId, id], onDelete: NoAction, map: "PrivateOfficialReportComposition_scale_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "PrivateOfficialReportComposition_actor_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, sourcePacketId])
+  @@index([schoolId, composedAt])
 }
