@@ -1,5 +1,12 @@
 # Blockers and Open Questions
 
+## Phase 8 recipient visibility configuration and private preview verification (2026-10-13)
+
+- **Private grade preview source authored:** current active exact-school School Super Admin read-only preview of frozen unreleased grades and same-school pupil identity with no-store response. Full PostgreSQL, Prisma, Vitest, browser, lint/types/build and security-audit acceptance have NOT run; historical Phase 6–8 unmerged drafts remain an upstream release blocker. No recipient route or report release.
+- **Visibility policy specificity for next slice:** `docs/requirements/CONFIGURATION_CATALOG.md` mentions *four supported* report-card visibility values but does not enumerate or define their exact semantics. `P-004` parent-first acknowledgment remains deferred. A reversible deny-by-default future adoption model may be designed, but none of these unspecified choices may be inferred to grant a student/guardian result. Implement/review explicit versions, release event, current verified student/guardian links and recipient read filters before enabling any disclosure. This ambiguity does not prevent independent tests, safe scaffolding or other roadmap work.
+- **No GitHub Actions requested:** do not trigger/retry workflows to validate this checkpoint. Local CI-equivalent verification remains next, on an explicitly disposable loopback PostgreSQL target with migration checksum checks.
+
+
 ## Approved and deferred decisions
 
 | Decision                                          | Status                                                                                                                                | Scope / remaining work                                                     |
