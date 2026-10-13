@@ -75,4 +75,6 @@ test("integration tests enforce roles, tenant isolation and immutable privacy", 
   assert.ok(integration.includes('TRUNCATE "ReportVisibilityPolicyRevision"'));
   assert.ok(integration.includes('expect(metadata).not.toContain(pupilId)'));
   assert.ok(integration.includes("privateOfficialReportComposition.count("));
+  assert.ok(integration.includes('data: { isActive: false }'));
+  assert.ok(integration.includes('expect((await history("super")).status).toBe(404)'));
 });
