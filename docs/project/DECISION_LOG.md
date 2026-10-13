@@ -1,5 +1,11 @@
 # Decision Log
 
+## D-062: Explicit guardian-to-enrolled-pupil attestation is evidence, not report access
+
+- **Status:** authored / unverified (2026-10-13); no production adoption.
+- **Decision:** the existing `PARENT` membership role can be independently attested by an active same-school School Administrator or School Super Admin to one existing ENROLLED StudentRecord with ACTIVE enrollment. The administrator must expressly confirm identity verification and provide reason; neither names/emails/admission numbers nor existing `ScopeGrant` rows prove kinship automatically. Support multiple guardian memberships per child and multiple children per guardian with one immutable link per exact pair; preserve terminal revocations as separate immutable actor-attributed rows, never delete/reassign the original. Direct SQL writes repeat school, actor user+membership, guardian role and exact pupil status/enrollment revalidation under school-row lock. Do **not** create recipient routes or grant report visibility from a link alone: report release, adopted school policy, independent owner event, current relationship, child enrollment and guardian identity must all be separately enforced in a future milestone. See ADR-048.
+
+
 ## D-061: School Super Admin confidential grade preview (no recipient release)
 
 - **Status:** authored / not yet runtime verified (2026-10-13).
