@@ -2134,6 +2134,56 @@ describe("Phase 7 exact-assignment private question bank", () => {
     })).rejects.toThrow();
     await expect(prisma.$executeRaw`TRUNCATE "PrivateOfficialReportComposition"`)
       .rejects.toThrow();
+    // Independently compare PostgreSQL category aggregation, both modes,
+    // and display-label rounding against the deterministic TypeScript engine.
+    const synthetic = [{
+      studentId: pupilId, adoptedWeightVersion: 7,
+      reportStatus: "INTERNAL_SOURCE_ONLY_NOT_RELEASED",
+      quizWeight: 20, testWeight: 30, examWeight: 50,
+      cbt: [
+        { draftId: "quiz-1", attemptId: "attempt-1", kind: "QUIZ",
+          earnedPoints: 1, maxPoints: 2 },
+        { draftId: "quiz-2", attemptId: "attempt-2", kind: "QUIZ",
+          earnedPoints: 1, maxPoints: 4 },
+        { draftId: "exam-1", attemptId: "attempt-3", kind: "EXAM",
+          earnedPoints: 8, maxPoints: 10 },
+      ],
+      manual: [
+        { componentId: "test-1", markId: "approved-mark-1", kind: "TEST",
+          effectivePoints: 6, maxPoints: 10 },
+      ],
+    }];
+    for (const mode of ["EQUAL_ASSESSMENT_BPS", "POOLED_CATEGORY_POINTS"] as const) {
+      const pg = await prisma.$queryRaw<Array<{ cards: Array<unknown> }>>`
+        SELECT "build_private_official_report_cards"(
+          ${JSON.stringify(synthetic)}::jsonb, ${1}::integer,
+          ${7}::integer, ${20}::integer, ${30}::integer, ${50}::integer,
+          ${mode}, ${"HALF_UP"}, ${JSON.stringify(scale.bands)}::jsonb,
+          ${scale.decimalPlaces}::integer, ${scale.roundingMode},
+          ${scale.bandBasis}) AS "cards"`;
+      const simulated = simulatePrivateReportComposition({
+        sourcePacketId: source.id, expectedStudentCount: 1,
+        students: synthetic as unknown as PrivatePacketStudent[],
+        aggregation: { id: aggregation.id, version: aggregation.version,
+          categoryMethod: mode, precisionMode: "HALF_UP" },
+        scale: { id: scale.id, version: scale.version,
+          bands: scale.bands as unknown as Array<{
+            code: string; remark: string; minBps: number; maxBps: number }>,
+          decimalPlaces: scale.decimalPlaces as 0 | 1 | 2,
+          roundingMode: scale.roundingMode as "HALF_UP" | "FLOOR" | "CEILING",
+          bandBasis: scale.bandBasis as "RAW_BPS" | "DISPLAY_ROUNDED_BPS",
+        },
+      });
+      expect(pg[0]?.cards).toMatchObject(simulated.students.map(item => ({
+        ...item, reportStatus: "INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED",
+      })));
+    }
+    await expect(prisma.$queryRaw`
+      SELECT "round_report_fraction"(${1}::numeric, ${0}::numeric,
+        ${"HALF_UP"})`).rejects.toThrow();
+    await expect(prisma.$queryRaw`
+      SELECT "round_report_fraction"(${1}::numeric, ${3}::numeric,
+        ${null}::text)`).rejects.toThrow();
     const bogus = [{
       studentId: pupilId, reportStatus: "INTERNAL_SOURCE_ONLY_NOT_RELEASED",
       adoptedWeightVersion: 3, quizWeight: 50, testWeight: 50,
