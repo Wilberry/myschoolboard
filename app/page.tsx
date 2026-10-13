@@ -109,6 +109,14 @@ async function HomeContent() {
                       My lesson notes
                     </Link>
                   )}
+                  {(role === "STUDENT" || role === "PARENT") && (
+                    <Link
+                      href={`/schools/${school.id}/published-reports`}
+                      className="school-link"
+                    >
+                      My authorized published reports
+                    </Link>
+                  )}
                   {canShowSchoolDetailLink(session.user.id, school.id, role) ? (
                     <Link href={`/schools/${school.id}`} className="school-link">
                       View details
