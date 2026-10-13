@@ -11,6 +11,7 @@ const id = z.string().min(1).max(128).refine(v => v === v.trim());
 const bps = z.number().int().min(0).max(10000);
 const row = z.object({
   studentId: id, admissionNumber: z.string().min(1),
+  recipientRole: z.enum(["STUDENT","PARENT"]),
   givenName: z.string().min(1), familyName: z.string().min(1),
   schoolName: z.string().min(1), sessionName: z.string().min(1),
   termName: z.string().min(1), className: z.string().min(1),
@@ -56,6 +57,7 @@ export async function readCurrentPublishedReports(schoolId: string) {
       sourcePupil.value->>'admissionNumber' AS "admissionNumber",
       sourcePupil.value->>'givenName' AS "givenName",
       sourcePupil.value->>'familyName' AS "familyName",
+      recipient."role" AS "recipientRole",
       school."name" AS "schoolName", session."name" AS "sessionName",
       term."name" AS "termName", classroom."name" AS "className",
       subject."name" AS "subjectName",
