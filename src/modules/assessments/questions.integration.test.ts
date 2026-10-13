@@ -28,6 +28,8 @@ import { GET as FINAL_OWNER_GET, POST as FINAL_OWNER_POST } from "@/app/api/scho
 import { GET as SOURCE_PACKET_GET, POST as SOURCE_PACKET_POST } from "@/app/api/schools/[schoolId]/report-card-source-packets/route";
 import { GET as REPORT_SCALE_GET, POST as REPORT_SCALE_POST } from "@/app/api/schools/[schoolId]/report-grade-scales/route";
 import { GET as AGGREGATION_RULE_GET, POST as AGGREGATION_RULE_POST } from "@/app/api/schools/[schoolId]/report-aggregation-rules/route";
+import { GET as COMPOSITION_GET, POST as COMPOSITION_POST } from "@/app/api/schools/[schoolId]/private-official-report-compositions/route";
+import { simulatePrivateReportComposition, type PrivatePacketStudent } from "@/src/modules/results/report-composition-simulation";
 import { POST as RESULT_REVIEW_POST } from "@/app/api/schools/[schoolId]/result-sheet-reviews/[evidenceId]/decision/route";
 import {
   GET as ADOPTIONS_GET, POST as ADOPTIONS_POST,
@@ -2026,6 +2028,123 @@ describe("Phase 7 exact-assignment private question bank", () => {
       });
       expect(unchanged.studentSourceCards).toEqual(sourceBefore.studentSourceCards);
     }
+  });
+
+  it("freezes private official composition with DB-recomputed pinned grade evidence, never releases", async () => {
+    const compose = (actor: string, input: unknown, targetSchool = schoolA) =>
+      COMPOSITION_POST(req(actor, targetSchool, "POST", input), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const history = (actor: string, targetSchool = schoolA) =>
+      COMPOSITION_GET(req(actor, targetSchool, "GET"), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const source = await prisma.resultReportCardSourcePacket.findFirstOrThrow({
+      where: { schoolId: schoolA },
+      orderBy: { preparedAt: "desc" },
+    });
+    const aggregation = await prisma.reportAggregationRuleRevision.findFirstOrThrow({
+      where: { schoolId: schoolA }, orderBy: { version: "desc" },
+    });
+    const scale = await prisma.reportGradeScaleRevision.findFirstOrThrow({
+      where: { schoolId: schoolA }, orderBy: { version: "desc" },
+    });
+    const payload = {
+      sourcePacketId: source.id, aggregationRuleId: aggregation.id,
+      gradeScaleId: scale.id, reason: "Synthetic immutable private official result evidence",
+    };
+    for (const actor of ["teacher", "student", "head", "principal", "admin", "other"]) {
+      expect((await compose(actor, payload)).status).toBe(404);
+      expect((await history(actor)).status).toBe(404);
+    }
+    expect((await compose("super", payload, schoolB)).status).toBe(404);
+    expect((await history("super", schoolB)).status).toBe(404);
+    for (const injected of [
+      { ...payload, studentId: pupilId },
+      { ...payload, composedStudentCards: [] },
+      { ...payload, actorUserId: users.super },
+      { ...payload, gradeScaleVersion: 500 },
+      { ...payload, studentCount: 0 },
+    ]) expect((await compose("super", injected)).status).toBe(400);
+    const older = await prisma.resultReportCardSourcePacket.findFirstOrThrow({
+      where: { schoolId: schoolA },
+      orderBy: { preparedAt: "asc" },
+    });
+    if (older.id !== source.id) {
+      expect((await compose("super", {
+        ...payload, sourcePacketId: older.id,
+      })).status).toBe(409);
+    }
+    const accepted = await compose("super", payload);
+    expect(accepted.status).toBe(201);
+    expect(accepted.headers.get("cache-control")).toBe("private, no-store");
+    expect((await accepted.json()).status)
+      .toBe("PRIVATE_COMPOSITION_FROZEN_NOT_PUBLISHED");
+    const frozen = await prisma.privateOfficialReportComposition.findFirstOrThrow({
+      where: { schoolId: schoolA, sourcePacketId: source.id },
+    });
+    expect(frozen).toMatchObject({
+      aggregationRuleId: aggregation.id, gradeScaleId: scale.id,
+      aggregationRuleVersion: aggregation.version, gradeScaleVersion: scale.version,
+      studentCount: source.studentCount, evidenceRevision: source.evidenceRevision,
+      status: "INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED",
+    });
+    const composed = frozen.composedStudentCards as Array<{
+      studentId: string; rawPercentBps: number; gradeCode: string;
+      remark: string; displayPercent: string; categoryPercentBps: unknown;
+      reportStatus: string;
+    }>;
+    const expected = simulatePrivateReportComposition({
+      sourcePacketId: source.id, expectedStudentCount: source.studentCount,
+      students: source.studentSourceCards as unknown as PrivatePacketStudent[],
+      aggregation: {
+        id: aggregation.id, version: aggregation.version,
+        categoryMethod: aggregation.categoryMethod as "EQUAL_ASSESSMENT_BPS" | "POOLED_CATEGORY_POINTS",
+        precisionMode: aggregation.precisionMode as "HALF_UP" | "FLOOR" | "CEILING",
+      },
+      scale: {
+        id: scale.id, version: scale.version,
+        bands: scale.bands as unknown as Array<{
+          code: string; remark: string; minBps: number; maxBps: number }>,
+        decimalPlaces: scale.decimalPlaces as 0 | 1 | 2,
+        roundingMode: scale.roundingMode as "HALF_UP" | "FLOOR" | "CEILING",
+        bandBasis: scale.bandBasis as "RAW_BPS" | "DISPLAY_ROUNDED_BPS",
+      },
+    });
+    expect(composed).toHaveLength(source.studentCount);
+    for (const row of expected.students) {
+      expect(composed.find(item => item.studentId === row.studentId)).toMatchObject({
+        ...row, reportStatus: "INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED",
+      });
+    }
+    expect(JSON.stringify(composed)).not.toContain("correctIndex");
+    const privateResponse = await history("super");
+    expect(privateResponse.status).toBe(200);
+    expect(privateResponse.headers.get("cache-control")).toBe("private, no-store");
+    const metadata = JSON.stringify(await privateResponse.json());
+    expect(metadata).not.toContain(pupilId);
+    expect(metadata).not.toContain("composedStudentCards");
+    expect(metadata).not.toContain("rawPercentBps");
+    expect((await compose("super", payload)).status).toBe(409);
+    await expect(prisma.privateOfficialReportComposition.update({
+      where: { id: frozen.id }, data: { reason: "Forged grade revision" },
+    })).rejects.toThrow();
+    await expect(prisma.privateOfficialReportComposition.delete({
+      where: { id: frozen.id },
+    })).rejects.toThrow();
+    await expect(prisma.$executeRaw`TRUNCATE "PrivateOfficialReportComposition"`)
+      .rejects.toThrow();
+    const bogus = [{
+      studentId: pupilId, reportStatus: "INTERNAL_SOURCE_ONLY_NOT_RELEASED",
+      adoptedWeightVersion: 3, quizWeight: 50, testWeight: 50,
+      examWeight: 0, cbt: [], manual: [],
+    }];
+    await expect(prisma.$queryRaw`SELECT "build_private_official_report_cards"(
+      ${JSON.stringify(bogus)}::jsonb, ${1}::integer,
+      ${3}::integer, ${50}::integer, ${50}::integer, ${0}::integer,
+      ${"POOLED_CATEGORY_POINTS"}, ${"HALF_UP"},
+      ${JSON.stringify(scale.bands)}::jsonb, ${scale.decimalPlaces}::integer,
+      ${scale.roundingMode}, ${scale.bandBasis})`).rejects.toThrow();
   });
 
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
