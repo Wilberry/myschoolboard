@@ -1,5 +1,9 @@
 # Authorization Rules
 
+## Phase 8 school-owned report aggregation rule (AUTHORED; NOT VERIFIED)
+
+`GET/POST /api/schools/[schoolId]/report-aggregation-rules` requires an active same-school authenticated `SCHOOL_SUPER_ADMIN`; only `categoryMethod`, `precisionMode` and 5–500 char reason are accepted on POST. The same authorization is rechecked by PostgreSQL INSERT under active School row lock and the private bounded GET SQL tenant+owner join. Policy revisions are immutable and not a report release. Pure `simulatePrivateReportComposition` has no route and must never be called with browser-supplied pupil marks as trusted official inputs; a future official writer must load frozen packet and pinned adopted rules server-side, confirm authorization and revalidate under the School lock. Neither school owners nor pupils/guardians gain report-card grade access by adopting a rule. D-059/ADR-045.
+
 ## Phase 8 school-adopted report grading-scale history (AUTHORED; NOT VERIFIED)
 
 Private `GET/POST /api/schools/[schoolId]/report-grade-scales` checks the authenticated currently active same-school `SCHOOL_SUPER_ADMIN`. Only exact owner can POST full specified grade bands, selected decimal precision/rounding/band basis and audit reason, never actor/version/timestamp. SERIALIZABLE transaction locks School, and PostgreSQL INSERT trigger independently revalidates current School and actor membership/user, mandatory full grade bands and immutable version ordinal under the same School lock. Read history SQL repeats active school/owner joins, is bounded to 100 and private no-store; other roles and foreign school concealed. Scale history contains school policy labels only; no student marks or disclosure, release, export or parent/student report API. Any future report uses an explicitly pinned adopted version, not silently the latest after it changes. D-058/ADR-044; tests not locally executed, publication disabled.

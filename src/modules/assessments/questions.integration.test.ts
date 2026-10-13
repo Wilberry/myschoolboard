@@ -27,6 +27,7 @@ import { GET as RESULT_OWNER_PREFLIGHT } from "@/app/api/schools/[schoolId]/resu
 import { GET as FINAL_OWNER_GET, POST as FINAL_OWNER_POST } from "@/app/api/schools/[schoolId]/result-final-publication-decisions/route";
 import { GET as SOURCE_PACKET_GET, POST as SOURCE_PACKET_POST } from "@/app/api/schools/[schoolId]/report-card-source-packets/route";
 import { GET as REPORT_SCALE_GET, POST as REPORT_SCALE_POST } from "@/app/api/schools/[schoolId]/report-grade-scales/route";
+import { GET as AGGREGATION_RULE_GET, POST as AGGREGATION_RULE_POST } from "@/app/api/schools/[schoolId]/report-aggregation-rules/route";
 import { POST as RESULT_REVIEW_POST } from "@/app/api/schools/[schoolId]/result-sheet-reviews/[evidenceId]/decision/route";
 import {
   GET as ADOPTIONS_GET, POST as ADOPTIONS_POST,
@@ -1953,6 +1954,77 @@ describe("Phase 7 exact-assignment private question bank", () => {
         where: { id: savedPacket.id }, select: { studentSourceCards: true },
       });
       expect(original.studentSourceCards).toEqual(savedPacket.studentSourceCards);
+    }
+  });
+
+  it("adopts immutable school calculation policies without rewriting frozen pupils", async () => {
+    const adoptRule = (actor: string, input: unknown, targetSchool = schoolA) =>
+      AGGREGATION_RULE_POST(req(actor, targetSchool, "POST", input), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const ruleHistory = (actor: string, targetSchool = schoolA) =>
+      AGGREGATION_RULE_GET(req(actor, targetSchool, "GET"), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const first = {
+      categoryMethod: "EQUAL_ASSESSMENT_BPS",
+      precisionMode: "HALF_UP",
+      reason: "Synthetic school-adopted equal-assessment grade aggregation",
+    };
+    for (const actor of ["teacher", "head", "principal", "admin", "student", "other"]) {
+      expect((await adoptRule(actor, first)).status).toBe(404);
+      expect((await ruleHistory(actor)).status).toBe(404);
+    }
+    expect((await adoptRule("super", first, schoolB)).status).toBe(404);
+    expect((await ruleHistory("super", schoolB)).status).toBe(404);
+    for (const input of [
+      { ...first, actorUserId: users.super },
+      { ...first, version: 25 },
+      { ...first, precisionMode: "BANKERS" },
+      { ...first, categoryMethod: "AUTO" },
+      { ...first, reason: "x" },
+    ]) expect((await adoptRule("super", input)).status).toBe(400);
+
+    const sourceBefore = await prisma.resultReportCardSourcePacket.findFirst({
+      where: { schoolId: schoolA }, orderBy: { preparedAt: "asc" },
+      select: { id: true, studentSourceCards: true },
+    });
+    const saved = await adoptRule("super", first);
+    expect(saved.status).toBe(201);
+    expect(saved.headers.get("cache-control")).toBe("private, no-store");
+    expect((await saved.json()).rule.version).toBe(1);
+    expect((await adoptRule("super", first)).status).toBe(409);
+    const revised = await adoptRule("super", {
+      ...first, categoryMethod: "POOLED_CATEGORY_POINTS",
+      precisionMode: "CEILING",
+      reason: "Synthetic changed adopted category-aggregation rule",
+    });
+    expect(revised.status).toBe(201);
+    const second = (await revised.json()).rule;
+    expect(second.version).toBe(2);
+    const history = await ruleHistory("super");
+    expect(history.status).toBe(200);
+    expect(history.headers.get("cache-control")).toBe("private, no-store");
+    const data = (await history.json()).rules;
+    expect(data.slice(0, 2).map((row: { version: number }) => row.version))
+      .toEqual([2, 1]);
+    expect(JSON.stringify(data)).not.toContain(pupilId);
+    expect(JSON.stringify(data)).not.toContain("studentSourceCards");
+    await expect(prisma.reportAggregationRuleRevision.update({
+      where: { id: second.id },
+      data: { precisionMode: "FLOOR" },
+    })).rejects.toThrow();
+    await expect(prisma.reportAggregationRuleRevision.delete({
+      where: { id: second.id },
+    })).rejects.toThrow();
+    await expect(prisma.$executeRaw`TRUNCATE "ReportAggregationRuleRevision"`)
+      .rejects.toThrow();
+    if (sourceBefore) {
+      const unchanged = await prisma.resultReportCardSourcePacket.findFirstOrThrow({
+        where: { id: sourceBefore.id },
+        select: { studentSourceCards: true },
+      });
+      expect(unchanged.studentSourceCards).toEqual(sourceBefore.studentSourceCards);
     }
   });
 

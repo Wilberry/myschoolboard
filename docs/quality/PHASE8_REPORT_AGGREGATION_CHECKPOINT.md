@@ -1,0 +1,27 @@
+# Phase 8 — Versioned School Report Aggregation & Private Composition Mathematics
+
+**Date:** 2026-10-13
+**Cumulative branch:** `feature/phase8-report-aggregation-policy`, based on draft PR #72 (school grading scale) → #71 private source packet → #70 owner approval → #69 locked readiness → #68 private preflight → #67 independent academic review → #66 grading weight adoption. Cumulative Phase 6–7 prerequisites remain unverified.
+
+**Requirements:** RES-REQ-001 partial, TEN-REQ-001/SEC-REQ-001 partial. **Exit:** BLOCKED.
+
+## Implementation authored
+
+- Additive `ReportAggregationRuleRevision` Prisma model and `20261013150000_phase8_report_aggregation_rule_revisions` migration. `categoryMethod` requires explicitly chosen `EQUAL_ASSESSMENT_BPS` or `POOLED_CATEGORY_POINTS`. `precisionMode` requires explicitly chosen `HALF_UP/FLOOR/CEILING` for all integer score divisions and final adopted category weighting. School-row-locked BEFORE INSERT verifies active exact School Super Admin membership/user, refuses identical version re-adoption, assigns immutable sequential school version and trusted timestamp. Unique school ID/version, same-school actor FK and protected UPDATE/DELETE/TRUNCATE preserve history. **No seeding or implicit rule.**
+- Private owner-only `GET/POST /api/schools/[schoolId]/report-aggregation-rules` and server-gated page/navigation. POST accepts only method, precision mode, and 5–500-character reason, with server-derived actor and SERIALIZABLE transaction. Final history SQL repeats active same-school owner and 100-row bound. Response is non-pupil policy metadata; private/no-store and no official grade/release action.
+- Pure `simulatePrivateReportComposition` takes a supposedly frozen private source packet with explicit source packet ID, student count and CBT/written points, adopted 100%-sum QUIZ/TEST/EXAM weight/version and explicitly **pinned** aggregation rule ID/version plus grade-scale ID/version. `EQUAL_ASSESSMENT_BPS` rounds every earned/possible fraction to integer 0–10000 basis points, then rounds the equal within-category mean; `POOLED_CATEGORY_POINTS` sums earned and possible points, then rounds the category ratio once. Both methods combine categories by the exact adopted weights and round final integer basis points using the adopted precision. The separate scale's adopted display precision/rounding/threshold basis maps the score to label. All scoring divisions use integer BigInt arithmetic; no floating-score fallback. Reject bad/missing/duplicate sources and pupils, missing positive-weight category, out-of-range points, mixed weight versions and invalid policy. **Returns PRIVATE_COMPOSITION_SIMULATION_ONLY; it is NOT an official result, stored document or student/guardian API.**
+- Authored Vitest pure math/corruption/threshold and synthetic authenticated role/school/replay/version/immutability/preserved-packet integration scenarios; Node invariant guard registered in the existing `npm test` and `npm run verify:local:guards` commands. D-059/ADR-045 and status/traceability/authorization/module/milestone docs updated.
+
+## Validation provenance
+
+- **Executed:** GitHub connector branch/commits/reads and 32/34 initial targeted source checks. The two initial schema relation checks flagged extra blank-line formatting; this was tidied before any database application (not a runtime failure). In-memory **15/15 arithmetic smoke checks passed** using exact GitHub-fetched pure TypeScript source content transformed to JavaScript in V8 (equal/pooled math, category and final scores, policy bands, 1/3 rounding, missing and corrupt inputs, duplicate/mismatched weight versions). This is not Node/Vitest, Prisma or PostgreSQL. A final source check is recorded in the draft PR.
+- **NOT executed:** `npm ci`, `prisma validate/generate/migrate`, PostgreSQL SQL trigger/lock/race/rollback tests, actual Node/Vitest, formatter/linter/typechecker/build/browser/a11y, strict `npm audit --audit-level=high`, `npm run verify:local`, passing GitHub Actions CI. No local checked-out repository (GitHub DNS failure documented at preceding checkpoints) or disposable PostgreSQL server. Previous Actions failures had no accessible job steps; cause unconfirmed.
+- **No student data, production/shared DB, historical migration rewrites, merged branch, deploy, official report-card grade release or public student/guardian grade view.**
+
+## Next engineering milestone
+
+1. Complete cumulative Phase 6–8 migration/Prisma/full Node/Vitest/dependency-security/CI validation in a confirmed disposable PostgreSQL environment; correct discovered defects without disabling security gates.
+2. Introduce **immutable privately composed official-result evidence** tied to an exact source-packet revision, school owner final decision, explicitly adopted assessment weights, an explicitly pinned aggregation-rule revision and grading-scale revision. Independently recompute/validate all numbers and current source eligibility in a locked transaction; never trust browser-provided grade scores or stale policy. Preserve amendments as new revisions.
+3. Separately add an audited School Super Admin recipient *release* action, explicit school report visibility, verified student/guardian relationships and configured download/export. None of these are authorized by a private simulation.
+
+**Outcome:** Versioned aggregation + private deterministic composition semantics AUTHORED; official report generation and release BLOCKED.
