@@ -1,5 +1,10 @@
 # Requirements Traceability Matrix
 
+## Phase 8 owner-only unreleased grade preview — RES-REQ-001, TEN-REQ-001, SEC-REQ-001 partial (AUTHORED)
+
+`feature/phase8-private-owner-grade-preview`: additive immutable `ResultPrivateGradePreviewAudit` table/actor+tenant FKs and `read_private_owner_one_pupil_grade_preview` SQL that independently revalidates current academic authorization, teacher/section reviewer/owner, unchanged frozen full class grade calculation and exact enrolled pupil context. SQL allowlist projects only one pupil's grade/school labels; inserts append-only reasoned audit **before returning**, even on direct SQL calls. School owner-only strict no-store POST and server-gated UI visibly warn `NOT RELEASED` and cannot grant student/guardian results, PDF, QR or publication. Authored role/tenant/reviewer/enrollment/forged-input/direct SQL auto-audit/rollback/immutable tests; registered structural guard replay 4/4 passed with mocked Node reads, not real PostgreSQL/Node runtime acceptance. P-004 and full cumulative Phase 6–8 gates still block release. D-065/ADR-051.
+
+
 ## Phase 8 owner-only single-pupil grade preview — RES-REQ-001/SEC-REQ-001/TEN-REQ-001 partial (AUTHORED / UNVERIFIED)
 
 `feature/phase8-private-owner-grade-preview` provides the admin-only internally watermarked report-grade preview projected by a SQL security-invoker function under current School lock, source/academic approval, current adopted grade scale and assessment aggregation and recomputed frozen class-composition equality. It returns the single selected ACTIVE-enrolled pupil's private school/context/score/grade/remark, never raw CBT/teacher marks or peers. The strict no-store POST authenticated current School Super Admin route logs an immutable same-transaction, grade-free `ResultPrivateGradePreviewAudit` for each successful preview, with owner page/nav. Authored role/tenant/forgery/cross-origin/revocation/immutable tests and registered Node structural guard. No recipient report access, P-004 acknowledgment, actual publication, public PDF or export; real cumulative PostgreSQL/Prisma/Node/Vitest/security/build checks remain BLOCKED. D-065/ADR-051.
