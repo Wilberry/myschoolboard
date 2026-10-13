@@ -17,6 +17,8 @@ test("only active same-school School Super Admin may read exact frozen compositi
     'owner."isActive"=true', 'school."isActive"=true',
     "INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED",
     'pupil."schoolId"=c."schoolId"', 'pupil."id"=entry.card->>\'studentId\'',
+    'source."schoolId"=c."schoolId"', 'source."id"=c."sourcePacketId"',
+    'sourcePupil.value->>\'studentId\'=pupil."id"',
     "parsed.data.length !== parsed.data[0].studentCount",
     "seen.has(row.studentId)", "LIMIT 501",
   ]) assert.ok(service.includes(text), `Missing scope check: ${text}`);
@@ -26,12 +28,16 @@ test("grade preview projects only allowed fields, no source/keys or release muta
   for (const text of [
     'entry.card->>\'rawPercentBps\'', 'entry.card->>\'displayPercent\'',
     'entry.card->>\'gradeCode\'', 'entry.card->>\'remark\'',
-    'entry.card->\'categoryPercentBps\'', 'pupil."admissionNumber"',
-    'pupil."givenName"', 'pupil."familyName"',
+    'entry.card->\'categoryPercentBps\'',
+    'sourcePupil.value->>\'admissionNumber\'',
+    'sourcePupil.value->>\'givenName\'',
+    'sourcePupil.value->>\'familyName\'',
   ]) assert.ok(service.includes(text));
   assert.equal(service.includes('c."composedStudentCards" AS'), false);
   assert.equal(service.includes('SELECT c.*'), false);
-  assert.equal(service.includes("studentSourceCards"), false);
+  assert.ok(service.includes('source."studentSourceCards"'));
+  assert.equal(service.includes('AS "studentSourceCards"'), false);
+  assert.equal(service.includes('pupil."givenName" AS "givenName"'), false);
   assert.ok(route.includes("export async function GET"));
   assert.equal(route.includes("export async function POST"), false);
   assert.equal(route.includes("export async function DELETE"), false);
@@ -54,6 +60,8 @@ test("database-backed scenarios cover role, tenant, nonexistent ID, revoked owne
     'expect((await preview("super")).status).toBe(404)',
     '"composedStudentCards"', '"studentSourceCards"',
     '"correctIndex"',
+    'data: { givenName: "LaterCorrectedIdentity" }',
+    'expect(historicalRows.find(row => row.studentId === pupilId)?.givenName)',
   ]) {
     const equivalent = text === 'preview("teacher")' || text === 'preview("student")'
       ? '["teacher", "student", "head", "principal", "admin", "other"]'
