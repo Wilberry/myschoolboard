@@ -1,5 +1,14 @@
 # Milestone Checklist
 
+## Phase 8 private single-pupil owner report preview — [ ] AUTHORED / NOT ACCEPTED
+
+- [x] SQL SECURITY INVOKER function reruns locked current exact school owner/teacher/HM-or-Principal academic approval/source manifest, verifies latest grading policies and recomputes full frozen report before returning **one** currently enrolled pupil's allowlisted grade projection.
+- [x] Same-school owner/pupil/composition immutable reasoned preview-access audit without stored marks, grade JSON or answer keys, required within same SERIALIZABLE transaction as every successful preview.
+- [x] No-store POST-only strict authenticated owner API, optional cross-origin Origin denial, server-gated workspace/navigation and prominent unreleased/confidential watermark; no downloads/public URLs/recipients.
+- [x] Authored synthetic TEACHER/STUDENT/PARENT/Head/Principal/Admin/cross-school denials, forged input, foreign pupil, cross-origin POST, read auditing, immutability, revocation and no-publication cases; registered Node structural guard without removing earlier checks.
+- [ ] Run cumulative disposable PostgreSQL/Prisma migrations and SQL one-pupil/parity/rollback/identity/concurrency tests, actual Node/Vitest, formatting/lint/typecheck/build and strict dependency audit.
+- [ ] Resolve P-004 and independently authorize actual report release and recipient relationship/acknowledgment checks before adding student/guardian readers or official report PDFs/exports. User instruction: **do not run GitHub Actions** currently.
+
 ## Phase 8 exact recipient review evidence, NOT report access — [ ] AUTHORED / BLOCKED
 
 - [x] SQL-locked immutable exact report/student/recipient review evidence with same-school composite FKs to prior internal preflight, current adopted policy, private report, pupil and recipient membership; DB-derived role, proof ID, internal status and timestamp.
