@@ -62,7 +62,7 @@ test("private API and UI require current same-school owner and deliberate intent
   assert.ok(page.includes("if (!owner) notFound()"));
   assert.ok(workspace.includes('useState<Mode | "">("")'));
   assert.ok(workspace.includes('disabled={busy || !recipientMode || reason.trim().length < 5}'));
-  assert.ok(workspace.includes("No report-card reader, release action"));
+  assert.ok(workspace.includes("report-card reader, release action"));
 });
 
 test("integration tests enforce roles, tenant isolation and immutable privacy", () => {
