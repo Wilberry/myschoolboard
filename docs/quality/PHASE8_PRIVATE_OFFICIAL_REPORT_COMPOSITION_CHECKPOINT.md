@@ -20,6 +20,12 @@
 
 **NOT executed:** `npm ci`, Prisma validate/generate/migrate, cumulative disposable-loopback PostgreSQL migration and trigger/lock/concurrency/rollback tests, full Node/Vitest including the newly added parity tests, format/lint/typecheck/build/browser/accessibility, `npm run verify:local`, `npm audit --audit-level=high`, passing GitHub CI. No local repository checkout (GitHub DNS failure), no PostgreSQL server in the current runtime, no shared or production database used and no live student data. Historical migrations are not to be rewritten if they have been applied anywhere; first inspect migration state and create forward repairs if necessary.
 
+## 2026-10-13 post-draft hardening
+
+- Explicitly reject NULL expected class size inside the otherwise fail-closed PostgreSQL composition helper (additional integration negative case). The prior latest-policy/mode NULL and missing assessment-kind hardening remains.
+- Post-hardening GitHub-fetched source assertions passed **11/11** (three paired SQL functions, NULL handling, pinned policies, authorization/reviewer revocation and SQL/TS parity test registration). These are source assertions, **not executed PostgreSQL integration tests**.
+- Draft PR #74 CI run [38391796445](https://github.com/Wilberry/myschoolboard/actions/runs/38391796445) completed **failure**; GitHub job `verify` exposed no steps and no logs via the connected API. Root cause **unconfirmed**, CI acceptance BLOCKED. No production merge or release.
+
 ## Next authorized development
 
 1. **First:** Resolve full cumulative Phase 6–8 local/PostgreSQL/CI/security gates. Any unexpected regression must be fixed before promoting official report workflows.
