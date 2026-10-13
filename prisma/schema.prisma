@@ -1820,5 +1820,5 @@ model ReportGuardianAcknowledgment {
 
   @@unique([schoolId, id])
   @@unique([schoolId, releaseId, studentId, guardianMembershipId], map: "ReportGuardianAcknowledgment_exact_receipt_key")
-  @@index([schoolId, studentId, acknowledgedAt], map: "ReportGuardianAcknowledgment_schoolId_studentId_acknowledgedAt_idx")
+  @@index([schoolId, studentId, acknowledgedAt], map: "ReportGuardianAck_school_student_time_idx")
 }
