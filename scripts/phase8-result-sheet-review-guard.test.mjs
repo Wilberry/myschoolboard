@@ -18,7 +18,7 @@ test("phase 8 source evidence remains immutable and database computed",()=>{
   assert.ok(sql.includes(check),check);
 });
 test("academic review repeats verified exact-section authorization and stays private",()=>{
- for(const check of ["grant.\"verified\"=true",
+ for(const check of ["scope.\"verified\"=true",
   "reviewer.\"role\"='HEAD_OF_SECTION'","reviewer.\"role\"='PRINCIPAL'",
   "NEW.\"reviewerUserId\"<>snapshot.\"teacherUserId\"",
   "IF NEW.\"action\"='APPROVED' THEN"])
