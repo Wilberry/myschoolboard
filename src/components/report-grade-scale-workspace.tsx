@@ -13,9 +13,9 @@ const emptyBands = "";
 export function ReportGradeScaleWorkspace({ schoolId }: { schoolId: string }) {
   const [history, setHistory] = useState<Scale[]>([]);
   const [bandsJson, setBandsJson] = useState(emptyBands);
-  const [decimalPlaces, setDecimalPlaces] = useState<0 | 1 | 2>(0);
-  const [roundingMode, setRoundingMode] = useState<"HALF_UP" | "FLOOR" | "CEILING">("HALF_UP");
-  const [bandBasis, setBandBasis] = useState<"RAW_BPS" | "DISPLAY_ROUNDED_BPS">("RAW_BPS");
+  const [decimalPlaces, setDecimalPlaces] = useState<0 | 1 | 2 | null>(null);
+  const [roundingMode, setRoundingMode] = useState<"HALF_UP" | "FLOOR" | "CEILING" | "">("");
+  const [bandBasis, setBandBasis] = useState<"RAW_BPS" | "DISPLAY_ROUNDED_BPS" | "">("");
   const [reason, setReason] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -80,22 +80,26 @@ export function ReportGradeScaleWorkspace({ schoolId }: { schoolId: string }) {
           "No school grading bands entered."}
       </p>
       <label htmlFor="grade-decimals">Displayed percentage decimal places</label>
-      <select id="grade-decimals" value={decimalPlaces}
-        onChange={event => setDecimalPlaces(Number(event.target.value) as 0 | 1 | 2)}>
+      <select id="grade-decimals" value={decimalPlaces ?? ""} required
+        onChange={event => setDecimalPlaces(event.target.value === "" ? null :
+          Number(event.target.value) as 0 | 1 | 2)}>
+        <option value="">Choose display precision</option>
         <option value={0}>Whole percentage</option>
         <option value={1}>One decimal place</option>
         <option value={2}>Two decimal places</option>
       </select>
       <label htmlFor="grade-rounding">Rounding method</label>
-      <select id="grade-rounding" value={roundingMode}
+      <select id="grade-rounding" value={roundingMode} required
         onChange={event => setRoundingMode(event.target.value as typeof roundingMode)}>
+        <option value="">Choose rounding mode</option>
         <option value="HALF_UP">Half up</option>
         <option value="FLOOR">Round down</option>
         <option value="CEILING">Round up</option>
       </select>
       <label htmlFor="grade-band-basis">Apply grade thresholds to</label>
-      <select id="grade-band-basis" value={bandBasis}
+      <select id="grade-band-basis" value={bandBasis} required
         onChange={event => setBandBasis(event.target.value as typeof bandBasis)}>
+        <option value="">Choose the threshold basis</option>
         <option value="RAW_BPS">Original unrounded score</option>
         <option value="DISPLAY_ROUNDED_BPS">Displayed rounded score</option>
       </select>
