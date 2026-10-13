@@ -1,5 +1,10 @@
 # Architecture Decision Records
 
+## ADR-051: Single-pupil SQL projection with inseparable confidential preview audit
+
+- **Decision:** The private-grade preview runs as a single authenticated School Super Admin-only POST, never as an unlogged GET, public link, PDF export or recipient token. Inside a SERIALIZABLE transaction, the service locks active School and derives actor identity. `read_private_owner_one_pupil_grade_preview` rechecks the exact current owner/teacher/HM-or-Principal approval through `assert_result_publication_readiness`, frozen source packet and current adopted grade scale/aggregation, recomputes every frozen class grade for parity, validates **exactly one** currently enrolled pupil matching the class/session, and projects only that pupil's verified name, admission number, category BPS/weights, score, grade/remark and school/session/term/class/subject metadata. It then inserts `ResultPrivateGradePreviewAudit` with DB-confirmed owner/pupil/composition in the **same SQL function**, deriving evidence revision/status/timestamp; no preview can be returned until the insert succeeds. The caller commits before sending HTTP response; a rollback removes the audit and no separate application-only write can be bypassed. Audit rows have no grades; UPDATE/DELETE/TRUNCATE forbidden. The POST-only API rejects cross-origin JSON browser POSTs and returns private no-store response; the page is server-gated and visually states `NOT RELEASED`. A direct SQL invocation of the preview function is also audited. Academic visibility to owner is separate from every form of report publication, student/guardian authorization and undecided P-004. **Status:** authored, PostgreSQL and full runtime testing outstanding. D-065.
+
+
 ## ADR-001: Modular domain design
 
 - Status: Approved
