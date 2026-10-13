@@ -26,6 +26,7 @@ import { GET as RESULT_REVIEW_QUEUE } from "@/app/api/schools/[schoolId]/result-
 import { GET as RESULT_OWNER_PREFLIGHT } from "@/app/api/schools/[schoolId]/result-publication-candidates/route";
 import { GET as FINAL_OWNER_GET, POST as FINAL_OWNER_POST } from "@/app/api/schools/[schoolId]/result-final-publication-decisions/route";
 import { GET as SOURCE_PACKET_GET, POST as SOURCE_PACKET_POST } from "@/app/api/schools/[schoolId]/report-card-source-packets/route";
+import { GET as REPORT_SCALE_GET, POST as REPORT_SCALE_POST } from "@/app/api/schools/[schoolId]/report-grade-scales/route";
 import { POST as RESULT_REVIEW_POST } from "@/app/api/schools/[schoolId]/result-sheet-reviews/[evidenceId]/decision/route";
 import {
   GET as ADOPTIONS_GET, POST as ADOPTIONS_POST,
@@ -1875,6 +1876,84 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect((await RESULT_EVIDENCE_GET(req("student", schoolA, "GET"), {
       params: Promise.resolve({ schoolId: schoolA }),
     })).status).toBe(404);
+  });
+
+  it("adopts versioned school report grade scales without touching old report sources", async () => {
+    const scaleRequest = (actor: string, body: unknown, targetSchool = schoolA) =>
+      REPORT_SCALE_POST(req(actor, targetSchool, "POST", body),
+        { params: Promise.resolve({ schoolId: targetSchool }) });
+    const scaleHistory = (actor: string, targetSchool = schoolA) =>
+      REPORT_SCALE_GET(req(actor, targetSchool, "GET"),
+        { params: Promise.resolve({ schoolId: targetSchool }) });
+    const bands = [
+      { code: "F", remark: "Synthetic low band", minBps: 0, maxBps: 5999 },
+      { code: "A", remark: "Synthetic high band", minBps: 6000, maxBps: 10000 },
+    ];
+    const valid = {
+      bands, decimalPlaces: 0, roundingMode: "HALF_UP",
+      bandBasis: "RAW_BPS",
+      reason: "Synthetic school grading scale adoption",
+    };
+    for (const actor of ["teacher", "head", "principal", "admin", "student", "other"]) {
+      expect((await scaleRequest(actor, valid)).status).toBe(404);
+      expect((await scaleHistory(actor)).status).toBe(404);
+    }
+    expect((await scaleRequest("super", valid, schoolB)).status).toBe(404);
+    expect((await scaleHistory("super", schoolB)).status).toBe(404);
+    for (const invalid of [
+      { ...valid, version: 99 },
+      { ...valid, actorMembershipId: members.super },
+      { ...valid, decimalPlaces: 3 },
+      { ...valid, bands: [{ ...bands[0], maxBps: 6000 }, bands[1]] },
+      { ...valid, bands: [{ ...bands[0], maxBps: 5998 }, bands[1]] },
+      { ...valid, bands: [{ ...bands[0], maxBps: 5999 },
+        { ...bands[1], code: "f" }] },
+    ]) expect((await scaleRequest("super", invalid)).status).toBe(400);
+
+    const savedPacket = await prisma.resultReportCardSourcePacket.findFirst({
+      where: { schoolId: schoolA }, orderBy: { preparedAt: "asc" },
+      select: { id: true, studentSourceCards: true },
+    });
+    const adoptedOne = await scaleRequest("super", valid);
+    expect(adoptedOne.status).toBe(201);
+    expect(adoptedOne.headers.get("cache-control")).toBe("private, no-store");
+    const first = (await adoptedOne.json()).scale;
+    expect(first.version).toBe(1);
+    expect(first.bands).toEqual(bands);
+    expect((await scaleRequest("super", valid)).status).toBe(409);
+    const updated = await scaleRequest("super", {
+      ...valid, decimalPlaces: 1, bandBasis: "DISPLAY_ROUNDED_BPS",
+      reason: "Synthetic amended displayed-score school grading policy",
+    });
+    expect(updated.status).toBe(201);
+    const second = (await updated.json()).scale;
+    expect(second.version).toBe(2);
+    const ownerHistory = await scaleHistory("super");
+    expect(ownerHistory.status).toBe(200);
+    expect(ownerHistory.headers.get("cache-control")).toBe("private, no-store");
+    const observed = (await ownerHistory.json()).scales;
+    expect(observed.slice(0, 2).map((item: { version: number }) => item.version))
+      .toEqual([2, 1]);
+    expect(JSON.stringify(observed)).not.toContain(pupilId);
+    expect(JSON.stringify(observed)).not.toContain("studentSourceCards");
+    await expect(prisma.reportGradeScaleRevision.update({
+      where: { id: first.id }, data: { reason: "Forged policy correction" },
+    })).rejects.toThrow();
+    await expect(prisma.reportGradeScaleRevision.delete({
+      where: { id: first.id },
+    })).rejects.toThrow();
+    await expect(prisma.$executeRaw`TRUNCATE "ReportGradeScaleRevision"`)
+      .rejects.toThrow();
+    await expect(prisma.$queryRaw`SELECT "assert_report_grade_scale_bands"(
+      ${JSON.stringify([
+        { ...bands[0], maxBps: 7000 }, bands[1],
+      ])}::jsonb)`).rejects.toThrow();
+    if (savedPacket) {
+      const original = await prisma.resultReportCardSourcePacket.findFirstOrThrow({
+        where: { id: savedPacket.id }, select: { studentSourceCards: true },
+      });
+      expect(original.studentSourceCards).toEqual(savedPacket.studentSourceCards);
+    }
   });
 
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {

@@ -62,6 +62,13 @@ async function SchoolDetailContent({
 
         {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
           <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/report-grade-scales`} className="secondary-link">
+              Adopt school report grade bands (not published)
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
+          <p className="setup-navigation">
             <Link href={`/schools/${schoolId}/report-card-sources`} className="secondary-link">
               Private report-card source packets (not graded or released)
             </Link>

@@ -1,5 +1,15 @@
 # Milestone Checklist
 
+## Phase 8 adopted report grading-scale rules — [ ] AUTHORED, BLOCKED
+
+- [x] Immutable active School Super Admin grade-scale adoption, no school-wide hard-coded default.
+- [x] SQL checks complete ascending 0–10000 integer basis-point coverage; strictly non-overlapping bands and unique labels, selected rounding mode, decimal precision and band classification basis.
+- [x] Preserve successive per-school revisions, audit actor/reason/trusted timestamp; prevent UPDATE, DELETE and TRUNCATE.
+- [x] Private no-store owner-only API, page, navigation and private deterministic score/label simulation; no official report calculation or release.
+- [x] Authored malformed rule, duplicate, role, cross-tenant, history, immutability and unchanged-packet tests and registered new Node guard without removing gates.
+- [ ] Execute cumulative disposable PostgreSQL, Prisma, Node/Vitest, format/lint/typecheck/build/security audit and CI-equivalent tests and repair failures.
+- [ ] Implement explicit adopted formula/band version binding, frozen official report composition, independent release and configured guardian/student visibility; official publication DISABLED.
+
 ## Phase 8 immutable private report-card source foundation — [ ] AUTHORED, BLOCKED
 
 - [x] Additive, server-built one-per-final-decision private pupil source snapshot with exact school/academic/policy/evidence version.
