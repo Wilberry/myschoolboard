@@ -8,6 +8,7 @@ type Packet = { id: string; evidenceRevision: number; finalDecisionOrdinal: numb
 type Scale = { id: string; version: number };
 type Rule = { id: string; version: number };
 type Composition = { id: string; sourcePacketId: string; evidenceRevision: number;
+  className: string; subjectName: string;
   studentCount: number; aggregationRuleVersion: number;
   gradeScaleVersion: number; status: string };
 export function PrivateOfficialCompositionWorkspace({ schoolId }: { schoolId: string }) {
@@ -112,7 +113,8 @@ export function PrivateOfficialCompositionWorkspace({ schoolId }: { schoolId: st
     </form>
     <h3>Private composition history</h3>
     <ul>{history.map(h => <li key={h.id}>
-      Evidence revision {h.evidenceRevision}, {h.studentCount} pupils;
+      {h.className} / {h.subjectName} — evidence revision {h.evidenceRevision},
+      {h.studentCount} pupils;
       aggregation revision {h.aggregationRuleVersion},
       scale revision {h.gradeScaleVersion} — {h.status}
       <button type="button" onClick={() => setPreviewId(h.id)}>
