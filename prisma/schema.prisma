@@ -288,6 +288,7 @@ model School {
   releasePreflightAttestations ResultReleasePreflightAttestation[]
   guardianRelationshipEvents GuardianStudentRelationshipEvent[]
   recipientEligibilityEvidence ResultRecipientEligibilityEvidence[]
+  privateGradePreviewAudits ResultPrivateGradePreviewAudit[]
 }
 
 model Membership {
@@ -346,6 +347,7 @@ model Membership {
   guardianRelationshipActorEvents GuardianStudentRelationshipEvent[] @relation("GuardianRelationshipActor")
   recipientEligibilityActors ResultRecipientEligibilityEvidence[] @relation("RecipientEligibilityActor")
   recipientEligibilitySubjects ResultRecipientEligibilityEvidence[] @relation("RecipientEligibilitySubject")
+  privateGradePreviewAudits ResultPrivateGradePreviewAudit[]
 }
 
 model ScopeGrant {
@@ -764,6 +766,7 @@ model StudentRecord {
   assessmentManualMarkProposals AssessmentManualMarkProposal[]
   guardianRelationshipEvents GuardianStudentRelationshipEvent[]
   recipientEligibilityEvidence ResultRecipientEligibilityEvidence[]
+  privateGradePreviewAudits ResultPrivateGradePreviewAudit[]
 }
 
 model StudentEnrollment {
@@ -1700,6 +1703,7 @@ model PrivateOfficialReportComposition {
   @@index([schoolId, composedAt])
   releasePreflightAttestations ResultReleasePreflightAttestation[]
   recipientEligibilityEvidence ResultRecipientEligibilityEvidence[]
+  privateGradePreviewAudits ResultPrivateGradePreviewAudit[]
 }
 
 /** School-owned immutable report audience configuration for FUTURE RELEASE ONLY.
@@ -1816,4 +1820,28 @@ model ResultRecipientEligibilityEvidence {
   @@unique([schoolId, id])
   @@unique([schoolId, compositionId, studentId, recipientMembershipId, visibilityPolicyId, relationshipProofId], map: "ResultRecipientEligibilityEvidence_exact_proof_key")
   @@index([schoolId, checkedAt])
+}
+
+/** Audit trail for a School Super Admin's PRIVATE one-pupil grade preview.
+ * Contains NO score, answer, release, or guardian/student authorization.
+ */
+model ResultPrivateGradePreviewAudit {
+  id String @id
+  schoolId String
+  compositionId String
+  studentId String
+  actorMembershipId String
+  actorUserId String
+  evidenceRevision Int @default(0)
+  status String @default("INTERNAL_OWNER_PREVIEW_NOT_RELEASED") @db.VarChar(64)
+  reason String @db.VarChar(500)
+  viewedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  composition PrivateOfficialReportComposition @relation(fields: [schoolId, compositionId], references: [schoolId, id], onDelete: NoAction, map: "ResultPrivateGradePreviewAudit_composition_fkey")
+  student StudentRecord @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction, map: "ResultPrivateGradePreviewAudit_student_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ResultPrivateGradePreviewAudit_actor_fkey")
+
+  @@unique([schoolId, id])
+  @@index([schoolId, viewedAt])
 }
