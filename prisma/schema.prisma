@@ -282,7 +282,6 @@ model School {
   resultFinalPublicationDecisions ResultFinalPublicationDecision[]
   resultReportCardSourcePackets ResultReportCardSourcePacket[]
   reportGradeScaleRevisions ReportGradeScaleRevision[]
-
   reportAggregationRuleRevisions ReportAggregationRuleRevision[]
 }
 
@@ -334,7 +333,6 @@ model Membership {
   resultFinalPublicationDecisions ResultFinalPublicationDecision[]
   resultReportCardSourcePackets ResultReportCardSourcePacket[]
   reportGradeScaleRevisions ReportGradeScaleRevision[]
-
   reportAggregationRuleRevisions ReportAggregationRuleRevision[]
 }
 
