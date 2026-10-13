@@ -27,6 +27,11 @@ test("private release preflight locks current academic evidence and never publis
   assert.ok(sql.includes('decision."status" IS DISTINCT FROM \'APPROVED_AWAITING_RELEASE\''));
   assert.ok(sql.includes('IF EXISTS (\n   SELECT 1 FROM "ResultReleasePreflightAttestation" earlier'));
   assert.ok(sql.includes('NEW."status":=\'INTERNAL_RELEASE_PREFLIGHT_ONLY_NOT_AUTHORIZATION\''));
+  assert.ok(schema.includes('recipientMode String @default("INTERNAL_UNSET")'));
+  assert.ok(sql.includes('DEFAULT \'INTERNAL_UNSET\''));
+  assert.ok(sql.includes('char_length("evidenceId")>0'));
+  assert.ok(sql.includes('char_length("sourcePacketId")>0'));
+
   for (const name of ["validate", "immutable", "no_truncate"]) {
     assert.ok(sql.includes(`"ResultReleasePreflightAttestation_${name}"`));
   }
@@ -46,6 +51,9 @@ test("preflight API accepts only exact owner request, discloses metadata and nev
   assert.ok(service.includes('owner."userId"=${userId}'));
   assert.ok(service.includes('WHERE att."schoolId"=${schoolId}'));
   assert.ok(service.includes("LIMIT 100"));
+  assert.equal(service.includes('recipientMode: "ASSESSMENT_ONLY"'), false);
+  assert.equal(service.includes('sourcePacketId: ""'), false);
+
   assert.equal(service.includes('att."composedStudentCards"'), false);
   assert.ok(route.includes("manualHeaders"));
   assert.ok(route.includes("INTERNAL_PREFLIGHT_ONLY_NOT_AUTHORIZED_OR_RELEASED"));
