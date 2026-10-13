@@ -87,7 +87,7 @@ BEGIN
    source_packet."adoptionId",source_packet."sessionId",source_packet."termId",
    source_packet."classId",source_packet."subjectId",source_packet."evidenceRevision",
    source_packet."studentCount",source_packet."studentSourceCards"
- INTO packet FROM "ResultReportCardSourcePacket" packet
+ INTO packet FROM "ResultReportCardSourcePacket" source_packet
  WHERE source_packet."schoolId"=NEW."schoolId"
    AND source_packet."id"=composition."sourcePacketId";
  IF NOT FOUND
