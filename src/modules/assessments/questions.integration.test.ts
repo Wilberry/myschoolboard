@@ -29,6 +29,8 @@ import { GET as SOURCE_PACKET_GET, POST as SOURCE_PACKET_POST } from "@/app/api/
 import { GET as REPORT_SCALE_GET, POST as REPORT_SCALE_POST } from "@/app/api/schools/[schoolId]/report-grade-scales/route";
 import { GET as AGGREGATION_RULE_GET, POST as AGGREGATION_RULE_POST } from "@/app/api/schools/[schoolId]/report-aggregation-rules/route";
 import { GET as COMPOSITION_GET, POST as COMPOSITION_POST } from "@/app/api/schools/[schoolId]/private-official-report-compositions/route";
+import { GET as GUARDIAN_GET, POST as GUARDIAN_POST } from "@/app/api/schools/[schoolId]/guardian-links/route";
+import { POST as GUARDIAN_REVOKE } from "@/app/api/schools/[schoolId]/guardian-links/[linkId]/revoke/route";
 import { GET as PRIVATE_GRADE_PREVIEW_GET } from "@/app/api/schools/[schoolId]/private-official-report-compositions/[compositionId]/preview/route";
 import { simulatePrivateReportComposition, type PrivatePacketStudent } from "@/src/modules/results/report-composition-simulation";
 import { POST as RESULT_REVIEW_POST } from "@/app/api/schools/[schoolId]/result-sheet-reviews/[evidenceId]/decision/route";
@@ -106,7 +108,7 @@ async function list(actor: string, schoolId = schoolA) {
 
 describe("Phase 7 exact-assignment private question bank", () => {
   beforeAll(async () => {
-    for (const name of ["teacher", "other", "admin", "foreign", "head", "principal", "super", "student"]) {
+    for (const name of ["teacher", "other", "admin", "foreign", "head", "principal", "super", "student", "parent"]) {
       const email = `asm-${name}-${suffix}@example.test`;
       const registered = await auth.api.signUpEmail({
         body: { name: `Synthetic ${name}`, email, password },
@@ -133,6 +135,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
       ["principal", "PRINCIPAL", schoolA],
       ["super", "SCHOOL_SUPER_ADMIN", schoolA],
       ["student", "STUDENT", schoolA],
+      ["parent", "PARENT", schoolA],
     ] as const) {
       const member = await prisma.membership.create({
         data: { userId: users[name], schoolId, role },
@@ -2327,6 +2330,116 @@ describe("Phase 7 exact-assignment private question bank", () => {
       ${"POOLED_CATEGORY_POINTS"}, ${"HALF_UP"},
       ${JSON.stringify(scale.bands)}::jsonb, ${scale.decimalPlaces}::integer,
       ${scale.roundingMode}, ${scale.bandBasis})`).rejects.toThrow();
+  });
+
+  it("requires independently attested guardian membership and preserves terminal link history", async () => {
+    const requestGuardianLink = (actor: string, body: unknown, schoolId = schoolA) =>
+      GUARDIAN_POST(req(actor, schoolId, "POST", body), {
+        params: Promise.resolve({ schoolId }),
+      });
+    const guardianHistory = (actor: string, schoolId = schoolA) =>
+      GUARDIAN_GET(req(actor, schoolId, "GET"), {
+        params: Promise.resolve({ schoolId }),
+      });
+    const revokeGuardian = (actor: string, linkId: string,
+      body: unknown, schoolId = schoolA) =>
+      GUARDIAN_REVOKE(req(actor, schoolId, "POST", body), {
+        params: Promise.resolve({ schoolId, linkId }),
+      });
+    const input = {
+      guardianMembershipId: members.parent,
+      studentId: pupilId,
+      identityVerified: true,
+      reason: "Synthetic administrator-verified guardian identity",
+    };
+    expect((await requestGuardianLink("anonymous", input)).status).toBe(401);
+    for (const actor of ["teacher", "head", "principal", "student", "parent", "foreign"]) {
+      expect((await requestGuardianLink(actor, input)).status).toBe(404);
+      expect((await guardianHistory(actor)).status).toBe(404);
+    }
+    expect((await requestGuardianLink("admin", input, schoolB)).status).toBe(404);
+    expect((await guardianHistory("admin", schoolB)).status).toBe(404);
+    for (const body of [
+      { ...input, identityVerified: false },
+      { ...input, identityVerified: undefined },
+      { ...input, parentUserId: users.parent },
+      { ...input, attestedByUserId: users.admin },
+      { ...input, reportVisibility: "PUBLISHED" },
+      { ...input, reason: "x" },
+    ]) expect((await requestGuardianLink("admin", body)).status).toBe(400);
+    expect((await requestGuardianLink("admin", {
+      ...input, guardianMembershipId: members.student,
+    })).status).toBe(404);
+    expect((await requestGuardianLink("admin", {
+      ...input, studentId: "missing-pupil",
+    })).status).toBe(404);
+    // Current active enrollment is mandatory, not a matching name or email.
+    await prisma.studentEnrollment.update({
+      where: { id: enrollmentId }, data: { status: "ENDED" },
+    });
+    try {
+      expect((await requestGuardianLink("admin", input)).status).toBe(404);
+    } finally {
+      await prisma.studentEnrollment.update({
+        where: { id: enrollmentId }, data: { status: "ACTIVE" },
+      });
+    }
+    const created = await requestGuardianLink("admin", input);
+    expect(created.status).toBe(201);
+    expect(created.headers.get("cache-control")).toBe("private, no-store");
+    const createdBody = await created.json();
+    expect(createdBody.status).toBe("GUARDIAN_LINK_EVIDENCE_ONLY_NO_REPORT_ACCESS");
+    const linkId = createdBody.link.id as string;
+    expect(JSON.stringify(createdBody)).not.toContain(pupilId);
+    expect(JSON.stringify(createdBody)).not.toContain("rawPercentBps");
+    expect((await requestGuardianLink("admin", input)).status).toBe(409);
+    const audit = await guardianHistory("admin");
+    expect(audit.status).toBe(200);
+    expect(audit.headers.get("cache-control")).toBe("private, no-store");
+    expect((await audit.json()).links).toContainEqual(expect.objectContaining({
+      id: linkId, studentId: pupilId,
+      guardianMembershipId: members.parent, revokedAt: null,
+    }));
+    await expect(prisma.guardianStudentLink.create({
+      data: {
+        schoolId: schoolA, studentId: pupilId,
+        guardianMembershipId: members.parent,
+        attestedByMembershipId: members.admin,
+        attestedByUserId: users.parent,
+        attestationReason: "Forged actor SQL identity",
+      },
+    })).rejects.toThrow();
+    expect((await revokeGuardian("parent", linkId, {
+      reason: "Forged guardian self-revocation",
+    })).status).toBe(404);
+    expect((await revokeGuardian("admin", linkId, {
+      reason: "Synthetic verified relationship correction",
+    }, schoolB)).status).toBe(404);
+    const revoked = await revokeGuardian("super", linkId, {
+      reason: "Synthetic verified guardian relationship revoked",
+    });
+    expect(revoked.status).toBe(201);
+    expect((await revoked.json()).status).toBe("GUARDIAN_LINK_REVOKED_NO_REPORT_ACCESS");
+    expect((await revokeGuardian("super", linkId, {
+      reason: "Duplicate terminal revocation",
+    })).status).toBe(404);
+    const revised = await guardianHistory("super");
+    expect((await revised.json()).links).toContainEqual(expect.objectContaining({
+      id: linkId, studentId: pupilId,
+      guardianMembershipId: members.parent,
+      revokedAt: expect.any(String),
+    }));
+    await expect(prisma.guardianStudentLink.update({
+      where: { id: linkId },
+      data: { attestationReason: "Forged changed guardian audit" },
+    })).rejects.toThrow();
+    await expect(prisma.guardianStudentLink.delete({
+      where: { id: linkId },
+    })).rejects.toThrow();
+    await expect(prisma.$executeRaw`TRUNCATE "GuardianStudentLink"`)
+      .rejects.toThrow();
+    await expect(prisma.$executeRaw`TRUNCATE "GuardianStudentLinkRevocation"`)
+      .rejects.toThrow();
   });
 
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
