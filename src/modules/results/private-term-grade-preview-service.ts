@@ -189,7 +189,7 @@ export async function previewPrivateOwnerStudentTerm(
         if (
           !grade ||
           grade.status !== "PRIVATE_OWNER_PREVIEW_NOT_RELEASED" ||
-          result.audit?.status !== "INTERNAL_OWNER_PREVIEW_NOT_RELEASED" ||
+          result?.audit?.status !== "INTERNAL_OWNER_PREVIEW_NOT_RELEASED" ||
           grade.academic.subject !== item.subjectName
         ) {
           throw new AssessmentError("CONFLICT");
