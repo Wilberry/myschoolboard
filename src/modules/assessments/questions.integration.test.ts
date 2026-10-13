@@ -2165,13 +2165,16 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect(payloadPreview.status).toBe("PRIVATE_GRADE_PREVIEW_NOT_RELEASED");
     expect(payloadPreview.studentCount).toBe(source.studentCount);
     expect(payloadPreview.students).toHaveLength(source.studentCount);
+    const frozenPupil = composed.find(row => row.studentId === pupilId);
+    expect(frozenPupil).toBeDefined();
     expect(payloadPreview.students.find((row: { studentId: string }) =>
       row.studentId === pupilId)).toMatchObject({
         studentId: pupilId,
-        ...((({ rawPercentBps, displayPercent, gradeCode, remark,
-          categoryPercentBps }) => ({
-          rawPercentBps, displayPercent, gradeCode, remark, categoryPercentBps,
-        }))(composed.find(row => row.studentId === pupilId)!)),
+        rawPercentBps: frozenPupil!.rawPercentBps,
+        displayPercent: frozenPupil!.displayPercent,
+        gradeCode: frozenPupil!.gradeCode,
+        remark: frozenPupil!.remark,
+        categoryPercentBps: frozenPupil!.categoryPercentBps,
       });
     const serializedPreview = JSON.stringify(payloadPreview);
     for (const secret of ["studentSourceCards", "composedStudentCards",
