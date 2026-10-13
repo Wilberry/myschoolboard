@@ -121,7 +121,7 @@ DECLARE
  results JSONB := '[]'::jsonb;
 BEGIN
  IF jsonb_typeof(source_cards) IS DISTINCT FROM 'array'
-   OR expected_count NOT BETWEEN 1 AND 500
+   OR expected_count IS NULL OR expected_count NOT BETWEEN 1 AND 500
    OR jsonb_array_length(source_cards)<>expected_count
    OR weight_version IS NULL OR weight_version<1
    OR quiz_weight IS NULL OR test_weight IS NULL OR exam_weight IS NULL
