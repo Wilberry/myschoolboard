@@ -2849,6 +2849,35 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect(await prisma.resultPrivateGradePreviewAudit.count({
       where: { schoolId: schoolA, compositionId: composition.id },
     })).toBe(before + 1);
+    // Direct SQL calls must create their own audit; there is no unlogged
+    // function that can return an approved pupil's grade.
+    const direct = await prisma.$queryRaw<Array<{
+      result: { preview: { status: string }; audit: { id: string; status: string } };
+    }>>`
+      SELECT "read_private_owner_one_pupil_grade_preview"(
+        ${schoolA},${composition.id},${pupilId},
+        ${members.super},${users.super},${randomUUID()},
+        ${"Direct synthetic owner preview audit regression"}
+      ) AS "result"`;
+    expect(direct[0]?.result.preview.status).toBe("PRIVATE_OWNER_PREVIEW_NOT_RELEASED");
+    expect(direct[0]?.result.audit.status).toBe("INTERNAL_OWNER_PREVIEW_NOT_RELEASED");
+    expect(await prisma.resultPrivateGradePreviewAudit.count({
+      where: { schoolId: schoolA, compositionId: composition.id },
+    })).toBe(before + 2);
+    await expect(
+      prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`
+          SELECT "read_private_owner_one_pupil_grade_preview"(
+            ${schoolA},${composition.id},${pupilId},
+            ${members.super},${users.super},${randomUUID()},
+            ${"Rollback atomic SQL owner preview audit"}
+          )`;
+        throw new Error("ROLLBACK_OWNER_PREVIEW_AND_AUDIT");
+      }),
+    ).rejects.toThrow("ROLLBACK_OWNER_PREVIEW_AND_AUDIT");
+    expect(await prisma.resultPrivateGradePreviewAudit.count({
+      where: { schoolId: schoolA, compositionId: composition.id },
+    })).toBe(before + 2);
     const audit = await prisma.resultPrivateGradePreviewAudit.findUniqueOrThrow({
       where: { id: body.audit.id },
     });
@@ -2892,7 +2921,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
     }
     expect(await prisma.resultPrivateGradePreviewAudit.count({
       where: { schoolId: schoolA, compositionId: composition.id },
-    })).toBe(before + 1);
+    })).toBe(before + 2);
 
     await prisma.membership.update({
       where: { id: members.super }, data: { isActive: false },
