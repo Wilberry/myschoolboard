@@ -2497,6 +2497,10 @@ describe("Phase 7 exact-assignment private question bank", () => {
     ]) expect((await record("super", forged)).status).toBe(400);
 
     await prisma.user.update({
+      where: { id: users.parent }, data: { emailVerified: false },
+    });
+    expect((await record("super", verified)).status).toBe(409);
+    await prisma.user.update({
       where: { id: users.parent }, data: { emailVerified: true },
     });
     await prisma.user.update({
@@ -2527,6 +2531,18 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect(JSON.stringify(privateStatus)).not.toContain("rawPercentBps");
     expect(JSON.stringify(privateStatus)).not.toContain("composedStudentCards");
 
+    await prisma.studentEnrollment.update({
+      where: { id: enrollmentId }, data: { status: "ENDED" },
+    });
+    try {
+      expect((await (await inspect("super", query)).json()).status)
+        .toBe("NO_VERIFIED_RELATIONSHIP_OR_POLICY");
+    } finally {
+      await prisma.studentEnrollment.update({
+        where: { id: enrollmentId }, data: { status: "ACTIVE" },
+      });
+    }
+
     await prisma.membership.update({
       where: { id: members.parent }, data: { isActive: false },
     });
@@ -2539,11 +2555,25 @@ describe("Phase 7 exact-assignment private question bank", () => {
         where: { id: members.parent }, data: { isActive: true },
       });
     }
-    const revoked = await record("super", {
-      action: "REVOKE", studentId: pupilId,
-      guardianMembershipId: members.parent,
-      reason: "School guardian evidence authorization withdrawn",
+    // A guardian whose PARENT role was removed must still be revocable
+    // for a complete historical audit, although diagnostics already deny it.
+    await prisma.membership.update({
+      where: { id: members.parent }, data: { role: "TEACHER" },
     });
+    let revoked: Response;
+    try {
+      expect((await (await inspect("super", query)).json()).status)
+        .toBe("NO_VERIFIED_RELATIONSHIP_OR_POLICY");
+      revoked = await record("super", {
+        action: "REVOKE", studentId: pupilId,
+        guardianMembershipId: members.parent,
+        reason: "School guardian evidence authorization withdrawn",
+      });
+    } finally {
+      await prisma.membership.update({
+        where: { id: members.parent }, data: { role: "PARENT" },
+      });
+    }
     expect(revoked.status).toBe(201);
     expect((await revoked.json()).event).toMatchObject({
       action: "REVOKE", ordinal: 2, evidenceReviewed: false,
