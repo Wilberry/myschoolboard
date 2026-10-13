@@ -112,3 +112,5 @@ The Project Owner has authorized the following **reversible implementation defau
 - **Reserved owner decision:** a material new business rule, sensitive-data disclosure, irreversible real-data change, production deployment, merge/release or security exception. Ask one focused question when actually needed.
 
 Decision records for those rare reserved items should include the decision ID, recommended option, trade-offs, scope, owner response and date. See [Standing Development Mandate](STANDING_DEVELOPMENT_MANDATE.md).
+
+**P-004 Phase 8 implementation note (2026-10-13):** The four school recipient-preference modes are now *configurable development-only intent* in `ReportVisibilityPolicyRevision`; none grants live report access, parent-first acknowledgment or release. P-004's actual parent-first acknowledgment rules remain **unresolved** and are isolated from this additive foundation. Future result publication and student/guardian access remain blocked until that rule, verified relationship enforcement and cumulative security/release checks are accepted.
