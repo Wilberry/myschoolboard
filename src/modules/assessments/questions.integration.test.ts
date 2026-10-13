@@ -23,6 +23,7 @@ import {
   GET as RESULT_EVIDENCE_GET, POST as RESULT_EVIDENCE_POST,
 } from "@/app/api/schools/[schoolId]/result-sheet-evidence/route";
 import { GET as RESULT_REVIEW_QUEUE } from "@/app/api/schools/[schoolId]/result-sheet-reviews/route";
+import { GET as RESULT_OWNER_PREFLIGHT } from "@/app/api/schools/[schoolId]/result-publication-candidates/route";
 import { POST as RESULT_REVIEW_POST } from "@/app/api/schools/[schoolId]/result-sheet-reviews/[evidenceId]/decision/route";
 import {
   GET as ADOPTIONS_GET, POST as ADOPTIONS_POST,
@@ -1598,6 +1599,68 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect(thirdRow.adoptionId).toBe(adoptionNextId);
     expect(thirdRow.sourceManifest).toEqual(newer.sourceManifest);
     expect((await decide("head", thirdId, "APPROVED")).status).toBe(201);
+    const ownerPreflight = (actor: string, inspectedSchool = schoolA) =>
+      RESULT_OWNER_PREFLIGHT(req(actor, inspectedSchool, "GET"), {
+        params: Promise.resolve({ schoolId: inspectedSchool }),
+      });
+    for (const actor of ["teacher", "student", "head", "admin", "principal", "other"]) {
+      expect((await ownerPreflight(actor)).status).toBe(404);
+    }
+    expect((await ownerPreflight("super", schoolB)).status).toBe(404);
+    const eligible = await ownerPreflight("super");
+    expect(eligible.status).toBe(200);
+    expect(eligible.headers.get("cache-control")).toBe("private, no-store");
+    const ownerBody = await eligible.json();
+    expect(ownerBody.status).toBe("INTERNAL_PREFLIGHT_ONLY_NOT_PUBLISHED");
+    const current = ownerBody.candidates.find(
+      (item: { evidenceId: string }) => item.evidenceId === thirdId,
+    );
+    expect(current).toMatchObject({ revision: 3, studentCount: 1,
+      adoptionId: adoptionNextId });
+    expect(ownerBody.candidates.some(
+      (item: { evidenceId: string }) => item.evidenceId === secondId,
+    )).toBe(false);
+    expect(ownerBody.candidates.some(
+      (item: { evidenceId: string }) => item.evidenceId === firstId,
+    )).toBe(false);
+    const ownerPayload = JSON.stringify(ownerBody);
+    expect(ownerPayload).not.toContain(pupilId);
+    expect(ownerPayload).not.toContain(proposalId);
+    expect(ownerPayload).not.toContain("sourceManifest");
+    // Changes in the current reviewer grant must hide the candidate,
+    // even though its immutable historic academic approval remains.
+    const scope = await prisma.scopeGrant.findFirstOrThrow({
+      where: { membershipId: members.head, type: "SECTION", scopeId: sectionId },
+    });
+    await prisma.scopeGrant.update({
+      where: { id: scope.id }, data: { verified: false },
+    });
+    try {
+      const revoked = await ownerPreflight("super");
+      expect(revoked.status).toBe(200);
+      expect((await revoked.json()).candidates.some(
+        (item: { evidenceId: string }) => item.evidenceId === thirdId,
+      )).toBe(false);
+    } finally {
+      await prisma.scopeGrant.update({
+        where: { id: scope.id }, data: { verified: true },
+      });
+    }
+    const newerAdoption = await POLICIES_POST(req("super", schoolA, "POST", {
+      sessionId, termId, classId, subjectId: newSubjectId,
+      quizWeight: 0, testWeight: 100, examWeight: 0,
+      reason: "Synthetic adoption invalidates owner result candidate",
+    }), { params: Promise.resolve({ schoolId: schoolA }) });
+    expect(newerAdoption.status).toBe(201);
+    expect((await ADOPTIONS_POST(req("super", schoolA, "POST", {
+      policyId: (await newerAdoption.json()).policy.id,
+      reason: "Synthetic subsequent owner preflight policy adoption",
+    }), { params: Promise.resolve({ schoolId: schoolA }) })).status).toBe(201);
+    const staleOwnerList = await ownerPreflight("super");
+    expect(staleOwnerList.status).toBe(200);
+    expect((await staleOwnerList.json()).candidates.some(
+      (item: { evidenceId: string }) => item.evidenceId === thirdId,
+    )).toBe(false);
     const teacherHistory = await RESULT_EVIDENCE_GET(
       req("teacher", schoolA, "GET"),
       { params: Promise.resolve({ schoolId: schoolA }) });
