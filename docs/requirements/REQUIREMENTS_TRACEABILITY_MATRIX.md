@@ -1,5 +1,9 @@
 # Requirements Traceability Matrix
 
+## Phase 8 internal report-release preflight attestation — RES-REQ-001/TEN-REQ-001/SEC-REQ-001 partial (AUTHORED, UNVERIFIED)
+
+New `ResultReleasePreflightAttestation` captures exact private composition and current school recipient preference under immutable same-tenant actor audit, SQL School lock, current academic/reviewer/policy/source validation and complete DB-recomputed per-pupil grade parity. Guarded exact School Super Admin private GET/POST and UI return only metadata, never pupil identity, marks, grade JSON or actual release. Null/missing/`ASSESSMENT_ONLY` recipient policy and stale composition/scale/aggregation are denied, with one attestation per composition and policy revision. Authored integration revocation/tenant/forgery/no-leak and structural tests; full PostgreSQL/Node/Prisma/CI/security acceptance remains BLOCKED. P-004 parent-first behavior and official recipient publication/access remain separate. D-062/ADR-048.
+
 ## Phase 8 school report visibility configuration — RES-REQ-001, TEN-REQ-001 and SEC-REQ-001 partial (AUTHORED; NOT VERIFIED)
 
 `feature/phase8-school-report-visibility-policy`: PostgreSQL-verified-on-INSERT school owner report-recipient preference policy with one of four explicit modes and immutable per-school version/actor/reason, current School row lock, same-tenant FK and exact owner membership/role checks. Strict authenticated no-store private owner POST and bounded policy-history GET, restricted school page/navigation; no raw marks/student records/composed JSON, release status, guardian relationship or pupil reader. Authored role/tenant/forgery/duplicate/immutability/no-leak integration and Node guard; actual cumulative PostgreSQL/Node/Vitest/CI gates remain blocked. Parent-first acknowledgment decision P-004 remains open; **policy adoption has no student/guardian access effect and never constitutes School Super Admin final publication.** D-061/ADR-047.
