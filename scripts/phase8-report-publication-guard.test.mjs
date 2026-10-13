@@ -114,5 +114,11 @@ test("authenticated tests cover visibility revision changes, replay, role, revoc
     'prisma.reportRecipientRelease.delete(',
     'prisma.reportGuardianAcknowledgment.update(',
     'TRUNCATE "ReportRecipientRelease"',
+    'const releaseRace = await Promise.all([',
+    'const acknowledgmentRace = await Promise.all([',
+    'actorUserId: users.parent2',
+    'guardianMembershipId: members.parent2',
+    'prisma.reportRecipientRelease.create(',
+    'prisma.reportGuardianAcknowledgment.create(',
   ]) assert.ok(tests.includes(token), token);
 });
