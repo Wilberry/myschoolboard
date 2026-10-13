@@ -23,6 +23,7 @@ The immutable teacher/CBT source, independent Head of Section/Principal review, 
 ## Verification evidence and strict limits
 
 - **Executed:** GitHub connector source writes and focused review against freshly fetched blobs. Initial V8 replay of exact new structural guard with mocked Node filesystem: **4/4 cases passed**. After audit exact-enrollment hardening and added negative scenarios, re-replayed updated guard: **4/4 passed**.
+- Final **61/61 GitHub-fetched-source assertions passed** after SQL audit hardening and integration expansion, covering exact tenant/role, current school/academic/grading policies, full recomputation vs frozen evidence, one-pupil return allowlist, per-access immutable grade-free audit and test registration. These were static source checks, **NOT** executed PostgreSQL, Prisma, full Node/Vitest or browser tests.
 - Source-level SQL projection/role/grade/audit checks were conducted, but **these are NOT actual PostgreSQL function syntax validation, migration, execution, transaction/rollback, authorization concurrency or data privacy tests**.
 - **Not executed:** cumulative Phase 6–8 migrations on disposable PostgreSQL; Prisma validate/generate; actual Node --test/Vitest; Prettier, lint, typecheck, Next build, dependency audit; browser session/security tests. No school/student database was accessed.
 - **Owner instruction:** DO NOT run or inspect GitHub Actions. Only GitHub code/branch operations; no new PR, `main` merge, workflow edit, build/deployment, publication, student/guardian access or export.
