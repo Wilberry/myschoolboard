@@ -213,6 +213,8 @@ export async function acknowledgeGuardianReport(
     return await prisma.$transaction(async tx => {
       await tx.$queryRaw`SELECT "id" FROM "School" WHERE "id"=${schoolId}
         AND "isActive"=true FOR UPDATE`;
+      await tx.$queryRaw`SELECT "id" FROM "Membership"
+        WHERE "schoolId"=${schoolId} AND "userId"=${userId} FOR UPDATE`;
       const member = await tx.membership.findFirst({
         where: { schoolId, userId, isActive: true, role: "PARENT",
           school: { isActive: true } }, select: { id: true },
