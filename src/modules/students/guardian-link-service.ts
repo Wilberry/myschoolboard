@@ -116,6 +116,17 @@ export async function revokeGuardianStudentLink(
 export async function listGuardianStudentLinksForAdmin(schoolId: string) {
   requireId(schoolId);
   const userId = await actorId();
+  const administrator = await prisma.membership.findFirst({
+    where: {
+      schoolId, userId, isActive: true,
+      role: { in: ["SCHOOL_ADMIN", "SCHOOL_SUPER_ADMIN"] },
+      school: { isActive: true },
+    },
+    select: { id: true },
+  });
+  if (!administrator) throw new AcademicConfigError("NOT_FOUND");
+  // Final SQL repeats active owner, school and tenant checks to cover
+  // membership revocation after this initial denial-only gate.
   return prisma.$queryRaw<Array<{
     id: string; studentId: string; guardianMembershipId: string;
     createdAt: Date; revokedAt: Date | null;
