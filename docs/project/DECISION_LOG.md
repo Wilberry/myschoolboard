@@ -1,5 +1,9 @@
 # Decision Log
 
+## D-055: Database-only final result publication readiness must precede any release
+
+- Status: Authored/unverified. Define a reusable PostgreSQL school-row-locked `assert_result_publication_readiness` predicate for the **future**, separate School Super Admin publication transaction. It checks an exact current same-school owner (membership plus server-derived user), current assigned teacher/class/section/session/term/subject, distinct independently APPROVED and still-verified correct-stage section reviewer, latest frozen result evidence and latest adopted grading policy, a freshly recomputed identical manifest, and complete per-pupil adopted positively weighted QUIZ/TEST/EXAM sources. Never treat a previous GET/preflight or true predicate result as enduring permission. This SQL-only milestone creates **no publication event, POST, report-card result or student/guardian visibility**. Later official publishing must append a separately audited, versioned final event in the **same** protected transaction as this recheck, after cumulative testing and school approval. ADR-041.
+
 ## D-054: Inspect current approved source evidence before any future owner publication
 
 - Status: Authored; unverified. School Super Admin may **read** a bounded metadata-only list of latest independently APPROVED source snapshots in its own active school, only while original teacher, independent section reviewer's currently verified grant, academic period, policy adoption, and SQL-rebuilt source manifest remain current. Return no pupil identity, marks, manifests, totals or download, and expose no POST or publication event. Treat the list as ephemeral inspection evidence, **not** future authorization to publish. Any eventual publication must independently recheck under a school lock, preserve a versioned decision, and remain disabled until mandatory verification and school approval. ADR-040.
