@@ -29,6 +29,7 @@ import { GET as SOURCE_PACKET_GET, POST as SOURCE_PACKET_POST } from "@/app/api/
 import { GET as REPORT_SCALE_GET, POST as REPORT_SCALE_POST } from "@/app/api/schools/[schoolId]/report-grade-scales/route";
 import { GET as AGGREGATION_RULE_GET, POST as AGGREGATION_RULE_POST } from "@/app/api/schools/[schoolId]/report-aggregation-rules/route";
 import { GET as COMPOSITION_GET, POST as COMPOSITION_POST } from "@/app/api/schools/[schoolId]/private-official-report-compositions/route";
+import { GET as VISIBILITY_POLICY_GET, POST as VISIBILITY_POLICY_POST } from "@/app/api/schools/[schoolId]/report-visibility-policies/route";
 import { simulatePrivateReportComposition, type PrivatePacketStudent } from "@/src/modules/results/report-composition-simulation";
 import { POST as RESULT_REVIEW_POST } from "@/app/api/schools/[schoolId]/result-sheet-reviews/[evidenceId]/decision/route";
 import {
@@ -2242,6 +2243,82 @@ describe("Phase 7 exact-assignment private question bank", () => {
       ${"POOLED_CATEGORY_POINTS"}, ${"HALF_UP"},
       ${JSON.stringify(scale.bands)}::jsonb, ${scale.decimalPlaces}::integer,
       ${scale.roundingMode}, ${scale.bandBasis})`).rejects.toThrow();
+  });
+
+  it("adopts immutable future report visibility intent but never grants pupils or guardians access", async () => {
+    const adopt = (actor: string, body: unknown, targetSchool = schoolA) =>
+      VISIBILITY_POLICY_POST(req(actor, targetSchool, "POST", body), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const history = (actor: string, targetSchool = schoolA) =>
+      VISIBILITY_POLICY_GET(req(actor, targetSchool, "GET"), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const mode = {
+      recipientMode: "ASSESSMENT_ONLY",
+      reason: "Synthetic initial school report visibility choice",
+    };
+    for (const actor of ["teacher", "student", "head", "principal", "admin", "other"]) {
+      expect((await adopt(actor, mode)).status).toBe(404);
+      expect((await history(actor)).status).toBe(404);
+    }
+    expect((await adopt("super", mode, schoolB)).status).toBe(404);
+    expect((await history("super", schoolB)).status).toBe(404);
+    for (const forged of [
+      { ...mode, version: 7 },
+      { ...mode, actorUserId: users.super },
+      { ...mode, actorMembershipId: members.super },
+      { ...mode, studentId: pupilId },
+      { ...mode, release: true },
+      { ...mode, rawPercentBps: 7200 },
+      { ...mode, recipientMode: "ALL_PUBLIC" },
+      { ...mode, reason: "x" },
+    ]) {
+      expect((await adopt("super", forged)).status).toBe(400);
+    }
+    const before = await prisma.privateOfficialReportComposition.count({
+      where: { schoolId: schoolA },
+    });
+    const first = await adopt("super", mode);
+    expect(first.status).toBe(201);
+    expect(first.headers.get("cache-control")).toBe("private, no-store");
+    const one = (await first.json()).policy;
+    expect(one).toMatchObject({ version: 1, recipientMode: "ASSESSMENT_ONLY" });
+    expect((await adopt("super", mode)).status).toBe(409);
+    for (const recipientMode of [
+      "GUARDIAN_AFTER_RELEASE",
+      "STUDENT_AFTER_RELEASE",
+      "GUARDIAN_AND_STUDENT_AFTER_RELEASE",
+    ]) {
+      const accepted = await adopt("super", {
+        recipientMode,
+        reason: "Synthetic future visibility configuration without publication",
+      });
+      expect(accepted.status).toBe(201);
+    }
+    const current = await history("super");
+    expect(current.status).toBe(200);
+    expect(current.headers.get("cache-control")).toBe("private, no-store");
+    const json = await current.json();
+    expect(json.status).toBe("CONFIGURATION_ONLY_NO_REPORT_RECIPIENT_ACCESS");
+    expect(json.policies.map((p: { version: number }) => p.version))
+      .toEqual([4, 3, 2, 1]);
+    const metadata = JSON.stringify(json);
+    expect(metadata).not.toContain(pupilId);
+    expect(metadata).not.toContain("composedStudentCards");
+    expect(metadata).not.toContain("rawPercentBps");
+    expect(metadata).not.toContain("studentSourceCards");
+    await expect(prisma.reportVisibilityPolicyRevision.update({
+      where: { id: one.id }, data: { reason: "Forged change to recorded audience" },
+    })).rejects.toThrow();
+    await expect(prisma.reportVisibilityPolicyRevision.delete({
+      where: { id: one.id },
+    })).rejects.toThrow();
+    await expect(prisma.$executeRaw`TRUNCATE "ReportVisibilityPolicyRevision"`)
+      .rejects.toThrow();
+    expect(await prisma.privateOfficialReportComposition.count({
+      where: { schoolId: schoolA },
+    })).toBe(before);
   });
 
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
