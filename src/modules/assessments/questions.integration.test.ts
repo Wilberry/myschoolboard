@@ -20,6 +20,9 @@ import { POST as MANUAL_REVIEW_DECISION } from "@/app/api/schools/[schoolId]/ass
 import { GET as REVIEWED_MANUAL_GRADEBOOK_GET } from "@/app/api/schools/[schoolId]/assessment-reviewed-manual-gradebook/route";
 import { GET as RESULT_PREP_GET } from "@/app/api/schools/[schoolId]/result-preparation/route";
 import {
+  GET as ADOPTIONS_GET, POST as ADOPTIONS_POST,
+} from "@/app/api/schools/[schoolId]/result-grading-adoptions/route";
+import {
   GET as CORRECTIONS_GET, POST as CORRECTIONS_POST,
 } from "@/app/api/schools/[schoolId]/assessment-manual-corrections/route";
 import { GET as CORRECTION_QUEUE } from "@/app/api/schools/[schoolId]/assessment-manual-correction-reviews/route";
@@ -790,6 +793,45 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect(revision2.status).toBe(201);
     const policy2 = (await revision2.json()).policy;
     expect(policy2.version).toBe(2);
+    const adoption = (actor: string, data: unknown, id = schoolA) =>
+      ADOPTIONS_POST(req(actor, id, "POST", data), {
+        params: Promise.resolve({ schoolId: id }),
+      });
+    for (const actor of ["teacher","student","admin","head","principal","foreign"]) {
+      expect((await adoption(actor, {
+        policyId: policy2.id, reason: "Only owner may adopt",
+      })).status).toBe(404);
+    }
+    expect((await adoption("super", {
+      policyId: policy2.id, reason: "Wrong school adoption attempt",
+    }, schoolB)).status).toBe(404);
+    expect((await adoption("super", { policyId: policy2.id })).status).toBe(400);
+    const adopted = await adoption("super", {
+      policyId: policy2.id, reason: "Synthetic initial official grading policy adoption",
+    });
+    expect(adopted.status).toBe(201);
+    expect((await adopted.json()).adoption).toMatchObject({
+      policyId: policy2.id, ordinal: 1, sessionId, termId, classId, subjectId,
+    });
+    expect((await adoption("super", {
+      policyId: policy2.id, reason: "Duplicate adoption should not rewrite history",
+    })).status).toBe(409);
+    expect((await ADOPTIONS_GET(req("super", schoolA, "GET"), {
+      params: Promise.resolve({ schoolId: schoolA }),
+    })).status).toBe(200);
+    expect((await ADOPTIONS_GET(req("teacher", schoolA, "GET"), {
+      params: Promise.resolve({ schoolId: schoolA }),
+    })).status).toBe(404);
+    const firstAdoption = await prisma.resultGradingAdoption.findFirstOrThrow({
+      where: { schoolId: schoolA, policyId: policy2.id },
+    });
+    await expect(prisma.resultGradingAdoption.update({
+      where: { id: firstAdoption.id }, data: { reason: "Tampered grading policy" },
+    })).rejects.toThrow();
+    await expect(prisma.resultGradingAdoption.delete({
+      where: { id: firstAdoption.id },
+    })).rejects.toThrow();
+
     expect((await getPolicies("super")).status).toBe(200);
     const history = await prisma.assessmentGradingPolicyRevision.findMany({
       where: { schoolId: schoolA, sessionId, termId, classId, subjectId },

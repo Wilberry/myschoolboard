@@ -276,6 +276,7 @@ model School {
   assessmentManualMarkDecisions AssessmentManualMarkDecision[]
   assessmentManualCorrectionRequests AssessmentManualCorrectionRequest[]
   assessmentManualCorrectionDecisions AssessmentManualCorrectionDecision[]
+  resultGradingAdoptions ResultGradingAdoption[]
 }
 
 model Membership {
@@ -320,6 +321,7 @@ model Membership {
   assessmentManualMarkDecisions AssessmentManualMarkDecision[]
   assessmentManualCorrectionRequests AssessmentManualCorrectionRequest[]
   assessmentManualCorrectionDecisions AssessmentManualCorrectionDecision[]
+  resultGradingAdoptions ResultGradingAdoption[]
 }
 
 model ScopeGrant {
@@ -1294,8 +1296,10 @@ model AssessmentGradingPolicyRevision {
   subject Subject @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentGradingPolicyRevision_subject_fkey")
   actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentGradingPolicyRevision_actor_fkey")
 
+  @@unique([schoolId, id])
   @@unique([schoolId, sessionId, termId, classId, subjectId, version], map: "AssessmentGradingPolicyRevision_context_version_key")
   @@index([schoolId, classId, subjectId, termId])
+  resultGradingAdoptions ResultGradingAdoption[]
 }
 
 /** Immutable teacher-authored offline/written assessment definition. It is
@@ -1426,4 +1430,31 @@ model AssessmentManualCorrectionDecision {
 
   @@unique([schoolId, requestId])
   @@index([schoolId, decidedAt])
+}
+
+/** School Super Admin's explicit academic adoption of an immutable grading
+ * profile for exactly one class/subject/session/term. Never report publication.
+ * Later adoption changes do not silently rewrite previously frozen evidence. */
+model ResultGradingAdoption {
+  id String @id
+  schoolId String
+  policyId String
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  ordinal Int @default(1)
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  adoptedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  policy AssessmentGradingPolicyRevision @relation(fields: [schoolId, policyId], references: [schoolId, id], onDelete: NoAction, map: "ResultGradingAdoption_policy_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ResultGradingAdoption_actor_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, policyId])
+  @@unique([schoolId, sessionId, termId, classId, subjectId, ordinal], map: "ResultGradingAdoption_context_ordinal_key")
+  @@index([schoolId, classId, subjectId, termId])
 }
