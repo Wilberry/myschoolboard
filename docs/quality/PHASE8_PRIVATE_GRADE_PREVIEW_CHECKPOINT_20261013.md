@@ -46,3 +46,9 @@
 
 - Owner history now identifies each frozen composition using its same-school class and subject **metadata** (not student/mark data), reducing the risk of inspecting an ambiguously labeled class. This metadata is read only after the same final-query active school-owner authorization.
 - The existing parent `phase8-private-official-composition-guard.test.mjs` was also replayed against current GitHub sources in isolated V8: **4/4 structural cases passed**. This is not the installed Node runner nor PostgreSQL verification.
+
+## Later checkpoint — historical frozen identity hardening
+
+- Found that the previous owner preview projected the **current** mutable `StudentRecord` name/admission number for an **historical** frozen grade composition. Changed it to project only the matching pupil ID's allowlisted names/admission number from its exact immutable `ResultReportCardSourcePacket.studentSourceCards`, while retaining the same-school `StudentRecord` referential join and active School Super Admin guard. Neither underlying JSONB source array nor mark-level input is returned in the API.
+- Authored a real-DB integration scenario temporarily changing a currently registered pupil's name, then verifying a previously frozen composition still displays the identity as it was attested in the source packet; the fixture is restored in `finally`. New source guard asserts the exact packet/student join and frozen identity fields; isolated V8 source replay passed **3/3**. Actual DB/Vitest/Next validation is STILL BLOCKED.
+- The next independent safe dependency—administrator-attested `PARENT` membership ↔ enrolled pupil evidence with terminal revocation—was authored without any recipient report API. See `PHASE8_GUARDIAN_RELATIONSHIP_CHECKPOINT_20261013.md`.
