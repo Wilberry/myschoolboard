@@ -32,8 +32,9 @@ export type PrivateGradePreviewRow = z.infer<typeof previewRow>;
  * historical composition evidence. The final SQL SELECT independently checks
  * the current active same-school owner; cross-tenant IDs return NOT_FOUND.
  *
- * Read the minimum allowlisted grade projection, not either private JSONB
- * source packet, raw marks, answer keys, or a school-recipient release.
+ * Read the minimum allowlisted grade projection and names frozen in that
+ * exact source packet. Do not substitute mutable present-day pupil identity,
+ * return either private JSONB packet, raw marks, or answer keys.
  * Never infer a guardian/student link from names, emails or admission numbers.
  */
 export async function readPrivateGradePreview(schoolId: string, compositionId: string) {
@@ -45,7 +46,9 @@ export async function readPrivateGradePreview(schoolId: string, compositionId: s
       c."evidenceRevision", c."aggregationRuleVersion",
       c."gradeScaleVersion", c."studentCount",
       entry.card->>'studentId' AS "studentId",
-      pupil."admissionNumber", pupil."givenName", pupil."familyName",
+      sourcePupil.value->>'admissionNumber' AS "admissionNumber",
+      sourcePupil.value->>'givenName' AS "givenName",
+      sourcePupil.value->>'familyName' AS "familyName",
       (entry.card->>'rawPercentBps')::integer AS "rawPercentBps",
       entry.card->>'displayPercent' AS "displayPercent",
       entry.card->>'gradeCode' AS "gradeCode",
@@ -54,10 +57,15 @@ export async function readPrivateGradePreview(schoolId: string, compositionId: s
     FROM "PrivateOfficialReportComposition" c
     JOIN "School" school ON school."id"=c."schoolId"
       AND school."isActive"=true
+    JOIN "ResultReportCardSourcePacket" source ON
+      source."schoolId"=c."schoolId" AND source."id"=c."sourcePacketId"
     CROSS JOIN LATERAL jsonb_array_elements(c."composedStudentCards")
       WITH ORDINALITY AS entry(card, position)
+    CROSS JOIN LATERAL jsonb_array_elements(source."studentSourceCards")
+      AS sourcePupil(value)
     JOIN "StudentRecord" pupil ON pupil."schoolId"=c."schoolId"
       AND pupil."id"=entry.card->>'studentId'
+      AND sourcePupil.value->>'studentId'=pupil."id"
     WHERE c."schoolId"=${schoolId} AND c."id"=${compositionId}
       AND c."status"='INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED'
       AND entry.card->>'reportStatus'='INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED'
