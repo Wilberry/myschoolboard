@@ -5,9 +5,9 @@ CREATE TABLE "ResultReleasePreflightAttestation" (
  "id" TEXT NOT NULL, "schoolId" TEXT NOT NULL,
  "compositionId" TEXT NOT NULL, "visibilityPolicyId" TEXT NOT NULL,
  "visibilityPolicyVersion" INTEGER NOT NULL DEFAULT 1,
- "recipientMode" VARCHAR(48) NOT NULL,
- "evidenceId" TEXT NOT NULL, "finalDecisionId" TEXT NOT NULL,
- "sourcePacketId" TEXT NOT NULL, "studentCount" INTEGER NOT NULL DEFAULT 0,
+ "recipientMode" VARCHAR(48) NOT NULL DEFAULT 'INTERNAL_UNSET',
+ "evidenceId" TEXT NOT NULL DEFAULT '', "finalDecisionId" TEXT NOT NULL DEFAULT '',
+ "sourcePacketId" TEXT NOT NULL DEFAULT '', "studentCount" INTEGER NOT NULL DEFAULT 0,
  "status" VARCHAR(64) NOT NULL DEFAULT 'INTERNAL_RELEASE_PREFLIGHT_ONLY_NOT_AUTHORIZATION',
  "reason" VARCHAR(500) NOT NULL,
  "actorMembershipId" TEXT NOT NULL, "actorUserId" TEXT NOT NULL,
@@ -20,6 +20,9 @@ CREATE TABLE "ResultReleasePreflightAttestation" (
      'GUARDIAN_AFTER_RELEASE','STUDENT_AFTER_RELEASE',
      'GUARDIAN_AND_STUDENT_AFTER_RELEASE')
    AND "status"='INTERNAL_RELEASE_PREFLIGHT_ONLY_NOT_AUTHORIZATION'
+   AND char_length("evidenceId")>0
+   AND char_length("finalDecisionId")>0
+   AND char_length("sourcePacketId")>0
    AND char_length(btrim("reason")) BETWEEN 5 AND 500
    AND "reason"=btrim("reason"))
 );
