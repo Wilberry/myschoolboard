@@ -1,5 +1,15 @@
 # Milestone Checklist
 
+## Phase 8 verified recipient relationship evidence — [ ] AUTHORED, NOT PUBLISHED
+
+- [x] Revocable append-only same-school guardian-to-pupil event ledger with independently audited School Super Admin actor/reason/ordinal, current active enrolled pupil and verified PARENT identity.
+- [x] Support explicit verified-pair revocation even if parent account/role becomes inactive; no silent inference, duplicate action, or history rewrite; allow newly attested verification after revocation.
+- [x] Reuse existing explicit STUDENT account link and its immutable revocation for student-specific diagnostics, with current active school/class/session enrollment and adopted visibility preference.
+- [x] Exact owner-only private history/event API and a separately restricted, report-specific diagnostic returning **no grades and `authorizedForReports: false`**, plus server-gated workspace/navigation.
+- [x] Authored role/tenant/forgery/withdrawn enrolment/email verification/role-loss/revocation/history and no-release integration scenarios; registered Node structural guard.
+- [ ] Execute full cumulative disposable PostgreSQL migration, auth/revocation/locking concurrency tests; Node/Vitest, Prisma, format/lint/types/build, strict audit and CI acceptance (owner currently requests no GitHub Actions).
+- [ ] Resolve P-004 parent-first acknowledgment, then develop separate immutable School Super Admin final recipient-release decision and secure one-student-at-a-time report readers/files **only after all release gates pass**.
+
 ## Phase 8 internal result release preflight (NO PUBLICATION) — [ ] AUTHORED / BLOCKED
 
 - [x] Same-school immutable `ResultReleasePreflightAttestation`, linked to exact internal composed report and explicit currently adopted visibility policy, only one attestation per composition/policy revision.
