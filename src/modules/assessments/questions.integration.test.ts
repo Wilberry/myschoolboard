@@ -25,6 +25,7 @@ import {
 import { GET as RESULT_REVIEW_QUEUE } from "@/app/api/schools/[schoolId]/result-sheet-reviews/route";
 import { GET as RESULT_OWNER_PREFLIGHT } from "@/app/api/schools/[schoolId]/result-publication-candidates/route";
 import { GET as FINAL_OWNER_GET, POST as FINAL_OWNER_POST } from "@/app/api/schools/[schoolId]/result-final-publication-decisions/route";
+import { GET as SOURCE_PACKET_GET, POST as SOURCE_PACKET_POST } from "@/app/api/schools/[schoolId]/report-card-source-packets/route";
 import { POST as RESULT_REVIEW_POST } from "@/app/api/schools/[schoolId]/result-sheet-reviews/[evidenceId]/decision/route";
 import {
   GET as ADOPTIONS_GET, POST as ADOPTIONS_POST,
@@ -1639,6 +1640,64 @@ describe("Phase 7 exact-assignment private question bank", () => {
       status: "APPROVED_AWAITING_RELEASE",
     });
     expect((await finalDecision("super", finalDecisionInput)).status).toBe(409);
+    const freezeSource = (actor: string, input: unknown, targetSchool = schoolA) =>
+      SOURCE_PACKET_POST(req(actor, targetSchool, "POST", input), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const packetHistory = (actor: string, targetSchool = schoolA) =>
+      SOURCE_PACKET_GET(req(actor, targetSchool, "GET"), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const sourceInput = {
+      finalDecisionId: recorded.id,
+      reason: "Synthetic private frozen report-card source evidence packet",
+    };
+    for (const actor of ["teacher", "head", "principal", "admin", "student", "other"]) {
+      expect((await freezeSource(actor, sourceInput)).status).toBe(404);
+      expect((await packetHistory(actor)).status).toBe(404);
+    }
+    expect((await freezeSource("super", sourceInput, schoolB)).status).toBe(404);
+    expect((await packetHistory("super", schoolB)).status).toBe(404);
+    expect((await freezeSource("super", { ...sourceInput, studentCount: 25 }))
+      .status).toBe(400);
+    expect((await freezeSource("super", { ...sourceInput, studentSourceCards: [] }))
+      .status).toBe(400);
+    const sourceCreated = await freezeSource("super", sourceInput);
+    expect(sourceCreated.status).toBe(201);
+    expect(sourceCreated.headers.get("cache-control")).toBe("private, no-store");
+    expect((await sourceCreated.json()).status)
+      .toBe("PRIVATE_SOURCE_PREPARED_NOT_GRADED_NOT_RELEASED");
+    const originalPacket = await prisma.resultReportCardSourcePacket.findFirstOrThrow({
+      where: { schoolId: schoolA, finalDecisionId: recorded.id },
+    });
+    expect(originalPacket).toMatchObject({
+      evidenceId: thirdId, adoptionId: adoptionNextId,
+      evidenceRevision: 3, finalDecisionOrdinal: 1, studentCount: 1,
+      actorMembershipId: members.super, actorUserId: users.super,
+    });
+    const sourceCards = originalPacket.studentSourceCards as Array<{
+      studentId: string; manual: Array<{ effectivePoints: number }>;
+      reportStatus: string; adoptedWeightVersion: number;
+    }>;
+    expect(sourceCards).toMatchObject([{
+      studentId: pupilId, reportStatus: "INTERNAL_SOURCE_ONLY_NOT_RELEASED",
+      manual: [{ effectivePoints: 9 }],
+    }]);
+    expect(JSON.stringify(sourceCards)).not.toContain("correctIndex");
+    expect(JSON.stringify(sourceCards)).not.toContain("officialGrade");
+    const publicPayload = JSON.stringify(await (await packetHistory("super")).json());
+    expect(publicPayload).not.toContain(pupilId);
+    expect(publicPayload).not.toContain(proposalId);
+    expect(publicPayload).not.toContain("studentSourceCards");
+    expect((await freezeSource("super", sourceInput)).status).toBe(409);
+    await expect(prisma.resultReportCardSourcePacket.update({
+      where: { id: originalPacket.id }, data: { reason: "Forged packet reason" },
+    })).rejects.toThrow();
+    await expect(prisma.resultReportCardSourcePacket.delete({
+      where: { id: originalPacket.id },
+    })).rejects.toThrow();
+    await expect(prisma.$executeRaw`TRUNCATE "ResultReportCardSourcePacket"`)
+      .rejects.toThrow();
     const finalHistory = (actor: string, targetSchool = schoolA) =>
       FINAL_OWNER_GET(req(actor, targetSchool, "GET"), {
         params: Promise.resolve({ schoolId: targetSchool }),
@@ -1741,6 +1800,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect(await prisma.resultFinalPublicationDecision.findFirstOrThrow({
       where: { schoolId: schoolA, evidenceId: thirdId },
     })).toMatchObject({ status: "APPROVED_AWAITING_RELEASE" });
+    expect((await freezeSource("super", sourceInput)).status).toBe(409);
     const staleOwnerList = await ownerPreflight("super");
     expect(staleOwnerList.status).toBe(200);
     expect((await staleOwnerList.json()).candidates.some(
@@ -1773,6 +1833,10 @@ describe("Phase 7 exact-assignment private question bank", () => {
         where: { id: finalScope.id }, data: { verified: true },
       });
     }
+    expect((await freezeSource("super", {
+      finalDecisionId: recorded.id,
+      reason: "Stale original source after new grading adoption",
+    })).status).toBe(409);
     const subsequentApproval = await finalDecision("super", {
       evidenceId: fourthId, reason: "Synthetic renewed independently reviewed final approval",
     });
@@ -1783,6 +1847,21 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect(laterDecision).toMatchObject({
       ordinal: 2, evidenceRevision: 4, status: "APPROVED_AWAITING_RELEASE",
     });
+    const laterPacketResponse = await freezeSource("super", {
+      finalDecisionId: laterDecision.id,
+      reason: "Synthetic new internal report packet after renewed approval",
+    });
+    expect(laterPacketResponse.status).toBe(201);
+    const laterPacket = await prisma.resultReportCardSourcePacket.findFirstOrThrow({
+      where: { schoolId: schoolA, finalDecisionId: laterDecision.id },
+    });
+    expect(laterPacket).toMatchObject({
+      evidenceRevision: 4, finalDecisionOrdinal: 2, studentCount: 1,
+    });
+    expect((await prisma.resultReportCardSourcePacket.findFirstOrThrow({
+      where: { id: originalPacket.id },
+    })).studentSourceCards).toEqual(originalPacket.studentSourceCards);
+
     expect(await prisma.resultFinalPublicationDecision.findFirstOrThrow({
       where: { schoolId: schoolA, evidenceId: thirdId },
     })).toMatchObject({
