@@ -1,5 +1,15 @@
 # Milestone Checklist
 
+## Phase 8 audited owner-only one-pupil grade preview — [ ] AUTHORED / RUNTIME BLOCKED
+
+- [x] Current exact School Super Admin private POST and server-gated workspace; no student/guardian GET, report-file export, final publication button or QR.
+- [x] SQL locked academic readiness, exact private source packet/grading policy validation, full class grade recomputation against immutable JSONB, **one specific enrolled pupil** projection (name, admission number, category scores/weights, grade/remark, school/session/term/class/subject).
+- [x] Insert immutable audit **inside the same database preview function before returning**, not just in the application; reason/actor/source evidence revision/DB timestamp, no grades in audit rows, denies UPDATE/DELETE/TRUNCATE and supports repeated logged previews.
+- [x] Authored synthetic role/tenant/cross-origin/forgery/current reviewer and enrollment/owner revocation, direct SQL auto-audit and transactional rollback test cases; Node structural guard registered in both existing local test scripts; isolated source replay 4/4 passed.
+- [ ] Actually run PostgreSQL migration, Prisma validate/generate, real Node/Vitest tests and direct-SQL/rollback regression, full format/lint/types/build, strict dependency audit and acceptance. Do not run GitHub Actions until the owner permits.
+- [ ] Official recipient release and student/guardian readers remain blocked by cumulative gates and unresolved parent-first acknowledgment P-004.
+
+
 ## Phase 8 private single-pupil owner report preview — [ ] AUTHORED / NOT ACCEPTED
 
 - [x] SQL SECURITY INVOKER function reruns locked current exact school owner/teacher/HM-or-Principal academic approval/source manifest, verifies latest grading policies and recomputes full frozen report before returning **one** currently enrolled pupil's allowlisted grade projection.
