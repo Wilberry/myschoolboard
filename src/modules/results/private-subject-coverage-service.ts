@@ -91,7 +91,7 @@ export async function inspectPrivateClassTermSubjectCoverage(
     const assigned = await tx.teacherClassSubjectAssignment.findMany({
       where: {
         schoolId, classId, sessionId, status: "ACTIVE",
-        membership: { isActive: true },
+        membership: { isActive: true, role: "TEACHER" },
         subject: { isActive: true },
       },
       select: {
