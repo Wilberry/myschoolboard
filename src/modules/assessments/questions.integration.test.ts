@@ -33,6 +33,7 @@ import { GET as VISIBILITY_POLICY_GET, POST as VISIBILITY_POLICY_POST } from "@/
 import { GET as RELEASE_PREFLIGHT_GET, POST as RELEASE_PREFLIGHT_POST } from "@/app/api/schools/[schoolId]/report-release-preflights/route";
 import { GET as GUARDIAN_EVENTS_GET, POST as GUARDIAN_EVENTS_POST } from "@/app/api/schools/[schoolId]/guardian-relationships/route";
 import { POST as GUARDIAN_RELATIONSHIP_INSPECT_POST } from "@/app/api/schools/[schoolId]/guardian-relationships/inspect/route";
+import { GET as RECIPIENT_ELIGIBILITY_GET, POST as RECIPIENT_ELIGIBILITY_POST } from "@/app/api/schools/[schoolId]/private-recipient-eligibility/route";
 import { simulatePrivateReportComposition, type PrivatePacketStudent } from "@/src/modules/results/report-composition-simulation";
 import { POST as RESULT_REVIEW_POST } from "@/app/api/schools/[schoolId]/result-sheet-reviews/[evidenceId]/decision/route";
 import {
@@ -2643,6 +2644,129 @@ describe("Phase 7 exact-assignment private question bank", () => {
         where: { id: members.super }, data: { isActive: true },
       });
     }
+  });
+
+  it("freezes only private recipient relationship eligibility; denies forged grants and revoked proofs", async () => {
+    const record = (actor: string, value: unknown, target = schoolA) =>
+      RECIPIENT_ELIGIBILITY_POST(req(actor, target, "POST", value), {
+        params: Promise.resolve({ schoolId: target }),
+      });
+    const history = (actor: string, target = schoolA) =>
+      RECIPIENT_ELIGIBILITY_GET(req(actor, target, "GET"), {
+        params: Promise.resolve({ schoolId: target }),
+      });
+    const composition = await prisma.privateOfficialReportComposition.findFirstOrThrow({
+      where: { schoolId: schoolA }, orderBy: { composedAt: "desc" },
+    });
+    const studentRequest = {
+      compositionId: composition.id,
+      studentId: pupilId,
+      recipientMembershipId: members.student,
+      reason: "Synthetic review of existing verified student account link",
+    };
+    const parentRequest = {
+      ...studentRequest,
+      recipientMembershipId: members.parent,
+      reason: "Synthetic review of current guardian event and private report",
+    };
+    for (const actor of ["teacher", "student", "parent", "head", "principal", "admin", "other"]) {
+      expect((await record(actor, studentRequest)).status).toBe(404);
+      expect((await history(actor)).status).toBe(404);
+    }
+    expect((await record("super", studentRequest, schoolB)).status).toBe(404);
+    expect((await history("super", schoolB)).status).toBe(404);
+    for (const forged of [
+      { ...studentRequest, recipientRole: "PARENT" },
+      { ...studentRequest, visibilityPolicyId: "wrong" },
+      { ...studentRequest, preflightId: "forged" },
+      { ...studentRequest, status: "PUBLISHED" },
+      { ...studentRequest, accessGranted: true },
+      { ...studentRequest, rawPercentBps: 10000 },
+      { ...studentRequest, actorUserId: users.super },
+      { ...studentRequest, reason: "x" },
+    ]) expect((await record("super", forged)).status).toBe(400);
+    expect((await record("super", {
+      ...studentRequest, recipientMembershipId: members.teacher,
+    })).status).toBe(409);
+    const studentResult = await record("super", studentRequest);
+    expect(studentResult.status).toBe(201);
+    expect(studentResult.headers.get("cache-control")).toBe("private, no-store");
+    const studentEvidence = (await studentResult.json()).evidence;
+    expect(studentEvidence).toMatchObject({
+      compositionId: composition.id,
+      recipientRole: "STUDENT",
+      status: "INTERNAL_RECIPIENT_RELATIONSHIP_ONLY_NOT_ACCESS",
+    });
+    expect(JSON.stringify(studentEvidence)).not.toContain(pupilId);
+    expect(JSON.stringify(studentEvidence)).not.toContain(members.student);
+    expect((await record("super", studentRequest)).status).toBe(409);
+
+    const parentResult = await record("super", parentRequest);
+    expect(parentResult.status).toBe(201);
+    expect((await parentResult.json()).evidence.recipientRole).toBe("PARENT");
+    const parentProof = await prisma.resultRecipientEligibilityEvidence.findFirstOrThrow({
+      where: {
+        schoolId: schoolA, compositionId: composition.id,
+        recipientMembershipId: members.parent,
+      },
+    });
+    const latestGuardianEvent = await prisma.guardianStudentRelationshipEvent.findFirstOrThrow({
+      where: { schoolId: schoolA, guardianMembershipId: members.parent, studentId: pupilId },
+      orderBy: { ordinal: "desc" },
+    });
+    expect(parentProof.relationshipProofId).toBe(latestGuardianEvent.id);
+    expect(parentProof.status).toBe("INTERNAL_RECIPIENT_RELATIONSHIP_ONLY_NOT_ACCESS");
+    const metaResponse = await history("super");
+    expect(metaResponse.status).toBe(200);
+    expect(metaResponse.headers.get("cache-control")).toBe("private, no-store");
+    const safe = JSON.stringify(await metaResponse.json());
+    for (const secret of [
+      pupilId, members.student, members.parent, "relationshipProofId",
+      "composedStudentCards", "studentSourceCards", "rawPercentBps",
+      "earnedPoints", "gradeCode",
+    ]) expect(safe).not.toContain(secret);
+    await expect(prisma.resultRecipientEligibilityEvidence.update({
+      where: { id: parentProof.id }, data: { status: "PUBLISHED" },
+    })).rejects.toThrow();
+    await expect(prisma.resultRecipientEligibilityEvidence.delete({
+      where: { id: parentProof.id },
+    })).rejects.toThrow();
+    await expect(prisma.$executeRaw`TRUNCATE "ResultRecipientEligibilityEvidence"`)
+      .rejects.toThrow();
+
+    const revokedLink = await prisma.studentAccountLink.findFirstOrThrow({
+      where: { schoolId: schoolA, studentId: pupilId },
+    });
+    await prisma.studentAccountLinkRevocation.create({
+      data: {
+        schoolId: schoolA, linkId: revokedLink.id,
+        actorMembershipId: members.super, actorUserId: users.super,
+        reason: "Synthetic account link revoked after eligibility snapshot",
+      },
+    });
+    expect((await record("super", studentRequest)).status).toBe(409);
+    await prisma.membership.update({
+      where: { id: members.parent }, data: { isActive: false },
+    });
+    try {
+      expect((await record("super", parentRequest)).status).toBe(409);
+    } finally {
+      await prisma.membership.update({
+        where: { id: members.parent }, data: { isActive: true },
+      });
+    }
+    await prisma.membership.update({
+      where: { id: members.super }, data: { isActive: false },
+    });
+    try {
+      expect((await record("super", parentRequest)).status).toBe(404);
+      expect((await history("super")).status).toBe(404);
+    } finally {
+      await prisma.membership.update({
+        where: { id: members.super }, data: { isActive: true },
+      });
+    }
+    expect(parentProof.status).toBe("INTERNAL_RECIPIENT_RELATIONSHIP_ONLY_NOT_ACCESS");
   });
 
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
