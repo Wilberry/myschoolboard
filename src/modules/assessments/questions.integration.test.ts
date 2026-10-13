@@ -31,6 +31,8 @@ import { GET as AGGREGATION_RULE_GET, POST as AGGREGATION_RULE_POST } from "@/ap
 import { GET as COMPOSITION_GET, POST as COMPOSITION_POST } from "@/app/api/schools/[schoolId]/private-official-report-compositions/route";
 import { GET as VISIBILITY_POLICY_GET, POST as VISIBILITY_POLICY_POST } from "@/app/api/schools/[schoolId]/report-visibility-policies/route";
 import { GET as RELEASE_PREFLIGHT_GET, POST as RELEASE_PREFLIGHT_POST } from "@/app/api/schools/[schoolId]/report-release-preflights/route";
+import { GET as GUARDIAN_EVENTS_GET, POST as GUARDIAN_EVENTS_POST } from "@/app/api/schools/[schoolId]/guardian-relationships/route";
+import { POST as GUARDIAN_RELATIONSHIP_INSPECT_POST } from "@/app/api/schools/[schoolId]/guardian-relationships/inspect/route";
 import { simulatePrivateReportComposition, type PrivatePacketStudent } from "@/src/modules/results/report-composition-simulation";
 import { POST as RESULT_REVIEW_POST } from "@/app/api/schools/[schoolId]/result-sheet-reviews/[evidenceId]/decision/route";
 import {
@@ -107,7 +109,7 @@ async function list(actor: string, schoolId = schoolA) {
 
 describe("Phase 7 exact-assignment private question bank", () => {
   beforeAll(async () => {
-    for (const name of ["teacher", "other", "admin", "foreign", "head", "principal", "super", "student"]) {
+    for (const name of ["teacher", "other", "admin", "foreign", "head", "principal", "super", "student", "parent"]) {
       const email = `asm-${name}-${suffix}@example.test`;
       const registered = await auth.api.signUpEmail({
         body: { name: `Synthetic ${name}`, email, password },
@@ -134,6 +136,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
       ["principal", "PRINCIPAL", schoolA],
       ["super", "SCHOOL_SUPER_ADMIN", schoolA],
       ["student", "STUDENT", schoolA],
+      ["parent", "PARENT", schoolA],
     ] as const) {
       const member = await prisma.membership.create({
         data: { userId: users[name], schoolId, role },
@@ -2447,6 +2450,165 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect(await prisma.privateOfficialReportComposition.count({
       where: { schoolId: schoolA },
     })).toBeGreaterThan(0);
+  });
+
+  it("records verified guardian evidence, revokes immediately, and never authorizes report reading", async () => {
+    const record = (actor: string, input: unknown, target = schoolA) =>
+      GUARDIAN_EVENTS_POST(req(actor, target, "POST", input), {
+        params: Promise.resolve({ schoolId: target }),
+      });
+    const history = (actor: string, target = schoolA) =>
+      GUARDIAN_EVENTS_GET(req(actor, target, "GET"), {
+        params: Promise.resolve({ schoolId: target }),
+      });
+    const inspect = (actor: string, input: unknown, target = schoolA) =>
+      GUARDIAN_RELATIONSHIP_INSPECT_POST(req(actor, target, "POST", input), {
+        params: Promise.resolve({ schoolId: target }),
+      });
+    const composition = await prisma.privateOfficialReportComposition.findFirstOrThrow({
+      where: { schoolId: schoolA }, orderBy: { composedAt: "desc" },
+    });
+    const verified = {
+      action: "VERIFY", studentId: pupilId,
+      guardianMembershipId: members.parent,
+      relationshipEvidenceReviewed: true,
+      reason: "School verified exact parent pupil relationship evidence",
+    };
+    const query = {
+      compositionId: composition.id, studentId: pupilId,
+      recipientMembershipId: members.parent,
+    };
+    for (const actor of ["teacher", "student", "head", "principal", "admin", "parent", "other"]) {
+      expect((await record(actor, verified)).status).toBe(404);
+      expect((await history(actor)).status).toBe(404);
+      expect((await inspect(actor, query)).status).toBe(404);
+    }
+    expect((await record("super", verified, schoolB)).status).toBe(404);
+    expect((await history("super", schoolB)).status).toBe(404);
+    expect((await inspect("super", query, schoolB)).status).toBe(404);
+    for (const forged of [
+      { ...verified, relationshipEvidenceReviewed: false },
+      { ...verified, actorMembershipId: members.super },
+      { ...verified, actorUserId: users.super },
+      { ...verified, action: "GRANT_REPORT_ACCESS" },
+      { ...verified, rawPercentBps: 10000 },
+      { ...verified, recipientMode: "GUARDIAN_AFTER_RELEASE" },
+      { ...verified, isPublished: true },
+    ]) expect((await record("super", forged)).status).toBe(400);
+
+    await prisma.user.update({
+      where: { id: users.parent }, data: { emailVerified: true },
+    });
+    await prisma.user.update({
+      where: { id: users.student }, data: { emailVerified: true },
+    });
+    const noProof = await inspect("super", query);
+    expect(noProof.status).toBe(200);
+    expect((await noProof.json()).status).toBe("NO_VERIFIED_RELATIONSHIP_OR_POLICY");
+    expect((await record("super", {
+      ...verified, guardianMembershipId: members.teacher,
+    })).status).toBe(409);
+    const accepted = await record("super", verified);
+    expect(accepted.status).toBe(201);
+    expect(accepted.headers.get("cache-control")).toBe("private, no-store");
+    const first = (await accepted.json()).event;
+    expect(first).toMatchObject({
+      studentId: pupilId, guardianMembershipId: members.parent,
+      action: "VERIFY", ordinal: 1, evidenceReviewed: true,
+    });
+    expect((await record("super", verified)).status).toBe(409);
+    const related = await inspect("super", query);
+    expect(related.status).toBe(200);
+    const privateStatus = await related.json();
+    expect(privateStatus).toMatchObject({
+      status: "RELATIONSHIP_VERIFIED_NOT_RELEASED",
+      authorizedForReports: false,
+    });
+    expect(JSON.stringify(privateStatus)).not.toContain("rawPercentBps");
+    expect(JSON.stringify(privateStatus)).not.toContain("composedStudentCards");
+
+    await prisma.membership.update({
+      where: { id: members.parent }, data: { isActive: false },
+    });
+    try {
+      expect((await (await inspect("super", query)).json()).status)
+        .toBe("NO_VERIFIED_RELATIONSHIP_OR_POLICY");
+      expect((await record("super", verified)).status).toBe(409);
+    } finally {
+      await prisma.membership.update({
+        where: { id: members.parent }, data: { isActive: true },
+      });
+    }
+    const revoked = await record("super", {
+      action: "REVOKE", studentId: pupilId,
+      guardianMembershipId: members.parent,
+      reason: "School guardian evidence authorization withdrawn",
+    });
+    expect(revoked.status).toBe(201);
+    expect((await revoked.json()).event).toMatchObject({
+      action: "REVOKE", ordinal: 2, evidenceReviewed: false,
+    });
+    expect((await (await inspect("super", query)).json()).status)
+      .toBe("NO_VERIFIED_RELATIONSHIP_OR_POLICY");
+    expect((await record("super", {
+      action: "REVOKE", studentId: pupilId,
+      guardianMembershipId: members.parent, reason: "Duplicate revocation",
+    })).status).toBe(409);
+    const restored = await record("super", {
+      ...verified, reason: "School reviewed renewed parent relationship evidence",
+    });
+    expect(restored.status).toBe(201);
+    expect((await restored.json()).event.ordinal).toBe(3);
+    expect((await (await inspect("super", query)).json()).authorizedForReports)
+      .toBe(false);
+    const events = await history("super");
+    expect(events.status).toBe(200);
+    expect(events.headers.get("cache-control")).toBe("private, no-store");
+    const metadata = JSON.stringify(await events.json());
+    for (const secret of [
+      "composedStudentCards", "studentSourceCards", "rawPercentBps",
+      "earnedPoints", "effectivePoints", "gradeCode",
+    ]) expect(metadata).not.toContain(secret);
+    await expect(prisma.guardianStudentRelationshipEvent.update({
+      where: { id: first.id }, data: { reason: "Forged correction" },
+    })).rejects.toThrow();
+    await expect(prisma.guardianStudentRelationshipEvent.delete({
+      where: { id: first.id },
+    })).rejects.toThrow();
+    await expect(prisma.$executeRaw`TRUNCATE "GuardianStudentRelationshipEvent"`)
+      .rejects.toThrow();
+
+    const link = await prisma.studentAccountLink.findFirst({
+      where: { schoolId: schoolA, studentId: pupilId },
+    });
+    if (!link) {
+      await prisma.studentAccountLink.create({
+        data: {
+          schoolId: schoolA, studentId: pupilId,
+          studentMembershipId: members.student,
+          attestedByMembershipId: members.super,
+          attestedByUserId: users.super,
+          attestationReason: "Synthetic exact account-to-pupil school attestation",
+        },
+      });
+    }
+    const studentStatus = await inspect("super", {
+      ...query, recipientMembershipId: members.student,
+    });
+    expect(studentStatus.status).toBe(200);
+    expect((await studentStatus.json()).authorizedForReports).toBe(false);
+    await prisma.membership.update({
+      where: { id: members.super }, data: { isActive: false },
+    });
+    try {
+      expect((await record("super", verified)).status).toBe(404);
+      expect((await history("super")).status).toBe(404);
+      expect((await inspect("super", query)).status).toBe(404);
+    } finally {
+      await prisma.membership.update({
+        where: { id: members.super }, data: { isActive: true },
+      });
+    }
   });
 
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
