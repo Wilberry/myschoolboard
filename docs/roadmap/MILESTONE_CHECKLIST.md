@@ -1,5 +1,14 @@
 # Milestone Checklist
 
+## Phase 8 protected final publication readiness predicate — [ ] AUTHORED, BLOCKED
+
+- [x] Reusable additive SQL-only lock-and-recheck helper for future School Super Admin final release transaction.
+- [x] Strict current exact active owner/teacher/scope/academic review/latest adopted policy and latest frozen source revision invariants.
+- [x] SQL complete recomputed pupil source manifest and per-pupil mandatory weighted category rechecks; no release or result mutation.
+- [x] Register Node structural guard and extend synthetic database tests for valid owner, wrong owner, wrong school, superseded evidence, revoked HM grant, and changed adoption.
+- [ ] Apply cumulative migrations only to disposable PostgreSQL and run all Node/Vitest/Prisma/static/build/security acceptance gates.
+- [ ] Separately implement immutable final School Super Admin publication event and audited visibility controls after verification; publication **DISABLED**.
+
 ## Phase 8 School Super Admin publication candidate inspection — [ ] AUTHORED, BLOCKED
 
 - [x] Private owner-only GET for bounded latest independently approved result evidence metadata; repeat active same-school owner and reviewer exact SECTION checks within query.

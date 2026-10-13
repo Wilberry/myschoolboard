@@ -1,5 +1,9 @@
 # Authorization Rules
 
+## Phase 8 SQL final publication readiness authorization (AUTHORED; NOT VERIFIED)
+
+A **future final owner publication transaction** must repeat `assert_result_publication_readiness` under school lock and SERIALIZABLE isolation. The SQL-only function requires exact active same-school `SCHOOL_SUPER_ADMIN` user and membership, original exact active teacher and academic scope, independently APPROVED result evidence by current verified PRIMARY Head of Section or SECONDARY Principal distinct from the teacher, latest school-adopted grading policy and immutable evidence revision, unchanged currently rebuilt pupil source, and positive-weight per-pupil assessment completeness. A previous private owner preflight GET or direct predicate success alone is never a release decision. No API, publication event, official grade, pupil/guardian visibility or production permission is implemented. D-055/ADR-041.
+
 ## Phase 8 owner-only result snapshot inspection (AUTHORED; NOT VERIFIED)
 
 `GET /api/schools/[schoolId]/result-publication-candidates`: only current same-school active `SCHOOL_SUPER_ADMIN`, independently authenticated and rechecked by SQL with active School. A candidate additionally requires independently APPROVED result evidence by a currently active PRIMARY Head of Section or SECONDARY Principal with verified grant on the actual class SECTION, distinct from the teacher; active original teacher assignment, session/term/class/section/subject; latest frozen source and adopted policy; source freshness and per-pupil required grading categories. Response is metadata only, bounded to 100, with `Cache-Control: private, no-store`; forbidden roles/schools concealed. No POST, grade release, report export or pupil/guardian access. D-054/ADR-040; full verification BLOCKED.
