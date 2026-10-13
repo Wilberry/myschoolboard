@@ -83,13 +83,13 @@ BEGIN
    NEW."schoolId",composition."evidenceId",
    NEW."actorMembershipId",NEW."actorUserId");
 
- SELECT packet."id",packet."finalDecisionId",packet."evidenceId",
-   packet."adoptionId",packet."sessionId",packet."termId",
-   packet."classId",packet."subjectId",packet."evidenceRevision",
-   packet."studentCount",packet."studentSourceCards"
+ SELECT source_packet."id",source_packet."finalDecisionId",source_packet."evidenceId",
+   source_packet."adoptionId",source_packet."sessionId",source_packet."termId",
+   source_packet."classId",source_packet."subjectId",source_packet."evidenceRevision",
+   source_packet."studentCount",source_packet."studentSourceCards"
  INTO packet FROM "ResultReportCardSourcePacket" packet
- WHERE packet."schoolId"=NEW."schoolId"
-   AND packet."id"=composition."sourcePacketId";
+ WHERE source_packet."schoolId"=NEW."schoolId"
+   AND source_packet."id"=composition."sourcePacketId";
  IF NOT FOUND
    OR packet."finalDecisionId" IS DISTINCT FROM composition."finalDecisionId"
    OR packet."evidenceId" IS DISTINCT FROM composition."evidenceId"
