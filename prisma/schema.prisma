@@ -1773,6 +1773,6 @@ model GuardianStudentRelationshipEvent {
   actor Membership @relation("GuardianRelationshipActor", fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "GuardianStudentRelationshipEvent_actor_fkey")
 
   @@unique([schoolId, id])
-  @@unique([schoolId, studentId, guardianMembershipId, ordinal])
-  @@index([schoolId, studentId, guardianMembershipId, recordedAt])
+  @@unique([schoolId, studentId, guardianMembershipId, ordinal], map: "GuardianStudentRelationshipEvent_pair_ordinal_key")
+  @@index([schoolId, studentId, guardianMembershipId, recordedAt], map: "GuardianStudentRelationshipEvent_pair_recordedAt_idx")
 }
