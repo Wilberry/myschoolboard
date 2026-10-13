@@ -1,5 +1,16 @@
 # Milestone Checklist
 
+## Phase 8 privately composed official-result evidence — [ ] AUTHORED / BLOCKED
+
+- [x] Append-only exact-school private `PrivateOfficialReportComposition`, with composite FK references to frozen packet, final owner approval and pinned adopted aggregation/grade scale.
+- [x] SQL row-locked reauthorization reuses full current review and source readiness; verify exact current adopted policy IDs, immutable weights and per-pupil source completeness.
+- [x] Database derives category scores, raw/displayed percentages and grade bands according to explicitly chosen adopted formula/rounding, no browser-supplied marks or grade fallback.
+- [x] Only one immutable composition per frozen source packet, preserving previous history for later independently reviewed revision/correction.
+- [x] Same-school current School Super Admin private no-store POST and metadata-only GET; no student-level grades, report files or release routes.
+- [x] Authored integration SQL parity/tenant/role/stale-packet/immutable mutation/privacy tests and Node guard without removing previous gates.
+- [ ] Run disposable PostgreSQL + Prisma schema/migration/SQL mathematical parity, concurrent revocation and rollback, Node/Vitest, lint/types/build, browser, strict audit and CI acceptance.
+- [ ] Define controlled **recipient release** and school visibility policy, verify student/guardian relationships, safe immutable amendments and official report-card export. Keep public result release DISABLED.
+
 ## Phase 8 adopted aggregation and private report composition mathematics — [ ] AUTHORED, BLOCKED
 
 - [x] Owner-adopted, append-only, explicit per-school assessment-category aggregation semantics and integer precision, without fallback method.
