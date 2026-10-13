@@ -1,5 +1,11 @@
 # Decision Log
 
+## D-063: Explicit school-selected visibility, independent immutable release and guardian-first receipt
+
+- **Status:** code/migration/tests authored, production/release acceptance NOT VERIFIED (2026-10-13). Routine roadmap-authorized development under D-023; no user approval is implied for a school's chosen mode.
+- **Decision:** represent the four named tenant-configurable report modes as `SCHOOL_ONLY`, `STUDENT_ONLY`, `GUARDIAN_ONLY`, `GUARDIAN_FIRST_ACK`. Absence of an explicitly adopted immutable School Super Admin policy revision denies publication and recipients. A policy alone never releases a result: the School Super Admin separately confirms exact private frozen official grades; PostgreSQL re-runs current teacher/independent HM or Principal reviewer, owner, roster, original source, approved aggregation and grade-band checks **within** immutable release insertion. Every release pins one school/session/term/class/subject, the exact frozen composition, current visibility-policy revision, the school owner and a reason. Versioned corrections supersede earlier subject releases without editing them. Each recipient read requires the current policy to equal the release's policy, latest release ordinal, active enrolled child and exact currently active unrevoked `StudentAccountLink` or `GuardianStudentLink`. `GUARDIAN_FIRST_ACK` additionally requires an explicit append-only receipt from a presently active, verified same-school guardian for the exact release and child before the student may read. Printing is via the authenticated recipient's browser, not a publicly addressable report. Default `PHASE8_REPORT_RELEASE_ENABLED=false` and `PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED=false` prevent use prior to security acceptance. This supplies a school-configurable parent-first **mechanism** without imposing that choice on any school or creating a national default. ADR-049, P-004 configuration semantics candidate.
+
+
 ## D-062: Explicit guardian-to-enrolled-pupil attestation is evidence, not report access
 
 - **Status:** authored / unverified (2026-10-13); no production adoption.
