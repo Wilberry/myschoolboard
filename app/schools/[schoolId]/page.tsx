@@ -111,6 +111,13 @@ async function SchoolDetailContent({
         )}
         {access.principal.membership?.role === "TEACHER" && (
           <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/result-sheet-evidence`} className="secondary-link">
+              Prepare frozen result evidence (Phase 8 development)
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "TEACHER" && (
+          <p className="setup-navigation">
             <Link href={`/schools/${schoolId}/result-preparation`} className="secondary-link">
               Result preparation readiness (Phase 8 development)
             </Link>
@@ -178,6 +185,13 @@ async function SchoolDetailContent({
           <p className="setup-navigation">
             <Link href={`/schools/${schoolId}/attendance-corrections`} className="secondary-link">
               Request attendance correction
+            </Link>
+          </p>
+        )}
+        {canReviewLessonNotes && (
+          <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/result-sheet-reviews`} className="secondary-link">
+              Review prepared result evidence (Phase 8 development)
             </Link>
           </p>
         )}
