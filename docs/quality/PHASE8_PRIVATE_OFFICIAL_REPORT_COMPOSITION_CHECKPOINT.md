@@ -33,3 +33,7 @@
 3. A private `INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED` row is **not** official result publication, cannot create parent/student entitlement, and does not authorize release if policy or reviewer status changes later.
 
 **Exit state: BLOCKED — no merge, deployment, recipient release or grade disclosure.**
+
+## Phase 8 verification-first continuation (2026-10-13)
+
+See `docs/quality/PHASE8_CUMULATIVE_VERIFICATION_BLOCKERS_20261013.md`. Discovered and corrected a **specific SQL NULL-status guard gap** with additive migration `20261013170000_phase8_private_composition_source_status_hardening` and tests for missing/JSON-null/empty/altered source statuses. The 20261013160000 migration is preserved unchanged for already-applied-history safety. Differential source checks **10/10 passed**, not PostgreSQL runtime verification. The GitHub Actions job returned no steps and its log-download URL produced `404 BlobNotFound`; the check run notes two inaccessible annotations. Root cause **unconfirmed**, and all cumulative migration, test, security and release gates remain BLOCKED.
