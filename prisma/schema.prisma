@@ -280,7 +280,8 @@ model School {
   resultSheetEvidences ResultSheetEvidence[]
   resultSheetReviews ResultSheetReview[]
   resultFinalPublicationDecisions ResultFinalPublicationDecision[]
-  resultReportCardSourcePackets ResultReportCardSourcePacket[]  reportGradeScaleRevisions ReportGradeScaleRevision[]
+  resultReportCardSourcePackets ResultReportCardSourcePacket[]
+  reportGradeScaleRevisions ReportGradeScaleRevision[]
 
 }
 
@@ -330,7 +331,8 @@ model Membership {
   resultSheetEvidences ResultSheetEvidence[]
   resultSheetReviews ResultSheetReview[]
   resultFinalPublicationDecisions ResultFinalPublicationDecision[]
-  resultReportCardSourcePackets ResultReportCardSourcePacket[]  reportGradeScaleRevisions ReportGradeScaleRevision[]
+  resultReportCardSourcePackets ResultReportCardSourcePacket[]
+  reportGradeScaleRevisions ReportGradeScaleRevision[]
 
 }
 
