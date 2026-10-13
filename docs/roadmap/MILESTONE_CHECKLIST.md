@@ -409,3 +409,9 @@ All subsequent phases remain pending until their entry criteria and required pro
 - [ ] Obtain CI check annotation/root cause and successful full job evidence without weakening the workflow.
 - [ ] Run all cumulative migrations and DB identity/approval/policy/score tests against confirmed disposable loopback PostgreSQL, then Prisma, Node/Vitest, Prettier, lint, typecheck, build and strict dependency audit.
 - [ ] Implement recipient publication only after verification and separate current School Super Admin release/relationship/visibility safeguards.
+
+## Phase 6–8 cumulative PL/pgSQL source-preflight hardening — [ ] BLOCKED
+
+- [x] Added a cross-migration parser-shape guard across the 13 currently authored late Phase 7–8 migration files (23 PL/pgSQL function declarations), registered in both existing test commands.
+- [x] Isolated GitHub-source V8 guard replay passed 2/2; introduced repeated-`DECLARE` and unpaired-dollar-delimiter synthetic mutations were both rejected.
+- [ ] Run the **actual** registered Node test, full PostgreSQL migrations and grading/authorization regression, Prisma validate/generate, format/lint/types/build, dependency audit and full CI; no recipient release until accepted.
