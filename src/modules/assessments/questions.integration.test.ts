@@ -35,6 +35,7 @@ import { GET as GUARDIAN_EVENTS_GET, POST as GUARDIAN_EVENTS_POST } from "@/app/
 import { POST as GUARDIAN_RELATIONSHIP_INSPECT_POST } from "@/app/api/schools/[schoolId]/guardian-relationships/inspect/route";
 import { GET as RECIPIENT_ELIGIBILITY_GET, POST as RECIPIENT_ELIGIBILITY_POST } from "@/app/api/schools/[schoolId]/private-recipient-eligibility/route";
 import { POST as OWNER_PRIVATE_GRADE_PREVIEW } from "@/app/api/schools/[schoolId]/private-owner-grade-previews/route";
+import { GET as PRIVATE_SUBJECT_COVERAGE_GET } from "@/app/api/schools/[schoolId]/private-subject-coverage/route";
 import { simulatePrivateReportComposition, type PrivatePacketStudent } from "@/src/modules/results/report-composition-simulation";
 import { POST as RESULT_REVIEW_POST } from "@/app/api/schools/[schoolId]/result-sheet-reviews/[evidenceId]/decision/route";
 import {
@@ -2936,6 +2937,66 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect((await prisma.privateOfficialReportComposition.findUniqueOrThrow({
       where: { id: composition.id },
     })).status).toBe("INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED");
+  });
+
+  it("inspects private exact-session subject evidence without pupil data or release permission", async () => {
+    const coverage = (actor: string, school = schoolA, options = {
+      sessionId, termId, classId,
+    }) => {
+      const query = new URLSearchParams(options).toString();
+      const request = req(actor, school, "GET");
+      const url = new URL(request.url);
+      url.pathname = `/api/schools/${school}/private-subject-coverage`;
+      url.search = query;
+      return PRIVATE_SUBJECT_COVERAGE_GET(new Request(url, {
+        headers: request.headers, method: "GET",
+      }), { params: Promise.resolve({ schoolId: school }) });
+    };
+    for (const actor of ["teacher", "head", "principal", "admin", "parent", "student", "other"]) {
+      expect((await coverage(actor)).status).toBe(404);
+    }
+    expect((await coverage("super", schoolB)).status).toBe(404);
+    expect((await coverage("super", schoolA, {
+      sessionId, termId, classId: "unknown-class",
+    })).status).toBe(404);
+    expect((await coverage("super", schoolA, {
+      sessionId, termId: "wrong-session-term", classId,
+    })).status).toBe(404);
+    const allowed = await coverage("super");
+    expect(allowed.status).toBe(200);
+    expect(allowed.headers.get("cache-control")).toBe("private, no-store");
+    const payload = await allowed.json();
+    expect(payload.status).toBe("PRIVATE_SUBJECT_COVERAGE_METADATA_NOT_PUBLICATION");
+    expect(payload.configuredSubjectCount).toBe(payload.subjects.length);
+    expect(payload.subjects.length).toBeGreaterThan(0);
+    expect(payload.subjects.some((item: { subjectId: string }) => item.subjectId === subjectId))
+      .toBe(true);
+    for (const item of payload.subjects) {
+      expect(item).toEqual({
+        subjectId: expect.any(String),
+        subjectName: expect.any(String),
+        state: expect.stringMatching(/^(MISSING_TEACHER_RESULT_EVIDENCE|AWAITING_ACADEMIC_REVIEW|AWAITING_OWNER_DECISION|AWAITING_PRIVATE_COMPOSITION|PRIVATE_COMPOSITION_POLICY_SUPERSEDED|PRIVATE_COMPOSITION_METADATA_PRESENT_NOT_RELEASED)$/),
+        evidenceRevision: expect.anything(),
+        pupilCount: expect.anything(),
+      });
+    }
+    const safe = JSON.stringify(payload);
+    for (const forbidden of [
+      pupilId, "givenName", "familyName", "admissionNumber",
+      "rawPercentBps", "displayPercent", "gradeCode", "gradeRemark",
+      "composedStudentCards", "studentSourceCards", "answerEvents",
+      "recipientMembershipId", "reportReleaseToken", "PUBLISHED",
+    ]) expect(safe).not.toContain(forbidden);
+    await prisma.membership.update({
+      where: { id: members.super }, data: { isActive: false },
+    });
+    try {
+      expect((await coverage("super")).status).toBe(404);
+    } finally {
+      await prisma.membership.update({
+        where: { id: members.super }, data: { isActive: true },
+      });
+    }
   });
 
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
