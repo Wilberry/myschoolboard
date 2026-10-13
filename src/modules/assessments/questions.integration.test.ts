@@ -2560,22 +2560,26 @@ describe("Phase 7 exact-assignment private question bank", () => {
     await prisma.membership.update({
       where: { id: members.parent }, data: { role: "TEACHER" },
     });
-    let revoked: Response;
+    let revokedStatus = 0;
     try {
       expect((await (await inspect("super", query)).json()).status)
         .toBe("NO_VERIFIED_RELATIONSHIP_OR_POLICY");
-      revoked = await record("super", {
+      revokedStatus = (await record("super", {
         action: "REVOKE", studentId: pupilId,
         guardianMembershipId: members.parent,
         reason: "School guardian evidence authorization withdrawn",
-      });
+      })).status;
     } finally {
       await prisma.membership.update({
         where: { id: members.parent }, data: { role: "PARENT" },
       });
     }
-    expect(revoked.status).toBe(201);
-    expect((await revoked.json()).event).toMatchObject({
+    expect(revokedStatus).toBe(201);
+    const newest = await prisma.guardianStudentRelationshipEvent.findFirstOrThrow({
+      where: { schoolId: schoolA, studentId: pupilId, guardianMembershipId: members.parent },
+      orderBy: { ordinal: "desc" },
+    });
+    expect(newest).toMatchObject({
       action: "REVOKE", ordinal: 2, evidenceReviewed: false,
     });
     expect((await (await inspect("super", query)).json()).status)
