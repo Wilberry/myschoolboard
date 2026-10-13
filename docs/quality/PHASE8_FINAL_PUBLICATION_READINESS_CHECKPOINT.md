@@ -17,7 +17,7 @@
 
 **ACTUALLY EXECUTED:** GitHub connected branch/file operations; **25/25 targeted GitHub-fetched-source structural assertions** checking owner/teacher/reviewer/scope/current adoption and revision/source/student completeness, SQL no-write boundaries, test presence and package guard registration. These are static inspection checks only.
 
-**NOT EXECUTED:** `npm ci`, `prisma validate/generate/migrate`, the new SQL predicate in real PostgreSQL, synthetic Vitest, Node guards, `npm run verify:local`, ESLint/Prettier/TypeScript/Next.js build/browser tests, security audit including `npm audit --audit-level=high`, or GitHub CI acceptance. The isolated local container has `node`/`git` but could not resolve `github.com` for clone and lacks a PostgreSQL server/checkout. GitHub CI failures without step details remain unexplained. Cumulative Phase 6–8 migration/test gates are still blocked.
+**NOT EXECUTED:** `npm ci`, `prisma validate/generate/migrate`, the new SQL predicate in real PostgreSQL, synthetic Vitest, Node guards, `npm run verify:local`, ESLint/Prettier/TypeScript/Next.js build/browser tests, security audit including `npm audit --audit-level=high`, or GitHub CI acceptance. The isolated local container has `node`/`git` but could not resolve `github.com` for clone and lacks a PostgreSQL server/checkout. The newest head SHA CI run **38377300536** reports **failure** (job `verify`), but the job API returned **no steps**, so its root cause remains unverified. Earlier GitHub CI failures were similarly unavailable. Cumulative Phase 6–8 migration/test gates are still blocked.
 
 ## Safety and follow-on
 
