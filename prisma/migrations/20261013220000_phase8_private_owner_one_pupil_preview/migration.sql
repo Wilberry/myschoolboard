@@ -219,7 +219,8 @@ BEGIN
    RAISE EXCEPTION 'Current exact School Super Admin required'
      USING ERRCODE='23503';
  END IF;
- SELECT comp."evidenceRevision",comp."status" INTO snapshot
+ SELECT comp."evidenceRevision",comp."status",comp."classId",
+   comp."sessionId",comp."composedStudentCards" INTO snapshot
  FROM "PrivateOfficialReportComposition" comp
  WHERE comp."schoolId"=NEW."schoolId"
    AND comp."id"=NEW."compositionId";
@@ -230,9 +231,21 @@ BEGIN
  END IF;
  IF NOT EXISTS (
    SELECT 1 FROM "StudentRecord" student
+   JOIN "StudentEnrollment" enrollment
+     ON enrollment."schoolId"=student."schoolId"
+     AND enrollment."studentId"=student."id"
+     AND enrollment."sessionId"=snapshot."sessionId"
+     AND enrollment."classId"=snapshot."classId"
+     AND enrollment."status"='ACTIVE'
    WHERE student."schoolId"=NEW."schoolId"
-     AND student."id"=NEW."studentId") THEN
-   RAISE EXCEPTION 'Exact same-school pupil required'
+     AND student."id"=NEW."studentId"
+     AND student."status"='ENROLLED'
+ ) OR (
+   SELECT count(*) FROM jsonb_array_elements(
+     snapshot."composedStudentCards"
+   ) AS card(value) WHERE card.value->>'studentId'=NEW."studentId"
+ )<>1 THEN
+   RAISE EXCEPTION 'Exact current enrolled pupil must occur once in report'
      USING ERRCODE='23503';
  END IF;
  NEW."evidenceRevision":=snapshot."evidenceRevision";
