@@ -1,5 +1,14 @@
 # Milestone Checklist
 
+## Phase 8 exact recipient review evidence, NOT report access — [ ] AUTHORED / BLOCKED
+
+- [x] SQL-locked immutable exact report/student/recipient review evidence with same-school composite FKs to prior internal preflight, current adopted policy, private report, pupil and recipient membership; DB-derived role, proof ID, internal status and timestamp.
+- [x] Deny stale/no private preflight, prior grading/visibility policy, `ASSESSMENT_ONLY`, unverified or inactive recipient, revoked STUDENT account link, revoked/non-current PARENT event, wrong pupil/class/session or unauthorized school owner.
+- [x] Owner-only strict no-store GET/POST and administrative page; responses include no student/recipient identity, marks, grade JSON or report access. Audit history immutable and exact proof/policy replay prohibited.
+- [x] Authored synthetic cross-role/tenant/client-forged grant/duplication/revocation/immutability regression tests and registered local Node source guard without weakening existing gates.
+- [ ] Run disposable PostgreSQL migrations and concurrent revocation tests, actual Prisma/Node/Vitest, format/lint/typecheck/build, strict dependency audit and cumulative acceptance; do not run GitHub Actions until the owner lifts that instruction.
+- [ ] Resolve P-004 parent-first acknowledgment, add a separately audited **actual** release decision and verified real-recipient reader with current authorization on every request **only after** security gates pass.
+
 ## Phase 8 verified recipient relationship evidence — [ ] AUTHORED, NOT PUBLISHED
 
 - [x] Revocable append-only same-school guardian-to-pupil event ledger with independently audited School Super Admin actor/reason/ordinal, current active enrolled pupil and verified PARENT identity.
