@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 
 type Subject = {
-  studentId: string; admissionNumber: string; givenName: string;
+  studentId: string; recipientRole: "PARENT" | "STUDENT";
+  admissionNumber: string; givenName: string;
   familyName: string; schoolName: string; sessionName: string; termName: string;
   className: string; subjectName: string;
   sessionId: string; termId: string; classId: string;
@@ -87,11 +88,12 @@ export function PublishedReportWorkspace({ schoolId }: { schoolId: string }) {
               <td>{row.remark}</td><td>{row.releaseOrdinal}</td>
               <td className="print-hide">
                 {row.policyMode === "GUARDIAN_FIRST_ACK" &&
-                  !row.guardianHasAcknowledged ?
+                  row.recipientRole === "PARENT" && !row.guardianHasAcknowledged ?
                   <button type="button" disabled={!!busyId}
                     onClick={() => acknowledge(row)}>
                     Acknowledge this published subject
-                  </button> : row.policyMode === "GUARDIAN_FIRST_ACK" ?
+                  </button> : row.policyMode === "GUARDIAN_FIRST_ACK" &&
+                  row.recipientRole === "PARENT" ?
                   "Acknowledged" : "Not required"}
               </td>
             </tr>)}</tbody>
