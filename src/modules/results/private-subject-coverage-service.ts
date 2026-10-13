@@ -52,7 +52,8 @@ export async function inspectPrivateClassTermSubjectCoverage(
   if (!parsed.success) throw new AssessmentError("INVALID_INPUT");
   const { sessionId, termId, classId } = parsed.data;
   const userId = await assessmentUserId();
-  return prisma.$transaction(async (tx) => {
+  try {
+    return await prisma.$transaction(async (tx) => {
     // Serializes the scope snapshot with school lifecycle and policy changes.
     const schools = await tx.$queryRaw<Array<{ id: string }>>`
       SELECT "id" FROM "School"
@@ -200,5 +201,15 @@ export async function inspectPrivateClassTermSubjectCoverage(
       configuredSubjectCount: coverage.length,
       subjects: coverage,
     };
-  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  } catch (error) {
+    if (error instanceof AssessmentError) throw error;
+    if (error && typeof error === "object" && "code" in error) {
+      if (["P2002", "P2004", "P2010", "P2034"].includes(String(error.code))) {
+        throw new AssessmentError("CONFLICT");
+      }
+      if (error.code === "P2003") throw new AssessmentError("NOT_FOUND");
+    }
+    throw new AssessmentError("INTERNAL");
+  }
 }
