@@ -81,3 +81,9 @@ docker compose --profile test rm -f postgres-test
 This addresses **only** `postgres-test`; do not run `docker compose down -v`, which could remove the separate development database volume.
 
 Report the exact commit SHA, Node/npm versions, Docker test service confirmation, commands executed and outcomes, test counts, migrations applied, audit findings, and residual blockers. If GitHub billing/runner scheduling is restored later, the **unchanged** GitHub workflow must also be run and reviewed before any production release.
+
+## Additional Phase 8 result-evidence migration preflight (2026-10-13)
+
+Before `npm run verify:local` on the previously specified **disposable loopback-only** test service, inspect `_prisma_migrations` for `20261013100000_phase8_result_sheet_evidence_review`. The unmerged branch corrected three invalid repeated PL/pgSQL `DECLARE` sections in this draft migration, leaving all nine variable names/types intact. An already-applied migration with a different checksum **must not be silently rewritten or replayed**. If the disposable DB was used with earlier branch artifacts, stop and inspect migration history/failed attempts first; a fresh disposable-only test instance may be provisioned according to the documented operator-controlled procedure, never by resetting a shared database.
+
+Run the newly registered structural guard in the normal `npm test`/`verify:local:guards` path before declaring local acceptance. This guard does not replace actual PostgreSQL syntax checking, data/tenant audit tests, Vitest, Prisma migration status or strict `npm audit --audit-level=high`. The existing `npm run verify:local` command order and CI workflow remain unchanged. This checkpoint did **not** execute migrations or seeding.

@@ -1,5 +1,16 @@
 # Milestone Checklist
 
+## Phase 8 privately composed official-result evidence — [ ] AUTHORED / BLOCKED
+
+- [x] Append-only exact-school private `PrivateOfficialReportComposition`, with composite FK references to frozen packet, final owner approval and pinned adopted aggregation/grade scale.
+- [x] SQL row-locked reauthorization reuses full current review and source readiness; verify exact current adopted policy IDs, immutable weights and per-pupil source completeness.
+- [x] Database derives category scores, raw/displayed percentages and grade bands according to explicitly chosen adopted formula/rounding, no browser-supplied marks or grade fallback.
+- [x] Only one immutable composition per frozen source packet, preserving previous history for later independently reviewed revision/correction.
+- [x] Same-school current School Super Admin private no-store POST and metadata-only GET; no student-level grades, report files or release routes.
+- [x] Authored integration SQL parity/tenant/role/stale-packet/immutable mutation/privacy tests and Node guard without removing previous gates.
+- [ ] Run disposable PostgreSQL + Prisma schema/migration/SQL mathematical parity, concurrent revocation and rollback, Node/Vitest, lint/types/build, browser, strict audit and CI acceptance.
+- [ ] Define controlled **recipient release** and school visibility policy, verify student/guardian relationships, safe immutable amendments and official report-card export. Keep public result release DISABLED.
+
 ## Phase 8 adopted aggregation and private report composition mathematics — [ ] AUTHORED, BLOCKED
 
 - [x] Owner-adopted, append-only, explicit per-school assessment-category aggregation semantics and integer precision, without fallback method.
@@ -389,3 +400,18 @@ Cumulative `feature/phase7-cbt-private-resume-reader` implements `readInternalCb
 ## Future phases
 
 All subsequent phases remain pending until their entry criteria and required product decisions are satisfied. The completed local Phase 1 foundation does not imply that Phase 2 or later requirements are implemented or complete.
+
+## Phase 8 verification/remediation first — [ ] BLOCKED
+
+- [x] Found missing/null JSON status fail-closed bug in the SQL private result composer and authored a **new forward-only** `20261013170000_phase8_private_composition_source_status_hardening` migration, without editing prior migration.
+- [x] Authored PostgreSQL negative scenarios for missing, JSON-null, empty and changed source status, plus registered Node source guard; exact source-diff checks 10/10 passed (NOT database/runtime tested).
+- [x] Inspected failed CI run `38391897336`: about two seconds, zero step details, log blob 404, two check annotations inaccessible. Root cause NOT verified.
+- [ ] Obtain CI check annotation/root cause and successful full job evidence without weakening the workflow.
+- [ ] Run all cumulative migrations and DB identity/approval/policy/score tests against confirmed disposable loopback PostgreSQL, then Prisma, Node/Vitest, Prettier, lint, typecheck, build and strict dependency audit.
+- [ ] Implement recipient publication only after verification and separate current School Super Admin release/relationship/visibility safeguards.
+
+## Phase 6–8 cumulative PL/pgSQL source-preflight hardening — [ ] BLOCKED
+
+- [x] Added a cross-migration parser-shape guard across the 13 currently authored late Phase 7–8 migration files (23 PL/pgSQL function declarations), registered in both existing test commands.
+- [x] Isolated GitHub-source V8 guard replay passed 2/2; introduced repeated-`DECLARE` and unpaired-dollar-delimiter synthetic mutations were both rejected.
+- [ ] Run the **actual** registered Node test, full PostgreSQL migrations and grading/authorization regression, Prisma validate/generate, format/lint/types/build, dependency audit and full CI; no recipient release until accepted.

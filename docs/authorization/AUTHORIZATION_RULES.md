@@ -1,5 +1,9 @@
 # Authorization Rules
 
+## Phase 8 private official report evidence composition (AUTHORED, BLOCKED)
+
+`GET/POST /api/schools/[schoolId]/private-official-report-compositions`: authenticated current active exact same-school `SCHOOL_SUPER_ADMIN` only. The POST accepts **only** `sourcePacketId`, `aggregationRuleId`, `gradeScaleId` and reason. Server derives owner membership/user from session under SERIALIZABLE School lock; SQL trigger separately verifies active school owner and latest teacher/reviewer/grading evidence under lock, exact current separately adopted policy IDs/versions, and recomputes all pupil grades from immutable evidence. Student IDs, marks, grade labels, percentage JSON and release status are never client-selected. Owner GET repeats current same-school authorization in SQL and returns up to 100 metadata-only rows, with `Cache-Control: private, no-store`; it **never selects `composedStudentCards`**. No current or guardian/student grade read, result-release mutation, export or download path. D-060/ADR-046; runtime acceptance BLOCKED.
+
 ## Phase 8 school-owned report aggregation rule (AUTHORED; NOT VERIFIED)
 
 `GET/POST /api/schools/[schoolId]/report-aggregation-rules` requires an active same-school authenticated `SCHOOL_SUPER_ADMIN`; only `categoryMethod`, `precisionMode` and 5–500 char reason are accepted on POST. The same authorization is rechecked by PostgreSQL INSERT under active School row lock and the private bounded GET SQL tenant+owner join. Policy revisions are immutable and not a report release. Pure `simulatePrivateReportComposition` has no route and must never be called with browser-supplied pupil marks as trusted official inputs; a future official writer must load frozen packet and pinned adopted rules server-side, confirm authorization and revalidate under the School lock. Neither school owners nor pupils/guardians gain report-card grade access by adopting a rule. D-059/ADR-045.
