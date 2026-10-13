@@ -2075,6 +2075,33 @@ describe("Phase 7 exact-assignment private question bank", () => {
         ...payload, sourcePacketId: older.id,
       })).status).toBe(409);
     }
+    const olderScale = await prisma.reportGradeScaleRevision.findFirst({
+      where: { schoolId: schoolA, version: { lt: scale.version } },
+      orderBy: { version: "desc" },
+    });
+    if (olderScale) expect((await compose("super", {
+      ...payload, gradeScaleId: olderScale.id,
+    })).status).toBe(409);
+    const olderRule = await prisma.reportAggregationRuleRevision.findFirst({
+      where: { schoolId: schoolA, version: { lt: aggregation.version } },
+      orderBy: { version: "desc" },
+    });
+    if (olderRule) expect((await compose("super", {
+      ...payload, aggregationRuleId: olderRule.id,
+    })).status).toBe(409);
+    const reviewerScope = await prisma.scopeGrant.findFirstOrThrow({
+      where: { membershipId: members.head, type: "SECTION", scopeId: sectionId },
+    });
+    await prisma.scopeGrant.update({
+      where: { id: reviewerScope.id }, data: { verified: false },
+    });
+    try {
+      expect((await compose("super", payload)).status).toBe(409);
+    } finally {
+      await prisma.scopeGrant.update({
+        where: { id: reviewerScope.id }, data: { verified: true },
+      });
+    }
     const accepted = await compose("super", payload);
     expect(accepted.status).toBe(201);
     expect(accepted.headers.get("cache-control")).toBe("private, no-store");
