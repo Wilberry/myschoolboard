@@ -36,3 +36,8 @@ The next independently useful Phase 8 foundation is school-owned **future report
 3. Resolve P-004 parent-first acknowledgment semantics separately; enforce exact independently verified student/guardian relationships, and make role-specific student/guardian readers and official report delivery only after release. Keep old history immutable.
 
 **Status:** policy foundation authored. **No result publication, recipient entitlement, `main` merge or deployment.**
+
+## Post-authoring authorization guard
+
+- Added a negative authenticated integration scenario that deactivates the previously valid School Super Admin membership, asserts both visibility policy GET and POST return 404, and restores that fixture in a `finally` block. No real data was changed; **scenario authored, not executed against PostgreSQL**.
+- Extended the Node regression guard to assert the revoked-owner test exists. Replayed the exact refreshed source guard in isolated V8 with mocked Node filesystem reads: **3/3 checks passed**. This is not a full Node test run. No GitHub Actions runs, reruns or job inspections were invoked, and no new PR was opened.
