@@ -1,5 +1,12 @@
 # Security Testing
 
+## Phase 8 school results and parent-first receipt acceptance — unexecuted (2026-10-13)
+
+New authored tests cover owner-only visibility-policy adoption and separate publication, school-only recipient denial, changed-policy suspension, current guardian-only positive read, verified guardian-first per-release receipt and active link revocation, anonymous and foreign-school denials, duplicate release/receipt races, direct forged SQL actor, immutable audit mutation, and no keys/marks/raw frozen source in recipient responses. `scripts/phase8-report-publication-guard.test.mjs` is registered in the existing full test and local guard chains. **3/3 isolated source-replay cases and 5/5 in-memory negative mutations pass**; this cannot substitute for Node, database or full CI acceptance. Live release/read switches remain false.
+
+Exit must include a fresh disposable loopback Postgres, migration checksum preflight, Prisma validate/deploy, actual SQL trigger/rollback/serializable tests, a separate **positive still-linked student** fixture for STUDENT_ONLY and GUARDIAN_FIRST_ACK, browser/no-cache/print/a11y checks, TypeScript/lint/format/build and strict `npm audit --audit-level=high`. No GitHub Actions may be started for this user-requested checkpoint. See `PHASE8_END_TO_END_PUBLICATION_CHECKPOINT_20261013.md`.
+
+
 ## Active school-owned scope grants (authored, pending local verification)
 
 The `resolveSchoolPrincipal` loader must not trust a CLASS or SUBJECT `ScopeGrant.scopeId` as proof of school ownership merely because its grant is verified. Only identifiers resolving to **active** classes or subjects in the requested school can enter the resolved principal. New disposable-DB integration cases deliberately create verified school-A grants for school-B class/subject IDs, verify that the invalid grants are filtered, and then deactivate the valid school-A resources to confirm those grants cease to authorize reads. These cases have **not** been executed on the cumulative branch. SECTION/CHILD resource binding, concurrency guarantees across multiple queries, and production read routes remain separate unverified responsibilities; do not infer them from these tests.
