@@ -108,6 +108,8 @@ test("authored authenticated regression cases deny forged, cross-tenant and revo
     'Origin: "https://evil.example"',
     'gradeCode: "A"',
     'resultPrivateGradePreviewAudit.count(',
+    'Direct synthetic owner preview audit regression',
+    'ROLLBACK_OWNER_PREVIEW_AND_AUDIT',
     'prisma.resultPrivateGradePreviewAudit.update(',
     'prisma.resultPrivateGradePreviewAudit.delete(',
     'TRUNCATE "ResultPrivateGradePreviewAudit"',
