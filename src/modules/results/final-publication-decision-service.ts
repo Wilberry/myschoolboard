@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/src/lib/db";
 import {
-  AssessmentError, assessmentFailure, assessmentUserId,
+  AssessmentError, assessmentUserId,
 } from "@/src/modules/assessments/question-service";
 
 const identifier = z.string().min(1).max(128).refine(value => value.trim() === value);
@@ -11,6 +11,17 @@ const inputSchema = z.object({
   evidenceId: identifier,
   reason: z.string().trim().min(5).max(500),
 }).strict();
+
+/** Do not leak SQL trigger details or convert denial into success. */
+function finalDecisionFailure(error: unknown): never {
+  if (error instanceof AssessmentError) throw error;
+  if (error && typeof error === "object" && "code" in error) {
+    if (["P2002", "P2004", "P2010", "P2034"].includes(String(error.code)))
+      throw new AssessmentError("CONFLICT");
+    if (error.code === "P2003") throw new AssessmentError("NOT_FOUND");
+  }
+  throw new AssessmentError("INTERNAL");
+}
 
 /**
  * School owner's final audited academic release AUTHORIZATION, never public
@@ -58,7 +69,7 @@ export async function recordInternalFinalPublicationDecision(
           reason: true, decidedAt: true },
       });
     }, { isolationLevel: "Serializable" });
-  } catch (error) { assessmentFailure(error); }
+  } catch (error) { finalDecisionFailure(error); }
 }
 
 /** Current school owner sees only bounded non-pupil audit metadata. */
