@@ -31,3 +31,9 @@ The user requested continued roadmap development and **no GitHub Actions**. This
 Complete cumulative Phase 6–8 PostgreSQL/Prisma/Node/Vitest/build/strict dependency-audit acceptance in the explicitly confirmed disposable local environment, without invoking GitHub Actions unless the user lifts that preference. After all gates pass, develop the **separate release decision ledger** and recipient visibility with verified student/guardian relationship and finalized P-004 acknowledgment rules. Other independently safe foundations may be authored without enabling access.
 
 **Status: PREPARATION ONLY. School result publication, student/guardian report access, `main` merge and production deployment remain disabled.**
+
+## Post-authoring trigger-owned field hardening
+
+- Set invalid, **non-persistable** internal SQL/Prisma defaults for trigger-owned fields (`recipientMode='INTERNAL_UNSET'`, evidence/decision/packet ID `''`). The PostgreSQL BEFORE INSERT must replace them with the current exact school policy and authorized frozen source metadata. Table CHECK constraints reject any persisted unset recipient mode or blank trusted source/decision/evidence identifiers, even if a trigger is disabled.
+- The authenticated service no longer sends synthetic `ASSESSMENT_ONLY` or blank evidence IDs at all. The request still accepts only exact composition ID, visibility policy ID and audit reason; actor is server authenticated and SQL owns all protected metadata.
+- Expanded the Node structural guard to assert the invalid interim defaults and absence of forged/transient service data. Isolated V8 replay of exact current GitHub guard source with mocked Node filesystem **passed 3/3**. It is still **not** an actual `node --test`, Prisma validation, PostgreSQL migration/integration execution, security audit or CI acceptance. No GitHub Actions calls, no PR and no publication.
