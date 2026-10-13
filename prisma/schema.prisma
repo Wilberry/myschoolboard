@@ -277,6 +277,8 @@ model School {
   assessmentManualCorrectionRequests AssessmentManualCorrectionRequest[]
   assessmentManualCorrectionDecisions AssessmentManualCorrectionDecision[]
   resultGradingAdoptions ResultGradingAdoption[]
+  resultSheetEvidences ResultSheetEvidence[]
+  resultSheetReviews ResultSheetReview[]
 }
 
 model Membership {
@@ -322,6 +324,8 @@ model Membership {
   assessmentManualCorrectionRequests AssessmentManualCorrectionRequest[]
   assessmentManualCorrectionDecisions AssessmentManualCorrectionDecision[]
   resultGradingAdoptions ResultGradingAdoption[]
+  resultSheetEvidences ResultSheetEvidence[]
+  resultSheetReviews ResultSheetReview[]
 }
 
 model ScopeGrant {
@@ -427,6 +431,7 @@ model TeacherClassSubjectAssignment {
   assessmentQuestions AssessmentQuestion[]
   assessmentDrafts AssessmentDraft[]
   assessmentManualComponents AssessmentManualComponent[]
+  resultSheetEvidences ResultSheetEvidence[]
 }
 
 model TeacherClassSubjectAssignmentEvent {
@@ -1457,4 +1462,55 @@ model ResultGradingAdoption {
   @@unique([schoolId, policyId])
   @@unique([schoolId, sessionId, termId, classId, subjectId, ordinal], map: "ResultGradingAdoption_context_ordinal_key")
   @@index([schoolId, classId, subjectId, termId])
+  resultSheetEvidences ResultSheetEvidence[]
+}
+
+/** Teacher-prepared frozen evidence. SourceManifest is ALWAYS computed
+ * by SQL from reviewed scores, never accepted from the caller. This is not
+ * an approved gradebook, official report card or public result. */
+model ResultSheetEvidence {
+  id String @id
+  schoolId String
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  assignmentId String
+  teacherMembershipId String
+  teacherUserId String
+  adoptionId String
+  revision Int @default(1)
+  reason String @db.VarChar(500)
+  sourceManifest Json @default("[]")
+  studentCount Int @default(0)
+  preparedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teacher Membership @relation(fields: [schoolId, teacherMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ResultSheetEvidence_teacher_fkey")
+  assignment TeacherClassSubjectAssignment @relation(fields: [schoolId, assignmentId, teacherMembershipId, classId, subjectId, sessionId], references: [schoolId, id, membershipId, classId, subjectId, sessionId], onDelete: NoAction, map: "ResultSheetEvidence_assignment_fkey")
+  adoption ResultGradingAdoption @relation(fields: [schoolId, adoptionId], references: [schoolId, id], onDelete: NoAction, map: "ResultSheetEvidence_adoption_fkey")
+  review ResultSheetReview?
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, sessionId, termId, classId, subjectId, revision], map: "ResultSheetEvidence_context_revision_key")
+  @@index([schoolId, teacherMembershipId, preparedAt])
+}
+/** Independent exact-section HM/Principal academic review of immutable
+ * result evidence, not School Super Admin publication or student visibility. */
+model ResultSheetReview {
+  id String @id
+  schoolId String
+  evidenceId String
+  reviewerMembershipId String
+  reviewerUserId String
+  action ManualMarkReviewAction
+  reason String @db.VarChar(500)
+  reviewedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  evidence ResultSheetEvidence @relation(fields: [schoolId, evidenceId], references: [schoolId, id], onDelete: NoAction, map: "ResultSheetReview_evidence_fkey")
+  reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ResultSheetReview_reviewer_fkey")
+
+  @@unique([schoolId, evidenceId])
+  @@index([schoolId, reviewedAt])
 }
