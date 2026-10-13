@@ -287,6 +287,7 @@ model School {
   reportVisibilityPolicyRevisions ReportVisibilityPolicyRevision[]
   releasePreflightAttestations ResultReleasePreflightAttestation[]
   guardianRelationshipEvents GuardianStudentRelationshipEvent[]
+  recipientEligibilityEvidence ResultRecipientEligibilityEvidence[]
 }
 
 model Membership {
@@ -343,6 +344,8 @@ model Membership {
   releasePreflightAttestations ResultReleasePreflightAttestation[]
   guardianRelationshipSubjectEvents GuardianStudentRelationshipEvent[] @relation("GuardianRelationshipSubject")
   guardianRelationshipActorEvents GuardianStudentRelationshipEvent[] @relation("GuardianRelationshipActor")
+  recipientEligibilityActors ResultRecipientEligibilityEvidence[] @relation("RecipientEligibilityActor")
+  recipientEligibilitySubjects ResultRecipientEligibilityEvidence[] @relation("RecipientEligibilitySubject")
 }
 
 model ScopeGrant {
@@ -760,6 +763,7 @@ model StudentRecord {
   assessmentAttempts AssessmentAttempt[]
   assessmentManualMarkProposals AssessmentManualMarkProposal[]
   guardianRelationshipEvents GuardianStudentRelationshipEvent[]
+  recipientEligibilityEvidence ResultRecipientEligibilityEvidence[]
 }
 
 model StudentEnrollment {
@@ -1695,6 +1699,7 @@ model PrivateOfficialReportComposition {
   @@unique([schoolId, sourcePacketId])
   @@index([schoolId, composedAt])
   releasePreflightAttestations ResultReleasePreflightAttestation[]
+  recipientEligibilityEvidence ResultRecipientEligibilityEvidence[]
 }
 
 /** School-owned immutable report audience configuration for FUTURE RELEASE ONLY.
@@ -1718,6 +1723,7 @@ model ReportVisibilityPolicyRevision {
   @@unique([schoolId, version])
   @@index([schoolId, adoptedAt])
   releasePreflightAttestations ResultReleasePreflightAttestation[]
+  recipientEligibilityEvidence ResultRecipientEligibilityEvidence[]
 }
 
 /** Immutable INTERNAL release preflight evidence only.
@@ -1749,6 +1755,7 @@ model ResultReleasePreflightAttestation {
   @@unique([schoolId, id])
   @@unique([schoolId, compositionId, visibilityPolicyId])
   @@index([schoolId, checkedAt])
+  recipientEligibilityEvidence ResultRecipientEligibilityEvidence[]
 }
 
 /** Revocable append-only school-attested PARENT<->pupil relationship history.
@@ -1775,4 +1782,38 @@ model GuardianStudentRelationshipEvent {
   @@unique([schoolId, id])
   @@unique([schoolId, studentId, guardianMembershipId, ordinal], map: "GuardianStudentRelationshipEvent_pair_ordinal_key")
   @@index([schoolId, studentId, guardianMembershipId, recordedAt], map: "GuardianStudentRelationshipEvent_pair_recordedAt_idx")
+}
+
+/** Immutable private per-recipient relationship eligibility observation ONLY.
+ * Not a result publication, access grant, P-004 acknowledgment or report token.
+ * Actual readers MUST recheck current identity, release and relationship.
+ */
+model ResultRecipientEligibilityEvidence {
+  id String @id
+  schoolId String
+  compositionId String
+  studentId String
+  recipientMembershipId String
+  preflightId String @default("")
+  visibilityPolicyId String @default("")
+  visibilityPolicyVersion Int @default(0)
+  recipientRole String @default("INTERNAL_UNSET") @db.VarChar(16)
+  relationshipProofId String @default("")
+  status String @default("INTERNAL_RECIPIENT_RELATIONSHIP_ONLY_NOT_ACCESS") @db.VarChar(64)
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  checkedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  composition PrivateOfficialReportComposition @relation(fields: [schoolId, compositionId], references: [schoolId, id], onDelete: NoAction, map: "ResultRecipientEligibilityEvidence_composition_fkey")
+  student StudentRecord @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction, map: "ResultRecipientEligibilityEvidence_student_fkey")
+  recipient Membership @relation("RecipientEligibilitySubject", fields: [schoolId, recipientMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ResultRecipientEligibilityEvidence_recipient_fkey")
+  preflight ResultReleasePreflightAttestation @relation(fields: [schoolId, preflightId], references: [schoolId, id], onDelete: NoAction, map: "ResultRecipientEligibilityEvidence_preflight_fkey")
+  visibilityPolicy ReportVisibilityPolicyRevision @relation(fields: [schoolId, visibilityPolicyId], references: [schoolId, id], onDelete: NoAction, map: "ResultRecipientEligibilityEvidence_visibility_fkey")
+  actor Membership @relation("RecipientEligibilityActor", fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ResultRecipientEligibilityEvidence_actor_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, compositionId, studentId, recipientMembershipId, visibilityPolicyId, relationshipProofId], map: "ResultRecipientEligibilityEvidence_exact_proof_key")
+  @@index([schoolId, checkedAt])
 }
