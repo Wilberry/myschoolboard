@@ -182,9 +182,9 @@ $$ LANGUAGE plpgsql STABLE;
 CREATE FUNCTION "assert_result_sheet_manifest_complete"(p_manifest JSONB)
 RETURNS VOID AS $$
 DECLARE pupil JSONB;
-DECLARE score JSONB;
-DECLARE any_source BOOLEAN := false;
-DECLARE pupil_has_source BOOLEAN;
+  score JSONB;
+  any_source BOOLEAN := false;
+  pupil_has_source BOOLEAN;
 BEGIN
  IF jsonb_typeof(p_manifest)<>'array' OR jsonb_array_length(p_manifest)
    NOT BETWEEN 1 AND 500 THEN
@@ -253,9 +253,9 @@ $$ LANGUAGE plpgsql;
 
 CREATE FUNCTION "validate_result_sheet_evidence"() RETURNS trigger AS $$
 DECLARE current_adoption RECORD;
-DECLARE previous RECORD;
-DECLARE next_revision INT;
-DECLARE frozen JSONB;
+  previous RECORD;
+  next_revision INT;
+  frozen JSONB;
 BEGIN
  PERFORM 1 FROM "School" school WHERE school."id"=NEW."schoolId"
   AND school."isActive"=true FOR UPDATE;
@@ -344,9 +344,9 @@ CREATE TRIGGER "ResultSheetEvidence_validate"
 
 CREATE FUNCTION "validate_result_sheet_review"() RETURNS trigger AS $$
 DECLARE snapshot RECORD;
-DECLARE current_adoption RECORD;
-DECLARE current_evidence TEXT;
-DECLARE now_manifest JSONB;
+  current_adoption RECORD;
+  current_evidence TEXT;
+  now_manifest JSONB;
 BEGIN
  PERFORM 1 FROM "School" school WHERE school."id"=NEW."schoolId"
   AND school."isActive"=true FOR UPDATE;
