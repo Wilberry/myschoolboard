@@ -232,3 +232,7 @@
 ## ADR-037: Phase 8 preparation reconciles private sources but cannot imply result approval
 
 - Status: Authored unverified. Existing separately exact teacher-scoped CBT and academically reviewed manual read models feed a fail-closed identity/counter reconciliation. It never combines objective/manual scores without an adopted versioned policy, never persists a report or authorizes student/parent visibility; full HM/Principal and School Super Admin two-stage official results workflow remains separate. D-051.
+
+## ADR-038: Explicit school grading adoption is immutable and separate from result publication
+
+- Status: authored, unverified. A School Super Admin may append an actor-attributed versioned adoption of an exact school/class/subject/session/term grading revision, enforced again by SQL school locking, active context, role and uniqueness. Historical result evidence references a concrete adoption; adopting a later revision cannot rewrite prior evidence. No report/publication authorization. D-052.
