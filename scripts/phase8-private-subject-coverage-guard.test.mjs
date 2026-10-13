@@ -19,7 +19,7 @@ test("school owner only: exact session/class/term assignment subject diagnostic"
   assert.ok(service.includes("tx.schoolClass.findFirst("));
   assert.ok(service.includes("where: { schoolId, id: classId, isActive: true }"));
   assert.ok(service.includes('sessionId, status: "ACTIVE"'));
-  assert.ok(service.includes("membership: { isActive: true }"));
+  assert.ok(service.includes('membership: { isActive: true, role: "TEACHER" }'));
   assert.ok(service.includes("subject: { isActive: true }"));
   assert.ok(service.includes("if (assigned.length > 500)"));
   assert.ok(service.includes("if (evidences.length > 500)"));
