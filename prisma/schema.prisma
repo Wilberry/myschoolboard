@@ -1762,7 +1762,7 @@ model ReportVisibilityPolicyRevision {
   actorUserId String
   adoptedAt DateTime @default(now())
   school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction)
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ReportVisibilityPolicyRevision_actor_fkey")
   releases ReportRecipientRelease[]
 
   @@unique([schoolId, id])
@@ -1789,15 +1789,15 @@ model ReportRecipientRelease {
   actorUserId String
   releasedAt DateTime @default(now())
   school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  composition PrivateOfficialReportComposition @relation(fields: [schoolId, compositionId], references: [schoolId, id], onDelete: NoAction)
-  visibilityPolicy ReportVisibilityPolicyRevision @relation(fields: [schoolId, visibilityPolicyId], references: [schoolId, id], onDelete: NoAction)
-  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction)
+  composition PrivateOfficialReportComposition @relation(fields: [schoolId, compositionId], references: [schoolId, id], onDelete: NoAction, map: "ReportRecipientRelease_composition_fkey")
+  visibilityPolicy ReportVisibilityPolicyRevision @relation(fields: [schoolId, visibilityPolicyId], references: [schoolId, id], onDelete: NoAction, map: "ReportRecipientRelease_visibility_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ReportRecipientRelease_actor_fkey")
   acknowledgments ReportGuardianAcknowledgment[]
 
   @@unique([schoolId, id])
-  @@unique([schoolId, compositionId, visibilityPolicyId])
-  @@unique([schoolId, sessionId, termId, classId, subjectId, releaseOrdinal])
-  @@index([schoolId, sessionId, termId, classId, releasedAt])
+  @@unique([schoolId, compositionId, visibilityPolicyId], map: "ReportRecipientRelease_composition_policy_key")
+  @@unique([schoolId, sessionId, termId, classId, subjectId, releaseOrdinal], map: "ReportRecipientRelease_exact_ordinal_key")
+  @@index([schoolId, sessionId, termId, classId, releasedAt], map: "ReportRecipientRelease_school_context_time_idx")
 }
 
 /** A guardian's explicit receipt of one exact released version for one child.
@@ -1813,12 +1813,12 @@ model ReportGuardianAcknowledgment {
   actorUserId String
   acknowledgedAt DateTime @default(now())
   school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  release ReportRecipientRelease @relation(fields: [schoolId, releaseId], references: [schoolId, id], onDelete: NoAction)
-  student StudentRecord @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction)
-  guardianLink GuardianStudentLink @relation(fields: [schoolId, guardianLinkId], references: [schoolId, id], onDelete: NoAction)
-  guardian Membership @relation(fields: [schoolId, guardianMembershipId], references: [schoolId, id], onDelete: NoAction)
+  release ReportRecipientRelease @relation(fields: [schoolId, releaseId], references: [schoolId, id], onDelete: NoAction, map: "ReportGuardianAcknowledgment_release_fkey")
+  student StudentRecord @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction, map: "ReportGuardianAcknowledgment_student_fkey")
+  guardianLink GuardianStudentLink @relation(fields: [schoolId, guardianLinkId], references: [schoolId, id], onDelete: NoAction, map: "ReportGuardianAcknowledgment_link_fkey")
+  guardian Membership @relation(fields: [schoolId, guardianMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ReportGuardianAcknowledgment_guardian_fkey")
 
   @@unique([schoolId, id])
-  @@unique([schoolId, releaseId, studentId, guardianMembershipId])
-  @@index([schoolId, studentId, acknowledgedAt])
+  @@unique([schoolId, releaseId, studentId, guardianMembershipId], map: "ReportGuardianAcknowledgment_exact_receipt_key")
+  @@index([schoolId, studentId, acknowledgedAt], map: "ReportGuardianAcknowledgment_schoolId_studentId_acknowledgedAt_idx")
 }
