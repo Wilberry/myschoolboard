@@ -41,3 +41,12 @@
 5. Resolve/repair any real failures without disabling or weakening security gates, pass dependency audit; complete independent security, privacy and release-operations review. Only then may release flags be considered for verified deployment.
 
 **Decision:** The remaining Phase 8 functional code path is authored end-to-end. **It is not validated or production-complete**, and enabling publication without the above gates would contradict the project mandate.
+
+## Final security and schema hardening after first authoring
+
+- School owner adoption/release transactions and guardian acknowledgment now lock caller membership after school-row lock; SQL triggers independently repeat current actor checks.
+- Authenticated parent/student portal is reachable via the signed-in home, **not** by widening the existing `academic:read` permission (the staff school-detail page deliberately excludes recipient roles). No parent/student privileged academic role was introduced.
+- Source review caught a new 66-byte PostgreSQL receipt index identifier (PostgreSQL 63-byte limit); shortened and synchronized the index `map` across Prisma and the additive SQL migration before deployment.
+- Synthetic release/receipt tests now race two identical inserts and expect exactly one success with a conflict; forged direct SQL actor user/release and receipt attempts are separately authored negative cases.
+- Final re-fetch structural guard: 3/3 publication source assertions passed; five deliberate in-memory mutations (current active parent, recomputed frozen grade parity, guardian revocation predicate, deployment release gate, exact receipt predicate) were rejected **5/5**. This is not actual TypeScript/PostgreSQL/browser execution.
+- The recipient-school home entry-point is now checked by the publication structural guard, separate from the protected staff `academic:read` view.
