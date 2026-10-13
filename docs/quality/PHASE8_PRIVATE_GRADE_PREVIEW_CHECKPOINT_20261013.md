@@ -41,3 +41,8 @@
 - Fresh GitHub-source isolated V8 replay: **3/3** preview structural guard cases passed; `package.json` contains the new guard in both full `test` and `verify:local:guards` commands.
 - **3/3 deliberate negative mutations** were rejected by the guard: removing exact owner role, removing active membership revocation check, and removing full class-count validation. This demonstrates guard sensitivity to these source edits; it does **not** establish the correctness of the PostgreSQL query at runtime.
 - The private GET route is explicitly `force-dynamic` with `revalidate = 0` as well as private/no-store/noindex response headers. No PR or Actions run was started.
+
+## Owner workflow refinement and parent-guard regression
+
+- Owner history now identifies each frozen composition using its same-school class and subject **metadata** (not student/mark data), reducing the risk of inspecting an ambiguously labeled class. This metadata is read only after the same final-query active school-owner authorization.
+- The existing parent `phase8-private-official-composition-guard.test.mjs` was also replayed against current GitHub sources in isolated V8: **4/4 structural cases passed**. This is not the installed Node runner nor PostgreSQL verification.
