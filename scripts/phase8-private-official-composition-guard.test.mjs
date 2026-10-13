@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 const read = path => readFileSync(new URL(path, import.meta.url), "utf8");
 const schema = read("../prisma/schema.prisma");
 const sql = read("../prisma/migrations/20261013160000_phase8_private_official_report_compositions/migration.sql");
+const hardening = read("../prisma/migrations/20261013170000_phase8_private_composition_source_status_hardening/migration.sql");
 const service = read("../src/modules/results/private-official-report-composition-service.ts");
 const route = read("../app/api/schools/[schoolId]/private-official-report-compositions/route.ts");
 const page = read("../app/schools/[schoolId]/private-report-compositions/page.tsx");
@@ -68,4 +69,20 @@ test("integration scenarios cover SQL calculation parity and mutable-record prot
     'TRUNCATE "PrivateOfficialReportComposition"',
     'SELECT "build_private_official_report_cards"(',
   ]) assert.ok(integration.includes(token),token);
+});
+
+test("forward-only report composition patch rejects absent and changed pupil statuses", () => {
+  assert.ok(sql.includes("pupil->>'reportStatus'<>'INTERNAL_SOURCE_ONLY_NOT_RELEASED'"));
+  assert.ok(hardening.includes('CREATE OR REPLACE FUNCTION "build_private_official_report_cards"('));
+  assert.ok(hardening.includes("pupil->>'reportStatus' IS DISTINCT FROM 'INTERNAL_SOURCE_ONLY_NOT_RELEASED'"));
+  assert.equal(hardening.includes("pupil->>'reportStatus'<>'INTERNAL_SOURCE_ONLY_NOT_RELEASED'"), false);
+  assert.equal(hardening.includes('CREATE TABLE "PrivateOfficialReportComposition"'), false);
+  assert.equal(hardening.includes("GRANT SELECT"), false);
+  assert.ok(hardening.includes("Missing positive-weight pupil assessment category"));
+  assert.ok(hardening.includes("Invalid or unapproved assessment source points") ||
+    hardening.includes("Assessment points exceed valid source range"));
+  for (const status of ['undefined', 'null', '"PUBLISHED"']) {
+    assert.ok(integration.includes(status), status);
+  }
+  assert.ok(integration.includes("const malformed = [{ ...synthetic[0], reportStatus: statusVariant }]"));
 });
