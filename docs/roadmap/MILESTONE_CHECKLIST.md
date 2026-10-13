@@ -1,5 +1,16 @@
 # Milestone Checklist
 
+## Phase 8 verified guardian relationship foundation — [ ] AUTHORED / BLOCKED
+
+- [x] Add school-owned immutable existing PARENT membership / existing ENROLLED child relationship, school-keyed FK and unique school-pupil-guardian pair; allow multiple guardians per child and multiple children per guardian.
+- [x] Require explicit school administrator attestation, affirmative identity verification and reason, with DB school-row-locked actor/role/active enrollment enforcement and trusted event time; never infer family from names/emails.
+- [x] Separate audited terminal revocation with SQL current administrator checks; deny UPDATE/DELETE/TRUNCATE of both histories.
+- [x] Private no-store admin-only creation/list/revocation handlers and metadata-only responses, zero parent/guardian reports, child results, releases or exports.
+- [x] Author synthetic real-session negative/forgery/tenant/role/replay/immutable history tests and register new guard in existing full and local checks.
+- [ ] Execute Prisma validate/generate/migrate and all synthetic tests against isolated disposable loopback Postgres; verify mutation concurrency, expiry of memberships/enrollments, browser visibility and full original cumulative CI-equivalent/audit gates.
+- [ ] Separately implement reviewed school visibility semantics, explicit School Super Admin recipient release, current verified guardian/student relationship filters and parent-first acknowledgment semantics before any recipient report access.
+
+
 ## Phase 8 confidential owner grade preview — [ ] AUTHORED / VALIDATION BLOCKED
 
 - [x] Explicit School Super Admin-only GET for an exact, privately frozen composition, with tenant/user/current active role reverified in the SQL SELECT and nonreleased status required.
