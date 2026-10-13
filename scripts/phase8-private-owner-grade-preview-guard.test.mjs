@@ -50,6 +50,12 @@ test("preview audit is immutable, actor-bound, same-school and contains no grade
   assert.ok(sql.includes('owner."userId"=NEW."actorUserId"'));
   assert.ok(sql.includes('owner."id"=NEW."actorMembershipId"'));
   assert.ok(sql.includes('owner."role"=\'SCHOOL_SUPER_ADMIN\''));
+  assert.ok(sql.includes('enrollment."classId"=snapshot."classId"'));
+  assert.ok(sql.includes('enrollment."sessionId"=snapshot."sessionId"'));
+  assert.ok(sql.includes('enrollment."status"=\'ACTIVE\''));
+  assert.ok(sql.includes('student."status"=\'ENROLLED\''));
+  assert.ok(sql.includes('card.value->>\'studentId\'=NEW."studentId"'));
+
   assert.ok(sql.includes('school."isActive"=true FOR UPDATE'));
   for (const key of ["composition", "student", "actor"]) {
     assert.ok(sql.includes(`"ResultPrivateGradePreviewAudit_${key}_fkey"`));
@@ -100,6 +106,10 @@ test("authored authenticated regression cases deny forged, cross-tenant and revo
     'prisma.resultPrivateGradePreviewAudit.delete(',
     'TRUNCATE "ResultPrivateGradePreviewAudit"',
     'data: { isActive: false }',
+    'data: { verified: false }',
+    'data: { status: "ENDED" }',
+    ')).toBe(before + 1)',
+
     'INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED',
     'expect(safe).not.toContain(forbidden)',
   ]) assert.ok(integration.includes(expected), expected);
