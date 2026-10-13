@@ -236,3 +236,7 @@
 ## ADR-038: Explicit school grading adoption is immutable and separate from result publication
 
 - Status: authored, unverified. A School Super Admin may append an actor-attributed versioned adoption of an exact school/class/subject/session/term grading revision, enforced again by SQL school locking, active context, role and uniqueness. Historical result evidence references a concrete adoption; adopting a later revision cannot rewrite prior evidence. No report/publication authorization. D-052.
+
+## ADR-039: SQL-generated immutable teacher evidence and verified-section academic review before publication
+
+- Status: Authored, unverified. The original teacher supplies only class/term assignment and reason, while SQL under a School lock independently builds a complete per-pupil source JSONB manifest from approved/published scored CBT and independently approved manual marks. Each evidence revision pins latest explicitly adopted school grading policy. Only verified exact-section Primary HM or Secondary Principal may append a separate final academic APPROVED/RETURNED decision; approval rechecks latest policy, latest evidence and byte-equivalent recomputed JSONB manifest. RETURN stale source for new immutable revision, never silently adopt changes or publish a result. Prior history immutable. D-053.

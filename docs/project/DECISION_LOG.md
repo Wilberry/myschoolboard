@@ -1,5 +1,10 @@
 # Decision Log
 
+## D-053: Freeze teacher evidence in SQL, then independent section review
+
+- Status: Authored/unverified. A teacher does not upload client-computed marks or declare a report ready. Under DB locks, freeze current sealed approved scored CBT and independently reviewed written marks per exact active enrolled pupil and current adopted grading version. Missing/mismatched source or category blocks preparation. A verified PRIMARY Head of Section / SECONDARY Principal reviews a separately immutable snapshot; only current unmodified evidence can receive APPROVED, stale evidence may be RETURNED and re-prepared after genuine change. School Super Admin final publication and student/guardian access remain separate later features. ADR-039.
+
+
 ## D-052: School Super Admin separately adopts versioned grading policy before result preparation
 
 - Status: authored/unverified. Grading draft creation is not academic policy adoption, and adoption is not result-sheet review or official report release. Adoption is append-only, exact school/class/subject/session/term, actor and reason. Snapshot evidence later pins one adoption ID. No automatic cross-school defaults or historical rewriting. ADR-038.
