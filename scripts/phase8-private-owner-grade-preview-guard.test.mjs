@@ -28,6 +28,11 @@ test("database preview recomputes all exact school grades but returns only one e
   assert.ok(sql.includes('card.value->>\'studentId\'=p_student'));
   assert.ok(sql.includes("jsonb_array_length(matching)<>1"));
   assert.ok(sql.includes("'PRIVATE_OWNER_PREVIEW_NOT_RELEASED'"));
+  assert.ok(sql.includes('INSERT INTO "ResultPrivateGradePreviewAudit" ('));
+  assert.ok(sql.indexOf('INSERT INTO "ResultPrivateGradePreviewAudit" (') <
+    sql.indexOf('RETURN jsonb_build_object('));
+  assert.ok(sql.includes("'preview',jsonb_build_object("));
+  assert.ok(sql.includes("'audit',jsonb_build_object("));
   const projection = sql.split("RETURN jsonb_build_object(")[1]?.split("\nEND;")[0];
   assert.ok(projection, "Explicit SQL allowlist required");
   for (const allowed of [
@@ -78,9 +83,10 @@ test("strict owner-only POST logs each preview, never adds a recipient read rout
   assert.ok(service.includes('isolationLevel: "Serializable"'));
   assert.ok(service.includes(".strict()"));
   assert.ok(service.includes('"read_private_owner_one_pupil_grade_preview"('));
-  assert.ok(service.includes("resultPrivateGradePreviewAudit.create("));
-  assert.ok(service.indexOf("resultPrivateGradePreviewAudit.create(") >
-    service.indexOf('"read_private_owner_one_pupil_grade_preview"('));
+  assert.equal(service.includes("resultPrivateGradePreviewAudit.create("), false);
+  assert.ok(service.includes("result.audit?.status"));
+  assert.ok(service.includes("${randomUUID()},${parsed.data.reason}"));
+  assert.ok(service.includes('"read_private_owner_one_pupil_grade_preview"('));
   assert.equal(service.includes("recipientMembershipId:"), false);
   assert.equal(service.includes("publish"), false);
   assert.ok(api.includes("export async function POST("));
