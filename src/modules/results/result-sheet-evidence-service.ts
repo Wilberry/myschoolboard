@@ -211,12 +211,31 @@ export async function decideResultSheetAcademicReview(
     return await prisma.$transaction(async tx => {
       await tx.$queryRaw`SELECT "id" FROM "School"
         WHERE "id"=${schoolId} AND "isActive"=true FOR UPDATE`;
-      const reviewer = await tx.membership.findFirst({
-        where: { schoolId, userId, isActive: true,
-          school: { isActive: true },
-          role: { in: ["HEAD_OF_SECTION","PRINCIPAL"] } },
-        select: { id: true },
-      });
+      // The eligibility SELECT must match actual class->section and verified
+      // reviewer grant; the INSERT trigger repeats every check and also
+      // compares the frozen source, latest adoption and revision under lock.
+      const reviewers = await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT reviewer."id" FROM "ResultSheetEvidence" evidence
+        JOIN "School" school ON school."id"=evidence."schoolId"
+          AND school."isActive"=true
+        JOIN "SchoolClass" room ON room."schoolId"=school."id"
+          AND room."id"=evidence."classId" AND room."isActive"=true
+        JOIN "SchoolSection" section ON section."schoolId"=room."schoolId"
+          AND section."id"=room."sectionId" AND section."isActive"=true
+        JOIN "Membership" reviewer ON reviewer."schoolId"=school."id"
+          AND reviewer."userId"=${userId}
+          AND reviewer."isActive"=true
+        JOIN "ScopeGrant" grant ON grant."membershipId"=reviewer."id"
+          AND grant."type"='SECTION' AND grant."verified"=true
+          AND grant."scopeId"=section."id"
+        WHERE evidence."schoolId"=${schoolId}
+          AND evidence."id"=${evidenceId}
+          AND evidence."teacherUserId"<>${userId}
+          AND ((reviewer."role"='HEAD_OF_SECTION' AND section."stage"='PRIMARY')
+            OR (reviewer."role"='PRINCIPAL' AND section."stage"='SECONDARY'))
+        LIMIT 1
+      `);
+      const reviewer = reviewers[0];
       if (!reviewer) throw new AssessmentError("NOT_FOUND");
       return tx.resultSheetReview.create({
         data: { id: randomUUID(), schoolId, evidenceId,
