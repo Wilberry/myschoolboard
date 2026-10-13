@@ -35,6 +35,7 @@ import { GET as GUARDIAN_EVENTS_GET, POST as GUARDIAN_EVENTS_POST } from "@/app/
 import { POST as GUARDIAN_RELATIONSHIP_INSPECT_POST } from "@/app/api/schools/[schoolId]/guardian-relationships/inspect/route";
 import { GET as RECIPIENT_ELIGIBILITY_GET, POST as RECIPIENT_ELIGIBILITY_POST } from "@/app/api/schools/[schoolId]/private-recipient-eligibility/route";
 import { POST as OWNER_PRIVATE_GRADE_PREVIEW } from "@/app/api/schools/[schoolId]/private-owner-grade-previews/route";
+import { POST as PRIVATE_TERM_GRADE_PREVIEW_POST } from "@/app/api/schools/[schoolId]/private-term-grade-previews/route";
 import { simulatePrivateReportComposition, type PrivatePacketStudent } from "@/src/modules/results/report-composition-simulation";
 import { POST as RESULT_REVIEW_POST } from "@/app/api/schools/[schoolId]/result-sheet-reviews/[evidenceId]/decision/route";
 import {
@@ -2935,6 +2936,140 @@ describe("Phase 7 exact-assignment private question bank", () => {
     }
     expect((await prisma.privateOfficialReportComposition.findUniqueOrThrow({
       where: { id: composition.id },
+    })).status).toBe("INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED");
+  });
+
+  it("privately previews assigned term subjects atomically and rolls back all audit reads on missing evidence", async () => {
+    const previewTerm = (actor: string, data: unknown, target = schoolA) =>
+      PRIVATE_TERM_GRADE_PREVIEW_POST(req(actor, target, "POST", data), {
+        params: Promise.resolve({ schoolId: target }),
+      });
+    const payload = {
+      sessionId, termId, classId, studentId: pupilId,
+      reason: "Synthetic confidential complete assigned-subject term review",
+    };
+    for (const actor of [
+      "teacher", "student", "parent", "head", "principal", "admin", "other",
+    ]) {
+      expect((await previewTerm(actor, payload)).status).toBe(404);
+    }
+    expect((await previewTerm("super", payload, schoolB)).status).toBe(404);
+    for (const forged of [
+      { ...payload, status: "PUBLISHED" },
+      { ...payload, grades: [{ subject: "Fake", gradeCode: "A" }] },
+      { ...payload, recipientMembershipId: members.parent },
+      { ...payload, release: true },
+      { ...payload, actorUserId: users.super },
+      { ...payload, reason: "x" },
+    ]) {
+      expect((await previewTerm("super", forged)).status).toBe(400);
+    }
+    req("super", schoolA, "POST", payload);
+    const crossOrigin = new Request(
+      `http://localhost/api/schools/${schoolA}/private-term-grade-previews`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://foreign.example",
+        },
+        body: JSON.stringify(payload),
+      },
+    );
+    expect((await PRIVATE_TERM_GRADE_PREVIEW_POST(crossOrigin, {
+      params: Promise.resolve({ schoolId: schoolA }),
+    })).status).toBe(400);
+    const before = await prisma.resultPrivateGradePreviewAudit.count({
+      where: { schoolId: schoolA },
+    });
+    const response = await previewTerm("super", payload);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    const result = await response.json();
+    expect(result).toMatchObject({
+      status: "PRIVATE_TERM_OWNER_PREVIEW_NOT_RELEASED",
+      coverage: "ACTIVE_SESSION_ASSIGNMENTS_ONLY_NOT_OFFICIAL_COMPLETENESS",
+      subjectCount: 1,
+      auditedSubjectCount: 1,
+      subjects: [{
+        subject: expect.any(String),
+        displayPercent: expect.any(String),
+        gradeCode: expect.any(String),
+        remark: expect.any(String),
+      }],
+    });
+    expect(result.student).toMatchObject({
+      givenName: expect.any(String),
+      familyName: expect.any(String),
+      admissionNumber: expect.any(String),
+    });
+    expect(JSON.stringify(result)).not.toContain('"studentId"');
+    expect(JSON.stringify(result)).not.toContain("composedStudentCards");
+    expect(JSON.stringify(result)).not.toContain("studentSourceCards");
+    expect(JSON.stringify(result)).not.toContain("answerEvents");
+    expect(JSON.stringify(result)).not.toContain("correctIndex");
+    expect(JSON.stringify(result)).not.toContain("recipientMembershipId");
+    expect(await prisma.resultPrivateGradePreviewAudit.count({
+      where: { schoolId: schoolA },
+    })).toBe(before + 1);
+
+    // Introduce a second currently assigned subject with NO approved report.
+    // Its absence must fail the entire term, including rollback of the
+    // already-audited first subject's SQL read inside the same transaction.
+    const extraSubjectId = `asm-ungraded-subject-${randomUUID()}`;
+    const extraAssignmentId = `asm-ungraded-assignment-${randomUUID()}`;
+    await prisma.subject.create({
+      data: {
+        id: extraSubjectId, schoolId: schoolA,
+        name: "Zzz Synthetic Unapproved Term Subject",
+        isActive: true,
+      },
+    });
+    try {
+      await prisma.teacherClassSubjectAssignment.create({
+        data: {
+          id: extraAssignmentId, schoolId: schoolA,
+          membershipId: members.teacher,
+          classId, sessionId,
+          subjectId: extraSubjectId, status: "ACTIVE",
+        },
+      });
+      try {
+        expect((await previewTerm("super", payload)).status).toBe(409);
+        expect(await prisma.resultPrivateGradePreviewAudit.count({
+          where: { schoolId: schoolA },
+        })).toBe(before + 1);
+      } finally {
+        await prisma.teacherClassSubjectAssignment.delete({
+          where: { id: extraAssignmentId },
+        });
+      }
+    } finally {
+      await prisma.subject.delete({ where: { id: extraSubjectId } });
+    }
+
+    await prisma.studentEnrollment.update({
+      where: { id: enrollmentId }, data: { status: "ENDED" },
+    });
+    try {
+      expect((await previewTerm("super", payload)).status).toBe(404);
+    } finally {
+      await prisma.studentEnrollment.update({
+        where: { id: enrollmentId }, data: { status: "ACTIVE" },
+      });
+    }
+    await prisma.membership.update({
+      where: { id: members.super }, data: { isActive: false },
+    });
+    try {
+      expect((await previewTerm("super", payload)).status).toBe(404);
+    } finally {
+      await prisma.membership.update({
+        where: { id: members.super }, data: { isActive: true },
+      });
+    }
+    expect((await prisma.privateOfficialReportComposition.findFirstOrThrow({
+      where: { schoolId: schoolA },
     })).status).toBe("INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED");
   });
 
