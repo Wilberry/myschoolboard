@@ -280,6 +280,7 @@ model School {
   resultSheetEvidences ResultSheetEvidence[]
   resultSheetReviews ResultSheetReview[]
   resultFinalPublicationDecisions ResultFinalPublicationDecision[]
+  resultReportCardSourcePackets ResultReportCardSourcePacket[]
 }
 
 model Membership {
@@ -328,6 +329,7 @@ model Membership {
   resultSheetEvidences ResultSheetEvidence[]
   resultSheetReviews ResultSheetReview[]
   resultFinalPublicationDecisions ResultFinalPublicationDecision[]
+  resultReportCardSourcePackets ResultReportCardSourcePacket[]
 }
 
 model ScopeGrant {
@@ -1466,6 +1468,7 @@ model ResultGradingAdoption {
   @@index([schoolId, classId, subjectId, termId])
   resultSheetEvidences ResultSheetEvidence[]
   resultFinalPublicationDecisions ResultFinalPublicationDecision[]
+  resultReportCardSourcePackets ResultReportCardSourcePacket[]
 }
 
 /** Teacher-prepared frozen evidence. SourceManifest is ALWAYS computed
@@ -1494,6 +1497,7 @@ model ResultSheetEvidence {
   adoption ResultGradingAdoption @relation(fields: [schoolId, adoptionId], references: [schoolId, id], onDelete: NoAction, map: "ResultSheetEvidence_adoption_fkey")
   review ResultSheetReview?
   finalPublicationDecision ResultFinalPublicationDecision?
+  resultReportCardSourcePackets ResultReportCardSourcePacket[]
 
   @@unique([schoolId, id])
   @@unique([schoolId, sessionId, termId, classId, subjectId, revision], map: "ResultSheetEvidence_context_revision_key")
@@ -1544,9 +1548,45 @@ model ResultFinalPublicationDecision {
   evidence ResultSheetEvidence @relation(fields: [schoolId, evidenceId], references: [schoolId, id], onDelete: NoAction, map: "ResultFinalPublicationDecision_evidence_fkey")
   adoption ResultGradingAdoption @relation(fields: [schoolId, adoptionId], references: [schoolId, id], onDelete: NoAction, map: "ResultFinalPublicationDecision_adoption_fkey")
   actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ResultFinalPublicationDecision_actor_fkey")
+  sourcePacket ResultReportCardSourcePacket?
 
   @@unique([schoolId, id])
   @@unique([schoolId, evidenceId])
   @@unique([schoolId, sessionId, termId, classId, subjectId, ordinal], map: "ResultFinalPublicationDecision_context_ordinal_key")
   @@index([schoolId, decidedAt])
+}
+
+/** Frozen, internal ONLY, per-pupil report-card source evidence packet.
+ * NO calculated official grade, grade bands, downloadable document, public
+ * release or student/guardian access. The trigger builds studentSourceCards
+ * from the validated approved evidence, never caller-submitted pupil marks.
+ * Future official report versions and visibility require separate workflows. */
+model ResultReportCardSourcePacket {
+  id String @id
+  schoolId String
+  finalDecisionId String
+  evidenceId String
+  adoptionId String
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  evidenceRevision Int @default(1)
+  finalDecisionOrdinal Int @default(1)
+  studentCount Int @default(0)
+  studentSourceCards Json @default("[]")
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  preparedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  finalDecision ResultFinalPublicationDecision @relation(fields: [schoolId, finalDecisionId], references: [schoolId, id], onDelete: NoAction, map: "ResultReportCardSourcePacket_finalDecision_fkey")
+  evidence ResultSheetEvidence @relation(fields: [schoolId, evidenceId], references: [schoolId, id], onDelete: NoAction, map: "ResultReportCardSourcePacket_evidence_fkey")
+  adoption ResultGradingAdoption @relation(fields: [schoolId, adoptionId], references: [schoolId, id], onDelete: NoAction, map: "ResultReportCardSourcePacket_adoption_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ResultReportCardSourcePacket_actor_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, finalDecisionId])
+  @@index([schoolId, preparedAt])
 }
