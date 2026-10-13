@@ -2205,6 +2205,19 @@ describe("Phase 7 exact-assignment private question bank", () => {
         ...item, reportStatus: "INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED",
       })));
     }
+    // A missing JSON status previously made SQL "<>" evaluate to NULL;
+    // the forward-only composer migration must reject all such variants.
+    for (const statusVariant of [undefined, null, "", "PUBLISHED"]) {
+      const malformed = [{ ...synthetic[0], reportStatus: statusVariant }];
+      await expect(prisma.$queryRaw`
+        SELECT "build_private_official_report_cards"(
+          ${JSON.stringify(malformed)}::jsonb, ${1}::integer,
+          ${7}::integer, ${20}::integer, ${30}::integer, ${50}::integer,
+          ${"POOLED_CATEGORY_POINTS"}, ${"HALF_UP"},
+          ${JSON.stringify(scale.bands)}::jsonb,
+          ${scale.decimalPlaces}::integer,
+          ${scale.roundingMode}, ${scale.bandBasis})`).rejects.toThrow();
+    }
     await expect(prisma.$queryRaw`
       SELECT "build_private_official_report_cards"(
         ${"[]"}::jsonb, ${null}::integer,
