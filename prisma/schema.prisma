@@ -259,6 +259,8 @@ model School {
   lessonReleaseEvents LessonReleaseEvent[]
   studentAccountLinks StudentAccountLink[]
   studentAccountLinkRevocations StudentAccountLinkRevocation[]
+  guardianStudentLinks GuardianStudentLink[]
+  guardianStudentLinkRevocations GuardianStudentLinkRevocation[]
   assessmentQuestions AssessmentQuestion[]
   assessmentQuestionKeys AssessmentQuestionKey[]
   assessmentDrafts AssessmentDraft[]
@@ -314,6 +316,9 @@ model Membership {
   studentAccountLink StudentAccountLink? @relation("LinkedStudentMembership")
   studentLinkAttestations StudentAccountLink[] @relation("StudentLinkAttestor")
   studentLinkRevocations StudentAccountLinkRevocation[] @relation("StudentLinkRevoker")
+  guardianStudentLinks GuardianStudentLink[] @relation("GuardianLinkMember")
+  guardianLinkAttestations GuardianStudentLink[] @relation("GuardianLinkAttestor")
+  guardianLinkRevocations GuardianStudentLinkRevocation[] @relation("GuardianLinkRevoker")
   assessmentQuestions AssessmentQuestion[]
   assessmentDrafts AssessmentDraft[]
   assessmentReviewEvents AssessmentReviewEvent[]
@@ -750,6 +755,7 @@ model StudentRecord {
   @@unique([schoolId, admissionNumber])
   @@index([schoolId, status])
   accountLink StudentAccountLink?
+  guardianStudentLinks GuardianStudentLink[]
   assessmentAttempts AssessmentAttempt[]
   assessmentManualMarkProposals AssessmentManualMarkProposal[]
 }
@@ -1007,6 +1013,46 @@ model StudentAccountLinkRevocation {
   school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   link StudentAccountLink @relation(fields: [schoolId, linkId], references: [schoolId, id], onDelete: NoAction, map: "StudentAccountLinkRevocation_link_fkey")
   actor Membership @relation("StudentLinkRevoker", fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "StudentAccountLinkRevocation_actor_fkey")
+
+  @@unique([schoolId, linkId])
+}
+
+/** Administrator-attested existing guardian member -> existing enrolled pupil.
+ * Multiple guardians/children are supported; no identity inference or result
+ * visibility is granted. A revoked pair cannot silently be rebound.
+ */
+model GuardianStudentLink {
+  id String @id @default(cuid())
+  schoolId String
+  studentId String
+  guardianMembershipId String
+  attestedByMembershipId String
+  attestedByUserId String
+  attestationReason String @db.VarChar(500)
+  createdAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student StudentRecord @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction, map: "GuardianStudentLink_student_fkey")
+  guardian Membership @relation("GuardianLinkMember", fields: [schoolId, guardianMembershipId], references: [schoolId, id], onDelete: NoAction, map: "GuardianStudentLink_guardian_fkey")
+  attestor Membership @relation("GuardianLinkAttestor", fields: [schoolId, attestedByMembershipId], references: [schoolId, id], onDelete: NoAction, map: "GuardianStudentLink_attestor_fkey")
+  revocation GuardianStudentLinkRevocation?
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, studentId, guardianMembershipId])
+  @@index([schoolId, guardianMembershipId, createdAt])
+}
+
+/** A guardian link revocation is terminal, immutable and school-owned. */
+model GuardianStudentLinkRevocation {
+  id String @id @default(cuid())
+  schoolId String
+  linkId String
+  actorMembershipId String
+  actorUserId String
+  reason String @db.VarChar(500)
+  createdAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  link GuardianStudentLink @relation(fields: [schoolId, linkId], references: [schoolId, id], onDelete: NoAction, map: "GuardianStudentLinkRevocation_link_fkey")
+  actor Membership @relation("GuardianLinkRevoker", fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "GuardianStudentLinkRevocation_actor_fkey")
 
   @@unique([schoolId, linkId])
 }
