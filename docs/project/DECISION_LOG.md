@@ -1,5 +1,9 @@
 # Decision Log
 
+## D-054: Inspect current approved source evidence before any future owner publication
+
+- Status: Authored; unverified. School Super Admin may **read** a bounded metadata-only list of latest independently APPROVED source snapshots in its own active school, only while original teacher, independent section reviewer's currently verified grant, academic period, policy adoption, and SQL-rebuilt source manifest remain current. Return no pupil identity, marks, manifests, totals or download, and expose no POST or publication event. Treat the list as ephemeral inspection evidence, **not** future authorization to publish. Any eventual publication must independently recheck under a school lock, preserve a versioned decision, and remain disabled until mandatory verification and school approval. ADR-040.
+
 ## D-053: Freeze teacher evidence in SQL, then independent section review
 
 - Status: Authored/unverified. A teacher does not upload client-computed marks or declare a report ready. Under DB locks, freeze current sealed approved scored CBT and independently reviewed written marks per exact active enrolled pupil and current adopted grading version. Missing/mismatched source or category blocks preparation. A verified PRIMARY Head of Section / SECONDARY Principal reviews a separately immutable snapshot; only current unmodified evidence can receive APPROVED, stale evidence may be RETURNED and re-prepared after genuine change. School Super Admin final publication and student/guardian access remain separate later features. ADR-039.
