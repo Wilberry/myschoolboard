@@ -24,6 +24,7 @@ import {
 } from "@/app/api/schools/[schoolId]/result-sheet-evidence/route";
 import { GET as RESULT_REVIEW_QUEUE } from "@/app/api/schools/[schoolId]/result-sheet-reviews/route";
 import { GET as RESULT_OWNER_PREFLIGHT } from "@/app/api/schools/[schoolId]/result-publication-candidates/route";
+import { GET as FINAL_OWNER_GET, POST as FINAL_OWNER_POST } from "@/app/api/schools/[schoolId]/result-final-publication-decisions/route";
 import { POST as RESULT_REVIEW_POST } from "@/app/api/schools/[schoolId]/result-sheet-reviews/[evidenceId]/decision/route";
 import {
   GET as ADOPTIONS_GET, POST as ADOPTIONS_POST,
@@ -1611,6 +1612,61 @@ describe("Phase 7 exact-assignment private question bank", () => {
       AS "ready"`;
     expect(await finalReady(schoolA, thirdId, members.super, users.super))
       .toEqual([{ ready: true }]);
+    const finalDecisionInput = {
+      evidenceId: thirdId, reason: "Synthetic final school academic evidence approval",
+    };
+    const finalDecision = (actor: string, input: unknown, targetSchool = schoolA) =>
+      FINAL_OWNER_POST(req(actor, targetSchool, "POST", input), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    for (const actor of ["teacher", "head", "principal", "admin", "student", "other"]) {
+      expect((await finalDecision(actor, finalDecisionInput)).status).toBe(404);
+    }
+    expect((await finalDecision("super", finalDecisionInput, schoolB)).status).toBe(404);
+    expect((await finalDecision("super", { ...finalDecisionInput,
+      actorUserId: users.super })).status).toBe(400);
+    const approvedForLater = await finalDecision("super", finalDecisionInput);
+    expect(approvedForLater.status).toBe(201);
+    expect(approvedForLater.headers.get("cache-control")).toBe("private, no-store");
+    expect((await approvedForLater.json()).status)
+      .toBe("FINAL_OWNER_APPROVED_AWAITING_RELEASE_NOT_PUBLIC");
+    const recorded = await prisma.resultFinalPublicationDecision.findFirstOrThrow({
+      where: { schoolId: schoolA, evidenceId: thirdId },
+    });
+    expect(recorded).toMatchObject({
+      ordinal: 1, evidenceRevision: 3, adoptionId: adoptionNextId,
+      actorMembershipId: members.super, actorUserId: users.super,
+      status: "APPROVED_AWAITING_RELEASE",
+    });
+    expect((await finalDecision("super", finalDecisionInput)).status).toBe(409);
+    const finalHistory = (actor: string, targetSchool = schoolA) =>
+      FINAL_OWNER_GET(req(actor, targetSchool, "GET"), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    for (const actor of ["teacher", "head", "principal", "admin", "student", "other"]) {
+      expect((await finalHistory(actor)).status).toBe(404);
+    }
+    expect((await finalHistory("super", schoolB)).status).toBe(404);
+    const ownerDecisions = await finalHistory("super");
+    expect(ownerDecisions.status).toBe(200);
+    expect(ownerDecisions.headers.get("cache-control")).toBe("private, no-store");
+    const historyBody = await ownerDecisions.json();
+    expect(historyBody.decisions.some(
+      (item: { evidenceId: string }) => item.evidenceId === thirdId,
+    )).toBe(true);
+    const historyJSON = JSON.stringify(historyBody);
+    expect(historyJSON).not.toContain(pupilId);
+    expect(historyJSON).not.toContain(proposalId);
+    expect(historyJSON).not.toContain("sourceManifest");
+    await expect(prisma.resultFinalPublicationDecision.update({
+      where: { id: recorded.id }, data: { reason: "Forged altered final school approval" },
+    })).rejects.toThrow();
+    await expect(prisma.resultFinalPublicationDecision.delete({
+      where: { id: recorded.id },
+    })).rejects.toThrow();
+    await expect(prisma.$executeRaw`TRUNCATE "ResultFinalPublicationDecision"`)
+      .rejects.toThrow();
+
     await expect(finalReady(schoolA, thirdId, members.head, users.head))
       .rejects.toThrow();
     await expect(finalReady(schoolA, thirdId, members.super, users.head))
@@ -1682,6 +1738,9 @@ describe("Phase 7 exact-assignment private question bank", () => {
     }), { params: Promise.resolve({ schoolId: schoolA }) })).status).toBe(201);
     await expect(finalReady(schoolA, thirdId, members.super, users.super))
       .rejects.toThrow();
+    expect(await prisma.resultFinalPublicationDecision.findFirstOrThrow({
+      where: { schoolId: schoolA, evidenceId: thirdId },
+    })).toMatchObject({ status: "APPROVED_AWAITING_RELEASE" });
     const staleOwnerList = await ownerPreflight("super");
     expect(staleOwnerList.status).toBe(200);
     expect((await staleOwnerList.json()).candidates.some(
