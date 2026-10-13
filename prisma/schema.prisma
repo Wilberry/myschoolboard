@@ -1555,6 +1555,7 @@ model ResultFinalPublicationDecision {
   adoption ResultGradingAdoption @relation(fields: [schoolId, adoptionId], references: [schoolId, id], onDelete: NoAction, map: "ResultFinalPublicationDecision_adoption_fkey")
   actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ResultFinalPublicationDecision_actor_fkey")
   sourcePacket ResultReportCardSourcePacket?
+  privateOfficialReportCompositions PrivateOfficialReportComposition[]
 
   @@unique([schoolId, id])
   @@unique([schoolId, evidenceId])
@@ -1677,6 +1678,7 @@ model PrivateOfficialReportComposition {
 
   school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   sourcePacket ResultReportCardSourcePacket @relation(fields: [schoolId, sourcePacketId], references: [schoolId, id], onDelete: NoAction, map: "PrivateOfficialReportComposition_packet_fkey")
+  finalDecision ResultFinalPublicationDecision @relation(fields: [schoolId, finalDecisionId], references: [schoolId, id], onDelete: NoAction, map: "PrivateOfficialReportComposition_decision_fkey")
   aggregationRule ReportAggregationRuleRevision @relation(fields: [schoolId, aggregationRuleId], references: [schoolId, id], onDelete: NoAction, map: "PrivateOfficialReportComposition_aggregation_fkey")
   gradeScale ReportGradeScaleRevision @relation(fields: [schoolId, gradeScaleId], references: [schoolId, id], onDelete: NoAction, map: "PrivateOfficialReportComposition_scale_fkey")
   actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "PrivateOfficialReportComposition_actor_fkey")
