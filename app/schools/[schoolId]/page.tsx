@@ -62,6 +62,29 @@ async function SchoolDetailContent({
 
         {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
           <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/report-publication`} className="secondary-link">
+              Adopt report visibility and independently authorize result release
+            </Link>
+          </p>
+        )}
+        {(access.principal.membership?.role === "SCHOOL_ADMIN" ||
+          access.principal.membership?.role === "SCHOOL_SUPER_ADMIN") && (
+          <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/guardian-links`} className="secondary-link">
+              Verify parent and guardian pupil relationships
+            </Link>
+          </p>
+        )}
+        {(access.principal.membership?.role === "STUDENT" ||
+          access.principal.membership?.role === "PARENT") && (
+          <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/published-reports`} className="secondary-link">
+              My school-authorized published subject reports
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
+          <p className="setup-navigation">
             <Link href={`/schools/${schoolId}/private-report-compositions`} className="secondary-link">
               Private official report evidence (not released)
             </Link>
