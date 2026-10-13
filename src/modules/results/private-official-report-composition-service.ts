@@ -95,7 +95,8 @@ export async function listPrivateOfficialReportCompositions(schoolId: string) {
   return prisma.$queryRaw<Array<{
     id: string; sourcePacketId: string; finalDecisionId: string;
     evidenceId: string; adoptionId: string; sessionId: string; termId: string;
-    classId: string; subjectId: string; evidenceRevision: number;
+    classId: string; subjectId: string; className: string; subjectName: string;
+    evidenceRevision: number;
     aggregationRuleId: string; aggregationRuleVersion: number;
     gradeScaleId: string; gradeScaleVersion: number;
     studentCount: number; status: string; composedAt: Date;
@@ -104,6 +105,7 @@ export async function listPrivateOfficialReportCompositions(schoolId: string) {
       composition."finalDecisionId",composition."evidenceId",
       composition."adoptionId",composition."sessionId",composition."termId",
       composition."classId",composition."subjectId",
+      classroom."name" AS "className",subject."name" AS "subjectName",
       composition."evidenceRevision",composition."aggregationRuleId",
       composition."aggregationRuleVersion",composition."gradeScaleId",
       composition."gradeScaleVersion",composition."studentCount",
@@ -111,6 +113,10 @@ export async function listPrivateOfficialReportCompositions(schoolId: string) {
     FROM "PrivateOfficialReportComposition" composition
     JOIN "School" school ON school."id"=composition."schoolId"
       AND school."isActive"=true
+    JOIN "SchoolClass" classroom ON classroom."schoolId"=school."id"
+      AND classroom."id"=composition."classId"
+    JOIN "Subject" subject ON subject."schoolId"=school."id"
+      AND subject."id"=composition."subjectId"
     JOIN "Membership" owner ON owner."schoolId"=school."id"
       AND owner."userId"=${userId}
       AND owner."role"='SCHOOL_SUPER_ADMIN'
