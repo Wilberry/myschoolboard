@@ -62,6 +62,13 @@ async function SchoolDetailContent({
 
         {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
           <p className="setup-navigation">
+            <Link href={`/schools/${schoolId}/result-publication-preflight`} className="secondary-link">
+              Inspect independently reviewed result evidence (not published)
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
+          <p className="setup-navigation">
             <Link href={`/schools/${schoolId}/result-grading-adoptions`} className="secondary-link">
               Adopt grading policy revision (Phase 8 development)
             </Link>

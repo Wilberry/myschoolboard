@@ -1,5 +1,14 @@
 # Milestone Checklist
 
+## Phase 8 School Super Admin publication candidate inspection — [ ] AUTHORED, BLOCKED
+
+- [x] Private owner-only GET for bounded latest independently approved result evidence metadata; repeat active same-school owner and reviewer exact SECTION checks within query.
+- [x] Require latest evidence revision, latest explicit adopted grading policy, current exact teacher academic assignment and byte-equal recomputed pupil manifest; per-pupil positive-weight category recheck.
+- [x] Read-only School Super Admin screen and school navigation; no pupil/guardian results, official grades, publishing API, export, or mutation.
+- [x] Synthetic authenticated role/tenant/revocation/policy-change tests and Node structural guard authored and registered.
+- [ ] Run disposable PostgreSQL integration, Node/Vitest, Prisma, static, build, browser and security gates on complete cumulative Phase 6–8 tree; resolve outstanding CI and dependency audit.
+- [ ] Implement distinct immutable School Super Admin publication authority in a later, separately verified result release slice; remains DISABLED.
+
 ## Phase 8 immutable result-sheet source evidence and independent academic review (AUTHORED; NOT VERIFIED)
 
 `feature/phase8-result-sheet-evidence-review` adds an additive **teacher-prepared frozen source-evidence snapshot** (`ResultSheetEvidence`) and separate **academic reviewer decision** (`ResultSheetReview`). It references one explicit current `ResultGradingAdoption` from the School Super Admin; the teacher may not supply marks, sourceManifest, enrollment counts, policy, actor ID or review outcome. A PostgreSQL BEFORE INSERT function acquires the current School row lock, validates the actual original active TEACHER's exact school/class/subject/session/term assignment, current enrolled roster and latest adopted school policy, and rebuilds a JSONB manifest of current sealed/independently approved/PUBLISHED-not-WITHDRAWN submitted+scored CBT and teacher-written effective marks from initial independently APPROVED decisions or latest independently APPROVED correction revisions. No answer keys, raw student options or speculative marks. Every pupil must have completed source evidence, no duplicate active enrollments, at most 500 pupils, and every positively weighted adopted QUIZ/TEST/EXAM category must have source evidence. This is a **frozen evidence manifest**, NOT a computed official report-card grade or published result.
