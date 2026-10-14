@@ -46,3 +46,12 @@
 These browser checks have not been run in ChatGPT's source-only connector environment.
 
 7. Switch between **separate browser windows** while a synthetic recipient report is displayed (not only tabs). On `focus` return, confirm an old report is cleared and an authenticated uncached GET completes before any grade reappears. Test account/session changes in another window while the recipient page remains open. Verify print, tab-visibility and window-focus listeners do not accidentally show a former account's confidential rows. This remains a manual real-browser acceptance check, not proof from source inspection.
+
+## Further stale-response / account-switch acceptance (2026-10-14)
+
+8. When guardian acknowledgment succeeds or fails in a synthetic session, verify grades **disappear immediately** before the POST finishes and reappear only after a new authenticated recipient GET. Exercise delayed server responses and duplicate receipts. A denied receipt must never leave stale grades available for a Print action.
+9. Start a recipient GET, trigger another school/account change or a tab hide while the original GET is pending, then let the earlier response complete. Verify the cancelled request never restores grades, even when headers arrived before cancellation and the body finishes afterward.
+10. Navigate between two verified school memberships without closing the application (synthetic records only). Because the report workspace is keyed by school ID, the previous school's child identity or grades must never flash while the new school is being verified. Reject page access when the second school is not independently authorized.
+11. Start explicit Print authorization while an earlier GET is pending; delay the earlier response until after the print GET completes. Verify only grades returned by the fresh authorized print GET can appear in print preview. End the print dialog, trigger Ctrl+P again and confirm a separate current verification is required.
+
+These new cases are **not yet performed in a real browser** and do not replace the existing release-gate/a11y/print checklist.
