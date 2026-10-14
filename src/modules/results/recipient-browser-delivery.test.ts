@@ -50,6 +50,47 @@ describe("recipient browser transport", () => {
     }
   });
 
+  it("discards a successful response when cancellation occurs while the network is pending", async () => {
+    const controller = new AbortController();
+    let release!: (value: Response) => void;
+    const request = vi.fn<typeof fetch>().mockImplementation(
+      () =>
+        new Promise<Response>((resolve) => {
+          release = resolve;
+        }),
+    );
+    const pending = fetchCurrentRecipientRows(
+      url,
+      controller.signal,
+      request,
+    );
+    controller.abort();
+    release(Response.json({ reports: [{ studentId: "previous-session" }] }));
+    await expect(pending).rejects.toThrow("Recipient report request cancelled");
+  });
+
+  it("discards a successful JSON body if cancellation happens before parsing resolves", async () => {
+    const controller = new AbortController();
+    let release!: (value: { reports: unknown[] }) => void;
+    const response = {
+      ok: true,
+      json: () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    } as Response;
+    const request = vi.fn<typeof fetch>().mockResolvedValue(response);
+    const pending = fetchCurrentRecipientRows(
+      url,
+      controller.signal,
+      request,
+    );
+    await Promise.resolve();
+    controller.abort();
+    release({ reports: [{ studentId: "previous-session" }] });
+    await expect(pending).rejects.toThrow("Recipient report request cancelled");
+  });
+
   it("does not turn an aborted request into a successful recipient report", async () => {
     const controller = new AbortController();
     const request = vi.fn<typeof fetch>().mockImplementation(async () => {
