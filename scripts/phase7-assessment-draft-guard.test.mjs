@@ -21,7 +21,7 @@ test("assessment configurations are immutable DRAFT-ONLY without delivery fields
   assert.match(migration, /"AssessmentDraftSeal_validate"/);
   assert.match(migration, /"AssessmentDraftSeal_immutable"/);
   assert.match(migration, /"AssessmentDraftSeal_no_truncate"/);
-  assert.match(migration, /"A sealed assessment draft cannot accept new items"/);
+  assert.match(migration, /RAISE EXCEPTION 'A sealed assessment draft cannot accept new items'/);
   assert.match(service, /tx\.assessmentDraftSeal\.create/);
   assert.match(service, /JOIN "AssessmentDraftSeal" seal/);
 
