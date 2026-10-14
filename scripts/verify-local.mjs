@@ -104,6 +104,22 @@ export function runLocalVerification(environment = process.env) {
         `Local CI failed at npm ${args.join(" ")} (exit ${result.status})`,
       );
     }
+    // Extra local-only safety step. Preserve the exact CI-command list above
+    // and its mandatory high audit gate; do not silently reapply edited
+    // historical migrations to a previously migrated test database.
+    if (args[0] === "run" && args[1] === "db:generate") {
+      console.info("Running: npm run verify:local:checksums");
+      const checked = spawnSync(executable, ["run", "verify:local:checksums"], {
+        cwd: projectRoot,
+        stdio: "inherit",
+        env: environment,
+        shell: false,
+      });
+      if (checked.error) throw checked.error;
+      if (checked.signal || checked.status !== 0) {
+        throw new Error("Local CI stopped at migration checksum preflight");
+      }
+    }
   }
   console.info("Local CI: all workflow steps passed");
 }
