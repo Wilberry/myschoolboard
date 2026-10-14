@@ -4,7 +4,9 @@ import { createHash } from "node:crypto";
 import { compareAppliedMigrationChecksums } from "./migration-checksum-preflight.mjs";
 
 const migrationName = "20261012160100_lesson_review_decisions";
-const correctSQL = Buffer.from("CREATE TABLE synthetic_school_test (id TEXT);\n");
+const correctSQL = Buffer.from(
+  "CREATE TABLE synthetic_school_test (id TEXT);\n",
+);
 const digest = createHash("sha256").update(correctSQL).digest("hex");
 const applied = {
   migration_name: migrationName,
@@ -42,7 +44,10 @@ test("refuses absent history files, unsafe names, and incomplete migrations", ()
     ["Unsafe migration directory name in database history"],
   );
   assert.deepEqual(
-    compareAppliedMigrationChecksums([{ ...applied, finished_at: null }], source),
+    compareAppliedMigrationChecksums(
+      [{ ...applied, finished_at: null }],
+      source,
+    ),
     [`${migrationName}: unfinished database migration`],
   );
 });

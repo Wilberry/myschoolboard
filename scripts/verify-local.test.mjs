@@ -93,10 +93,7 @@ test("checks applied migration hashes before local deployment without editing CI
     pkg.scripts["verify:local:checksums"],
     "node scripts/migration-checksum-preflight.mjs",
   );
-  assert.match(
-    pkg.scripts["test"],
-    /migration-checksum-preflight\.test\.mjs/,
-  );
+  assert.match(pkg.scripts["test"], /migration-checksum-preflight\.test\.mjs/);
   assert.match(
     pkg.scripts["verify:local:guards"],
     /migration-checksum-preflight\.test\.mjs/,

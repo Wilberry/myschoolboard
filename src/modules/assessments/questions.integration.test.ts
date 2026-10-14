@@ -3999,7 +3999,9 @@ describe("Phase 7 exact-assignment private question bank", () => {
         { params: Promise.resolve({ schoolId: schoolA }) },
       );
       expect(selectorAttempt.status).toBe(400);
-      expect(selectorAttempt.headers.get("cache-control")).toContain("no-store");
+      expect(selectorAttempt.headers.get("cache-control")).toContain(
+        "no-store",
+      );
       expect(selectorAttempt.headers.get("x-robots-tag")).toContain("noindex");
       expect((await published("student")).status).toBe(200);
       expect((await (await published("student")).json()).reports).toHaveLength(
@@ -4232,9 +4234,9 @@ describe("Phase 7 exact-assignment private question bank", () => {
           data: { isActive: true },
         });
       }
-      expect(
-        (await (await published("student")).json()).reports,
-      ).toHaveLength(1);
+      expect((await (await published("student")).json()).reports).toHaveLength(
+        1,
+      );
       await expect(
         prisma.reportVisibilityPolicyRevision.update({
           where: { id: policy3.id },
@@ -4283,9 +4285,9 @@ describe("Phase 7 exact-assignment private question bank", () => {
       expect(studentPolicy.status).toBe(201);
       const policy4 = (await studentPolicy.json()).policy;
       expect(policy4.version).toBe(4);
-      expect(
-        (await (await published("student")).json()).reports,
-      ).toHaveLength(0);
+      expect((await (await published("student")).json()).reports).toHaveLength(
+        0,
+      );
       const fourth = await postRelease("super", payload(policy4.id));
       expect(fourth.status).toBe(201);
       const release4 = (await fourth.json()).release;
@@ -4302,9 +4304,9 @@ describe("Phase 7 exact-assignment private question bank", () => {
           recipientRole: "STUDENT",
         },
       ]);
-      expect(
-        (await (await published("parent2")).json()).reports,
-      ).toHaveLength(0);
+      expect((await (await published("parent2")).json()).reports).toHaveLength(
+        0,
+      );
       // A revoked verified pupil account remains revoked even with a
       // matching school policy and an immutable successful owner release.
       const verifiedStudentLink =
@@ -4321,15 +4323,16 @@ describe("Phase 7 exact-assignment private question bank", () => {
           reason: "Synthetic terminal student account link safety revocation",
         },
       });
-      expect(
-        (await (await published("student")).json()).reports,
-      ).toHaveLength(0);
+      expect((await (await published("student")).json()).reports).toHaveLength(
+        0,
+      );
       const admittedAttempt = await prisma.assessmentAttempt.findFirstOrThrow({
         where: { schoolId: schoolA, studentId: pupilId },
         select: { draftId: true },
       });
+      context.headers = new Headers({ cookie: cookies.student });
       await expect(
-        reserve("student", admittedAttempt.draftId),
+        reserveInternalCbtAttempt(schoolA, admittedAttempt.draftId),
       ).rejects.toBeInstanceOf(AssessmentError);
     } finally {
       if (savedReleaseGate === undefined)
