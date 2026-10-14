@@ -35,7 +35,7 @@ export default async function PublishedReportsPage({
       <section className="workspace-content">
         <p className="eyebrow">PHASE 8 / AUTHORIZED SCHOOL REPORTS</p>
         <h1>My officially released subjects</h1>
-        <PublishedReportWorkspace schoolId={schoolId} />
+        <PublishedReportWorkspace key={schoolId} schoolId={schoolId} />
       </section>
     </main>
   );
