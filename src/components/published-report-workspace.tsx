@@ -142,7 +142,9 @@ export function PublishedReportWorkspace({ schoolId }: { schoolId: string }) {
       printingRef.current = false;
       setRows([]);
       setPrintAllowed(false);
-      setStatus("Printing denied: current recipient permission could not be confirmed.");
+      setStatus(
+        "Printing denied: current recipient permission could not be confirmed.",
+      );
     } finally {
       if (printFetchRef.current === abort) printFetchRef.current = null;
       setBusyId("");
@@ -190,6 +192,10 @@ export function PublishedReportWorkspace({ schoolId }: { schoolId: string }) {
         Only released individual-subject grades appear here. This is not a class
         ranking or a claim that all subjects have been published. Historical
         grade corrections require new release versions.
+      </p>
+      <p className="print-hide">
+        Use the button below to recheck school permission before printing.
+        Browser printing shortcuts do not authorize confidential grades.
       </p>
       <div className="print-hide">
         <button
