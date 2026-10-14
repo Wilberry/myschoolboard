@@ -494,3 +494,10 @@ All subsequent phases remain pending until their entry criteria and required pro
 - [ ] Re-run actual new transport tests and complete cumulative disposable PostgreSQL/Prisma/Node/Vitest, format/lint/types/Next build, audit on current HEAD; static source and smoke checks are not acceptance evidence.
 - [ ] Perform browser delayed-network receipt/focus/bfcache, cross-school navigation, Print and accessibility tests with synthetic identities; verify no stale grade appears in DOM, print preview or shared cache.
 - [ ] Resolve eight outstanding high package findings through compatibility-tested upstream fixes or separate production security-risk disposition. No broad risk acceptance, bypass, release or Phase 9 transition is inferred.
+
+## Phase 8 HTML no-store checkpoint (2026-10-14)
+
+- [x] Configure private no-store/noindex/no-referrer HTML response headers on exact Phase 8 confidential school routes, without broad public-page policy changes or role expansion.
+- [x] Author `next.config.test.ts` for four exact routes, no caching and no indexing; extend the existing Phase 8 guard with the same invariant.
+- [x] Isolated Next header-rule execution 4/4 and cumulative source-guard replay 5/5 passed.
+- [ ] Verify **actual** Next document response headers and bfcache/back-forward account change behavior in a real synthetic browser, alongside full latest-head Prisma/Vitest/format/lint/types/Next build and strict audit. Source-only assertions are not production acceptance.
