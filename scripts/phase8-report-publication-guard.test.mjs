@@ -30,6 +30,8 @@ const transport = read("../src/modules/results/recipient-browser-delivery.ts");
 const transportTests = read("../src/modules/results/recipient-browser-delivery.test.ts");
 const home = read("../app/page.tsx");
 const publishedPage = read("../app/schools/[schoolId]/published-reports/page.tsx");
+const nextConfig = read("../next.config.ts");
+const nextConfigTests = read("../next.config.test.ts");
 
 test("policy, immutable independent release, and per-child acknowledgment have three exact-school ledgers", () => {
   for (const mode of [
@@ -226,4 +228,22 @@ test("recipient browser discards hidden/bfcache grades and reauthorizes every pr
     "oversized server projections",
     "aborted request",
   ]) assert.ok(transportTests.includes(token), token);
+});
+
+test("private academic and recipient page HTML sets independent cache and indexing controls", () => {
+  for (const path of [
+    "/schools/:schoolId/published-reports",
+    "/schools/:schoolId/report-publication",
+    "/schools/:schoolId/private-report-compositions",
+    "/schools/:schoolId/guardian-links",
+  ]) assert.ok(nextConfig.includes(path), path);
+  for (const token of [
+    "private, no-store, max-age=0",
+    "noindex, noarchive, nosnippet",
+    "no-referrer",
+    "nosniff",
+    "async headers()",
+  ]) assert.ok(nextConfig.includes(token), token);
+  assert.ok(nextConfigTests.includes("keeps the private-page header rules scoped"));
+  assert.ok(nextConfigTests.includes("private, no-store, max-age=0"));
 });
