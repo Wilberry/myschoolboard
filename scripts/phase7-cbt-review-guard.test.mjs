@@ -54,6 +54,10 @@ test("future CBT attempt policy is pure, not a student attempt authorization", (
   assert.match(policy, /ACTIVE_ATTEMPT/);
   assert.match(policy, /ATTEMPT_LIMIT/);
   assert.match(policy, /scheduledEnd/);
-  assert.doesNotMatch(schema, /model AssessmentAttempt \{/);
+  // Later Phase 7 introduced exact enrolled-student CBT admission.
+  // This historical review migration is still delivery-free.
+  assert.match(schema, /model AssessmentAttempt \{/);
+  assert.match(schema, /studentMembershipId String/);
+  assert.match(schema, /linkId String/);
   assert.doesNotMatch(review, /CREATE TABLE "AssessmentAttempt"/);
 });
