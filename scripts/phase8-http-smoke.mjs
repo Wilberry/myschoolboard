@@ -54,7 +54,9 @@ function assertPrivateResponse(response, label) {
     !robots.includes("noindex") ||
     response.headers.get("referrer-policy") !== "no-referrer"
   ) {
-    throw new Error(`${label}: missing private no-store/noindex/no-referrer headers`);
+    throw new Error(
+      `${label}: missing private no-store/noindex/no-referrer headers`,
+    );
   }
 }
 
@@ -97,7 +99,9 @@ if (
 ) {
   runPhase8HttpSmoke()
     .then(({ passed, expected }) => {
-      console.info(`Phase 8 anonymous HTTP privacy smoke: ${passed}/${expected} passed`);
+      console.info(
+        `Phase 8 anonymous HTTP privacy smoke: ${passed}/${expected} passed`,
+      );
     })
     .catch((error) => {
       console.error(
