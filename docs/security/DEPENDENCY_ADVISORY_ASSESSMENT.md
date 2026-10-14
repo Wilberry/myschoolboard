@@ -171,3 +171,8 @@ In that exact snapshot, `npm ci` and Prisma Client generation succeeded; all six
 ### Reassessment triggers
 
 Reassess when a fixed braces release is listed by the advisory and its compatible parent adopts it; a stable Next parent removes/updates the chain; Prisma publishes a stable config pin at `deepmerge-ts >=8` with supported compatibility evidence; or the owner changes Option A in the decision log. Until then, the audit gate and Phase 1 block remain.
+
+## 2026-10-14 Phase 8 continuation — current advisory disposition
+
+The preceding local verification completed migrations, 95/95 source guards, 312/312 Vitest tests and Next production build, but `npm audit --audit-level=high` continued to fail with eight high package findings. The developer checkout may continue isolated validation under D-023; no full audit-pass or release authorization is inferred. GHSA-vfj7-8cjw-p6xm still lists **no patched `braces` version**, so forcing npm's suggested incompatible downgrade does not produce a proper verified remediation. GHSA-ggr8-5vv4-36mx is fixed in `deepmerge-ts` v8+, but Prisma's pinned older major cannot be overridden into this project without a **separate test branch** and full verification of Prisma CLI config, migrations, generated-client and build. Do not add an npm override to this verified branch without that proof. Keep both advisories and all fail conditions visible; no security exception is expanded in this checkpoint. Relevant upstream sources: https://github.com/advisories/GHSA-vfj7-8cjw-p6xm, https://github.com/advisories/GHSA-ggr8-5vv4-36mx, https://github.com/prisma/orm/issues/30052.
+
