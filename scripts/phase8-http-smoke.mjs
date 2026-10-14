@@ -74,6 +74,7 @@ export async function runPhase8HttpSmoke(
       redirect: "manual",
       cache: "no-store",
       credentials: "omit",
+      signal: AbortSignal.timeout(5000),
       headers: { "Cache-Control": "no-store" },
     });
     if (!expectedStatuses.includes(result.status)) {
