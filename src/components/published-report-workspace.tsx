@@ -166,8 +166,14 @@ export function PublishedReportWorkspace({ schoolId }: { schoolId: string }) {
   }
   async function acknowledge(row: Subject) {
     if (busyId) return;
+    // Receipt processing can change which released version this account may
+    // see. No previously fetched pupil rows should remain during the POST
+    // or the subsequent authorization refresh, including on POST failure.
+    fetchRef.current?.abort();
+    setRows([]);
+    setPrintAllowed(false);
     setBusyId(row.releaseId);
-    setStatus("");
+    setStatus("Rechecking school authorization after acknowledgment…");
     try {
       const target = `${root}/acknowledgments/${encodeURIComponent(row.releaseId)}/${encodeURIComponent(row.studentId)}`;
       const response = await fetch(target, {
@@ -181,13 +187,13 @@ export function PublishedReportWorkspace({ schoolId }: { schoolId: string }) {
       setStatus(
         "This exact released subject was acknowledged. Student access remains subject to independent current checks.",
       );
-      setRefresh((v) => v + 1);
     } catch {
       setStatus(
         "Acknowledgment denied or already recorded. Check guardian link, release and school policy.",
       );
     } finally {
       setBusyId("");
+      setRefresh((v) => v + 1);
     }
   }
   return (
