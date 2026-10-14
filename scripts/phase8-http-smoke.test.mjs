@@ -81,6 +81,7 @@ test("checks six anonymous endpoints without cookies or writes", async () => {
   for (const { options } of calls) {
     assert.equal(options.method, "GET");
     assert.equal(options.credentials, "omit");
+    assert.ok(options.signal instanceof AbortSignal);
     assert.equal(options.redirect, "manual");
     assert.equal(options.cache, "no-store");
     assert.equal(options.headers["Cache-Control"], "no-store");
