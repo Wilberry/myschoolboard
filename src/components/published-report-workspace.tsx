@@ -82,6 +82,11 @@ export function PublishedReportWorkspace({ schoolId }: { schoolId: string }) {
       discard();
       if (!document.hidden) setRefresh((value) => value + 1);
     };
+    const onFocus = () => {
+      if (printingRef.current || document.hidden) return;
+      discard();
+      setRefresh((value) => value + 1);
+    };
     const onPageHide = () => discard();
     const onPageShow = (event: PageTransitionEvent) => {
       if (event.persisted) {
@@ -95,11 +100,13 @@ export function PublishedReportWorkspace({ schoolId }: { schoolId: string }) {
       if (!document.hidden) setRefresh((value) => value + 1);
     };
     document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", onFocus);
     window.addEventListener("pagehide", onPageHide);
     window.addEventListener("pageshow", onPageShow);
     window.addEventListener("afterprint", onAfterPrint);
     return () => {
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onFocus);
       window.removeEventListener("pagehide", onPageHide);
       window.removeEventListener("pageshow", onPageShow);
       window.removeEventListener("afterprint", onAfterPrint);
