@@ -93,3 +93,46 @@ The user-provided local verification report used a **real isolated** `verify/pha
 **Database/build/release status:** `pg_isready -h localhost -p 5434` reports no response. No `verify:local`, migration, database-backed integration test, application build or GitHub Actions run was performed. Release and recipient-access feature flags were not changed and must remain disabled. Phase 8 exit gate: **BLOCKED** pending disposable PostgreSQL and full verification; dependency audit remains an independent security blocker.
 
 **Change scope note:** The formatter produced a deliberately broad 270-file style-only diff (21,557 insertions and 9,398 deletions before this checkpoint update). No source-level behavior change was intended from formatting; structural test expectations were kept and adjusted only to ignore formatting whitespace or parenthesized arrow-parameter syntax. Review the large formatting diff before any commit.
+
+## 2026-10-14 disposable PostgreSQL and complete local CI-equivalent run
+
+**Phase/milestone:** Phase 8 cumulative local verification; database-dependent test and build gates exercised. This is not Phase 8 acceptance or release approval.
+
+**Worktree/revision:** `/home/wilberry/Desktop/project/myschoolboard-phase8`, branch `verify/phase8-local`, tested base commit `946bd7f8c0fd02ffda18c22a21d44b5e2c59c182` (Node.js v22.23.2, npm 10.9.8). Changes listed below remain uncommitted. Commands ran from this worktree; the separate Phase 1 worktree was not modified. No GitHub Actions, push, merge, production migration, or deployment occurred.
+
+**Requirements addressed:** RES-REQ-001 remains partial and unverified for release acceptance. The composition/publication integration fixture now follows the exact frozen source packet into its composition and checks the actual composed subject. Related SQL alias and integration expectation fixes affect ATT-REQ-001, LES-REQ-001, and ASM-REQ-001 surfaces; no requirement status, role, permission, school policy, or publication behavior was redefined.
+
+**Files and modules changed:**
+
+- Assessment integration: `src/modules/assessments/questions.integration.test.ts` selects the publication composition through the exact latest source-packet ID and asserts its subject; retains the corrected concealed-access expectations and long CBT timeout.
+- SQL alias corrections: `prisma/migrations/20261012160100_lesson_review_decisions/migration.sql`, `prisma/migrations/20261012180000_attendance_register_ledger/migration.sql`, `prisma/migrations/20261012190000_attendance_immutable_corrections/migration.sql`, `prisma/migrations/20261012230000_lesson_approved_release/migration.sql`; and raw SQL callers in `src/modules/attendance/{corrections-read,navigation,read-service}.ts`, `src/modules/lesson-notes/{release-read,review-service}.ts`, and `src/modules/results/result-sheet-evidence-service.ts`. The unquoted PostgreSQL-reserved alias `grant` is now `scope_grant`.
+- Grade-scale width: `prisma/schema.prisma` and additive `prisma/migrations/20261013210000_phase8_grade_scale_basis_width/migration.sql` widen `ReportGradeScaleRevision.bandBasis` to `VARCHAR(24)` so `DISPLAY_ROUNDED_BPS` fits. The local deployment found 49 migrations and reported no pending migrations.
+- Guards and related regressions: `scripts/phase78-plpgsql-function-shape-guard.test.mjs`, `scripts/phase8-report-grade-scale-guard.test.mjs`, `src/modules/attendance/routes.integration.test.ts`, `src/modules/lesson-notes/read-options.integration.test.ts`, `src/modules/lesson-notes/review.integration.test.ts`, and `vitest.config.ts`.
+- Build configuration: `next.config.ts` no longer enables `cacheComponents` or its dependent `partialPrefetching` option. The existing private-route `dynamic = "force-dynamic"`, `revalidate = 0`, and private/no-store response protections were retained.
+- This checkpoint section records the verification; `CURRENT_STATUS.md` and `MILESTONE_CHECKLIST.md` were not changed because Phase 8's milestone status remains blocked.
+
+**Database migrations:** The project preflight passed for the explicitly guarded test target. Prisma generated successfully; `prisma migrate deploy` connected to `myschoolboard_test` at loopback port 5434, found 49 migrations, and reported no pending migrations. The synthetic seed completed for two schools. No shared or production database was used.
+
+**Authorization and security implications:** No authorization rules or recipient permissions changed. The report integration fixture now binds the recipient-visible report to the composition's exact frozen source packet rather than assuming it uses the unrelated global test subject. Disclosure environment flags remained false throughout. Removing incompatible Next.js cache opt-ins preserves the explicit dynamic rendering and no-store behavior required by authenticated routes.
+
+**Tests and validation actually executed:**
+
+- `npm run verify:local:preflight`: passed; the first attempt with mismatched URL variables was rejected before running commands, then the corrected test-only configuration passed.
+- `npm ci`: passed.
+- `npm run db:generate`: passed; Prisma Client v6.19.3 generated.
+- `npm run db:deploy`: passed; no pending migrations.
+- `npm run db:seed`: passed; two synthetic schools seeded.
+- `npm run format:check`: passed after formatting the touched guard and Next config.
+- `npm run lint`: passed.
+- `npm run typecheck`: passed.
+- `npm test`: passed, **95/95 Node guard assertions and 312/312 Vitest tests** across 39 test files.
+- `npx vitest run src/modules/assessments/questions.integration.test.ts`: passed, **20/20**, including the Phase 8 recipient visibility test.
+- `npm run build`: passed. Next.js compiled, typechecked, generated static pages, and listed authenticated school routes as dynamic server-rendered routes.
+- Final `npm run verify:local`: ran every configured workflow step through `npm run build` successfully, then failed at its unchanged final `npm audit --audit-level=high` step (exit 1).
+- `npm audit --audit-level=high`: reports **8 high-severity vulnerabilities** through `braces` → `micromatch`/`fast-glob`/`eslint-config-next` and `deepmerge-ts` → `@prisma/config`/Prisma. npm's forced suggestions downgrade `eslint-config-next` to 14.2.35 or Prisma to 6.12.0; neither was applied. The audit gate remains unsuppressed and unresolved.
+
+**Known limitations and remaining tasks:** Phase 8 remains **BLOCKED** despite the database-backed suite and build passing. Resolve the dependency advisories with separately tested compatible upgrades (or preserve the failing gate); do not force a downgrade to make audit green. The canonical RES-REQ-001 acceptance list still requires a positive currently verified student recipient-report scenario and any remaining browser/accessibility and operational release checks. Keep both disclosure flags false until all release gates and approvals are complete.
+
+**Documentation/deviations:** This checkpoint is the only documentation file updated. The build-config adjustment is a compatibility correction: Next.js 16.4 rejects route-level `dynamic`/`revalidate` declarations when Cache Components is enabled, and `partialPrefetching` requires that same incompatible mode. The route-level private caching protections were retained. No requirements, roadmap status, or architecture decision record changed.
+
+**Exit-gate result: BLOCKED** — database migrations, integration tests, source guards, typecheck, lint, formatting, and application build passed locally; the mandatory high-severity dependency audit and remaining Phase 8 acceptance/release gates remain open.

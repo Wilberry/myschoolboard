@@ -7,6 +7,9 @@ const schema = read("../prisma/schema.prisma");
 const sql = read(
   "../prisma/migrations/20261013140000_phase8_report_grade_scale_revisions/migration.sql",
 );
+const widthSQL = read(
+  "../prisma/migrations/20261013210000_phase8_grade_scale_basis_width/migration.sql",
+);
 const service = read("../src/modules/results/report-grade-scale-service.ts");
 const route = read(
   "../app/api/schools/[schoolId]/report-grade-scales/route.ts",
@@ -20,6 +23,8 @@ const integration = read(
 );
 test("adopted grade scale has no defaults, SQL validates bands and preserves immutable revisions", () => {
   assert.ok(schema.includes("model ReportGradeScaleRevision {"));
+  assert.ok(schema.includes("bandBasis String @db.VarChar(24)"));
+  assert.ok(widthSQL.includes('ALTER COLUMN "bandBasis" TYPE VARCHAR(24)'));
   assert.ok(sql.includes('CREATE FUNCTION "assert_report_grade_scale_bands"('));
   assert.ok(sql.includes("jsonb_array_length(p_bands) NOT BETWEEN 1 AND 20"));
   assert.ok(sql.includes("this_min<>previous_max+1"));

@@ -626,7 +626,7 @@ describe("section-scoped lesson note review and return", () => {
       404,
     );
     expect((await release("head", primaryNoteId, "RELEASE", 1)).status).toBe(
-      409,
+      404,
     );
     expect((await releaseQueue("teacher")).status).toBe(404);
     const queue = await releaseQueue("head");

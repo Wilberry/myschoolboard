@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
+import { join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const migrationRoot = new URL("../prisma/migrations/", import.meta.url);
 const phase78 = readdirSync(migrationRoot, { withFileTypes: true })
@@ -12,6 +14,20 @@ const phase78 = readdirSync(migrationRoot, { withFileTypes: true })
   )
   .map((entry) => entry.name)
   .sort();
+const allMigrations = readdirSync(migrationRoot, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory() && /^\d{14}_/.test(entry.name))
+  .map((entry) => entry.name)
+  .sort();
+const sourceRoots = ["../src/", "../app/"].map((path) =>
+  fileURLToPath(new URL(path, import.meta.url)),
+);
+
+function listFiles(directory) {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(directory, entry.name);
+    return entry.isDirectory() ? listFiles(path) : [path];
+  });
+}
 
 test("Phase 7–8 SQL migration functions have paired bodies and valid declaration sections", () => {
   assert.ok(
@@ -71,4 +87,29 @@ test("cumulative Phase 7–8 SQL check is non-mutating and never weakens release
       "20261013170000_phase8_private_composition_source_status_hardening",
     ),
   );
+});
+
+test("migration SQL avoids PostgreSQL reserved GRANT as an unquoted table alias", () => {
+  for (const migration of allMigrations) {
+    const sql = readFileSync(
+      new URL(`${migration}/migration.sql`, migrationRoot),
+      "utf8",
+    );
+    assert.doesNotMatch(
+      sql,
+      /\b(?:JOIN|FROM)\s+"ScopeGrant"\s+grant\b/iu,
+      `${migration}: use a non-reserved ScopeGrant alias`,
+    );
+  }
+  for (const root of sourceRoots) {
+    for (const path of listFiles(root).filter((file) =>
+      /\.(?:ts|tsx)$/u.test(file),
+    )) {
+      assert.doesNotMatch(
+        readFileSync(path, "utf8"),
+        /\b(?:JOIN|FROM)\s+"ScopeGrant"\s+grant\b/iu,
+        `${relative(root, path)}: use a non-reserved ScopeGrant alias`,
+      );
+    }
+  }
 });

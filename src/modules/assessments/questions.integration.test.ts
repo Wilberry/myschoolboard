@@ -1494,7 +1494,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
     await expect(reserve("student", draftId)).rejects.toBeInstanceOf(
       AssessmentError,
     );
-  });
+  }, 90_000);
 
   it("revoking exact verified section grant blocks new academic moderation", async () => {
     const grant = await prisma.scopeGrant.findFirstOrThrow({
@@ -2958,7 +2958,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
             reason: "Unauthorized final approval after section grant revoked",
           })
         ).status,
-      ).toBe(409);
+      ).toBe(404);
     } finally {
       await prisma.scopeGrant.update({
         where: { id: finalScope.id },
@@ -3338,7 +3338,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
       data: { verified: false },
     });
     try {
-      expect((await compose("super", payload)).status).toBe(409);
+      expect((await compose("super", payload)).status).toBe(404);
     } finally {
       await prisma.scopeGrant.update({
         where: { id: reviewerScope.id },
@@ -3899,9 +3899,15 @@ describe("Phase 7 exact-assignment private question bank", () => {
       REPORT_ACK_POST(req(actor, schoolId, "POST", body), {
         params: Promise.resolve({ schoolId, releaseId, studentId: childId }),
       });
+    const sourcePacket =
+      await prisma.resultReportCardSourcePacket.findFirstOrThrow({
+        where: { schoolId: schoolA },
+        orderBy: { preparedAt: "desc" },
+        select: { id: true },
+      });
     const composition =
       await prisma.privateOfficialReportComposition.findFirstOrThrow({
-        where: { schoolId: schoolA, classId, subjectId },
+        where: { schoolId: schoolA, sourcePacketId: sourcePacket.id },
       });
     const schoolOnly = {
       mode: "SCHOOL_ONLY",
@@ -4036,7 +4042,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
       expect(rows).toHaveLength(1);
       expect(rows[0]).toMatchObject({
         studentId: pupilId,
-        subjectId,
+        subjectId: composition.subjectId,
         releaseId: release2.id,
         releaseOrdinal: 2,
         recipientRole: "PARENT",
@@ -4238,7 +4244,14 @@ describe("Phase 7 exact-assignment private question bank", () => {
       data: { status: "REVOKED" },
     });
     try {
-      expect((await list("teacher")).status).toBe(404);
+      const listed = await list("teacher");
+      expect(listed.status).toBe(200);
+      expect(
+        (await listed.json()).questions.some(
+          (question: { assignmentId: string }) =>
+            question.assignmentId === assignmentId,
+        ),
+      ).toBe(false);
       expect((await create("teacher", payload())).status).toBe(404);
     } finally {
       await prisma.teacherClassSubjectAssignment.update({

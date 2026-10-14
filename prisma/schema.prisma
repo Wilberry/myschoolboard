@@ -1674,7 +1674,7 @@ model ReportGradeScaleRevision {
   bands Json
   decimalPlaces Int
   roundingMode String @db.VarChar(16)
-  bandBasis String @db.VarChar(16)
+  bandBasis String @db.VarChar(24)
   reason String @db.VarChar(500)
   actorMembershipId String
   actorUserId String

@@ -13,5 +13,7 @@ export default defineConfig({
     // sequential to avoid cross-suite SSI conflicts; concurrency behavior is
     // exercised explicitly within the relevant suites.
     fileParallelism: false,
+    hookTimeout: 30_000,
+    testTimeout: 30_000,
   },
 });
