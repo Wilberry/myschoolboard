@@ -4307,10 +4307,11 @@ describe("Phase 7 exact-assignment private question bank", () => {
       ).toHaveLength(0);
       // A revoked verified pupil account remains revoked even with a
       // matching school policy and an immutable successful owner release.
-      const verifiedStudentLink = await prisma.studentAccountLink.findFirstOrThrow({
-        where: { schoolId: schoolA, studentId: pupilId, revocation: null },
-        select: { id: true },
-      });
+      const verifiedStudentLink =
+        await prisma.studentAccountLink.findFirstOrThrow({
+          where: { schoolId: schoolA, studentId: pupilId, revocation: null },
+          select: { id: true },
+        });
       await prisma.studentAccountLinkRevocation.create({
         data: {
           schoolId: schoolA,
@@ -4327,9 +4328,9 @@ describe("Phase 7 exact-assignment private question bank", () => {
         where: { schoolId: schoolA, studentId: pupilId },
         select: { draftId: true },
       });
-      await expect(reserve("student", admittedAttempt.draftId)).rejects.toBeInstanceOf(
-        AssessmentError,
-      );
+      await expect(
+        reserve("student", admittedAttempt.draftId),
+      ).rejects.toBeInstanceOf(AssessmentError);
     } finally {
       if (savedReleaseGate === undefined)
         delete process.env.PHASE8_REPORT_RELEASE_ENABLED;
