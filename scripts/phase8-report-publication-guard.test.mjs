@@ -179,6 +179,7 @@ test("authenticated tests cover visibility revision changes, replay, role, revoc
 test("recipient browser discards hidden/bfcache grades and reauthorizes every print", () => {
   for (const token of [
     'document.addEventListener("visibilitychange", onVisibility)',
+    'window.addEventListener("focus", onFocus)',
     'window.addEventListener("pagehide", onPageHide)',
     'window.addEventListener("pageshow", onPageShow)',
     'window.addEventListener("afterprint", onAfterPrint)',
