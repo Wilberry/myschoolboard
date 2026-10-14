@@ -1481,19 +1481,9 @@ describe("Phase 7 exact-assignment private question bank", () => {
         where: { id: rows[0].id },
       }),
     ).rejects.toThrow();
-    // Revocation is append-only and forbids all future admissions.
-    await prisma.studentAccountLinkRevocation.create({
-      data: {
-        schoolId: schoolA,
-        linkId: link.id,
-        actorMembershipId: members.admin,
-        actorUserId: users.admin,
-        reason: "Synthetic child account safety revocation during CBT check",
-      },
-    });
-    await expect(reserve("student", draftId)).rejects.toBeInstanceOf(
-      AssessmentError,
-    );
+    // Keep this verified link active for the later positive Phase 8 student
+    // recipient checks. Revocation and subsequent CBT denial are exercised
+    // after the guardian-first and STUDENT_ONLY published-report scenarios.
   }, 90_000);
 
   it("revoking exact verified section grant blocks new academic moderation", async () => {
@@ -4184,11 +4174,52 @@ describe("Phase 7 exact-assignment private question bank", () => {
       ).toBe(409);
       const after = (await (await published("parent2")).json()).reports;
       expect(after[0].guardianHasAcknowledged).toBe(true);
-      // Student account link was intentionally revoked in prior CBT test.
-      // A valid guardian receipt must NOT override independent student-link revocation.
-      expect((await (await published("student")).json()).reports).toHaveLength(
-        0,
+      // The child has a separately verified, still-unrevoked STUDENT link.
+      // Before the guardian acknowledged this exact released version, the
+      // student's read had zero rows; now the identical frozen grade is
+      // permitted without accepting a child selector from the request.
+      const studentAckRead = await published("student");
+      expect(studentAckRead.status).toBe(200);
+      expect(studentAckRead.headers.get("cache-control")).toContain("no-store");
+      expect(studentAckRead.headers.get("x-robots-tag")).toContain("noindex");
+      const afterGuardianAck = (await studentAckRead.json()).reports;
+      expect(afterGuardianAck).toHaveLength(1);
+      expect(afterGuardianAck[0]).toMatchObject({
+        studentId: pupilId,
+        releaseId: release3.id,
+        subjectId: composition.subjectId,
+        policyMode: "GUARDIAN_FIRST_ACK",
+        recipientRole: "STUDENT",
+        releaseOrdinal: 3,
+      });
+      expect(afterGuardianAck[0].displayPercent).toBe(
+        parentRead[0].displayPercent,
       );
+      expect(afterGuardianAck[0].gradeCode).toBe(parentRead[0].gradeCode);
+      expect(JSON.stringify(afterGuardianAck)).not.toContain(
+        "studentSourceCards",
+      );
+      expect((await published("student", schoolB)).status).toBe(404);
+      // A historical receipt by a now-disabled guardian must not open a
+      // student's report even while that student's own link remains active.
+      await prisma.membership.update({
+        where: { id: members.parent2 },
+        data: { isActive: false },
+      });
+      try {
+        expect((await published("parent2")).status).toBe(404);
+        expect(
+          (await (await published("student")).json()).reports,
+        ).toHaveLength(0);
+      } finally {
+        await prisma.membership.update({
+          where: { id: members.parent2 },
+          data: { isActive: true },
+        });
+      }
+      expect(
+        (await (await published("student")).json()).reports,
+      ).toHaveLength(1);
       await expect(
         prisma.reportVisibilityPolicyRevision.update({
           where: { id: policy3.id },
@@ -4227,6 +4258,63 @@ describe("Phase 7 exact-assignment private question bank", () => {
       expect((await (await published("student")).json()).reports).toHaveLength(
         0,
       );
+      // Revoked guardian's old receipt cannot be reused under parent-first.
+      // A fourth independently adopted mode now grants only the verified
+      // STUDENT their own current released composition, never the guardian.
+      const studentPolicy = await postPolicy("super", {
+        mode: "STUDENT_ONLY",
+        reason: "Independently verified student only subject delivery",
+      });
+      expect(studentPolicy.status).toBe(201);
+      const policy4 = (await studentPolicy.json()).policy;
+      expect(policy4.version).toBe(4);
+      expect(
+        (await (await published("student")).json()).reports,
+      ).toHaveLength(0);
+      const fourth = await postRelease("super", payload(policy4.id));
+      expect(fourth.status).toBe(201);
+      const release4 = (await fourth.json()).release;
+      expect(release4.releaseOrdinal).toBe(4);
+      const studentOnly = await published("student");
+      expect(studentOnly.status).toBe(200);
+      expect((await studentOnly.json()).reports).toMatchObject([
+        {
+          studentId: pupilId,
+          subjectId: composition.subjectId,
+          releaseId: release4.id,
+          releaseOrdinal: 4,
+          policyMode: "STUDENT_ONLY",
+          recipientRole: "STUDENT",
+        },
+      ]);
+      expect(
+        (await (await published("parent2")).json()).reports,
+      ).toHaveLength(0);
+      // A revoked verified pupil account remains revoked even with a
+      // matching school policy and an immutable successful owner release.
+      const verifiedStudentLink = await prisma.studentAccountLink.findFirstOrThrow({
+        where: { schoolId: schoolA, studentId: pupilId, revocation: null },
+        select: { id: true },
+      });
+      await prisma.studentAccountLinkRevocation.create({
+        data: {
+          schoolId: schoolA,
+          linkId: verifiedStudentLink.id,
+          actorMembershipId: members.admin,
+          actorUserId: users.admin,
+          reason: "Synthetic terminal student account link safety revocation",
+        },
+      });
+      expect(
+        (await (await published("student")).json()).reports,
+      ).toHaveLength(0);
+      const admittedAttempt = await prisma.assessmentAttempt.findFirstOrThrow({
+        where: { schoolId: schoolA, studentId: pupilId },
+        select: { draftId: true },
+      });
+      await expect(reserve("student", admittedAttempt.draftId)).rejects.toBeInstanceOf(
+        AssessmentError,
+      );
     } finally {
       if (savedReleaseGate === undefined)
         delete process.env.PHASE8_REPORT_RELEASE_ENABLED;
@@ -4236,7 +4324,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
       else
         process.env.PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED = savedRecipientGate;
     }
-  });
+   }, 90_000);
 
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
     await prisma.teacherClassSubjectAssignment.update({
