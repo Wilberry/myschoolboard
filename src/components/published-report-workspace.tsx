@@ -41,9 +41,6 @@ export function PublishedReportWorkspace({ schoolId }: { schoolId: string }) {
     let active = true;
     const abort = new AbortController();
     fetchRef.current = abort;
-    setRows([]);
-    setPrintAllowed(false);
-    setStatus("Verifying recipient access…");
     fetchCurrentRecipientRows<Subject>(root, abort.signal)
       .then((latest) => {
         if (!active || abort.signal.aborted) return;
@@ -102,7 +99,6 @@ export function PublishedReportWorkspace({ schoolId }: { schoolId: string }) {
     window.addEventListener("pageshow", onPageShow);
     window.addEventListener("afterprint", onAfterPrint);
     return () => {
-      discard();
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pagehide", onPageHide);
       window.removeEventListener("pageshow", onPageShow);
