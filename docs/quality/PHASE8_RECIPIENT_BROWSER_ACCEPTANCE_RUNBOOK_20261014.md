@@ -55,3 +55,7 @@ These browser checks have not been run in ChatGPT's source-only connector enviro
 11. Start explicit Print authorization while an earlier GET is pending; delay the earlier response until after the print GET completes. Verify only grades returned by the fresh authorized print GET can appear in print preview. End the print dialog, trigger Ctrl+P again and confirm a separate current verification is required.
 
 These new cases are **not yet performed in a real browser** and do not replace the existing release-gate/a11y/print checklist.
+
+## Server-rendered page HTML headers (added October 14)
+
+12. In a synthetic logged-in browser session, inspect **document navigation** response headers (not only the `/published-reports` API GET). Verify `Cache-Control: private, no-store, max-age=0` and `X-Robots-Tag: noindex, noarchive, nosnippet` plus `Referrer-Policy: no-referrer` for: `/schools/{schoolId}/published-reports`, `/report-publication`, `/private-report-compositions` and `/guardian-links`. Confirm no externally cacheable HTML copy or indexable result page, then test browser-history restoration separately because response headers alone cannot prove bfcache suppression. Check the build's real response headers rather than relying on source assertions.
