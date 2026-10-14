@@ -291,3 +291,7 @@ The matrix below links requirements to the canonical domains and expected roadma
 - Every requirement must attach to a specific module, workflow, and expected test coverage.
 - Deferred requirements remain in the matrix and must not be removed.
 - Implementation status must be recorded as verified, specified, proposed, resolved, or deferred according to actual evidence.
+
+### RES-REQ-001 browser recipient stale-response regression (Phase 8, 2026-10-14)
+
+Verified school-selected release policy, immutable owner publication, guardian receipt and student/guardian relationship checks remain the sole server-side authorization boundary. Additional browser hardening cancels and rejects stale recipient GETs before and after JSON parsing, immediately clears confidential child rows on receipt POST, rechecks permission after either receipt outcome, forces a new report workspace on school ID changes and cancels older requests before authorized print. New asynchronous cancellation tests, source-guard assertions and browser-acceptance cases authored. **Isolated** source guard replay 4/4 and standalone TypeScript transport smoke 12/12 passed. Whole-repository Vitest/Postgres/Next/browser tests on the new branch head not yet run. No permission expansion, migration, policy change, external publication, public report URL or audit weakening. RES-REQ-001 partial pending full acceptance.
