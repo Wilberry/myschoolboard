@@ -18,9 +18,7 @@ describe("private Phase 8 page response headers", () => {
       const headers = new Map(
         entry.headers.map(({ key, value }) => [key.toLowerCase(), value]),
       );
-      expect(headers.get("cache-control")).toBe(
-        "private, no-store, max-age=0",
-      );
+      expect(headers.get("cache-control")).toBe("private, no-store, max-age=0");
       expect(headers.get("pragma")).toBe("no-cache");
       expect(headers.get("x-robots-tag")).toContain("noindex");
       expect(headers.get("referrer-policy")).toBe("no-referrer");
