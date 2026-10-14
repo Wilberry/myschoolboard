@@ -1,5 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
+import { fetchCurrentRecipientRows } from "@/src/modules/results/recipient-browser-delivery";
 
 type Subject = {
   studentId: string;
@@ -30,29 +32,30 @@ export function PublishedReportWorkspace({ schoolId }: { schoolId: string }) {
   const [status, setStatus] = useState("Verifying recipient access…");
   const [busyId, setBusyId] = useState("");
   const [refresh, setRefresh] = useState(0);
+  const [printAllowed, setPrintAllowed] = useState(false);
+  const fetchRef = useRef<AbortController | null>(null);
+  const printFetchRef = useRef<AbortController | null>(null);
+  const printingRef = useRef(false);
+
   useEffect(() => {
     let active = true;
     const abort = new AbortController();
-    fetch(root, {
-      cache: "no-store",
-      credentials: "same-origin",
-      signal: abort.signal,
-    })
-      .then(async (r) => {
-        if (!r.ok) throw Error("Access denied");
-        return r.json();
-      })
-      .then((data) => {
-        if (!active) return;
-        setRows(data.reports);
+    fetchRef.current = abort;
+    setRows([]);
+    setPrintAllowed(false);
+    setStatus("Verifying recipient access…");
+    fetchCurrentRecipientRows<Subject>(root, abort.signal)
+      .then((latest) => {
+        if (!active || abort.signal.aborted) return;
+        setRows(latest);
         setStatus(
-          data.reports.length
+          latest.length
             ? "Only your independently published and currently authorized grades are shown."
             : "No released grades are visible to this account under the current school policy.",
         );
       })
       .catch(() => {
-        if (!active) return;
+        if (!active || abort.signal.aborted) return;
         setRows([]);
         setStatus(
           "Published report access is unavailable, disabled or not authorized.",
@@ -61,8 +64,94 @@ export function PublishedReportWorkspace({ schoolId }: { schoolId: string }) {
     return () => {
       active = false;
       abort.abort();
+      if (fetchRef.current === abort) fetchRef.current = null;
     };
   }, [root, refresh]);
+
+  useEffect(() => {
+    // A browser back-forward cache entry or tab hidden during account
+    // revocation must never display the former user's result from React state.
+    const discard = () => {
+      fetchRef.current?.abort();
+      printFetchRef.current?.abort();
+      flushSync(() => {
+        setRows([]);
+        setPrintAllowed(false);
+        setStatus("Recipient access must be rechecked.");
+      });
+    };
+    const onVisibility = () => {
+      if (printingRef.current) return;
+      discard();
+      if (!document.hidden) setRefresh((value) => value + 1);
+    };
+    const onPageHide = () => discard();
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        discard();
+        setRefresh((value) => value + 1);
+      }
+    };
+    const onAfterPrint = () => {
+      printingRef.current = false;
+      discard();
+      if (!document.hidden) setRefresh((value) => value + 1);
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("pageshow", onPageShow);
+    window.addEventListener("afterprint", onAfterPrint);
+    return () => {
+      discard();
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("afterprint", onAfterPrint);
+    };
+  }, []);
+
+  async function printAuthorizedReport() {
+    if (busyId || !rows.length || document.hidden) return;
+    const abort = new AbortController();
+    printFetchRef.current = abort;
+    setBusyId("print");
+    setRows([]);
+    setPrintAllowed(false);
+    setStatus("Rechecking current school permission before printing…");
+    try {
+      // Never print React state retained from an earlier access decision.
+      const latest = await fetchCurrentRecipientRows<Subject>(
+        root,
+        abort.signal,
+      );
+      if (abort.signal.aborted || document.hidden || latest.length === 0)
+        throw new Error("Printing not authorized");
+      printingRef.current = true;
+      flushSync(() => {
+        setRows(latest);
+        setPrintAllowed(true);
+      });
+      window.print();
+      // Some print dialogs do not dispatch afterprint. Restrict the permit
+      // even then; a subsequent print requires a new authenticated GET.
+      window.setTimeout(() => {
+        if (printingRef.current) {
+          printingRef.current = false;
+          setPrintAllowed(false);
+          setRows([]);
+          setRefresh((value) => value + 1);
+        }
+      }, 30_000);
+    } catch {
+      printingRef.current = false;
+      setRows([]);
+      setPrintAllowed(false);
+      setStatus("Printing denied: current recipient permission could not be confirmed.");
+    } finally {
+      if (printFetchRef.current === abort) printFetchRef.current = null;
+      setBusyId("");
+    }
+  }
   const groups = new Map<string, Subject[]>();
   for (const row of rows) {
     const key = [row.studentId, row.sessionId, row.termId, row.classId].join(
@@ -97,7 +186,10 @@ export function PublishedReportWorkspace({ schoolId }: { schoolId: string }) {
     }
   }
   return (
-    <section className="school-card">
+    <section
+      className="school-card published-report-workspace"
+      data-print-authorized={printAllowed ? "true" : "false"}
+    >
       <p>
         Only released individual-subject grades appear here. This is not a class
         ranking or a claim that all subjects have been published. Historical
@@ -106,8 +198,8 @@ export function PublishedReportWorkspace({ schoolId }: { schoolId: string }) {
       <div className="print-hide">
         <button
           type="button"
-          disabled={!rows.length}
-          onClick={() => window.print()}
+          disabled={!rows.length || !!busyId}
+          onClick={() => void printAuthorizedReport()}
         >
           Print authorized subject report / Save as PDF
         </button>
@@ -183,6 +275,9 @@ export function PublishedReportWorkspace({ schoolId }: { schoolId: string }) {
       </p>
       <style jsx global>{`
         @media print {
+          .published-report-workspace[data-print-authorized="false"] article {
+            display: none !important;
+          }
           .print-hide,
           .topbar {
             display: none !important;
