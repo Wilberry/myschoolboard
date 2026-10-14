@@ -451,3 +451,14 @@ All subsequent phases remain pending until their entry criteria and required pro
 - [x] Added a cross-migration parser-shape guard across the 13 currently authored late Phase 7–8 migration files (23 PL/pgSQL function declarations), registered in both existing test commands.
 - [x] Isolated GitHub-source V8 guard replay passed 2/2; introduced repeated-`DECLARE` and unpaired-dollar-delimiter synthetic mutations were both rejected.
 - [ ] Run the **actual** registered Node test, full PostgreSQL migrations and grading/authorization regression, Prisma validate/generate, format/lint/types/build, dependency audit and full CI; no recipient release until accepted.
+
+## Phase 8 recipient positive-path acceptance follow-up — authored, unverified
+
+- [x] **Test source added:** a still-verified student's `GUARDIAN_FIRST_ACK` access is denied before the exact release receipt, allowed afterward, and denied when the acknowledging guardian becomes inactive or their link is revoked.
+- [x] **Test source added:** fourth owner-adopted `STUDENT_ONLY` revision requires independent exact composition release; student can view the new released version while current/previous guardians cannot; terminal student-account-link revocation denies subsequent report reads and CBT admissions.
+- [x] **Test source added:** no-store/noindex on denied pupil reads, refusal of query-selected child IDs, and SSR privacy/print-disabled shell.
+- [x] **Source hardening authored:** finalized historical migration SHA-256 checks before local disposable DB deployment; pure negative unit tests and guard integration.
+- [ ] Actually execute the **new** positive child/guardian receipt and revocation integration tests, migration checksum step, initial-render test, cumulative Prisma/Vitest/Next build and audit on an isolated disposable DB. Previous 312/312 tests predate these additions and are **not current-head acceptance evidence**.
+- [ ] Perform real browser/keyboard/screen-reader/print/privacy operations on a synthetic authorized report; review retention/export and recipients for production release.
+- [ ] Resolve `braces`/`deepmerge-ts` advisories through tested compatible upstream updates or separately authorized release-risk review. The unchanged strict high audit gate remains failing and is not waived.
+
