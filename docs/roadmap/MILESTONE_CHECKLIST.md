@@ -1,5 +1,17 @@
 # Milestone Checklist
 
+## Phase 8 final acceptance checkpoint after local verified push — 2026-10-14
+
+- [x] Committed and pushed only four reviewed test/guard formatting fixes as `verify/phase8-local` at `60eaa44`; separate original Phase 1 checkout preserved.
+- [x] **Earlier worktree revision:** disposable PostgreSQL preflight and 49 migration checksums passed; complete database integration suite (313/313 Vitest), source guards (99/99), TypeScript, lint, formatting and Next.js build passed.
+- [x] **Later worktree test-only changes:** 111/111 database-independent Node guards and formatting passed; worktree clean on push.
+- [ ] On **exact pushed HEAD**, rerun full `npm run verify:local` with all required disposable-test environment variables; do not substitute earlier-revision results or run against a shared/production database.
+- [ ] Execute and sign off browser acceptance for no unauthorized sibling disclosure, guardian-first receipt, student-only release, active-link revocation, no-store/noindex, keyboard/screen-reader behavior and authenticated print/save-as-PDF with synthetic records only.
+- [ ] Close or formally account for **both** high dependency advisories without silently suppressing `npm audit --audit-level=high`. The unchanged full audit currently fails with eight transitive affected packages. Avoid forced incompatible Next/Prisma downgrades.
+- [ ] Independent school privacy/data-retention/release-operations review, actual permission to enable publication, and Phase 8 acceptance record. Both server disclosure flags remain OFF; nothing is live.
+- [ ] Only after completion evidence and approved milestone exit, proceed to the Phase 9 fees/payments implementation with distinct scope and tenant-safe payment evidence.
+
+
 ## Phase 8 publication and official subject report candidate — [ ] CODE AUTHORED / ACCEPTANCE BLOCKED
 
 - [x] School-selected four named visibility modes, immutable owner-only policy revisions, no default release and current-version read enforcement.
