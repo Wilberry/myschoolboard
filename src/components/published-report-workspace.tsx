@@ -284,7 +284,7 @@ export function PublishedReportWorkspace({ schoolId }: { schoolId: string }) {
       </p>
       <style jsx global>{`
         @media print {
-          .published-report-workspace[data-print-authorized="false"] article {
+          .published-report-workspace[data-print-authorized=false] article {
             display: none !important;
           }
           .print-hide,
