@@ -52,9 +52,9 @@ export async function preflightMigrationHistory(environment = process.env) {
   const prisma = new PrismaClient();
   try {
     const [ledger] = await prisma.$queryRaw`
-      SELECT to_regclass('public."_prisma_migrations"') AS "tableName"
+      SELECT to_regclass('public."_prisma_migrations"') IS NOT NULL AS "exists"
     `;
-    if (!ledger?.tableName) {
+    if (!ledger?.exists) {
       const [count] = await prisma.$queryRaw`
         SELECT COUNT(*)::int AS "tableCount"
         FROM information_schema.tables
