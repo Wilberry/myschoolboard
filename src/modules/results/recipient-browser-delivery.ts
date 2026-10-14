@@ -8,13 +8,19 @@ export async function fetchCurrentRecipientRows<Row>(
   signal?: AbortSignal,
   fetcher: typeof fetch = fetch,
 ): Promise<Row[]> {
+  // Abort is also checked after each await: a mocked, polyfilled or
+  // noncompliant transport may resolve even after its signal was aborted.
+  // Stale rows must not be promoted into printable recipient state.
+  if (signal?.aborted) throw new Error("Recipient report request cancelled");
   const response = await fetcher(url, {
     cache: "no-store",
     credentials: "same-origin",
     signal,
   });
+  if (signal?.aborted) throw new Error("Recipient report request cancelled");
   if (!response.ok) throw new Error("Recipient report unavailable");
   const payload: unknown = await response.json();
+  if (signal?.aborted) throw new Error("Recipient report request cancelled");
   if (
     !payload ||
     typeof payload !== "object" ||
