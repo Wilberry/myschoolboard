@@ -30,7 +30,7 @@ export default async function PublishedReportsPage({
         <Link href="/" className="brand">
           MySchoolBoard
         </Link>
-        <Link href={`/schools/${schoolId}`}>Back to school</Link>
+        <Link href="/">Back to my schools</Link>
       </header>
       <section className="workspace-content">
         <p className="eyebrow">PHASE 8 / AUTHORIZED SCHOOL REPORTS</p>
