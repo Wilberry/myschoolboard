@@ -501,3 +501,11 @@ All subsequent phases remain pending until their entry criteria and required pro
 - [x] Author `next.config.test.ts` for four exact routes, no caching and no indexing; extend the existing Phase 8 guard with the same invariant.
 - [x] Isolated Next header-rule execution 4/4 and cumulative source-guard replay 5/5 passed.
 - [ ] Verify **actual** Next document response headers and bfcache/back-forward account change behavior in a real synthetic browser, alongside full latest-head Prisma/Vitest/format/lint/types/Next build and strict audit. Source-only assertions are not production acceptance.
+
+## Phase 8 read-only live HTTP privacy probe — authored 2026-10-14
+
+- [x] Add independently runnable `npm run verify:local:http` to check four confidential Next pages and two pupil-report GET cases, with private/no-store/noindex/no-referrer and forbidden anonymous/selector access assertions.
+- [x] Require loopback `http://localhost:3000/`, matching `BETTER_AUTH_URL`, confirmed disposable test-only DB environment and BOTH Phase 8 disclosure gates explicitly OFF. Send no cookies, no POST and no database mutations.
+- [x] Add four Node mocked HTTP/preflight negative-test cases to both local guard and full test registrations; isolated copied-source fixture tests **4/4 passed**. Leave GitHub Actions and mandatory `npm audit --audit-level=high` unchanged.
+- [ ] **Actually start** the isolated Next app and run the six live probes on this exact branch HEAD; inspect real document response headers (including redirects) and fix any failures.
+- [ ] Run full disposable Postgres/Prisma/Vitest/TypeScript/Next build, perform recipient authenticated browser/print/a11y acceptance and resolve outstanding high npm audit; do not mark Phase 8 accepted or turn on recipient release.
