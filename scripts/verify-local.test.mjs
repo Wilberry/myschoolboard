@@ -100,3 +100,25 @@ test("checks applied migration hashes before local deployment without editing CI
   );
   assert.deepEqual(workflowCommands.at(-1), ["audit", "--audit-level=high"]);
 });
+
+test("registers a separate read-only HTTP smoke without weakening CI audit", () => {
+  const smoke = readFileSync(
+    new URL("./phase8-http-smoke.mjs", import.meta.url),
+    "utf8",
+  );
+  const pkg = JSON.parse(
+    readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+  );
+  assert.equal(
+    pkg.scripts["verify:local:http"],
+    "node scripts/phase8-http-smoke.mjs",
+  );
+  for (const key of ["test", "verify:local:guards"]) {
+    assert.match(pkg.scripts[key], /phase8-http-smoke\.test\.mjs/);
+  }
+  assert.match(smoke, /assertLocalVerificationTarget\(environment\)/);
+  assert.match(smoke, /credentials: "omit"/);
+  assert.match(smoke, /PHASE8_REPORT_RELEASE_ENABLED !== "false"/);
+  assert.match(smoke, /PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED !== "false"/);
+  assert.deepEqual(workflowCommands.at(-1), ["audit", "--audit-level=high"]);
+});
