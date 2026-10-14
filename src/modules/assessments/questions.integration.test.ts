@@ -3985,7 +3985,22 @@ describe("Phase 7 exact-assignment private question bank", () => {
       expect(release1.releaseOrdinal).toBe(1);
       expect((await listRelease("super")).status).toBe(200);
       expect((await listRelease("parent")).status).toBe(404);
-      expect((await published("teacher")).status).toBe(404);
+      const deniedReport = await published("teacher");
+      expect(deniedReport.status).toBe(404);
+      expect(deniedReport.headers.get("cache-control")).toContain("no-store");
+      expect(deniedReport.headers.get("x-robots-tag")).toContain("noindex");
+      // The recipient API never accepts arbitrary child lookup selectors,
+      // even when the caller has an authenticated school account.
+      context.headers = new Headers({ cookie: cookies.student });
+      const selectorAttempt = await PUBLISHED_REPORT_GET(
+        new Request(
+          `http://localhost/api/schools/${schoolA}/published-reports?studentId=${pupilId}`,
+        ),
+        { params: Promise.resolve({ schoolId: schoolA }) },
+      );
+      expect(selectorAttempt.status).toBe(400);
+      expect(selectorAttempt.headers.get("cache-control")).toContain("no-store");
+      expect(selectorAttempt.headers.get("x-robots-tag")).toContain("noindex");
       expect((await published("student")).status).toBe(200);
       expect((await (await published("student")).json()).reports).toHaveLength(
         0,
@@ -4324,7 +4339,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
       else
         process.env.PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED = savedRecipientGate;
     }
-   }, 90_000);
+  }, 90_000);
 
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
     await prisma.teacherClassSubjectAssignment.update({
