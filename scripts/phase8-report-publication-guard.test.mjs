@@ -29,6 +29,7 @@ const recipientUI = read("../src/components/published-report-workspace.tsx");
 const transport = read("../src/modules/results/recipient-browser-delivery.ts");
 const transportTests = read("../src/modules/results/recipient-browser-delivery.test.ts");
 const home = read("../app/page.tsx");
+const publishedPage = read("../app/schools/[schoolId]/published-reports/page.tsx");
 
 test("policy, immutable independent release, and per-child acknowledgment have three exact-school ledgers", () => {
   for (const mode of [
@@ -192,6 +193,9 @@ test("recipient browser discards hidden/bfcache grades and reauthorizes every pr
     "window.print()",
     "flushSync(() => {",
   ]) assert.ok(recipientUI.includes(token), token);
+  // PARENT and STUDENT intentionally cannot open the staff academic page.
+  assert.ok(publishedPage.includes('<Link href="/">Back to my schools</Link>'));
+  assert.equal(publishedPage.includes("Back to school"), false);
   for (const token of [
     'cache: "no-store"',
     'credentials: "same-origin"',
