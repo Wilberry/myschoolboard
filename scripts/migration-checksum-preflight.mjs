@@ -48,7 +48,8 @@ export async function preflightMigrationHistory(environment = process.env) {
   if (url.searchParams.get("schema") !== "public") {
     throw new Error("Migration checksum preflight requires schema=public");
   }
-  // Pure guard tests must not require generated Prisma Client or a DB.\n  const { PrismaClient } = await import("@prisma/client");
+  // Pure guard tests must not require generated Prisma Client or a DB.
+  const { PrismaClient } = await import("@prisma/client");
   const prisma = new PrismaClient();
   try {
     const [ledger] = await prisma.$queryRaw`
