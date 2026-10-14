@@ -2,17 +2,23 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const read = path => readFileSync(new URL(path, import.meta.url), "utf8");
+const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const schema = read("../prisma/schema.prisma");
-const migration = read("../prisma/migrations/20261012270000_phase7_assessment_drafts/migration.sql");
+const migration = read(
+  "../prisma/migrations/20261012270000_phase7_assessment_drafts/migration.sql",
+);
 const service = read("../src/modules/assessments/draft-service.ts");
 const route = read("../app/api/schools/[schoolId]/assessment-drafts/route.ts");
 
 test("assessment configurations are immutable DRAFT-ONLY without delivery fields", () => {
   assert.match(schema, /model AssessmentDraft \{/);
   assert.match(schema, /model AssessmentDraftQuestion \{/);
-  const draftSchema = schema.match(/model AssessmentDraft \{[\s\S]*?\n\}/)?.[0] ?? "";
-  assert.doesNotMatch(draftSchema, /isPublished|PUBLISHED|releasedAt|answerKey|correctIndex/);
+  const draftSchema =
+    schema.match(/model AssessmentDraft \{[\s\S]*?\n\}/)?.[0] ?? "";
+  assert.doesNotMatch(
+    draftSchema,
+    /isPublished|PUBLISHED|releasedAt|answerKey|correctIndex/,
+  );
   // Later Phase 7 added controlled CBT attempts, not an implicit draft release.
   assert.match(draftSchema, /attempts\s+AssessmentAttempt\[\]/);
   assert.doesNotMatch(migration, /CREATE TABLE "AssessmentAttempt"/);
@@ -21,7 +27,10 @@ test("assessment configurations are immutable DRAFT-ONLY without delivery fields
   assert.match(migration, /"AssessmentDraftSeal_validate"/);
   assert.match(migration, /"AssessmentDraftSeal_immutable"/);
   assert.match(migration, /"AssessmentDraftSeal_no_truncate"/);
-  assert.match(migration, /RAISE EXCEPTION 'A sealed assessment draft cannot accept new items'/);
+  assert.match(
+    migration,
+    /RAISE EXCEPTION 'A sealed assessment draft cannot accept new items'/,
+  );
   assert.match(service, /tx\.assessmentDraftSeal\.create/);
   assert.match(service, /JOIN "AssessmentDraftSeal" seal/);
 
@@ -51,6 +60,12 @@ test("draft service selects exact keyed questions and protects actor identity", 
   assert.match(route, /"Cache-Control": "private, no-store"/);
 });
 test("draft migration never publishes scores or changes existing records", () => {
-  assert.doesNotMatch(migration, /\bDROP TABLE\b|\bTRUNCATE TABLE\b|\bUPDATE\s+"AttendanceEntry"/i);
-  assert.doesNotMatch(migration, /CREATE TABLE "AssessmentAttempt"|CREATE TABLE "AssessmentScore"/);
+  assert.doesNotMatch(
+    migration,
+    /\bDROP TABLE\b|\bTRUNCATE TABLE\b|\bUPDATE\s+"AttendanceEntry"/i,
+  );
+  assert.doesNotMatch(
+    migration,
+    /CREATE TABLE "AssessmentAttempt"|CREATE TABLE "AssessmentScore"/,
+  );
 });

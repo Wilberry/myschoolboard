@@ -37,7 +37,9 @@ export async function readInternalCbtAttempt(
     throw new AssessmentError("INVALID_INPUT");
   }
   const userId = await assessmentUserId();
-  const result = await prisma.$queryRaw<Array<AttemptMetadata & SafeQuestion>>(Prisma.sql`
+  const result = await prisma.$queryRaw<
+    Array<AttemptMetadata & SafeQuestion>
+  >(Prisma.sql`
     SELECT attempt."id" AS "attemptId", draft."id" AS "draftId",
       draft."title", draft."kind", attempt."startedAt", attempt."deadlineAt",
       draft."endsAt" AS "examEndsAt", attempt."attemptNumber",
@@ -149,15 +151,23 @@ export async function readInternalCbtAttempt(
   const first = result[0];
   return {
     attempt: {
-      attemptId: first.attemptId, draftId: first.draftId,
-      title: first.title, kind: first.kind,
-      startedAt: first.startedAt, deadlineAt: first.deadlineAt,
-      examEndsAt: first.examEndsAt, attemptNumber: first.attemptNumber,
+      attemptId: first.attemptId,
+      draftId: first.draftId,
+      title: first.title,
+      kind: first.kind,
+      startedAt: first.startedAt,
+      deadlineAt: first.deadlineAt,
+      examEndsAt: first.examEndsAt,
+      attemptNumber: first.attemptNumber,
     },
-    questions: result.map(row => ({
-      questionId: row.questionId, position: row.position, points: row.points,
-      prompt: row.prompt, options: row.options,
-      selectedIndex: row.selectedIndex, revision: row.revision,
+    questions: result.map((row) => ({
+      questionId: row.questionId,
+      position: row.position,
+      points: row.points,
+      prompt: row.prompt,
+      options: row.options,
+      selectedIndex: row.selectedIndex,
+      revision: row.revision,
     })),
   };
 }

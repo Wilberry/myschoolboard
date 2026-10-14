@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-const read = p => readFileSync(new URL(p, import.meta.url), "utf8");
+const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 const pure = read("../src/modules/results/result-readiness.ts");
 const service = read("../src/modules/results/preparation-service.ts");
 const route = read("../app/api/schools/[schoolId]/result-preparation/route.ts");
@@ -16,7 +16,8 @@ test("Phase 8 preflight never grants publication from a draft grading policy", (
     "MANUAL_REVIEW_PENDING",
     "MANUAL_CORRECTION_PENDING",
     "SOURCES_RECONCILED_NOT_APPROVED",
-  ]) assert.ok(pure.includes(signal), signal);
+  ])
+    assert.ok(pure.includes(signal), signal);
   assert.equal(pure.includes("approvedForPublication"), false);
   assert.equal(pure.includes("publishReport"), false);
 });
@@ -26,9 +27,12 @@ test("preflight uses two independently exact-teacher secured readers", () => {
   assert.ok(service.includes("reconcileResultPreparation"));
   assert.ok(service.includes('throw new AssessmentError("CONFLICT")'));
   for (const secret of [
-    "AssessmentQuestionKey", "correctIndex",
-    "AssessmentAttemptAnswerEvent", "AssessmentManualMarkProposal",
-  ]) assert.equal(service.includes(secret), false, secret);
+    "AssessmentQuestionKey",
+    "correctIndex",
+    "AssessmentAttemptAnswerEvent",
+    "AssessmentManualMarkProposal",
+  ])
+    assert.equal(service.includes(secret), false, secret);
 });
 test("student/guardian publishing remains unavailable from preflight API", () => {
   assert.ok(route.includes("manualHeaders"));

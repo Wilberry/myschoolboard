@@ -12,7 +12,10 @@ interface ClassOption {
  * Form Teacher class/session options require the exact active PRIMARY
  * responsibility, current active school and class classification.
  */
-export async function readFormTeacherAttendanceOptions(userId: string, schoolId: string) {
+export async function readFormTeacherAttendanceOptions(
+  userId: string,
+  schoolId: string,
+) {
   if (!userId || !schoolId) return null;
   const classes = await prisma.$queryRaw<ClassOption[]>`
     SELECT school."name" AS "schoolName", c."id" AS "classId",
@@ -41,7 +44,10 @@ export async function readFormTeacherAttendanceOptions(userId: string, schoolId:
   return {
     schoolName: classes[0].schoolName,
     classes: classes.map(({ classId, className, sessionId, sessionName }) => ({
-      classId, className, sessionId, sessionName,
+      classId,
+      className,
+      sessionId,
+      sessionName,
     })),
   };
 }
@@ -54,7 +60,10 @@ interface ReviewerSectionRow {
 /** Separate reviewer navigation; the pending-reader and decision service both
  * repeat authorization over exact current section resources independently.
  */
-export async function readAttendanceReviewerOptions(userId: string, schoolId: string) {
+export async function readAttendanceReviewerOptions(
+  userId: string,
+  schoolId: string,
+) {
   if (!userId || !schoolId) return null;
   const sections = await prisma.$queryRaw<ReviewerSectionRow[]>`
     SELECT school."name" AS "schoolName", section."name" AS "sectionName"
@@ -75,5 +84,8 @@ export async function readAttendanceReviewerOptions(userId: string, schoolId: st
     LIMIT 30
   `;
   if (sections.length === 0) return null;
-  return { schoolName: sections[0].schoolName, sectionNames: sections.map(x => x.sectionName) };
+  return {
+    schoolName: sections[0].schoolName,
+    sectionNames: sections.map((x) => x.sectionName),
+  };
 }

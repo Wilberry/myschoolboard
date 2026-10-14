@@ -1,28 +1,48 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-const read = path => readFileSync(new URL(path, import.meta.url), "utf8");
+const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const schema = read("../prisma/schema.prisma");
-const sql = read("../prisma/migrations/20261013190000_phase8_release_visibility_and_ack/migration.sql");
-const publication = read("../src/modules/results/report-publication-service.ts");
+const sql = read(
+  "../prisma/migrations/20261013190000_phase8_release_visibility_and_ack/migration.sql",
+);
+const publication = read(
+  "../src/modules/results/report-publication-service.ts",
+);
 const recipient = read("../src/modules/results/recipient-report-service.ts");
 const http = read("../src/modules/results/report-http.ts");
-const policyRoute = read("../app/api/schools/[schoolId]/report-visibility-policies/route.ts");
-const releaseRoute = read("../app/api/schools/[schoolId]/report-recipient-releases/route.ts");
-const reportRoute = read("../app/api/schools/[schoolId]/published-reports/route.ts");
-const acknowledgmentRoute = read("../app/api/schools/[schoolId]/published-reports/acknowledgments/[releaseId]/[studentId]/route.ts");
+const policyRoute = read(
+  "../app/api/schools/[schoolId]/report-visibility-policies/route.ts",
+);
+const releaseRoute = read(
+  "../app/api/schools/[schoolId]/report-recipient-releases/route.ts",
+);
+const reportRoute = read(
+  "../app/api/schools/[schoolId]/published-reports/route.ts",
+);
+const acknowledgmentRoute = read(
+  "../app/api/schools/[schoolId]/published-reports/acknowledgments/[releaseId]/[studentId]/route.ts",
+);
 const tests = read("../src/modules/assessments/questions.integration.test.ts");
 const ownerUI = read("../src/components/report-release-workspace.tsx");
 const recipientUI = read("../src/components/published-report-workspace.tsx");
 const home = read("../app/page.tsx");
 
 test("policy, immutable independent release, and per-child acknowledgment have three exact-school ledgers", () => {
-  for (const mode of ["SCHOOL_ONLY","STUDENT_ONLY","GUARDIAN_ONLY","GUARDIAN_FIRST_ACK"]) {
+  for (const mode of [
+    "SCHOOL_ONLY",
+    "STUDENT_ONLY",
+    "GUARDIAN_ONLY",
+    "GUARDIAN_FIRST_ACK",
+  ]) {
     assert.ok(schema.includes(mode), mode);
     assert.ok(sql.includes(mode), mode);
   }
-  for (const model of ["ReportVisibilityPolicyRevision","ReportRecipientRelease",
-    "ReportGuardianAcknowledgment"]) {
+  for (const model of [
+    "ReportVisibilityPolicyRevision",
+    "ReportRecipientRelease",
+    "ReportGuardianAcknowledgment",
+  ]) {
     assert.ok(schema.includes(`model ${model} {`), model);
     assert.ok(sql.includes(`CREATE TABLE "${model}"`), model);
     assert.ok(sql.includes(`"${model}_immutable"`), model);
@@ -44,23 +64,27 @@ test("policy, immutable independent release, and per-child acknowledgment have t
     'policy."version"=(\n   SELECT max(v."version")',
     'guardian."userId"=NEW."actorUserId"',
     'guardian."isActive"=true',
-    'guardian."role"=\'PARENT\'',
+    "guardian.\"role\"='PARENT'",
     'revoked."linkId"=link."id"',
-  ]) assert.ok(sql.includes(token), token);
+  ])
+    assert.ok(sql.includes(token), token);
   assert.equal((sql.match(/\$\$/g) || []).length, 6);
   assert.equal(sql.includes("GRANT SELECT TO PUBLIC"), false);
 });
 
 test("owner release is confirmation-gated and report readers are independently tenant-authorized", () => {
   for (const token of [
-    'PHASE8_REPORT_RELEASE_ENABLED', 'PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED',
-    'confirmRecipientRelease: z.literal(true)',
-    'role: "SCHOOL_SUPER_ADMIN"', 'isActive: true',
+    "PHASE8_REPORT_RELEASE_ENABLED",
+    "PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED",
+    "confirmRecipientRelease: z.literal(true)",
+    'role: "SCHOOL_SUPER_ADMIN"',
+    "isActive: true",
     'isolationLevel: "Serializable"',
-    'reportVisibilityPolicyRevision.create(',
-    'reportRecipientRelease.create(',
-    'owner."role"=\'SCHOOL_SUPER_ADMIN\'',
-  ]) assert.ok(publication.includes(token), token);
+    "reportVisibilityPolicyRevision.create(",
+    "reportRecipientRelease.create(",
+    "owner.\"role\"='SCHOOL_SUPER_ADMIN'",
+  ])
+    assert.ok(publication.includes(token), token);
   for (const token of [
     'reportGate("recipient")',
     'role: { in: ["STUDENT", "PARENT"] }',
@@ -76,22 +100,28 @@ test("owner release is confirmation-gated and report readers are independently t
     'policy."version"=(\n        SELECT max(latest."version")',
     'release."schoolId"=${schoolId}',
     'AND recipient."isActive"=true',
-    'LIMIT 101',
-    'readCurrentPublishedReports',
-    'guardianLinkId: link.id',
-    'acknowledge: z.literal(true)',
-  ]) assert.ok(recipient.includes(token), token);
+    "LIMIT 101",
+    "readCurrentPublishedReports",
+    "guardianLinkId: link.id",
+    "acknowledge: z.literal(true)",
+  ])
+    assert.ok(recipient.includes(token), token);
   // There are two independent guardian-revocation boundaries: parent view
   // and student post-acknowledgment, and two exact receipt projections.
   assert.ok(recipient.split('"GuardianStudentLinkRevocation"').length >= 3);
-  assert.ok(recipient.split('"ReportGuardianAcknowledgment" receipt').length >= 3);
+  assert.ok(
+    recipient.split('"ReportGuardianAcknowledgment" receipt').length >= 3,
+  );
   assert.equal(recipient.includes("AssessmentQuestionKey"), false);
   assert.ok(policyRoute.includes("adoptReportVisibilityPolicy"));
   assert.ok(releaseRoute.includes("releaseOfficialComposition"));
   assert.ok(reportRoute.includes("readCurrentPublishedReports"));
   assert.ok(acknowledgmentRoute.includes("acknowledgeGuardianReport"));
   assert.equal(reportRoute.includes("export async function POST"), false);
-  assert.equal(acknowledgmentRoute.includes("export async function GET"), false);
+  assert.equal(
+    acknowledgmentRoute.includes("export async function GET"),
+    false,
+  );
   assert.ok(http.includes("private, no-store, max-age=0"));
   assert.ok(http.includes("noindex, noarchive, nosnippet"));
   assert.ok(ownerUI.includes("I have inspected the frozen grades"));
@@ -99,32 +129,37 @@ test("owner release is confirmation-gated and report readers are independently t
   // Academic school-detail navigation deliberately excludes guardians/pupils.
   // Recipient portal must be reachable separately without an academic:read grant.
   assert.ok(home.includes('role === "STUDENT" || role === "PARENT"'));
-  assert.ok(home.includes('/published-reports'));
-
+  assert.ok(home.includes("/published-reports"));
 });
 
 test("authenticated tests cover visibility revision changes, replay, role, revocation, parent's explicit receipt", () => {
   for (const token of [
-    "REPORT_VISIBILITY_POST", "REPORT_RELEASE_POST",
-    "PUBLISHED_REPORT_GET", "REPORT_ACK_POST",
-    'mode: "GUARDIAN_ONLY"', 'mode: "GUARDIAN_FIRST_ACK"',
-    'policy2.version).toBe(2)',
-    'release3.releaseOrdinal).toBe(3)',
+    "REPORT_VISIBILITY_POST",
+    "REPORT_RELEASE_POST",
+    "PUBLISHED_REPORT_GET",
+    "REPORT_ACK_POST",
+    'mode: "GUARDIAN_ONLY"',
+    'mode: "GUARDIAN_FIRST_ACK"',
+    "policy2.version).toBe(2)",
+    "release3.releaseOrdinal).toBe(3)",
     '"GUARDIAN_FIRST_ACK"',
-    'guardianHasAcknowledged).toBe(false)',
-    'guardianHasAcknowledged).toBe(true)',
-    'members.parent2', 'published("parent2")',
-    'published("student")', 'published("teacher")',
+    "guardianHasAcknowledged).toBe(false)",
+    "guardianHasAcknowledged).toBe(true)",
+    "members.parent2",
+    'published("parent2")',
+    'published("student")',
+    'published("teacher")',
     'process.env.PHASE8_REPORT_RELEASE_ENABLED = "true"',
     'process.env.PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED = "true"',
-    'prisma.reportRecipientRelease.delete(',
-    'prisma.reportGuardianAcknowledgment.update(',
+    "prisma.reportRecipientRelease.delete(",
+    "prisma.reportGuardianAcknowledgment.update(",
     'TRUNCATE "ReportRecipientRelease"',
-    'const releaseRace = await Promise.all([',
-    'const acknowledgmentRace = await Promise.all([',
-    'actorUserId: users.parent2',
-    'guardianMembershipId: members.parent2',
-    'prisma.reportRecipientRelease.create(',
-    'prisma.reportGuardianAcknowledgment.create(',
-  ]) assert.ok(tests.includes(token), token);
+    "const releaseRace = await Promise.all([",
+    "const acknowledgmentRace = await Promise.all([",
+    "actorUserId: users.parent2",
+    "guardianMembershipId: members.parent2",
+    "prisma.reportRecipientRelease.create(",
+    "prisma.reportGuardianAcknowledgment.create(",
+  ])
+    assert.ok(tests.includes(token), token);
 });

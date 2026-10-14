@@ -7,26 +7,38 @@ import { FinalResultApprovalWorkspace } from "@/src/components/final-result-appr
 
 export default async function FinalResultApprovalsPage({
   params,
-}: { params: Promise<{ schoolId: string }> }) {
+}: {
+  params: Promise<{ schoolId: string }>;
+}) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/");
   const { schoolId } = await params;
   const owner = await prisma.membership.findFirst({
-    where: { schoolId, userId: session.user.id,
-      isActive: true, role: "SCHOOL_SUPER_ADMIN",
-      school: { isActive: true } },
+    where: {
+      schoolId,
+      userId: session.user.id,
+      isActive: true,
+      role: "SCHOOL_SUPER_ADMIN",
+      school: { isActive: true },
+    },
     select: { id: true },
   });
   if (!owner) notFound();
-  return <main className="workspace">
-    <header className="topbar">
-      <Link className="brand" href="/">MySchoolBoard</Link>
-      <Link href={`/schools/${schoolId}`}>Back to school</Link>
-    </header>
-    <section className="workspace-content">
-      <p className="eyebrow">PHASE 8 / FINAL SCHOOL APPROVAL — RELEASE DISABLED</p>
-      <h1>Approve academically reviewed result evidence</h1>
-      <FinalResultApprovalWorkspace schoolId={schoolId} />
-    </section>
-  </main>;
+  return (
+    <main className="workspace">
+      <header className="topbar">
+        <Link className="brand" href="/">
+          MySchoolBoard
+        </Link>
+        <Link href={`/schools/${schoolId}`}>Back to school</Link>
+      </header>
+      <section className="workspace-content">
+        <p className="eyebrow">
+          PHASE 8 / FINAL SCHOOL APPROVAL — RELEASE DISABLED
+        </p>
+        <h1>Approve academically reviewed result evidence</h1>
+        <FinalResultApprovalWorkspace schoolId={schoolId} />
+      </section>
+    </main>
+  );
 }

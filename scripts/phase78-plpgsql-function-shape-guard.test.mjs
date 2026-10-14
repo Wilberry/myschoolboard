@@ -14,7 +14,10 @@ const phase78 = readdirSync(migrationRoot, { withFileTypes: true })
   .sort();
 
 test("Phase 7–8 SQL migration functions have paired bodies and valid declaration sections", () => {
-  assert.ok(phase78.length >= 13, "Expected cumulative grading/result migrations");
+  assert.ok(
+    phase78.length >= 13,
+    "Expected cumulative grading/result migrations",
+  );
   let inspectedFunctions = 0;
   for (const migration of phase78) {
     const sql = readFileSync(
@@ -53,10 +56,19 @@ test("Phase 7–8 SQL migration functions have paired bodies and valid declarati
       inspectedFunctions++;
     }
   }
-  assert.ok(inspectedFunctions >= 23, "Expected all cumulative result functions");
+  assert.ok(
+    inspectedFunctions >= 23,
+    "Expected all cumulative result functions",
+  );
 });
 
 test("cumulative Phase 7–8 SQL check is non-mutating and never weakens release controls", () => {
-  assert.ok(phase78.includes("20261013100000_phase8_result_sheet_evidence_review"));
-  assert.ok(phase78.includes("20261013170000_phase8_private_composition_source_status_hardening"));
+  assert.ok(
+    phase78.includes("20261013100000_phase8_result_sheet_evidence_review"),
+  );
+  assert.ok(
+    phase78.includes(
+      "20261013170000_phase8_private_composition_source_status_hardening",
+    ),
+  );
 });

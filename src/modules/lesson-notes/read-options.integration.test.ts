@@ -30,8 +30,16 @@ describe("teacher lesson-note form options isolation", () => {
   beforeAll(async () => {
     await prisma.user.createMany({
       data: [
-        { id: userA, name: "Synthetic Teacher A", email: `${userA}@example.test` },
-        { id: userB, name: "Synthetic Teacher B", email: `${userB}@example.test` },
+        {
+          id: userA,
+          name: "Synthetic Teacher A",
+          email: `${userA}@example.test`,
+        },
+        {
+          id: userB,
+          name: "Synthetic Teacher B",
+          email: `${userB}@example.test`,
+        },
         { id: admin, name: "Synthetic Admin", email: `${admin}@example.test` },
       ],
     });
@@ -50,18 +58,44 @@ describe("teacher lesson-note form options isolation", () => {
     });
     await prisma.academicSession.createMany({
       data: [
-        { id: sessionA, schoolId: schoolA, name: "2026/2027", status: "ACTIVE", ...dates },
-        { id: sessionB, schoolId: schoolB, name: "2026/2027", status: "ACTIVE", ...dates },
+        {
+          id: sessionA,
+          schoolId: schoolA,
+          name: "2026/2027",
+          status: "ACTIVE",
+          ...dates,
+        },
+        {
+          id: sessionB,
+          schoolId: schoolB,
+          name: "2026/2027",
+          status: "ACTIVE",
+          ...dates,
+        },
       ],
     });
     await prisma.academicTerm.createMany({
       data: [
-        { id: termA, sessionId: sessionA, schoolId: schoolA, status: "ACTIVE",
-          name: "First Term", position: 1,
-          startsOn: dates.startsOn, endsOn: new Date("2026-12-18T00:00:00.000Z") },
-        { id: termB, sessionId: sessionB, schoolId: schoolB, status: "ACTIVE",
-          name: "First Term", position: 1,
-          startsOn: dates.startsOn, endsOn: new Date("2026-12-18T00:00:00.000Z") },
+        {
+          id: termA,
+          sessionId: sessionA,
+          schoolId: schoolA,
+          status: "ACTIVE",
+          name: "First Term",
+          position: 1,
+          startsOn: dates.startsOn,
+          endsOn: new Date("2026-12-18T00:00:00.000Z"),
+        },
+        {
+          id: termB,
+          sessionId: sessionB,
+          schoolId: schoolB,
+          status: "ACTIVE",
+          name: "First Term",
+          position: 1,
+          startsOn: dates.startsOn,
+          endsOn: new Date("2026-12-18T00:00:00.000Z"),
+        },
       ],
     });
     await prisma.schoolClass.createMany({
@@ -78,10 +112,22 @@ describe("teacher lesson-note form options isolation", () => {
     });
     await prisma.teacherClassSubjectAssignment.createMany({
       data: [
-        { id: assignmentA, schoolId: schoolA, sessionId: sessionA,
-          membershipId: memberA, classId: classA, subjectId: subjectA },
-        { id: assignmentB, schoolId: schoolB, sessionId: sessionB,
-          membershipId: memberB, classId: classB, subjectId: foreign.id },
+        {
+          id: assignmentA,
+          schoolId: schoolA,
+          sessionId: sessionA,
+          membershipId: memberA,
+          classId: classA,
+          subjectId: subjectA,
+        },
+        {
+          id: assignmentB,
+          schoolId: schoolB,
+          sessionId: sessionB,
+          membershipId: memberB,
+          classId: classB,
+          subjectId: foreign.id,
+        },
       ],
     });
   });
@@ -99,12 +145,20 @@ describe("teacher lesson-note form options isolation", () => {
   it("returns only the teacher's own active school terms and assignments", async () => {
     const options = await readLessonWritingOptions(userA, schoolA);
     expect(options?.school.id).toBe(schoolA);
-    expect(options?.terms).toEqual([{
-      id: termA, sessionId: sessionA, name: "2026/2027 · First Term",
-    }]);
-    expect(options?.assignments).toEqual([{
-      id: assignmentA, sessionId: sessionA, label: "Primary One · Mathematics",
-    }]);
+    expect(options?.terms).toEqual([
+      {
+        id: termA,
+        sessionId: sessionA,
+        name: "2026/2027 · First Term",
+      },
+    ]);
+    expect(options?.assignments).toEqual([
+      {
+        id: assignmentA,
+        sessionId: sessionA,
+        label: "Primary One · Mathematics",
+      },
+    ]);
     expect(JSON.stringify(options)).not.toContain("Foreign Biology");
     expect(JSON.stringify(options)).not.toContain(assignmentB);
   });
@@ -132,7 +186,10 @@ describe("teacher lesson-note form options isolation", () => {
   });
 
   it("repeats teacher and tenant membership predicates in final queries", async () => {
-    const assignments = vi.spyOn(prisma.teacherClassSubjectAssignment, "findMany");
+    const assignments = vi.spyOn(
+      prisma.teacherClassSubjectAssignment,
+      "findMany",
+    );
     const terms = vi.spyOn(prisma.academicTerm, "findMany");
     try {
       expect(await readLessonWritingOptions(userA, schoolA)).not.toBeNull();

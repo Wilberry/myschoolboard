@@ -9,39 +9,56 @@ import { reconcileResultPreparation } from "./result-readiness";
  * combines grading systems or approves/publishes results.
  */
 export async function readInternalTeacherResultPreparation(
-  schoolId: string, sessionId: string, termId: string,
-  classId: string, subjectId: string,
+  schoolId: string,
+  sessionId: string,
+  termId: string,
+  classId: string,
+  subjectId: string,
 ) {
   // Both readers independently repeat final-query active teacher assignment,
   // current enrolled pupil, same-school and academic period authorization.
   const objective = await readInternalTeacherClassRecord(
-    schoolId, sessionId, termId, classId, subjectId,
+    schoolId,
+    sessionId,
+    termId,
+    classId,
+    subjectId,
   );
   const manual = await readInternalReviewedManualGradebook(
-    schoolId, sessionId, termId, classId, subjectId,
+    schoolId,
+    sessionId,
+    termId,
+    classId,
+    subjectId,
   );
-  if (manual.schoolId !== schoolId ||
-      manual.classId !== objective.classId ||
-      manual.sessionId !== objective.sessionId ||
-      manual.termId !== objective.termId ||
-      manual.subjectId !== objective.subjectId ||
-      objective.classId !== classId ||
-      objective.subjectId !== subjectId ||
-      objective.sessionId !== sessionId ||
-      objective.termId !== termId) {
+  if (
+    manual.schoolId !== schoolId ||
+    manual.classId !== objective.classId ||
+    manual.sessionId !== objective.sessionId ||
+    manual.termId !== objective.termId ||
+    manual.subjectId !== objective.subjectId ||
+    objective.classId !== classId ||
+    objective.subjectId !== subjectId ||
+    objective.sessionId !== sessionId ||
+    objective.termId !== termId
+  ) {
     throw new AssessmentError("CONFLICT");
   }
   try {
     return reconcileResultPreparation(
-      objective.students.map(s => ({
-        studentId: s.studentId, admissionNumber: s.admissionNumber,
-        givenName: s.givenName, familyName: s.familyName,
+      objective.students.map((s) => ({
+        studentId: s.studentId,
+        admissionNumber: s.admissionNumber,
+        givenName: s.givenName,
+        familyName: s.familyName,
         assessmentCount: s.assessments.length,
         unscoredCount: s.pendingAssessments,
       })),
-      manual.students.map(s => ({
-        studentId: s.studentId, admissionNumber: s.admissionNumber,
-        givenName: s.givenName, familyName: s.familyName,
+      manual.students.map((s) => ({
+        studentId: s.studentId,
+        admissionNumber: s.admissionNumber,
+        givenName: s.givenName,
+        familyName: s.familyName,
         componentCount: s.components.length,
         unapprovedCount: s.unapprovedComponents,
         pendingCorrections: s.pendingCorrections,

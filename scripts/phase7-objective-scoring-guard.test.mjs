@@ -1,17 +1,23 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-const read = path => readFileSync(new URL(path, import.meta.url), "utf8");
+const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const schema = read("../prisma/schema.prisma");
-const sql = read("../prisma/migrations/20261012320000_phase7_cbt_objective_scoring/migration.sql");
+const sql = read(
+  "../prisma/migrations/20261012320000_phase7_cbt_objective_scoring/migration.sql",
+);
 const svc = read("../src/modules/assessments/objective-score-service.ts");
 test("scoring audit is immutable, once per submitted school-bound attempt", () => {
   assert.match(schema, /model AssessmentAttemptScore \{/);
   assert.match(schema, /@@unique\(\[schoolId, attemptId\]\)/);
-  for (const name of ["AssessmentAttemptScore_attempt_fkey",
+  for (const name of [
+    "AssessmentAttemptScore_attempt_fkey",
     "AssessmentAttemptScore_scorer_fkey",
-    "AssessmentAttemptScore_validate", "AssessmentAttemptScore_immutable",
-    "AssessmentAttemptScore_no_truncate"]) assert.ok(sql.includes(name), name);
+    "AssessmentAttemptScore_validate",
+    "AssessmentAttemptScore_immutable",
+    "AssessmentAttemptScore_no_truncate",
+  ])
+    assert.ok(sql.includes(name), name);
 });
 test("keys are only joined within database-calculated objective score", () => {
   assert.match(sql, /JOIN "AssessmentQuestionKey" key/);

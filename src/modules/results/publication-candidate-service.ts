@@ -1,9 +1,16 @@
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/src/lib/db";
-import { AssessmentError, assessmentUserId } from "@/src/modules/assessments/question-service";
+import {
+  AssessmentError,
+  assessmentUserId,
+} from "@/src/modules/assessments/question-service";
 
-const identifier = z.string().min(1).max(128).refine(value => value.trim() === value);
+const identifier = z
+  .string()
+  .min(1)
+  .max(128)
+  .refine((value) => value.trim() === value);
 
 export interface InternalResultPublicationCandidate {
   evidenceId: string;
@@ -31,14 +38,20 @@ export interface InternalResultPublicationCandidate {
  * publication decision: the future server-side publication INSERT must
  * revalidate all of these invariants under a school row lock.
  */
-export async function listInternalResultPublicationCandidates(schoolId: string)
-: Promise<InternalResultPublicationCandidate[]> {
+export async function listInternalResultPublicationCandidates(
+  schoolId: string,
+): Promise<InternalResultPublicationCandidate[]> {
   if (!identifier.safeParse(schoolId).success)
     throw new AssessmentError("INVALID_INPUT");
   const userId = await assessmentUserId();
   const owner = await prisma.membership.findFirst({
-    where: { schoolId, userId, role: "SCHOOL_SUPER_ADMIN",
-      isActive: true, school: { isActive: true } },
+    where: {
+      schoolId,
+      userId,
+      role: "SCHOOL_SUPER_ADMIN",
+      isActive: true,
+      school: { isActive: true },
+    },
     select: { id: true },
   });
   if (!owner) throw new AssessmentError("NOT_FOUND");

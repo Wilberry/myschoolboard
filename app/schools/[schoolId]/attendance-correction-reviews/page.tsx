@@ -7,7 +7,9 @@ import { AttendanceCorrectionReviewEditor } from "@/src/components/attendance-co
 
 export default async function AttendanceCorrectionReviewPage({
   params,
-}: { params: Promise<{ schoolId: string }> }) {
+}: {
+  params: Promise<{ schoolId: string }>;
+}) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/");
   const { schoolId } = await params;
@@ -16,14 +18,23 @@ export default async function AttendanceCorrectionReviewPage({
   return (
     <main className="workspace">
       <header className="topbar">
-        <Link className="brand" href="/">MySchoolBoard</Link>
-        <Link className="secondary-link" href={`/schools/${schoolId}`}>Back to school</Link>
+        <Link className="brand" href="/">
+          MySchoolBoard
+        </Link>
+        <Link className="secondary-link" href={`/schools/${schoolId}`}>
+          Back to school
+        </Link>
       </header>
       <section className="workspace-content">
         <p className="eyebrow">SECTION REVIEW</p>
         <h1>Attendance correction reviews</h1>
-        <p className="lede">{access.schoolName} · {access.sectionNames.join(", ")}</p>
-        <p>Each correction is evaluated separately against the original approved mark and the requester’s explanation. Approvals are immutable.</p>
+        <p className="lede">
+          {access.schoolName} · {access.sectionNames.join(", ")}
+        </p>
+        <p>
+          Each correction is evaluated separately against the original approved
+          mark and the requester’s explanation. Approvals are immutable.
+        </p>
         <AttendanceCorrectionReviewEditor schoolId={schoolId} />
       </section>
     </main>

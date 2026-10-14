@@ -83,7 +83,9 @@ export async function readLessonReleaseQueue(schoolId: string) {
   `);
   // Unrelated actor must not receive an authorized empty queue.
   if (rows.length === 0) {
-    const allowed = await prisma.$queryRaw<Array<{ allowed: boolean }>>(Prisma.sql`
+    const allowed = await prisma.$queryRaw<
+      Array<{ allowed: boolean }>
+    >(Prisma.sql`
       SELECT true AS "allowed" FROM "School" school
       JOIN "Membership" reviewer ON reviewer."schoolId" = school."id"
         AND reviewer."userId" = ${actorUserId} AND reviewer."isActive" = true

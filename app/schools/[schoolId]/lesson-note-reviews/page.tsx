@@ -19,10 +19,12 @@ export default async function LessonReviewPage({
   try {
     notes = await readSubmittedLessonNotes(schoolId);
   } catch (error) {
-    if (error instanceof LessonNoteError &&
+    if (
+      error instanceof LessonNoteError &&
       (error.code === "FORBIDDEN" ||
-       error.code === "NOT_FOUND" ||
-       error.code === "INVALID_INPUT")) {
+        error.code === "NOT_FOUND" ||
+        error.code === "INVALID_INPUT")
+    ) {
       notFound();
     }
     throw error;
@@ -31,6 +33,9 @@ export default async function LessonReviewPage({
   const pending = notes.map((note) => ({
     id: note.id,
     topic: note.topic,
+    kind: note.kind,
+    weekStart: note.weekStart,
+    weekEnd: note.weekEnd,
     classId: note.classId,
     className: note.className,
     sectionName: note.sectionName,
@@ -57,7 +62,13 @@ export default async function LessonReviewPage({
           Review notes only for your verified primary or secondary section.
           Approval is not student publication.
         </p>
-        <LessonReviewWorkspace schoolId={schoolId} initialNotes={pending} />
+        <LessonReviewWorkspace
+          key={JSON.stringify(
+            pending.map(({ id, currentRevision }) => [id, currentRevision]),
+          )}
+          schoolId={schoolId}
+          initialNotes={pending}
+        />
       </section>
     </main>
   );

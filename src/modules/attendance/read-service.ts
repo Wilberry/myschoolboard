@@ -5,9 +5,14 @@ import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
 import { AttendanceError } from "./service";
 
-const identifier = z.string().min(1).max(128).refine(v => v.trim() === v);
+const identifier = z
+  .string()
+  .min(1)
+  .max(128)
+  .refine((v) => v.trim() === v);
 function validateId(value: string) {
-  if (!identifier.safeParse(value).success) throw new AttendanceError("INVALID_INPUT");
+  if (!identifier.safeParse(value).success)
+    throw new AttendanceError("INVALID_INPUT");
 }
 async function currentUser() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -133,7 +138,9 @@ export async function readPendingAttendanceReviews(
   const userId = await currentUser();
   // A reviewer with no currently verified in-school section is denied even
   // when the queue is empty. The main query still independently scopes rows.
-  const permitted = await prisma.$queryRaw<Array<{ allowed: boolean }>>(Prisma.sql`
+  const permitted = await prisma.$queryRaw<
+    Array<{ allowed: boolean }>
+  >(Prisma.sql`
     SELECT true AS "allowed" FROM "School" school
     JOIN "Membership" reviewer ON reviewer."schoolId" = school."id"
       AND reviewer."userId" = ${userId} AND reviewer."isActive" = true
@@ -212,8 +219,9 @@ export async function readPendingAttendanceReviews(
     LIMIT ${registerId ? 1 : 100}
   `);
   if (registerId && rows.length === 0) throw new AttendanceError("NOT_FOUND");
-  if (rows.some(row => row.entries.length > 500)) throw new AttendanceError("CONFLICT");
-  return rows.map(row => ({
+  if (rows.some((row) => row.entries.length > 500))
+    throw new AttendanceError("CONFLICT");
+  return rows.map((row) => ({
     ...row,
     attendanceDate: row.attendanceDate.toISOString().slice(0, 10),
     submittedAt: row.submittedAt.toISOString(),

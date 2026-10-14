@@ -67,7 +67,11 @@ async function create(cookie: string, body: unknown, schoolId = schoolA) {
   });
 }
 
-async function transfer(cookie: string, responsibilityId: string, body: unknown) {
+async function transfer(
+  cookie: string,
+  responsibilityId: string,
+  body: unknown,
+) {
   return handover(request(cookie, body), {
     params: Promise.resolve({ schoolId: schoolA, responsibilityId }),
   });
@@ -110,7 +114,12 @@ describe("Form Teacher administration and handover", () => {
     });
     await prisma.membership.createMany({
       data: [
-        { id: adminMember, schoolId: schoolA, userId: users[0], role: "SCHOOL_ADMIN" },
+        {
+          id: adminMember,
+          schoolId: schoolA,
+          userId: users[0],
+          role: "SCHOOL_ADMIN",
+        },
         { id: teacherA, schoolId: schoolA, userId: users[1], role: "TEACHER" },
         { id: teacherB, schoolId: schoolA, userId: users[2], role: "TEACHER" },
         { schoolId: schoolB, userId: users[3], role: "SCHOOL_ADMIN" },
@@ -158,12 +167,26 @@ describe("Form Teacher administration and handover", () => {
     expect((await create(teacherCookie, body)).status).toBe(404);
     expect((await create(foreignCookie, body)).status).toBe(404);
     expect((await create(adminCookie, body, schoolB)).status).toBe(404);
-    expect((await create(adminCookie, { ...body, classId: "foreign-class-id" })).status).toBe(404);
-    expect((await create(adminCookie, { ...body, teacherMembershipId: "foreign-membership-id" })).status).toBe(404);
-    expect((await create(adminCookie, { ...body, schoolId: schoolB })).status).toBe(400);
-    expect(await prisma.formTeacherEvent.count({
-      where: { schoolId: schoolA },
-    })).toBe(0);
+    expect(
+      (await create(adminCookie, { ...body, classId: "foreign-class-id" }))
+        .status,
+    ).toBe(404);
+    expect(
+      (
+        await create(adminCookie, {
+          ...body,
+          teacherMembershipId: "foreign-membership-id",
+        })
+      ).status,
+    ).toBe(404);
+    expect(
+      (await create(adminCookie, { ...body, schoolId: schoolB })).status,
+    ).toBe(400);
+    expect(
+      await prisma.formTeacherEvent.count({
+        where: { schoolId: schoolA },
+      }),
+    ).toBe(0);
   });
 
   it("assigns a primary and atomically hands over responsibility", async () => {
@@ -176,13 +199,17 @@ describe("Form Teacher administration and handover", () => {
     });
     expect(assigned.status).toBe(201);
     primaryId = (await assigned.json()).responsibility.id;
-    expect((await create(adminCookie, {
-      sessionId: sessionA,
-      classId: classA,
-      teacherMembershipId: teacherB,
-      kind: "PRIMARY",
-      reason: "Synthetic duplicate primary",
-    })).status).toBe(409);
+    expect(
+      (
+        await create(adminCookie, {
+          sessionId: sessionA,
+          classId: classA,
+          teacherMembershipId: teacherB,
+          kind: "PRIMARY",
+          reason: "Synthetic duplicate primary",
+        })
+      ).status,
+    ).toBe(409);
 
     const moved = await transfer(adminCookie, primaryId, {
       replacementMembershipId: teacherB,
@@ -203,10 +230,14 @@ describe("Form Teacher administration and handover", () => {
     });
     expect(old.status).toBe("ENDED");
     expect(old.endedAt).not.toBeNull();
-    expect((await transfer(adminCookie, primaryId, {
-      replacementMembershipId: teacherA,
-      reason: "Repeat handover attempt",
-    })).status).toBe(404);
+    expect(
+      (
+        await transfer(adminCookie, primaryId, {
+          replacementMembershipId: teacherA,
+          reason: "Repeat handover attempt",
+        })
+      ).status,
+    ).toBe(404);
 
     const events = await prisma.formTeacherEvent.findMany({
       where: { schoolId: schoolA },
@@ -217,7 +248,9 @@ describe("Form Teacher administration and handover", () => {
       "HANDOVER_OUT",
     ]);
     expect(events.every((event) => event.reason?.length)).toBe(true);
-    expect(events.every((event) => event.actorMembershipId === adminMember)).toBe(true);
+    expect(
+      events.every((event) => event.actorMembershipId === adminMember),
+    ).toBe(true);
   });
 
   it("requires explicit school configuration for co-responsibility", async () => {
@@ -247,11 +280,17 @@ describe("Form Teacher administration and handover", () => {
         kind: "PRIMARY",
       },
     });
-    expect((await end(adminCookie, primary.id, "Premature primary removal")).status)
-      .toBe(409);
-    expect((await end(foreignCookie, support.id, "Foreign staff removal")).status)
-      .toBe(404);
-    const ended = await end(adminCookie, support.id, "End support teaching period");
+    expect(
+      (await end(adminCookie, primary.id, "Premature primary removal")).status,
+    ).toBe(409);
+    expect(
+      (await end(foreignCookie, support.id, "Foreign staff removal")).status,
+    ).toBe(404);
+    const ended = await end(
+      adminCookie,
+      support.id,
+      "End support teaching period",
+    );
     expect(ended.status).toBe(200);
     expect((await ended.json()).responsibility.status).toBe("ENDED");
     expect((await changePolicy(adminCookie, false)).status).toBe(200);
@@ -270,16 +309,17 @@ describe("Form Teacher administration and handover", () => {
   });
 
   it("does not grant child access or subject teaching from a Form Teacher relation", async () => {
-    const activeFormTeacher = await prisma.formTeacherResponsibility.findFirstOrThrow({
-      where: {
-        schoolId: schoolA,
-        membershipId: teacherB,
-        sessionId: sessionA,
-        classId: classA,
-        kind: "PRIMARY",
-        status: "ACTIVE",
-      },
-    });
+    const activeFormTeacher =
+      await prisma.formTeacherResponsibility.findFirstOrThrow({
+        where: {
+          schoolId: schoolA,
+          membershipId: teacherB,
+          sessionId: sessionA,
+          classId: classA,
+          kind: "PRIMARY",
+          status: "ACTIVE",
+        },
+      });
     expect(activeFormTeacher.id).toBeTruthy();
     const before = await resolveSchoolPrincipal(secondUserId, schoolA);
     const request = {
@@ -289,10 +329,12 @@ describe("Form Teacher administration and handover", () => {
       sessionId: sessionA,
     };
     expect(authorize(before, "academic:edit", request).allowed).toBe(false);
-    expect(authorize(before, "child:read", {
-      schoolId: schoolA,
-      childUserId: "synthetic-private-child",
-    }).allowed).toBe(false);
+    expect(
+      authorize(before, "child:read", {
+        schoolId: schoolA,
+        childUserId: "synthetic-private-child",
+      }).allowed,
+    ).toBe(false);
 
     await prisma.teacherClassSubjectAssignment.create({
       data: {
@@ -312,13 +354,17 @@ describe("Form Teacher administration and handover", () => {
     const event = await prisma.formTeacherEvent.findFirstOrThrow({
       where: { schoolId: schoolA },
     });
-    await expect(prisma.formTeacherEvent.update({
-      where: { id: event.id },
-      data: { reason: "tampered" },
-    })).rejects.toThrow();
-    await expect(prisma.formTeacherEvent.delete({
-      where: { id: event.id },
-    })).rejects.toThrow();
+    await expect(
+      prisma.formTeacherEvent.update({
+        where: { id: event.id },
+        data: { reason: "tampered" },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.formTeacherEvent.delete({
+        where: { id: event.id },
+      }),
+    ).rejects.toThrow();
   });
 
   it("rejects new responsibilities after the academic session is closed", async () => {

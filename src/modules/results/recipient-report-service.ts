@@ -3,35 +3,56 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/src/lib/db";
 import {
-  AssessmentError, assessmentUserId,
+  AssessmentError,
+  assessmentUserId,
 } from "@/src/modules/assessments/question-service";
 import { reportGate } from "@/src/modules/results/report-publication-service";
 
-const id = z.string().min(1).max(128).refine(v => v === v.trim());
+const id = z
+  .string()
+  .min(1)
+  .max(128)
+  .refine((v) => v === v.trim());
 const bps = z.number().int().min(0).max(10000);
-const row = z.object({
-  studentId: id, admissionNumber: z.string().min(1),
-  recipientRole: z.enum(["STUDENT","PARENT"]),
-  givenName: z.string().min(1), familyName: z.string().min(1),
-  schoolName: z.string().min(1), sessionName: z.string().min(1),
-  termName: z.string().min(1), className: z.string().min(1),
-  subjectName: z.string().min(1),
-  sessionId: id, termId: id, classId: id, subjectId: id,
-  releaseId: id, releaseOrdinal: z.number().int().min(1),
-  policyMode: z.enum(["STUDENT_ONLY", "GUARDIAN_ONLY", "GUARDIAN_FIRST_ACK"]),
-  releasedAt: z.date(), rawPercentBps: bps,
-  displayPercent: z.string().regex(/^(?:100|[0-9]{1,2})(?:\.[0-9]{1,2})?$/),
-  gradeCode: z.string().min(1).max(100),
-  remark: z.string().min(1).max(500),
-  categoryPercentBps: z.object({
-    QUIZ: bps.nullable(), TEST: bps.nullable(), EXAM: bps.nullable(),
-  }).strict(),
-  guardianHasAcknowledged: z.boolean(),
-}).strict();
+const row = z
+  .object({
+    studentId: id,
+    admissionNumber: z.string().min(1),
+    recipientRole: z.enum(["STUDENT", "PARENT"]),
+    givenName: z.string().min(1),
+    familyName: z.string().min(1),
+    schoolName: z.string().min(1),
+    sessionName: z.string().min(1),
+    termName: z.string().min(1),
+    className: z.string().min(1),
+    subjectName: z.string().min(1),
+    sessionId: id,
+    termId: id,
+    classId: id,
+    subjectId: id,
+    releaseId: id,
+    releaseOrdinal: z.number().int().min(1),
+    policyMode: z.enum(["STUDENT_ONLY", "GUARDIAN_ONLY", "GUARDIAN_FIRST_ACK"]),
+    releasedAt: z.date(),
+    rawPercentBps: bps,
+    displayPercent: z.string().regex(/^(?:100|[0-9]{1,2})(?:\.[0-9]{1,2})?$/),
+    gradeCode: z.string().min(1).max(100),
+    remark: z.string().min(1).max(500),
+    categoryPercentBps: z
+      .object({
+        QUIZ: bps.nullable(),
+        TEST: bps.nullable(),
+        EXAM: bps.nullable(),
+      })
+      .strict(),
+    guardianHasAcknowledged: z.boolean(),
+  })
+  .strict();
 export type PublishedSubjectRow = z.infer<typeof row>;
 
 function validId(schoolId: string) {
-  if (!id.safeParse(schoolId).success) throw new AssessmentError("INVALID_INPUT");
+  if (!id.safeParse(schoolId).success)
+    throw new AssessmentError("INVALID_INPUT");
 }
 
 /**
@@ -47,8 +68,13 @@ export async function readCurrentPublishedReports(schoolId: string) {
   validId(schoolId);
   const userId = await assessmentUserId();
   const member = await prisma.membership.findFirst({
-    where: { schoolId, userId, isActive: true,
-      role: { in: ["STUDENT", "PARENT"] }, school: { isActive: true } },
+    where: {
+      schoolId,
+      userId,
+      isActive: true,
+      role: { in: ["STUDENT", "PARENT"] },
+      school: { isActive: true },
+    },
     select: { id: true },
   });
   if (!member) throw new AssessmentError("NOT_FOUND");
@@ -182,13 +208,18 @@ export async function readCurrentPublishedReports(schoolId: string) {
       release."classId",pupil."id",subject."name",release."releaseOrdinal" DESC
     LIMIT 101
   `);
-  if (rows.length>100) throw new AssessmentError("NOT_FOUND");
+  if (rows.length > 100) throw new AssessmentError("NOT_FOUND");
   const parsed = z.array(row).safeParse(rows);
   if (!parsed.success) throw new AssessmentError("NOT_FOUND");
   const seen = new Set<string>();
   for (const item of parsed.data) {
-    const key = [item.studentId,item.sessionId,item.termId,
-      item.classId,item.subjectId].join(":");
+    const key = [
+      item.studentId,
+      item.sessionId,
+      item.termId,
+      item.classId,
+      item.subjectId,
+    ].join(":");
     if (seen.has(key)) throw new AssessmentError("NOT_FOUND");
     seen.add(key);
   }
@@ -200,45 +231,68 @@ export async function readCurrentPublishedReports(schoolId: string) {
 
 /** Parent-first receipt for only one exact released child/subject version. */
 export async function acknowledgeGuardianReport(
-  schoolId: string, releaseId: string, studentId: string, input: unknown,
+  schoolId: string,
+  releaseId: string,
+  studentId: string,
+  input: unknown,
 ) {
   reportGate("recipient");
   validId(schoolId);
   if (!id.safeParse(releaseId).success || !id.safeParse(studentId).success)
     throw new AssessmentError("INVALID_INPUT");
-  const parsed = z.object({ acknowledge: z.literal(true) }).strict().safeParse(input);
+  const parsed = z
+    .object({ acknowledge: z.literal(true) })
+    .strict()
+    .safeParse(input);
   if (!parsed.success) throw new AssessmentError("INVALID_INPUT");
   const userId = await assessmentUserId();
   try {
-    return await prisma.$transaction(async tx => {
-      await tx.$queryRaw`SELECT "id" FROM "School" WHERE "id"=${schoolId}
+    return await prisma.$transaction(
+      async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "School" WHERE "id"=${schoolId}
         AND "isActive"=true FOR UPDATE`;
-      await tx.$queryRaw`SELECT "id" FROM "Membership"
+        await tx.$queryRaw`SELECT "id" FROM "Membership"
         WHERE "schoolId"=${schoolId} AND "userId"=${userId} FOR UPDATE`;
-      const member = await tx.membership.findFirst({
-        where: { schoolId, userId, isActive: true, role: "PARENT",
-          school: { isActive: true } }, select: { id: true },
-      });
-      if (!member) throw new AssessmentError("NOT_FOUND");
-      const link = await tx.guardianStudentLink.findFirst({
-        where: {
-          schoolId, studentId, guardianMembershipId: member.id,
-          revocation: null,
-          student: { status: "ENROLLED",
-            enrollments: { some: { schoolId, status: "ACTIVE" } } },
-        }, select: { id: true },
-      });
-      if (!link) throw new AssessmentError("NOT_FOUND");
-      return tx.reportGuardianAcknowledgment.create({
-        data: {
-          id: randomUUID(), schoolId, releaseId, studentId,
-          guardianLinkId: link.id,
-          guardianMembershipId: member.id,
-          actorUserId: userId,
-        },
-        select: { id: true, releaseId: true, acknowledgedAt: true },
-      });
-    }, { isolationLevel: "Serializable" });
+        const member = await tx.membership.findFirst({
+          where: {
+            schoolId,
+            userId,
+            isActive: true,
+            role: "PARENT",
+            school: { isActive: true },
+          },
+          select: { id: true },
+        });
+        if (!member) throw new AssessmentError("NOT_FOUND");
+        const link = await tx.guardianStudentLink.findFirst({
+          where: {
+            schoolId,
+            studentId,
+            guardianMembershipId: member.id,
+            revocation: null,
+            student: {
+              status: "ENROLLED",
+              enrollments: { some: { schoolId, status: "ACTIVE" } },
+            },
+          },
+          select: { id: true },
+        });
+        if (!link) throw new AssessmentError("NOT_FOUND");
+        return tx.reportGuardianAcknowledgment.create({
+          data: {
+            id: randomUUID(),
+            schoolId,
+            releaseId,
+            studentId,
+            guardianLinkId: link.id,
+            guardianMembershipId: member.id,
+            actorUserId: userId,
+          },
+          select: { id: true, releaseId: true, acknowledgedAt: true },
+        });
+      },
+      { isolationLevel: "Serializable" },
+    );
   } catch (error) {
     if (error instanceof AssessmentError) throw error;
     if (error && typeof error === "object" && "code" in error) {

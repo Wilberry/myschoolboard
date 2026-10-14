@@ -1,5 +1,8 @@
 import { readPrivateGradePreview } from "@/src/modules/results/private-grade-preview-service";
-import { manualError, manualHeaders } from "@/src/modules/assessments/manual-http";
+import {
+  manualError,
+  manualHeaders,
+} from "@/src/modules/assessments/manual-http";
 
 // Authenticated pupil grades must never be pre-rendered or ISR-cached.
 export const dynamic = "force-dynamic";
@@ -7,7 +10,7 @@ export const revalidate = 0;
 
 const previewHeaders = {
   ...manualHeaders,
-  "Pragma": "no-cache",
+  Pragma: "no-cache",
   "X-Robots-Tag": "noindex, noarchive, nosnippet",
   "Referrer-Policy": "no-referrer",
 };
@@ -21,13 +24,18 @@ export async function GET(
 ) {
   try {
     if (new URL(request.url).search) {
-      return Response.json({ error: "Invalid request" },
-        { status: 400, headers: previewHeaders });
+      return Response.json(
+        { error: "Invalid request" },
+        { status: 400, headers: previewHeaders },
+      );
     }
     const { schoolId, compositionId } = await params;
-    return Response.json({
-      preview: await readPrivateGradePreview(schoolId, compositionId),
-    }, { headers: previewHeaders });
+    return Response.json(
+      {
+        preview: await readPrivateGradePreview(schoolId, compositionId),
+      },
+      { headers: previewHeaders },
+    );
   } catch (error) {
     const response = manualError(error);
     for (const [name, value] of Object.entries(previewHeaders))

@@ -3,25 +3,36 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/src/lib/db";
 import {
-  AssessmentError, assessmentUserId, exactAssessmentTeacher,
+  AssessmentError,
+  assessmentUserId,
+  exactAssessmentTeacher,
 } from "@/src/modules/assessments/question-service";
 
-const id = z.string().min(1).max(128).refine(v => v.trim() === v);
-const prepareInput = z.object({
-  assignmentId: id, termId: id,
-  reason: z.string().trim().min(5).max(500),
-}).strict();
-const reviewInput = z.object({
-  action: z.enum(["APPROVED", "RETURNED"]),
-  reason: z.string().trim().min(5).max(500),
-}).strict();
+const id = z
+  .string()
+  .min(1)
+  .max(128)
+  .refine((v) => v.trim() === v);
+const prepareInput = z
+  .object({
+    assignmentId: id,
+    termId: id,
+    reason: z.string().trim().min(5).max(500),
+  })
+  .strict();
+const reviewInput = z
+  .object({
+    action: z.enum(["APPROVED", "RETURNED"]),
+    reason: z.string().trim().min(5).max(500),
+  })
+  .strict();
 function checkId(value: string) {
   if (!id.safeParse(value).success) throw new AssessmentError("INVALID_INPUT");
 }
 function fail(error: unknown): never {
   if (error instanceof AssessmentError) throw error;
   if (error && typeof error === "object" && "code" in error) {
-    if (["P2002","P2034","P2004","P2010"].includes(String(error.code)))
+    if (["P2002", "P2034", "P2004", "P2010"].includes(String(error.code)))
       throw new AssessmentError("CONFLICT");
     if (error.code === "P2003") throw new AssessmentError("NOT_FOUND");
   }
@@ -32,41 +43,71 @@ function fail(error: unknown): never {
  * Database trigger reconstructs every pupil/source mark from sealed, approved,
  * published scored CBT and independently reviewed written components. */
 export async function prepareInternalResultSheetEvidence(
-  schoolId: string, input: unknown,
+  schoolId: string,
+  input: unknown,
 ) {
   checkId(schoolId);
   const parsed = prepareInput.safeParse(input);
   if (!parsed.success) throw new AssessmentError("INVALID_INPUT");
   const userId = await assessmentUserId();
   try {
-    return await prisma.$transaction(async tx => {
-      const teacher = await exactAssessmentTeacher(
-        tx, schoolId, userId, parsed.data.assignmentId, parsed.data.termId,
-      );
-      const latest = await tx.resultGradingAdoption.findFirst({
-        where: { schoolId, sessionId: teacher.term.sessionId,
-          termId: teacher.term.id, classId: teacher.assignment.classId,
-          subjectId: teacher.assignment.subjectId },
-        orderBy: { ordinal: "desc" },
-        select: { id: true },
-      });
-      if (!latest) throw new AssessmentError("NOT_FOUND");
-      const evidence = await tx.resultSheetEvidence.create({
-        data: { id: randomUUID(), schoolId,
-          sessionId: teacher.term.sessionId, termId: teacher.term.id,
-          classId: teacher.assignment.classId,
-          subjectId: teacher.assignment.subjectId,
-          assignmentId: teacher.assignment.id,
-          teacherMembershipId: teacher.teacherId,
-          teacherUserId: userId, adoptionId: latest.id,
-          reason: parsed.data.reason },
-        select: { id: true, sessionId: true, termId: true, classId: true,
-          subjectId: true, revision: true, adoptionId: true,
-          studentCount: true, preparedAt: true },
-      });
-      return { ...evidence, status: "PREPARED_AWAITING_ACADEMIC_REVIEW" as const };
-    }, { isolationLevel: "Serializable" });
-  } catch (error) { fail(error); }
+    return await prisma.$transaction(
+      async (tx) => {
+        const teacher = await exactAssessmentTeacher(
+          tx,
+          schoolId,
+          userId,
+          parsed.data.assignmentId,
+          parsed.data.termId,
+        );
+        const latest = await tx.resultGradingAdoption.findFirst({
+          where: {
+            schoolId,
+            sessionId: teacher.term.sessionId,
+            termId: teacher.term.id,
+            classId: teacher.assignment.classId,
+            subjectId: teacher.assignment.subjectId,
+          },
+          orderBy: { ordinal: "desc" },
+          select: { id: true },
+        });
+        if (!latest) throw new AssessmentError("NOT_FOUND");
+        const evidence = await tx.resultSheetEvidence.create({
+          data: {
+            id: randomUUID(),
+            schoolId,
+            sessionId: teacher.term.sessionId,
+            termId: teacher.term.id,
+            classId: teacher.assignment.classId,
+            subjectId: teacher.assignment.subjectId,
+            assignmentId: teacher.assignment.id,
+            teacherMembershipId: teacher.teacherId,
+            teacherUserId: userId,
+            adoptionId: latest.id,
+            reason: parsed.data.reason,
+          },
+          select: {
+            id: true,
+            sessionId: true,
+            termId: true,
+            classId: true,
+            subjectId: true,
+            revision: true,
+            adoptionId: true,
+            studentCount: true,
+            preparedAt: true,
+          },
+        });
+        return {
+          ...evidence,
+          status: "PREPARED_AWAITING_ACADEMIC_REVIEW" as const,
+        };
+      },
+      { isolationLevel: "Serializable" },
+    );
+  } catch (error) {
+    fail(error);
+  }
 }
 
 /** Teacher sees only their own active assignment metadata, not another
@@ -75,16 +116,30 @@ export async function listOwnResultSheetEvidence(schoolId: string) {
   checkId(schoolId);
   const userId = await assessmentUserId();
   const allowed = await prisma.membership.findFirst({
-    where: { schoolId, userId, role: "TEACHER", isActive: true,
-      school: { isActive: true } },
+    where: {
+      schoolId,
+      userId,
+      role: "TEACHER",
+      isActive: true,
+      school: { isActive: true },
+    },
     select: { id: true },
   });
   if (!allowed) throw new AssessmentError("NOT_FOUND");
-  return prisma.$queryRaw<Array<{
-    id: string; classId: string; subjectId: string; termId: string;
-    revision: number; studentCount: number; adoptionId: string;
-    reason: string; preparedAt: Date; reviewAction: string | null;
-  }>>(Prisma.sql`
+  return prisma.$queryRaw<
+    Array<{
+      id: string;
+      classId: string;
+      subjectId: string;
+      termId: string;
+      revision: number;
+      studentCount: number;
+      adoptionId: string;
+      reason: string;
+      preparedAt: Date;
+      reviewAction: string | null;
+    }>
+  >(Prisma.sql`
     SELECT evidence."id", evidence."classId", evidence."subjectId",
       evidence."termId", evidence."revision", evidence."studentCount",
       evidence."adoptionId", evidence."reason", evidence."preparedAt",
@@ -125,15 +180,22 @@ export async function listOwnResultSheetEvidence(schoolId: string) {
 }
 
 export interface ResultReviewQueueRow {
-  id: string; className: string; subjectName: string;
-  sectionName: string; termId: string; revision: number;
-  studentCount: number; reason: string; preparedAt: Date;
+  id: string;
+  className: string;
+  subjectName: string;
+  sectionName: string;
+  termId: string;
+  revision: number;
+  studentCount: number;
+  reason: string;
+  preparedAt: Date;
   sourceManifest: unknown;
 }
 /** Private verified-section reviewer queue. Final SELECT binds each scope
  * to that school's actual class section and current source teacher. */
-export async function listResultSheetAcademicReviewQueue(schoolId: string)
-: Promise<ResultReviewQueueRow[]> {
+export async function listResultSheetAcademicReviewQueue(
+  schoolId: string,
+): Promise<ResultReviewQueueRow[]> {
   checkId(schoolId);
   const reviewerId = await assessmentUserId();
   const allowed = await prisma.$queryRaw<Array<{ ok: boolean }>>(Prisma.sql`
@@ -201,20 +263,24 @@ export async function listResultSheetAcademicReviewQueue(schoolId: string)
 /** Separate independent reviewer decision. SQL verifies current data
  * freshness and latest adopted policy; a stale sheet cannot be approved. */
 export async function decideResultSheetAcademicReview(
-  schoolId: string, evidenceId: string, input: unknown,
+  schoolId: string,
+  evidenceId: string,
+  input: unknown,
 ) {
-  checkId(schoolId); checkId(evidenceId);
+  checkId(schoolId);
+  checkId(evidenceId);
   const parsed = reviewInput.safeParse(input);
   if (!parsed.success) throw new AssessmentError("INVALID_INPUT");
   const userId = await assessmentUserId();
   try {
-    return await prisma.$transaction(async tx => {
-      await tx.$queryRaw`SELECT "id" FROM "School"
+    return await prisma.$transaction(
+      async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "School"
         WHERE "id"=${schoolId} AND "isActive"=true FOR UPDATE`;
-      // The eligibility SELECT must match actual class->section and verified
-      // reviewer grant; the INSERT trigger repeats every check and also
-      // compares the frozen source, latest adoption and revision under lock.
-      const reviewers = await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        // The eligibility SELECT must match actual class->section and verified
+        // reviewer grant; the INSERT trigger repeats every check and also
+        // compares the frozen source, latest adoption and revision under lock.
+        const reviewers = await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`
         SELECT reviewer."id" FROM "ResultSheetEvidence" evidence
         JOIN "School" school ON school."id"=evidence."schoolId"
           AND school."isActive"=true
@@ -235,15 +301,30 @@ export async function decideResultSheetAcademicReview(
             OR (reviewer."role"='PRINCIPAL' AND section."stage"='SECONDARY'))
         LIMIT 1
       `);
-      const reviewer = reviewers[0];
-      if (!reviewer) throw new AssessmentError("NOT_FOUND");
-      return tx.resultSheetReview.create({
-        data: { id: randomUUID(), schoolId, evidenceId,
-          reviewerMembershipId: reviewer.id, reviewerUserId: userId,
-          action: parsed.data.action, reason: parsed.data.reason },
-        select: { id: true, evidenceId: true, action: true,
-          reason: true, reviewedAt: true },
-      });
-    }, { isolationLevel: "Serializable" });
-  } catch (error) { fail(error); }
+        const reviewer = reviewers[0];
+        if (!reviewer) throw new AssessmentError("NOT_FOUND");
+        return tx.resultSheetReview.create({
+          data: {
+            id: randomUUID(),
+            schoolId,
+            evidenceId,
+            reviewerMembershipId: reviewer.id,
+            reviewerUserId: userId,
+            action: parsed.data.action,
+            reason: parsed.data.reason,
+          },
+          select: {
+            id: true,
+            evidenceId: true,
+            action: true,
+            reason: true,
+            reviewedAt: true,
+          },
+        });
+      },
+      { isolationLevel: "Serializable" },
+    );
+  } catch (error) {
+    fail(error);
+  }
 }

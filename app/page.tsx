@@ -118,7 +118,10 @@ async function HomeContent() {
                     </Link>
                   )}
                   {canShowSchoolDetailLink(session.user.id, school.id, role) ? (
-                    <Link href={`/schools/${school.id}`} className="school-link">
+                    <Link
+                      href={`/schools/${school.id}`}
+                      className="school-link"
+                    >
                       View details
                     </Link>
                   ) : (

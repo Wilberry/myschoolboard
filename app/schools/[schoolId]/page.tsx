@@ -62,7 +62,10 @@ async function SchoolDetailContent({
 
         {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/report-publication`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/report-publication`}
+              className="secondary-link"
+            >
               Adopt report visibility and independently authorize result release
             </Link>
           </p>
@@ -70,7 +73,10 @@ async function SchoolDetailContent({
         {(access.principal.membership?.role === "SCHOOL_ADMIN" ||
           access.principal.membership?.role === "SCHOOL_SUPER_ADMIN") && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/guardian-links`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/guardian-links`}
+              className="secondary-link"
+            >
               Verify parent and guardian pupil relationships
             </Link>
           </p>
@@ -78,161 +84,233 @@ async function SchoolDetailContent({
         {(access.principal.membership?.role === "STUDENT" ||
           access.principal.membership?.role === "PARENT") && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/published-reports`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/published-reports`}
+              className="secondary-link"
+            >
               My school-authorized published subject reports
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/private-report-compositions`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/private-report-compositions`}
+              className="secondary-link"
+            >
               Private official report evidence (not released)
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/report-aggregation-rules`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/report-aggregation-rules`}
+              className="secondary-link"
+            >
               Adopt report aggregation rule (no grade release)
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/report-grade-scales`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/report-grade-scales`}
+              className="secondary-link"
+            >
               Adopt school report grade bands (not published)
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/report-card-sources`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/report-card-sources`}
+              className="secondary-link"
+            >
               Private report-card source packets (not graded or released)
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/result-final-approvals`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/result-final-approvals`}
+              className="secondary-link"
+            >
               Final school result approval ledger (release disabled)
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/result-publication-preflight`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/result-publication-preflight`}
+              className="secondary-link"
+            >
               Inspect independently reviewed result evidence (not published)
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/result-grading-adoptions`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/result-grading-adoptions`}
+              className="secondary-link"
+            >
               Adopt grading policy revision (Phase 8 development)
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/assessment-grading-policies`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/assessment-grading-policies`}
+              className="secondary-link"
+            >
               Grading policy drafts (development)
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/assessment-publications`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/assessment-publications`}
+              className="secondary-link"
+            >
               Assessment publication ledger (development)
             </Link>
           </p>
         )}
-        {authorize(access.principal, "school:configure", { schoolId }).allowed && (
+        {authorize(access.principal, "school:configure", { schoolId })
+          .allowed && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/setup`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/setup`}
+              className="secondary-link"
+            >
               Configure academic structure
             </Link>
           </p>
         )}
-        {authorize(access.principal, "school:configure", { schoolId }).allowed && (
+        {authorize(access.principal, "school:configure", { schoolId })
+          .allowed && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/students`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/students`}
+              className="secondary-link"
+            >
               Manage students and enrollment
             </Link>
           </p>
         )}
-        {authorize(access.principal, "school:configure", { schoolId }).allowed && (
+        {authorize(access.principal, "school:configure", { schoolId })
+          .allowed && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/student-links`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/student-links`}
+              className="secondary-link"
+            >
               Verify student account identity
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "STUDENT" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/my-lessons`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/my-lessons`}
+              className="secondary-link"
+            >
               My released lessons and schemes of work
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "TEACHER" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/result-sheet-evidence`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/result-sheet-evidence`}
+              className="secondary-link"
+            >
               Prepare frozen result evidence (Phase 8 development)
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "TEACHER" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/result-preparation`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/result-preparation`}
+              className="secondary-link"
+            >
               Result preparation readiness (Phase 8 development)
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "TEACHER" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/assessment-reviewed-manual-gradebook`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/assessment-reviewed-manual-gradebook`}
+              className="secondary-link"
+            >
               Reviewed manual gradebook (private academic preview)
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "TEACHER" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/assessment-manual-corrections`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/assessment-manual-corrections`}
+              className="secondary-link"
+            >
               Request corrections to approved written marks (development)
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "TEACHER" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/assessment-manual-marks`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/assessment-manual-marks`}
+              className="secondary-link"
+            >
               Written assessment mark proposals (development)
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "TEACHER" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/assessment-marking`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/assessment-marking`}
+              className="secondary-link"
+            >
               Mark submitted objective assessments (development)
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "TEACHER" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/assessment-class-records`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/assessment-class-records`}
+              className="secondary-link"
+            >
               Provisional class record sheets (development)
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "TEACHER" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/assessment-drafts`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/assessment-drafts`}
+              className="secondary-link"
+            >
               Configure assessment drafts (development)
             </Link>
           </p>
         )}
         {access.principal.membership?.role === "TEACHER" && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/assessment-questions`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/assessment-questions`}
+              className="secondary-link"
+            >
               My assessment question bank (development)
             </Link>
           </p>
@@ -240,7 +318,10 @@ async function SchoolDetailContent({
         {(access.principal.membership?.role === "TEACHER" ||
           access.principal.membership?.role === "FORM_TEACHER") && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/attendance`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/attendance`}
+              className="secondary-link"
+            >
               Take class attendance (Form Teacher)
             </Link>
           </p>
@@ -248,63 +329,90 @@ async function SchoolDetailContent({
         {(access.principal.membership?.role === "FORM_TEACHER" ||
           access.principal.membership?.role === "TEACHER") && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/attendance-corrections`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/attendance-corrections`}
+              className="secondary-link"
+            >
               Request attendance correction
             </Link>
           </p>
         )}
         {canReviewLessonNotes && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/result-sheet-reviews`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/result-sheet-reviews`}
+              className="secondary-link"
+            >
               Review prepared result evidence (Phase 8 development)
             </Link>
           </p>
         )}
         {canReviewLessonNotes && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/assessment-manual-correction-reviews`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/assessment-manual-correction-reviews`}
+              className="secondary-link"
+            >
               Review written mark corrections (development)
             </Link>
           </p>
         )}
         {canReviewLessonNotes && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/assessment-manual-reviews`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/assessment-manual-reviews`}
+              className="secondary-link"
+            >
               Review initial manual assessment marks (development)
             </Link>
           </p>
         )}
         {canReviewLessonNotes && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/assessment-reviews`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/assessment-reviews`}
+              className="secondary-link"
+            >
               Review assessment configurations (development)
             </Link>
           </p>
         )}
         {canReviewLessonNotes && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/lesson-releases`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/lesson-releases`}
+              className="secondary-link"
+            >
               Manage approved lesson releases
             </Link>
           </p>
         )}
         {canReviewLessonNotes && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/attendance-correction-reviews`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/attendance-correction-reviews`}
+              className="secondary-link"
+            >
               Review attendance corrections
             </Link>
           </p>
         )}
         {canReviewLessonNotes && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/attendance-reviews`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/attendance-reviews`}
+              className="secondary-link"
+            >
               Review section attendance
             </Link>
           </p>
         )}
         {canReviewLessonNotes && (
           <p className="setup-navigation">
-            <Link href={`/schools/${schoolId}/lesson-note-reviews`} className="secondary-link">
+            <Link
+              href={`/schools/${schoolId}/lesson-note-reviews`}
+              className="secondary-link"
+            >
               Review submitted lesson notes
             </Link>
           </p>

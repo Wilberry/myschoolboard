@@ -43,15 +43,21 @@ function nonnegative(value: number): boolean {
   return Number.isSafeInteger(value) && value >= 0;
 }
 function sameStudent(a: PreparedSourceStudent, b: PreparedSourceStudent) {
-  return a.studentId === b.studentId &&
+  return (
+    a.studentId === b.studentId &&
     a.admissionNumber === b.admissionNumber &&
-    a.givenName === b.givenName && a.familyName === b.familyName;
+    a.givenName === b.givenName &&
+    a.familyName === b.familyName
+  );
 }
 function validateIdentity(value: PreparedSourceStudent) {
-  return typeof value.studentId === "string" && value.studentId.length > 0 &&
+  return (
+    typeof value.studentId === "string" &&
+    value.studentId.length > 0 &&
     typeof value.admissionNumber === "string" &&
     typeof value.givenName === "string" &&
-    typeof value.familyName === "string";
+    typeof value.familyName === "string"
+  );
 }
 /** Fail closed on an exact active roster mismatch or duplicate, rather than
  * joining different pupils on display names/admission number alone.
@@ -62,18 +68,24 @@ export function reconcileResultPreparation(
   manual: readonly ManualPreparationStudent[],
   gradingPolicyVersion: number | null,
 ): SourceReadiness {
-  if (objectives.length > 500 || manual.length > 500 ||
+  if (
+    objectives.length > 500 ||
+    manual.length > 500 ||
     (gradingPolicyVersion !== null &&
-      (!Number.isSafeInteger(gradingPolicyVersion) || gradingPolicyVersion < 1))) {
+      (!Number.isSafeInteger(gradingPolicyVersion) || gradingPolicyVersion < 1))
+  ) {
     throw new Error("Invalid result preparation breadth or revision");
   }
   const manualById = new Map<string, ManualPreparationStudent>();
   for (const record of manual) {
-    if (!validateIdentity(record) || !nonnegative(record.componentCount) ||
+    if (
+      !validateIdentity(record) ||
+      !nonnegative(record.componentCount) ||
       !nonnegative(record.unapprovedCount) ||
       !nonnegative(record.pendingCorrections) ||
       record.unapprovedCount > record.componentCount ||
-      manualById.has(record.studentId)) {
+      manualById.has(record.studentId)
+    ) {
       throw new Error("Invalid or ambiguous manual source roster");
     }
     manualById.set(record.studentId, record);
@@ -82,21 +94,28 @@ export function reconcileResultPreparation(
   const students: SourceReadinessStudent[] = [];
   for (const objective of objectives) {
     const counterpart = manualById.get(objective.studentId);
-    if (!validateIdentity(objective) || seen.has(objective.studentId) ||
-      !counterpart || !sameStudent(objective, counterpart) ||
+    if (
+      !validateIdentity(objective) ||
+      seen.has(objective.studentId) ||
+      !counterpart ||
+      !sameStudent(objective, counterpart) ||
       !nonnegative(objective.assessmentCount) ||
       !nonnegative(objective.unscoredCount) ||
-      objective.unscoredCount > objective.assessmentCount) {
+      objective.unscoredCount > objective.assessmentCount
+    ) {
       throw new Error("Result sources disagree on exact active pupil roster");
     }
     seen.add(objective.studentId);
     const blockers: PreparationBlocker[] = [];
     if (objective.assessmentCount + counterpart.componentCount === 0)
       blockers.push("NO_ASSESSMENT_SOURCE");
-    if (objective.unscoredCount > 0)
-      blockers.push("OBJECTIVE_SCORING_PENDING");
-    if (counterpart.unapprovedCount > 0 || !counterpart.academicallyComplete &&
-      counterpart.componentCount > 0 && counterpart.pendingCorrections === 0)
+    if (objective.unscoredCount > 0) blockers.push("OBJECTIVE_SCORING_PENDING");
+    if (
+      counterpart.unapprovedCount > 0 ||
+      (!counterpart.academicallyComplete &&
+        counterpart.componentCount > 0 &&
+        counterpart.pendingCorrections === 0)
+    )
       blockers.push("MANUAL_REVIEW_PENDING");
     if (counterpart.pendingCorrections > 0)
       blockers.push("MANUAL_CORRECTION_PENDING");
@@ -114,8 +133,10 @@ export function reconcileResultPreparation(
       unapprovedManualComponents: counterpart.unapprovedCount,
       pendingManualCorrections: counterpart.pendingCorrections,
       blockers,
-      status: blockers.length > 1 ? "NEEDS_SOURCE_WORK"
-        : "SOURCES_RECONCILED_NOT_APPROVED",
+      status:
+        blockers.length > 1
+          ? "NEEDS_SOURCE_WORK"
+          : "SOURCES_RECONCILED_NOT_APPROVED",
     });
   }
   if (seen.size !== manualById.size)
@@ -124,7 +145,8 @@ export function reconcileResultPreparation(
     status: "PRIVATE_PREPARATION_ONLY",
     gradingPolicyVersion,
     studentCount: students.length,
-    blockedCount: students.filter(s => s.status === "NEEDS_SOURCE_WORK").length,
+    blockedCount: students.filter((s) => s.status === "NEEDS_SOURCE_WORK")
+      .length,
     students,
   };
 }

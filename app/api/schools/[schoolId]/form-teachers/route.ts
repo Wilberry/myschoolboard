@@ -1,6 +1,4 @@
-import {
-  handleAssignFormTeacher,
-} from "@/src/modules/form-teachers/http";
+import { handleAssignFormTeacher } from "@/src/modules/form-teachers/http";
 
 export async function POST(
   request: Request,

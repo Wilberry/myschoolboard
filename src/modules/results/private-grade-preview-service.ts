@@ -1,29 +1,42 @@
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/src/lib/db";
-import { AssessmentError, assessmentUserId } from "@/src/modules/assessments/question-service";
+import {
+  AssessmentError,
+  assessmentUserId,
+} from "@/src/modules/assessments/question-service";
 
-const id = z.string().min(1).max(128).refine(value => value.trim() === value);
+const id = z
+  .string()
+  .min(1)
+  .max(128)
+  .refine((value) => value.trim() === value);
 const bps = z.number().int().min(0).max(10000);
-const previewRow = z.object({
-  compositionId: id,
-  sourcePacketId: id,
-  evidenceRevision: z.number().int().min(1),
-  aggregationRuleVersion: z.number().int().min(1),
-  gradeScaleVersion: z.number().int().min(1),
-  studentCount: z.number().int().min(1).max(500),
-  studentId: id,
-  admissionNumber: z.string().min(1),
-  givenName: z.string().min(1),
-  familyName: z.string().min(1),
-  rawPercentBps: bps,
-  displayPercent: z.string().regex(/^(?:100|[0-9]{1,2})(?:\.[0-9]{1,2})?$/),
-  gradeCode: z.string().min(1).max(100),
-  remark: z.string().min(1).max(500),
-  categoryPercentBps: z.object({
-    QUIZ: bps.nullable(), TEST: bps.nullable(), EXAM: bps.nullable(),
-  }).strict(),
-}).strict();
+const previewRow = z
+  .object({
+    compositionId: id,
+    sourcePacketId: id,
+    evidenceRevision: z.number().int().min(1),
+    aggregationRuleVersion: z.number().int().min(1),
+    gradeScaleVersion: z.number().int().min(1),
+    studentCount: z.number().int().min(1).max(500),
+    studentId: id,
+    admissionNumber: z.string().min(1),
+    givenName: z.string().min(1),
+    familyName: z.string().min(1),
+    rawPercentBps: bps,
+    displayPercent: z.string().regex(/^(?:100|[0-9]{1,2})(?:\.[0-9]{1,2})?$/),
+    gradeCode: z.string().min(1).max(100),
+    remark: z.string().min(1).max(500),
+    categoryPercentBps: z
+      .object({
+        QUIZ: bps.nullable(),
+        TEST: bps.nullable(),
+        EXAM: bps.nullable(),
+      })
+      .strict(),
+  })
+  .strict();
 
 export type PrivateGradePreviewRow = z.infer<typeof previewRow>;
 
@@ -37,7 +50,10 @@ export type PrivateGradePreviewRow = z.infer<typeof previewRow>;
  * return either private JSONB packet, raw marks, or answer keys.
  * Never infer a guardian/student link from names, emails or admission numbers.
  */
-export async function readPrivateGradePreview(schoolId: string, compositionId: string) {
+export async function readPrivateGradePreview(
+  schoolId: string,
+  compositionId: string,
+) {
   if (!id.safeParse(schoolId).success || !id.safeParse(compositionId).success)
     throw new AssessmentError("INVALID_INPUT");
   const userId = await assessmentUserId();
@@ -81,33 +97,61 @@ export async function readPrivateGradePreview(schoolId: string, compositionId: s
   `);
   // If any student record is missing, a JSON row is malformed, or the
   // composition count is inconsistent, reveal no partial class report.
-  if (!rows.length || rows.length > 500)
-    throw new AssessmentError("NOT_FOUND");
+  if (!rows.length || rows.length > 500) throw new AssessmentError("NOT_FOUND");
   const parsed = z.array(previewRow).safeParse(rows);
   if (!parsed.success || parsed.data.length !== parsed.data[0].studentCount)
     throw new AssessmentError("NOT_FOUND");
   const seen = new Set<string>();
   for (const row of parsed.data) {
-    if (row.compositionId !== compositionId ||
+    if (
+      row.compositionId !== compositionId ||
       row.sourcePacketId !== parsed.data[0].sourcePacketId ||
       row.evidenceRevision !== parsed.data[0].evidenceRevision ||
       row.aggregationRuleVersion !== parsed.data[0].aggregationRuleVersion ||
       row.gradeScaleVersion !== parsed.data[0].gradeScaleVersion ||
       row.studentCount !== parsed.data[0].studentCount ||
-      seen.has(row.studentId)) throw new AssessmentError("NOT_FOUND");
+      seen.has(row.studentId)
+    )
+      throw new AssessmentError("NOT_FOUND");
     seen.add(row.studentId);
   }
-  const { sourcePacketId, evidenceRevision, aggregationRuleVersion,
-    gradeScaleVersion, studentCount } = parsed.data[0];
+  const {
+    sourcePacketId,
+    evidenceRevision,
+    aggregationRuleVersion,
+    gradeScaleVersion,
+    studentCount,
+  } = parsed.data[0];
   return {
-    compositionId, sourcePacketId, evidenceRevision, aggregationRuleVersion,
-    gradeScaleVersion, studentCount,
+    compositionId,
+    sourcePacketId,
+    evidenceRevision,
+    aggregationRuleVersion,
+    gradeScaleVersion,
+    studentCount,
     status: "PRIVATE_GRADE_PREVIEW_NOT_RELEASED" as const,
-    students: parsed.data.map(({ studentId, admissionNumber, givenName,
-      familyName, rawPercentBps, displayPercent, gradeCode, remark,
-      categoryPercentBps }) => ({
-      studentId, admissionNumber, givenName, familyName, rawPercentBps,
-      displayPercent, gradeCode, remark, categoryPercentBps,
-    })),
+    students: parsed.data.map(
+      ({
+        studentId,
+        admissionNumber,
+        givenName,
+        familyName,
+        rawPercentBps,
+        displayPercent,
+        gradeCode,
+        remark,
+        categoryPercentBps,
+      }) => ({
+        studentId,
+        admissionNumber,
+        givenName,
+        familyName,
+        rawPercentBps,
+        displayPercent,
+        gradeCode,
+        remark,
+        categoryPercentBps,
+      }),
+    ),
   };
 }

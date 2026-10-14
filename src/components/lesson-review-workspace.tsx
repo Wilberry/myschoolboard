@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
 interface ReviewSummary {
   id: string;
@@ -43,10 +43,6 @@ export function LessonReviewWorkspace({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const base = `/api/schools/${encodeURIComponent(schoolId)}/lesson-note-reviews`;
-
-  useEffect(() => {
-    setNotes(initialNotes);
-  }, [initialNotes]);
 
   function errorMessage(status: number) {
     return status === 409
@@ -103,7 +99,8 @@ export function LessonReviewWorkspace({
           ? "Approve this exact revision? Approval does not publish to students."
           : "Return this exact revision to its teacher for further work?",
       )
-    ) return;
+    )
+      return;
 
     setPending(true);
     setError(null);
@@ -150,15 +147,34 @@ export function LessonReviewWorkspace({
 
   return (
     <div className="setup-workspace lesson-review-workspace">
-      {error && <p className="form-error" role="alert">{error}</p>}
-      {success && <p className="setup-success" role="status">{success}</p>}
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
+      {success && (
+        <p className="setup-success" role="status">
+          {success}
+        </p>
+      )}
       <section className="setup-panel" aria-labelledby="pending-review-title">
         <h2 id="pending-review-title">Pending section reviews</h2>
-        <p>Only submitted notes for your current verified section grant are listed.</p>
+        <p>
+          Only submitted notes for your current verified section grant are
+          listed.
+        </p>
         <ul className="setup-records">
           {notes.map((note) => (
             <li key={note.id}>
-              <strong>{note.kind === "SCHEME_OF_WORK" ? "Scheme of work" : "Lesson note"}: {note.topic}{note.weekStart ? ` (weeks ${note.weekStart}–${note.weekEnd})` : ""}</strong>
+              <strong>
+                {note.kind === "SCHEME_OF_WORK"
+                  ? "Scheme of work"
+                  : "Lesson note"}
+                : {note.topic}
+                {note.weekStart
+                  ? ` (weeks ${note.weekStart}–${note.weekEnd})`
+                  : ""}
+              </strong>
               <span>
                 {note.sectionName} · {note.className} · {note.subjectName}
               </span>
@@ -175,12 +191,17 @@ export function LessonReviewWorkspace({
               </button>
             </li>
           ))}
-          {notes.length === 0 && <li>No submitted notes awaiting your review.</li>}
+          {notes.length === 0 && (
+            <li>No submitted notes awaiting your review.</li>
+          )}
         </ul>
       </section>
 
       {active && (
-        <section className="setup-panel lesson-review-detail" aria-labelledby="review-note-title">
+        <section
+          className="setup-panel lesson-review-detail"
+          aria-labelledby="review-note-title"
+        >
           <h2 id="review-note-title">{active.topic}</h2>
           <p>
             {active.sectionName} · {active.className} · {active.subjectName}
@@ -189,8 +210,12 @@ export function LessonReviewWorkspace({
           <ol className="lesson-revisions">
             {active.revisions.map((revision) => (
               <li key={revision.revisionNumber}>
-                <strong>Revision {revision.revisionNumber} · {revision.topic}</strong>
-                <p><strong>Objectives:</strong> {revision.objectives}</p>
+                <strong>
+                  Revision {revision.revisionNumber} · {revision.topic}
+                </strong>
+                <p>
+                  <strong>Objectives:</strong> {revision.objectives}
+                </p>
                 <p className="lesson-revision-content">{revision.content}</p>
               </li>
             ))}
@@ -232,8 +257,9 @@ export function LessonReviewWorkspace({
         </section>
       )}
       <p className="workspace-note">
-        Review requires your current verified school section and the latest submitted
-        revision. Approval is not publication and does not make notes visible to students.
+        Review requires your current verified school section and the latest
+        submitted revision. Approval is not publication and does not make notes
+        visible to students.
       </p>
     </div>
   );

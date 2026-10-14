@@ -70,3 +70,26 @@ The user-provided local verification report used a **real isolated** `verify/pha
 3. An isolated in-memory replay of the two affected Node guard files with freshly fetched source/migration inputs now passes **8/8 assertions**. A static scan of all 67 Prisma models found **no other reverse one-to-one relation missing an exact composite unique**. This source replay does **not** establish that actual `npm run db:generate`, Node `--test`, ESLint, Prettier, TypeScript or PostgreSQL succeeds locally.
 
 **Next execution:** In the clean isolated `myschoolboard-phase8` worktree only, `git fetch origin feature/phase8-owner-private-grade-preview` and `git merge --ff-only FETCH_HEAD`; then run `DATABASE_URL=<synthetic localhost:5434 URL> npm run db:generate`, `npm run verify:local:guards`, and `npm run typecheck`. Collect **actual** Prisma/TypeScript/ESLint and `npm audit --audit-level=high` diagnostics for exact fixes. Format only narrowly changed code or record the whole 270-file existing baseline separately; do not mask gates or rewrite huge migration files without verifying checksum implications. Keep disclosure flags OFF and do not launch GitHub Actions.
+
+## 2026-10-14 isolated post-fix verification follow-up
+
+**Worktree/commit:** `/home/wilberry/Desktop/project/myschoolboard-phase8`, branch `verify/phase8-local`, fast-forwarded only to `308c23a` (`feature/phase8-owner-private-grade-preview`). No migration was added by this follow-up or applied to a database. No commit or GitHub Action was created. The original Phase 1 worktree is restored to its recorded pre-update commit `2c7c6b9`; its 10 existing untracked paths remain present.
+
+**Requirements:** RES-REQ-001 remains authored/unverified and publication remains disabled. Narrow type-safety and lint corrections also touch Phase 6/7 LES-REQ-001 and ASM-REQ-001 implementation surfaces; no requirement status or authorization was changed.
+
+**Files/modules:** Repository-wide Prettier formatting updated 270 tracked files after `format:check` identified 270 files. Focused follow-up changes fix lesson-review projection types, guarded Prisma error metadata, typed lesson-note revision parsing, target-compatible BigInt construction in private report simulation, React effect/state synchronization, JSX apostrophe lint, and unused imports/test bindings. Formatting changed the source shape expected by several structural guards, so those assertions were updated to match whitespace-independent source while retaining their specific authorization, tenant, no-publication and projection assertions; `scripts/source-text.mjs` supplies the shared whitespace normalization. No business policy, role, result visibility, tenant scope or publication flag changed.
+
+**Tests/validation actually executed on the Phase 8 worktree:**
+
+- `DATABASE_URL=<synthetic loopback URL> npm run db:generate`: passed; Prisma Client v6.19.3 generated successfully. This does not connect to PostgreSQL or apply migrations.
+- `npm run verify:local:guards`: passed, **105/105** Node guard tests.
+- `NODE_ENV=test TEST_DATABASE_DISPOSABLE=1 TEST_DATABASE_URL=<synthetic localhost:5434/myschoolboard_test URL> npx vitest run src/modules/results/report-composition-simulation.test.ts src/modules/attendance/eligibility.test.ts`: passed, **16/16** focused tests. These tests exercise pure logic; setup validated the disposable URL shape, but no database connection was available or used.
+- `npm run typecheck`: passed (`tsc --noEmit`).
+- `npm run lint`: passed with no reported errors or warnings.
+- `npm run format:check`: passed; all matched files use Prettier style.
+- `git diff --check`: passed.
+- `npm audit --audit-level=high`: failed with **8 high-severity package findings** in the already documented `braces` and `deepmerge-ts` advisory chains. npm's proposed `--force` changes downgrade `eslint-config-next` to 14.2.35 or Prisma to 6.12.0; neither was applied. The canonical dependency assessment records no verified compatible fix, so the mandatory audit gate remains failed and unsuppressed.
+
+**Database/build/release status:** `pg_isready -h localhost -p 5434` reports no response. No `verify:local`, migration, database-backed integration test, application build or GitHub Actions run was performed. Release and recipient-access feature flags were not changed and must remain disabled. Phase 8 exit gate: **BLOCKED** pending disposable PostgreSQL and full verification; dependency audit remains an independent security blocker.
+
+**Change scope note:** The formatter produced a deliberately broad 270-file style-only diff (21,557 insertions and 9,398 deletions before this checkpoint update). No source-level behavior change was intended from formatting; structural test expectations were kept and adjusted only to ignore formatting whitespace or parenthesized arrow-parameter syntax. Review the large formatting diff before any commit.
