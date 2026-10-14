@@ -15,6 +15,12 @@ describe("published subject report privacy and print shell", () => {
     expect(html).toMatch(/<button[^>]*disabled/);
     expect(html).toContain("Print authorized subject report");
     expect(html).toContain("@media print");
+    // Keyboard Ctrl+P or a restored back-forward cached page cannot print
+    // rows without the explicit, freshly reauthorized print workflow.
+    expect(html).toContain('data-print-authorized="false"');
+    expect(html).toContain(
+      '.published-report-workspace[data-print-authorized="false"] article',
+    );
     for (const sensitive of [
       "Admission number:",
       "Individually authorized subject grades",
