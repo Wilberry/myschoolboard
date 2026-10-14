@@ -485,3 +485,12 @@ All subsequent phases remain pending until their entry criteria and required pro
 - [ ] Execute keyboard/screen-reader/contrast, Ctrl+P vs explicit Print, tab visibility, bfcache navigation, logout/membership revocation, multiple children/subjects and report export retention checklist with synthetic subjects only.
 - [ ] Clear eight high npm audit package findings through tested compatible fixes or explicit separate security risk review; keep gate and report flags unchanged. Phase 8 remains NOT ACCEPTED.
 
+
+## Phase 8 recipient stale-request regression checkpoint (2026-10-14)
+
+- [x] Author cancellation rechecks before fetch and after both asynchronous network awaits; reject late rows even when fetch disregards AbortSignal.
+- [x] Author immediate grade redaction before guardian acknowledgment and fresh verification after success or denial; discard old rows on school route change, abort any older read before printing.
+- [x] Add deterministic delayed-response/body tests and school-keyed workspace source guard. Narrow strict TypeScript-compiled transport smoke 12/12 and source replay 4/4 passed.
+- [ ] Re-run actual new transport tests and complete cumulative disposable PostgreSQL/Prisma/Node/Vitest, format/lint/types/Next build, audit on current HEAD; static source and smoke checks are not acceptance evidence.
+- [ ] Perform browser delayed-network receipt/focus/bfcache, cross-school navigation, Print and accessibility tests with synthetic identities; verify no stale grade appears in DOM, print preview or shared cache.
+- [ ] Resolve eight outstanding high package findings through compatibility-tested upstream fixes or separate production security-risk disposition. No broad risk acceptance, bypass, release or Phase 9 transition is inferred.
