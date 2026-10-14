@@ -925,6 +925,10 @@ model AttendanceCorrectionDecision {
   reviewer             Membership @relation("AttendanceCorrectionReviewer", fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AttendanceCorrectionDecision_reviewer_fkey")
 
   @@unique([schoolId, requestId])
+  // Prisma one-to-one references all three FK columns, even though the
+  // existing stricter (schoolId, requestId) uniqueness already prevents
+  // multiple decisions. Keep the original FK and never edit old migrations.
+  @@unique([schoolId, requestId, registerId], map: "AttendanceCorrectionDecision_request_relation_unique")
   @@index([schoolId, reviewerUserId, createdAt])
 }
 
