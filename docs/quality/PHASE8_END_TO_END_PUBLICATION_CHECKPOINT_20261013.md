@@ -98,7 +98,7 @@ The user-provided local verification report used a **real isolated** `verify/pha
 
 **Phase/milestone:** Phase 8 cumulative local verification; database-dependent test and build gates exercised. This is not Phase 8 acceptance or release approval.
 
-**Worktree/revision:** `/home/wilberry/Desktop/project/myschoolboard-phase8`, branch `verify/phase8-local`, tested base commit `946bd7f8c0fd02ffda18c22a21d44b5e2c59c182` (Node.js v22.23.2, npm 10.9.8). Changes listed below remain uncommitted. Commands ran from this worktree; the separate Phase 1 worktree was not modified. No GitHub Actions, push, merge, production migration, or deployment occurred.
+**Worktree/revision:** `/home/wilberry/Desktop/project/myschoolboard-phase8`, branch `verify/phase8-local`, based on `946bd7f8c0fd02ffda18c22a21d44b5e2c59c182`; the verified source changes were recorded locally in commit `eae5e60e67da517be9880efb8a9a13a8c5054292` (Node.js v22.23.2, npm 10.9.8). Commands ran from this worktree; the separate Phase 1 worktree was not modified. No GitHub Actions, push, merge, production migration, or deployment occurred.
 
 **Requirements addressed:** RES-REQ-001 remains partial and unverified for release acceptance. The composition/publication integration fixture now follows the exact frozen source packet into its composition and checks the actual composed subject. Related SQL alias and integration expectation fixes affect ATT-REQ-001, LES-REQ-001, and ASM-REQ-001 surfaces; no requirement status, role, permission, school policy, or publication behavior was redefined.
 
