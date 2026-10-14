@@ -78,3 +78,28 @@ test("keeps the configured GitHub CI command order and audit threshold", () => {
   assert.deepEqual(workflowCommands, actualCommands);
   assert.deepEqual(workflowCommands.at(-1), ["audit", "--audit-level=high"]);
 });
+
+test("checks applied migration hashes before local deployment without editing CI/audit gates", () => {
+  const runner = readFileSync(
+    new URL("./verify-local.mjs", import.meta.url),
+    "utf8",
+  );
+  const pkg = JSON.parse(
+    readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+  );
+  assert.match(runner, /args\[1\] === "db:generate"/);
+  assert.match(runner, /\["run", "verify:local:checksums"\]/);
+  assert.equal(
+    pkg.scripts["verify:local:checksums"],
+    "node scripts/migration-checksum-preflight.mjs",
+  );
+  assert.match(
+    pkg.scripts["test"],
+    /migration-checksum-preflight\.test\.mjs/,
+  );
+  assert.match(
+    pkg.scripts["verify:local:guards"],
+    /migration-checksum-preflight\.test\.mjs/,
+  );
+  assert.deepEqual(workflowCommands.at(-1), ["audit", "--audit-level=high"]);
+});
