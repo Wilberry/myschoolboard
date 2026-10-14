@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { PrismaClient } from "@prisma/client";
 import { assertLocalVerificationTarget } from "./verify-local.mjs";
 
 const migrationsRoot = fileURLToPath(
@@ -47,6 +46,7 @@ export async function preflightMigrationHistory(environment = process.env) {
   if (url.searchParams.get("schema") !== "public") {
     throw new Error("Migration checksum preflight requires schema=public");
   }
+  // Pure guard tests must not require generated Prisma Client or a DB.\n  const { PrismaClient } = await import("@prisma/client");
   const prisma = new PrismaClient();
   try {
     const [ledger] = await prisma.$queryRaw`
