@@ -299,3 +299,7 @@ Verified school-selected release policy, immutable owner publication, guardian r
 ### RES-REQ-001 private-page cache isolation (Phase 8, 2026-10-14)
 
 The four server-rendered confidential Phase 8 school pages now declare route-specific private/no-store, noindex, no-referrer and nosniff headers independently of API response headers. New Vitest header-config test and Node source guard authored, plus browser network-response acceptance case. Isolated config execution 4/4 and Phase 8 source replay 5/5; **real Next build/document response/browser privacy verification remains unexecuted** on current HEAD. Permission boundaries and disabled release defaults unchanged. RES-REQ-001 remains acceptance-blocked.
+
+### RES-REQ-001 anonymous HTTP response acceptance (2026-10-14)
+
+Added optional, read-only `phase8-http-smoke.mjs` for four private Phase 8 page HTML GETs plus disabled recipient API GET and forbidden `?studentId=` query GET. The script requires the exact disposable loopback test preflight, test-only credentials and BOTH report-disclosure feature flags explicitly false. It performs no session-authenticated access and no writes. Four source/mock negative tests registered in cumulative guards; local isolated mocked Node fixture run 4/4 passed, real Next HTTP probe pending. This adds executable acceptance evidence tooling but does not authorize a live report release or complete RES-REQ-001.
