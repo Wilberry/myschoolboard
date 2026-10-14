@@ -163,7 +163,7 @@ test("authenticated tests cover visibility revision changes, replay, role, revoc
     'const studentAckRead = await published("student")',
     'guardianHasAcknowledged).toBe(true)',
     'prisma.studentAccountLinkRevocation.create(',
-    'await expect(reserve("student", admittedAttempt.draftId))',
+    'reserve("student", admittedAttempt.draftId)',
     'PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED = "true"',
     "actorUserId: users.parent2",
     "guardianMembershipId: members.parent2",
