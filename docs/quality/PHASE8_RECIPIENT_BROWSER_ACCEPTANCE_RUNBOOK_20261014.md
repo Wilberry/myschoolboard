@@ -33,3 +33,14 @@
 **Accessibility:** Keyboard access for all controls including print, form labels, disabled state and live status, correct table headings and caption, readable contrast, print page breaks, and no accidental acknowledgment triggered by reading. Record browser/viewport/version, exact account roles, test fixture IDs, and a redacted evidence log. Avoid saving screenshots or printable documents containing actual student personal data.
 
 **Deliverable:** record results in a dated QA note with revision SHA, synthetic DB migration count, completed cases, failures, privacy/security findings, and any compensating fixes; rerun full suite after changes. Do not mark Phase 8 accepted, merge, deploy or turn on server disclosure flags while the strict `npm audit --audit-level=high` gate is failing or any mandatory recipient/print case lacks evidence. No GitHub Actions are necessary to execute this locally.
+
+## Browser lifecycle and safe-print regression (added after the 60eaa44 checkpoint)
+
+1. With synthetic verified guardian or pupil grades visible, switch to another tab. Check that this tab's DOM no longer contains the previous grade table; returning must issue a new uncached `GET /published-reports` before restoring any grade. Disable the student's membership or revoke the exact guardian link while the tab is hidden; returning must **not** restore sensitive content.
+2. Navigate away and use browser Back (including a back-forward cache restoration). Check `pageshow.persisted` behavior, response headers, and that no previous grades flash before the current authenticated authorization completes.
+3. Invoke keyboard Ctrl+P with grades visible but **without** clicking the report's explicit Print button. The confidential table must be absent from print preview. Next click the explicit Print button; confirm exactly one fresh same-origin/no-store GET succeeds before permitted grade rows appear in print preview. On print completion, another print must require new authorization.
+4. Revoke the recipient relationship after grades have been shown, and then click Print: the new GET must deny and no grade-bearing print preview may be produced. Test this for both `STUDENT_ONLY` and `GUARDIAN_FIRST_ACK`.
+5. Confirm recipient Back link returns to the signed-in school home, not an academic staff 404, while non-recipient roles still lack published-report access.
+6. Validate browser support for deferred `window.print()`, `afterprint`/timeout behavior, print CSS visibility, live status messages, and a11y. Record browser version, synthetic account, revision SHA and pass/fail evidence. If printing cannot reliably wait for authorized React rows, fail closed and implement a compatible dedicated print view; never fall back to printing stale client state.
+
+These browser checks have not been run in ChatGPT's source-only connector environment.
