@@ -45,7 +45,7 @@ function fixtureRequest(
   return { calls, request };
 }
 
-test("allows only explicitly disposable loopback test app and both flags off", () => {
+test("allows only disposable loopback with both report gates off", () => {
   assert.equal(
     assertPhase8HttpSmokeTarget(environment).href,
     environment.BETTER_AUTH_URL,
@@ -69,7 +69,7 @@ test("allows only explicitly disposable loopback test app and both flags off", (
   }
 });
 
-test("checks six anonymous endpoints without cookies, cross-host calls or POST", async () => {
+test("checks six anonymous endpoints without cookies or writes", async () => {
   const { calls, request } = fixtureRequest();
   assert.deepEqual(await runPhase8HttpSmoke(environment, request), {
     passed: 6,
@@ -87,7 +87,7 @@ test("checks six anonymous endpoints without cookies, cross-host calls or POST",
   }
 });
 
-test("rejects exposed pages, exposed APIs and unexpected redirect/query status", async () => {
+test("rejects exposed pages, APIs and query-selector responses", async () => {
   for (const change of [
     (path, status, headers) => ({
       status: path.endsWith("/published-reports") ? 200 : status,
@@ -110,11 +110,14 @@ test("rejects exposed pages, exposed APIs and unexpected redirect/query status",
   }
 });
 
-test("rejects missing no-store, noindex or no-referrer on private pages", async () => {
+test("rejects missing no-store, noindex or no-referrer", async () => {
   for (const name of ["Cache-Control", "X-Robots-Tag", "Referrer-Policy"]) {
     const headers = { ...privacy };
     delete headers[name];
-    const { request } = fixtureRequest((_path, status) => ({ status, headers }));
+    const { request } = fixtureRequest((_path, status) => ({
+      status,
+      headers,
+    }));
     await assert.rejects(
       runPhase8HttpSmoke(environment, request),
       /missing private/,
