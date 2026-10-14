@@ -474,3 +474,14 @@ All subsequent phases remain pending until their entry criteria and required pro
 - [ ] Perform real browser/keyboard/screen-reader/print/privacy operations on a synthetic authorized report; review retention/export and recipients for production release.
 - [ ] Resolve `braces`/`deepmerge-ts` advisories through tested compatible upstream updates or separately authorized release-risk review. The unchanged strict high audit gate remains failing and is not waived.
 
+
+## Phase 8 browser privacy follow-up — authored 2026-10-14; acceptance still open
+
+- [x] Browser recipient state invalidation on `visibilitychange`, `pagehide`, back/forward restoration and after printing; outstanding reads cancelled; new data must be obtained from an authorized server read.
+- [x] Print button requires an independent fresh same-origin/no-store authorization response and temporarily permits printable confidential tables. Browser Ctrl+P without revalidation hides tables; cannot retroactively revoke saved PDFs/screenshots.
+- [x] Recipient pure transport denial/malformed/abort unit cases and server-initial-render test; source guard protects browser lifecycle and non-staff navigation.
+- [x] Fix student/guardian Back navigation to signed-in school home without granting `academic:read`.
+- [ ] Run new Vitest/browser lifecycle/print cases and the entire cumulative `npm run verify:local` workflow on exact current HEAD in the disposable PostgreSQL environment. Earlier tests are not a substitute.
+- [ ] Execute keyboard/screen-reader/contrast, Ctrl+P vs explicit Print, tab visibility, bfcache navigation, logout/membership revocation, multiple children/subjects and report export retention checklist with synthetic subjects only.
+- [ ] Clear eight high npm audit package findings through tested compatible fixes or explicit separate security risk review; keep gate and report flags unchanged. Phase 8 remains NOT ACCEPTED.
+
