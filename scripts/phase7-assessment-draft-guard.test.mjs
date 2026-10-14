@@ -11,7 +11,11 @@ const route = read("../app/api/schools/[schoolId]/assessment-drafts/route.ts");
 test("assessment configurations are immutable DRAFT-ONLY without delivery fields", () => {
   assert.match(schema, /model AssessmentDraft \{/);
   assert.match(schema, /model AssessmentDraftQuestion \{/);
-  assert.doesNotMatch(schema.match(/model AssessmentDraft \{[\s\S]*?\n\}/)?.[0] ?? "", /isPublished|PUBLISHED|releasedAt|attempts\s+AssessmentAttempt/);
+  const draftSchema = schema.match(/model AssessmentDraft \{[\s\S]*?\n\}/)?.[0] ?? "";
+  assert.doesNotMatch(draftSchema, /isPublished|PUBLISHED|releasedAt|answerKey|correctIndex/);
+  // Later Phase 7 added controlled CBT attempts, not an implicit draft release.
+  assert.match(draftSchema, /attempts\s+AssessmentAttempt\[\]/);
+  assert.doesNotMatch(migration, /CREATE TABLE "AssessmentAttempt"/);
   assert.match(migration, /"AssessmentDraft_immutable"/);
   assert.match(migration, /"AssessmentDraftQuestion_immutable"/);
   assert.match(migration, /"AssessmentDraftSeal_validate"/);
