@@ -189,7 +189,7 @@ test("recipient browser discards hidden/bfcache grades and reauthorizes every pr
     "setRows([])",
     "setPrintAllowed(false)",
     'data-print-authorized={printAllowed ? "true" : "false"}',
-    '.published-report-workspace[data-print-authorized="false"] article',
+    '.published-report-workspace[data-print-authorized=false] article',
     'fetchCurrentRecipientRows<Subject>(',
     "window.print()",
     "flushSync(() => {",
