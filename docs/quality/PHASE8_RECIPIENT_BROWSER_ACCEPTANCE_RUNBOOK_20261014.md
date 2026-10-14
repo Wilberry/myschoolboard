@@ -44,3 +44,5 @@
 6. Validate browser support for deferred `window.print()`, `afterprint`/timeout behavior, print CSS visibility, live status messages, and a11y. Record browser version, synthetic account, revision SHA and pass/fail evidence. If printing cannot reliably wait for authorized React rows, fail closed and implement a compatible dedicated print view; never fall back to printing stale client state.
 
 These browser checks have not been run in ChatGPT's source-only connector environment.
+
+7. Switch between **separate browser windows** while a synthetic recipient report is displayed (not only tabs). On `focus` return, confirm an old report is cleared and an authenticated uncached GET completes before any grade reappears. Test account/session changes in another window while the recipient page remains open. Verify print, tab-visibility and window-focus listeners do not accidentally show a former account's confidential rows. This remains a manual real-browser acceptance check, not proof from source inspection.
