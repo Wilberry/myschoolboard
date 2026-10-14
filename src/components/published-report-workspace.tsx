@@ -116,6 +116,9 @@ export function PublishedReportWorkspace({ schoolId }: { schoolId: string }) {
   async function printAuthorizedReport() {
     if (busyId || !rows.length || document.hidden) return;
     const abort = new AbortController();
+    // An older recipient GET may still be pending after a prior refresh.
+    // It must never overwrite the result of this explicit fresh print check.
+    fetchRef.current?.abort();
     printFetchRef.current = abort;
     setBusyId("print");
     setRows([]);
