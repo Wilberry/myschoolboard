@@ -72,20 +72,21 @@ describe("recipient browser transport", () => {
   it("discards a successful JSON body if cancellation happens before parsing resolves", async () => {
     const controller = new AbortController();
     let release!: (value: { reports: unknown[] }) => void;
+    let parsingStarted!: () => void;
+    const parsing = new Promise<void>((resolve) => {
+      parsingStarted = resolve;
+    });
     const response = {
       ok: true,
       json: () =>
         new Promise((resolve) => {
           release = resolve;
+          parsingStarted();
         }),
     } as Response;
     const request = vi.fn<typeof fetch>().mockResolvedValue(response);
-    const pending = fetchCurrentRecipientRows(
-      url,
-      controller.signal,
-      request,
-    );
-    await Promise.resolve();
+    const pending = fetchCurrentRecipientRows(url, controller.signal, request);
+    await parsing;
     controller.abort();
     release({ reports: [{ studentId: "previous-session" }] });
     await expect(pending).rejects.toThrow("Recipient report request cancelled");
