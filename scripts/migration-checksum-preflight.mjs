@@ -32,7 +32,9 @@ export function compareAppliedMigrationChecksums(rows, readMigration) {
     }
     const hash = createHash("sha256").update(contents).digest("hex");
     if (hash !== row.checksum) {
-      mismatches.push(`${row.migration_name}: applied checksum differs from local SQL`);
+      mismatches.push(
+        `${row.migration_name}: applied checksum differs from local SQL`,
+      );
     }
   }
   return mismatches;
@@ -79,7 +81,10 @@ export async function preflightMigrationHistory(environment = process.env) {
         `Migration safety preflight stopped: ${mismatches.join("; ")}. Do not reset or rewrite history; reconcile with a reviewed forward-only migration.`,
       );
     }
-    console.info(`Verified ${applied.filter((row) => row.finished_at !== null && row.rolled_back_at === null).length} applied migration checksums`);
+    const finalized = applied.filter(
+      (row) => row.finished_at !== null && row.rolled_back_at === null,
+    );
+    console.info(`Verified ${finalized.length} applied migration checksums`);
   } finally {
     await prisma.$disconnect();
   }
@@ -91,7 +96,9 @@ if (
 ) {
   preflightMigrationHistory().catch((error) => {
     console.error(
-      error instanceof Error ? error.message : "Migration checksum preflight failed",
+      error instanceof Error
+        ? error.message
+        : "Migration checksum preflight failed",
     );
     process.exitCode = 1;
   });
