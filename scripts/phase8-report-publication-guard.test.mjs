@@ -26,6 +26,8 @@ const acknowledgmentRoute = read(
 const tests = read("../src/modules/assessments/questions.integration.test.ts");
 const ownerUI = read("../src/components/report-release-workspace.tsx");
 const recipientUI = read("../src/components/published-report-workspace.tsx");
+const transport = read("../src/modules/results/recipient-browser-delivery.ts");
+const transportTests = read("../src/modules/results/recipient-browser-delivery.test.ts");
 const home = read("../app/page.tsx");
 
 test("policy, immutable independent release, and per-child acknowledgment have three exact-school ledgers", () => {
@@ -171,4 +173,37 @@ test("authenticated tests cover visibility revision changes, replay, role, revoc
     "prisma.reportGuardianAcknowledgment.create(",
   ])
     assert.ok(tests.includes(token), token);
+});
+
+test("recipient browser discards hidden/bfcache grades and reauthorizes every print", () => {
+  for (const token of [
+    'document.addEventListener("visibilitychange", onVisibility)',
+    'window.addEventListener("pagehide", onPageHide)',
+    'window.addEventListener("pageshow", onPageShow)',
+    'window.addEventListener("afterprint", onAfterPrint)',
+    "event.persisted",
+    "fetchRef.current?.abort()",
+    "printFetchRef.current?.abort()",
+    "setRows([])",
+    "setPrintAllowed(false)",
+    'data-print-authorized={printAllowed ? "true" : "false"}',
+    '.published-report-workspace[data-print-authorized="false"] article',
+    'fetchCurrentRecipientRows<Subject>(',
+    "window.print()",
+    "flushSync(() => {",
+  ]) assert.ok(recipientUI.includes(token), token);
+  for (const token of [
+    'cache: "no-store"',
+    'credentials: "same-origin"',
+    "signal,",
+    "if (!response.ok)",
+    "payload.reports.length > 100",
+    "throw new Error",
+  ]) assert.ok(transport.includes(token), token);
+  for (const token of [
+    "same-origin, no-store",
+    "refuses denied",
+    "oversized server projections",
+    "aborted request",
+  ]) assert.ok(transportTests.includes(token), token);
 });
