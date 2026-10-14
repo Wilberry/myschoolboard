@@ -197,6 +197,21 @@ test("recipient browser discards hidden/bfcache grades and reauthorizes every pr
   // PARENT and STUDENT intentionally cannot open the staff academic page.
   assert.ok(publishedPage.includes('<Link href="/">Back to my schools</Link>'));
   assert.equal(publishedPage.includes("Back to school"), false);
+  assert.ok(publishedPage.includes(
+    '<PublishedReportWorkspace key={schoolId} schoolId={schoolId} />',
+  ));
+  // An acknowledgment, successful or not, changes what may be displayed.
+  // Clear the old child rows before POST; refetch only after it settles.
+  assert.ok(recipientUI.includes("fetchRef.current?.abort();"));
+  assert.ok(recipientUI.includes('setStatus("Rechecking school authorization after acknowledgment…")'));
+  assert.ok(recipientUI.includes("setRows([]);"));
+  assert.ok(recipientUI.includes("setRefresh((v) => v + 1);"));
+  assert.ok(transport.includes("if (signal?.aborted)"));
+  assert.ok(transport.split("if (signal?.aborted)").length >= 4);
+  for (const marker of [
+    "cancellation occurs while the network is pending",
+    "cancellation happens before parsing resolves",
+  ]) assert.ok(transportTests.includes(marker), marker);
   for (const token of [
     'cache: "no-store"',
     'credentials: "same-origin"',
