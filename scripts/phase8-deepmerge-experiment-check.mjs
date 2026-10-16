@@ -58,7 +58,9 @@ if (
       "Lock graph inspection passed; full npm ci, Prisma/migration/test/build/audit still required",
     );
   } catch (error) {
-    console.error(error instanceof Error ? error.message : "Candidate not ready");
+    console.error(
+      error instanceof Error ? error.message : "Candidate not ready",
+    );
     process.exitCode = 1;
   }
 }
