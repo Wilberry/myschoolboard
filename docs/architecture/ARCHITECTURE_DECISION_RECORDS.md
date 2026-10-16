@@ -1,5 +1,38 @@
 # Architecture Decision Records
 
+## ADR-P9-003: Immutable manual reference-claim ledger and independent attestation
+
+- **Status:** authored; NOT migrated, integrated or security accepted
+  (2026-10-16).
+- **Context:** transfer upload/reference is not verified funds. No
+  private upload storage, external provider, delegated bursar identity
+  model or actual banking account reconciliation exists in this baseline.
+- **Decision:** additive `PaymentEvidence` records `SUBMITTED`
+  manual reference-only claims, one exact school obligation, issuer,
+  bank-reference digest, claim amount/currency and unique school request
+  and reference keys. `PaymentVerificationDecision` independently
+  records terminal `VERIFIED` or `REJECTED` outcomes, explicit
+  confirmedBankFunds attestation, reviewer, reason and trusted time.
+  School composite FKs, nonmutating SQL triggers, exact active submitter
+  SCHOOL_ADMIN and independent reviewer SCHOOL_SUPER_ADMIN prevent
+  cross-tenant modification. All writes serialize under School lock;
+  verification rechecks the actual reference and caps the sum of
+  earlier VERIFIED claims against the immutable obligation amount.
+  Application services use authenticated actual sessions, strict
+  input shapes, serialized idempotent request/review replay, no-store
+  metadata-only bounded readers and default-OFF master/evidence/review
+  switches. No raw reference, uploaded file, personal bank data or
+  provider credentials stored. Verified reviewer attestation does not
+  create provider settlement or official receipt.
+- **Consequences:** status transitions are represented by new immutable
+  evidence, not UPDATE. No cumulative outstanding balance, refund or
+  reversal shown before a separately audited allocation/reversal
+  design. Fully authenticated real-user, SQL concurrency, tenant
+  deletion, current actor revocation and production privacy acceptance
+  are mandatory before any finance access can be enabled.
+  D-P9-003.
+
+
 ## ADR-P9-002: Version-pinned fee debt with database-derived amounts
 
 - **Status:** authored but not migrated or runtime verified (2026-10-16).
