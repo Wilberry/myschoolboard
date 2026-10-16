@@ -111,7 +111,8 @@ export async function listManualAllocationPreview(schoolId: string) {
   const rows = await prisma.$queryRaw<Array<{
     obligationId: string; studentId: string; sessionId: string;
     termId: string; categoryId: string; currency: string;
-    originalChargeMinor: string; independentlyReviewedMinor: string;
+    originalChargeMinor: string; appliedWaiverMinor: string;
+    adjustedChargeMinor: string; independentlyReviewedMinor: string;
     grossManuallyAllocatedMinor: string; approvedReversedMinor: string;
     manuallyAllocatedMinor: string; reviewedNotAllocatedMinor: string;
     previewRemainingMinor: string;
@@ -122,6 +123,9 @@ export async function listManualAllocationPreview(schoolId: string) {
       charge."sessionId", charge."termId", charge."categoryId",
       charge."currency",
       charge."amountMinor"::text AS "originalChargeMinor",
+      COALESCE(waived."waivedMinor",0)::text AS "appliedWaiverMinor",
+      (charge."amountMinor"::numeric-
+        COALESCE(waived."waivedMinor",0))::text AS "adjustedChargeMinor",
       COALESCE(reviewed."reviewedMinor",0)::text AS "independentlyReviewedMinor",
       COALESCE(applied."grossAllocatedMinor",0)::text AS "grossManuallyAllocatedMinor",
       COALESCE(applied."reversedMinor",0)::text AS "approvedReversedMinor",
@@ -131,13 +135,15 @@ export async function listManualAllocationPreview(schoolId: string) {
       GREATEST(COALESCE(reviewed."reviewedMinor",0)-
         COALESCE(applied."grossAllocatedMinor",0),0)::text AS "reviewedNotAllocatedMinor",
       GREATEST(charge."amountMinor"::numeric-
+        COALESCE(waived."waivedMinor",0)-
         COALESCE(applied."allocatedMinor",0),0)::text AS "previewRemainingMinor",
       CASE
         WHEN COALESCE(applied."grossAllocatedMinor",0)>0
           AND COALESCE(applied."allocatedMinor",0)=0
           THEN 'REVERSED_MANUAL_ALLOCATION'
         WHEN COALESCE(applied."allocatedMinor",0)=0 THEN 'NO_MANUAL_ALLOCATION'
-        WHEN COALESCE(applied."allocatedMinor",0)=charge."amountMinor"
+        WHEN COALESCE(applied."allocatedMinor",0)=
+          charge."amountMinor"::numeric-COALESCE(waived."waivedMinor",0)
           THEN 'FULL_MANUAL_ALLOCATION'
         ELSE 'PARTIAL_MANUAL_ALLOCATION' END AS "previewState"
     FROM "FeeObligation" charge
@@ -145,6 +151,13 @@ export async function listManualAllocationPreview(schoolId: string) {
     JOIN "Membership" member ON member."schoolId"=s."id"
       AND member."userId"=${userId} AND member."isActive"=true
       AND member."role"='SCHOOL_SUPER_ADMIN'
+    LEFT JOIN LATERAL (
+      SELECT SUM(w."amountMinor")::numeric AS "waivedMinor"
+      FROM "FeeWaiverApplication" w
+      WHERE w."schoolId"=charge."schoolId"
+        AND w."obligationId"=charge."id"
+        AND w."currency"=charge."currency"
+    ) waived ON true
     LEFT JOIN LATERAL (
       SELECT SUM(e."claimedAmountMinor")::numeric AS "reviewedMinor"
       FROM "PaymentEvidence" e
