@@ -46,16 +46,33 @@ export function assertPhase8HttpSmokeTarget(environment) {
 }
 
 function assertPrivateResponse(response, label) {
-  const cache = response.headers.get("cache-control") ?? "";
-  const robots = response.headers.get("x-robots-tag") ?? "";
+  const directives = (response.headers.get("cache-control") ?? "")
+    .toLowerCase()
+    .split(",")
+    .map((value) => value.trim());
+  const robots = (response.headers.get("x-robots-tag") ?? "")
+    .toLowerCase()
+    .split(",")
+    .map((value) => value.trim());
+  // RFC 9111: no-store forbids BOTH private and shared caches from storing
+  // the response. Next.js may replace configured "private, no-store" with
+  // "no-store" on its 307 auth redirect. Only that exact temporary redirect
+  // may omit "private"; actual 401/404 pages and API replies must retain it.
+  const temporaryRedirect = response.status === 307;
   if (
-    !cache.includes("private") ||
-    !cache.includes("no-store") ||
+    !directives.includes("no-store") ||
+    (!temporaryRedirect && !directives.includes("private")) ||
+    directives.some(
+      (value) =>
+        value === "public" ||
+        value.startsWith("s-maxage=") ||
+        (value.startsWith("max-age=") && value !== "max-age=0"),
+    ) ||
     !robots.includes("noindex") ||
     response.headers.get("referrer-policy") !== "no-referrer"
   ) {
     throw new Error(
-      `${label}: missing private no-store/noindex/no-referrer headers`,
+      `${label}: missing secure no-store/noindex/no-referrer headers`,
     );
   }
 }
@@ -74,17 +91,33 @@ export async function runPhase8HttpSmoke(
       redirect: "manual",
       cache: "no-store",
       credentials: "omit",
-      signal: AbortSignal.timeout(5000),
+      // The first Next.js dev request may compile the route on demand.
+      // Keep a bounded timeout rather than treating cold compilation as denial.
+      signal: AbortSignal.timeout(60_000),
       headers: { "Cache-Control": "no-store" },
     });
     if (!expectedStatuses.includes(result.status)) {
       throw new Error(`${path}: unexpectedly returned HTTP ${result.status}`);
     }
     assertPrivateResponse(result, path);
+    if (result.status === 307) {
+      // Never accept a redirect to a different host, a malicious URL, or
+      // a different local endpoint in place of the known sign-in home.
+      const location = result.headers.get("location");
+      let destination;
+      try {
+        destination = new URL(location ?? "", origin);
+      } catch {
+        throw new Error(`${path}: invalid anonymous redirect target`);
+      }
+      if (!location || destination.href !== origin.href) {
+        throw new Error(`${path}: unexpected anonymous redirect target`);
+      }
+    }
     passed += 1;
   }
   for (const page of privatePages) {
-    await probe(`/schools/${testSchool}/${page}`, [307, 308, 401, 404]);
+    await probe(`/schools/${testSchool}/${page}`, [307, 401, 404]);
   }
   await probe(`/api/schools/${testSchool}/published-reports`, [404]);
   await probe(
