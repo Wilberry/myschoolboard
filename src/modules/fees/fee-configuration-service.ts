@@ -31,15 +31,15 @@ const revisionInput = z.object({
   reason: z.string().trim().min(5).max(500),
 }).strict();
 
-function checkSchoolId(schoolId: string) {
+export function checkSchoolId(schoolId: string) {
   if (!id.safeParse(schoolId).success) throw new FeeError("INVALID_INPUT");
 }
-async function currentUserId() {
+async export function currentUserId() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) throw new FeeError("UNAUTHENTICATED");
   return session.user.id;
 }
-async function lockCurrentFinanceAdmin(tx: Prisma.TransactionClient,
+async export function lockCurrentFinanceAdmin(tx: Prisma.TransactionClient,
   schoolId: string, userId: string) {
   // Preserve lock ordering with school configuration/academic mutations.
   await tx.$queryRaw`SELECT "id" FROM "School"
@@ -56,7 +56,7 @@ async function lockCurrentFinanceAdmin(tx: Prisma.TransactionClient,
   if (!admin) throw new FeeError("NOT_FOUND");
   return admin.id;
 }
-function feeFailure(error: unknown): never {
+export function feeFailure(error: unknown): never {
   if (error instanceof FeeError) throw error;
   if (error && typeof error === "object" && "code" in error) {
     if (["P2002", "P2034"].includes(String(error.code)))
@@ -66,7 +66,14 @@ function feeFailure(error: unknown): never {
   }
   throw new FeeError("INTERNAL");
 }
+/** Fail closed until the cumulative SQL, security and browser gates are accepted. */
+export function requirePhase9FeeWritesEnabled() {
+  if (process.env.PHASE9_FEE_WRITE_ENABLED !== "true") {
+    throw new FeeError("NOT_FOUND");
+  }
+}
 export async function createInternalFeeCategory(schoolId: string, input: unknown) {
+  requirePhase9FeeWritesEnabled();
   checkSchoolId(schoolId);
   const parsed = categoryInput.safeParse(input);
   if (!parsed.success) throw new FeeError("INVALID_INPUT");
@@ -89,6 +96,7 @@ export async function createInternalFeeCategory(schoolId: string, input: unknown
 export async function createInternalFeeStructureRevision(
   schoolId: string, input: unknown,
 ) {
+  requirePhase9FeeWritesEnabled();
   checkSchoolId(schoolId);
   const parsed = revisionInput.safeParse(input);
   if (!parsed.success ||
