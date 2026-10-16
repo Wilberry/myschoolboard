@@ -123,8 +123,10 @@ are tenant-bound and financial history must be attributable and non-silently mut
   creates a separate immutable manual review; no read/export/PUT/DELETE
   action exists on that endpoint. All replies use `private, no-store`.
   `SUBMITTED_EVIDENCE_ONLY` is the permanent submission acknowledgment
-  even after later review; query `reviewAction` separately to see a
-  terminal verification result.
+  even after later review. Its separate owner/submitter GET projection
+  reports `PENDING_VERIFICATION` before a decision, or `VERIFIED` /
+  `REJECTED` with the terminal `reviewAction` after manual review;
+  these are not provider-certified transfers or receipts.
 - All three finance-related switches must be explicitly set to
   `true` for the corresponding writes:
   `PHASE9_FEE_WRITE_ENABLED`, `PHASE9_PAYMENT_EVIDENCE_ENABLED`
@@ -159,4 +161,6 @@ Migration, Prisma generation/validation, real-session synthetic PostgreSQL
 integration, financial lifecycle, browser and unchanged CI/security audit
 remain **NOT EXECUTED**. This branch is a non-production candidate only.
 See `docs/quality/PHASE9_FEE_CONFIGURATION_CHECKPOINT_20261016.md`,
-D-P9-001 and ADR-P9-001.
+D-P9-001 / D-P9-002 / D-P9-003 and ADR-P9-001 /
+ADR-P9-002 / ADR-P9-003. See
+`docs/quality/PHASE9_PAYMENT_EVIDENCE_CHECKPOINT_20261016.md`.
