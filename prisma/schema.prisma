@@ -1598,6 +1598,7 @@ model PaymentVerificationDecision {
   schoolId String
   evidenceId String
   action PaymentVerificationAction
+  confirmedBankFunds Boolean
   confirmedReferenceDigest String? @db.VarChar(64)
   reason String @db.VarChar(500)
   reviewerMembershipId String
