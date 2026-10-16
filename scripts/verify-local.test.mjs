@@ -125,3 +125,42 @@ test("registers a separate read-only HTTP smoke without weakening CI audit", () 
   assert.match(smoke, /PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED !== "false"/);
   assert.deepEqual(workflowCommands.at(-1), ["audit", "--audit-level=high"]);
 });
+
+test("Phase 8 full runner resolves its own clean worktree and preserves audit", () => {
+  const runner = readFileSync(
+    new URL("./verify-phase8-checkpoint.mjs", import.meta.url),
+    "utf8",
+  );
+  const pkg = JSON.parse(
+    readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+  );
+  assert.equal(
+    pkg.scripts["verify:phase8:preflight"],
+    "node scripts/verify-phase8-checkpoint.mjs --preflight",
+  );
+  assert.equal(
+    pkg.scripts["verify:phase8:full"],
+    "node scripts/verify-phase8-checkpoint.mjs --run",
+  );
+  for (const key of ["test", "verify:local:guards"]) {
+    assert.match(
+      pkg.scripts[key],
+      /verify-phase8-checkpoint\.test\.mjs/,
+    );
+  }
+  for (const required of [
+    'new URL("../", import.meta.url)',
+    'basename(resolve(info.topLevel)) !== "myschoolboard-phase8"',
+    'info.branch !== branchName',
+    "info.status.trim()",
+    "info.head !== info.trackingHead",
+    "assertLocalVerificationTarget(environment)",
+    "assertDisposableCompose",
+    '"pg_isready"',
+    '"scripts/verify-local.mjs"',
+  ]) {
+    assert.ok(runner.includes(required), required);
+  }
+  assert.doesNotMatch(runner, /git (?:reset|clean|restore)/);
+  assert.deepEqual(workflowCommands.at(-1), ["audit", "--audit-level=high"]);
+});
