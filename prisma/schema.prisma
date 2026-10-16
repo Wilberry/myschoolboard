@@ -36,6 +36,16 @@ enum FeeScope {
   CLASS
 }
 
+/** Submission is always evidence only, never a credit or paid status. */
+enum PaymentEvidenceStatus {
+  SUBMITTED
+}
+
+enum PaymentVerificationAction {
+  VERIFIED
+  REJECTED
+}
+
 enum SchoolLifecycleStatus {
   PENDING
   ACTIVE
@@ -285,6 +295,8 @@ model School {
   feeCategories FeeCategory[]
   feeStructureRevisions FeeStructureRevision[]
   feeObligations FeeObligation[]
+  paymentEvidence PaymentEvidence[]
+  paymentVerificationDecisions PaymentVerificationDecision[]
 }
 
 model Membership {
@@ -332,6 +344,8 @@ model Membership {
   authoredFeeCategories FeeCategory[]
   authoredFeeStructureRevisions FeeStructureRevision[]
   issuedFeeObligations FeeObligation[]
+  submittedPaymentEvidence PaymentEvidence[]
+  reviewedPaymentEvidence PaymentVerificationDecision[]
 }
 
 model ScopeGrant {
@@ -1544,4 +1558,56 @@ model FeeObligation {
   @@unique([schoolId, requestKey])
   @@unique([schoolId, studentId, sessionId, termId, categoryId], map: "FeeObligation_student_category_period_key")
   @@index([schoolId, enrollmentId, issuedAt])
+  paymentEvidence PaymentEvidence[]
+}
+
+
+/** Manual transfer REFERENCE CLAIM, not an upload, settlement or verified
+ * payment. Only a SHA-256 school-bound reference digest is persisted. */
+model PaymentEvidence {
+  id String @id
+  schoolId String
+  obligationId String
+  requestKey String @db.VarChar(64)
+  referenceDigest String @db.VarChar(64)
+  claimedAmountMinor BigInt
+  currency String @db.VarChar(3)
+  status PaymentEvidenceStatus @default(SUBMITTED)
+  reason String @db.VarChar(500)
+  submitterMembershipId String
+  submitterUserId String
+  submittedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  obligation FeeObligation @relation(fields: [schoolId, obligationId], references: [schoolId, id], onDelete: NoAction, map: "PaymentEvidence_obligation_fkey")
+  submitter Membership @relation(fields: [schoolId, submitterMembershipId], references: [schoolId, id], onDelete: NoAction, map: "PaymentEvidence_submitter_fkey")
+  verification PaymentVerificationDecision?
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, requestKey])
+  @@unique([schoolId, referenceDigest])
+  @@index([schoolId, obligationId, submittedAt])
+}
+
+/** Independent School Super Admin bank-reconciliation attestation. No
+ * automatic payment/receipt creation and no refund/reversal workflow.
+ * Only VERIFIED decisions can later participate in balance calculation.
+ * A rejection or verification is final and cannot be edited. */
+model PaymentVerificationDecision {
+  id String @id
+  schoolId String
+  evidenceId String
+  action PaymentVerificationAction
+  confirmedReferenceDigest String? @db.VarChar(64)
+  reason String @db.VarChar(500)
+  reviewerMembershipId String
+  reviewerUserId String
+  decidedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  evidence PaymentEvidence @relation(fields: [schoolId, evidenceId], references: [schoolId, id], onDelete: NoAction, map: "PaymentVerificationDecision_evidence_fkey")
+  reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "PaymentVerificationDecision_reviewer_fkey")
+
+  @@unique([schoolId, evidenceId])
+  @@index([schoolId, decidedAt])
 }
