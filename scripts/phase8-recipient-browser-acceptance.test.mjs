@@ -5,6 +5,8 @@ import {
   assertLocalDockerHost,
   assertNoLeaks,
   assertRecipientBrowserTarget,
+  assertSignedInRecipientLink,
+  assertSyntheticSessionUser,
 } from "./phase8-recipient-browser-acceptance.mjs";
 
 const safe = {
@@ -168,4 +170,109 @@ test("allows receipt writes only under guardian-first mode", () => {
       PHASE8_BROWSER_ALLOW_RECEIPT_WRITE: "1",
     }),
   );
+});
+
+test("session must prove actual student or parent identity, not an empty grade GET", () => {
+  const email = "synthetic-student@example.test";
+  assert.equal(
+    assertSyntheticSessionUser({ user: { id: "uid-1", email } }, email),
+    "uid-1",
+  );
+  for (const payload of [
+    null,
+    {},
+    { user: { id: "", email } },
+    { user: { id: "../invalid", email } },
+    { user: { id: "uid-1", email: "unrelated@example.test" } },
+  ]) {
+    assert.throws(() => assertSyntheticSessionUser(payload, email));
+  }
+});
+
+test("each signed-in role requires its own current attested exact-child link", async () => {
+  const calls = [];
+  const database = {
+    membership: {
+      findFirst: async (args) => {
+        calls.push(["membership", args]);
+        return { id: "member-a" };
+      },
+    },
+    guardianStudentLink: {
+      findFirst: async (args) => {
+        calls.push(["parent", args]);
+        return { id: "link-parent" };
+      },
+    },
+    studentAccountLink: {
+      findFirst: async (args) => {
+        calls.push(["student", args]);
+        return { id: "link-student" };
+      },
+    },
+  };
+  for (const [role, kind, field] of [
+    ["PARENT", "parent", "guardianMembershipId"],
+    ["STUDENT", "student", "studentMembershipId"],
+  ]) {
+    await assertSignedInRecipientLink(
+      database,
+      "school-a",
+      "child-a",
+      role,
+      "login-a",
+    );
+    const membership = calls.findLast(([name]) => name === "membership")[1];
+    assert.deepEqual(membership.where, {
+      schoolId: "school-a",
+      userId: "login-a",
+      role,
+      isActive: true,
+      school: { isActive: true },
+    });
+    const linked = calls.findLast(([name]) => name === kind)[1];
+    assert.deepEqual(linked.where, {
+      schoolId: "school-a",
+      studentId: "child-a",
+      revocation: null,
+      student: {
+        status: "ENROLLED",
+        enrollments: { some: { schoolId: "school-a", status: "ACTIVE" } },
+      },
+      [field]: "member-a",
+    });
+  }
+  await assert.rejects(
+    assertSignedInRecipientLink(
+      database,
+      "school-a",
+      "child-a",
+      "SCHOOL_SUPER_ADMIN",
+      "login-a",
+    ),
+  );
+  await assert.rejects(
+    assertSignedInRecipientLink(
+      { ...database, membership: { findFirst: async () => null } },
+      "school-a",
+      "child-a",
+      "STUDENT",
+      "login-a",
+    ),
+  );
+  for (const role of ["PARENT", "STUDENT"]) {
+    await assert.rejects(
+      assertSignedInRecipientLink(
+        {
+          ...database,
+          [role === "PARENT" ? "guardianStudentLink" : "studentAccountLink"]:
+            { findFirst: async () => null },
+        },
+        "school-a",
+        "child-a",
+        role,
+        "login-a",
+      ),
+    );
+  }
 });

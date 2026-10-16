@@ -101,6 +101,100 @@ export function assertNoLeaks(rows, childId, role, mode, acknowledged) {
   }
 }
 
+/**
+ * A pre-ack student must see no grades: that alone cannot prove the signed-in
+ * student owns the separately inventoried link for the exact selected child.
+ * Validate the real browser session before evaluating any expected empty GET.
+ */
+export function assertSyntheticSessionUser(payload, expectedEmail) {
+  const user = payload?.user;
+  assert.ok(
+    typeof user?.id === "string" &&
+      /^[A-Za-z0-9_-]{1,128}$/.test(user.id),
+    "Synthetic session is missing a valid user ID",
+  );
+  assert.ok(
+    typeof user.email === "string" &&
+      user.email.toLowerCase() === expectedEmail.toLowerCase(),
+    "Signed-in account does not match the selected synthetic identity",
+  );
+  return user.id;
+}
+
+export async function assertSignedInRecipientLink(
+  database,
+  schoolId,
+  childId,
+  role,
+  userId,
+) {
+  assert.ok(
+    role === "PARENT" || role === "STUDENT",
+    "Unexpected recipient role",
+  );
+  const member = await database.membership.findFirst({
+    where: {
+      schoolId,
+      userId,
+      role,
+      isActive: true,
+      school: { isActive: true },
+    },
+    select: { id: true },
+  });
+  assert.ok(
+    member?.id,
+    "Synthetic login has no active exact-school recipient membership",
+  );
+  const common = {
+    schoolId,
+    studentId: childId,
+    revocation: null,
+    student: {
+      status: "ENROLLED",
+      enrollments: { some: { schoolId, status: "ACTIVE" } },
+    },
+  };
+  const link =
+    role === "PARENT"
+      ? await database.guardianStudentLink.findFirst({
+          where: { ...common, guardianMembershipId: member.id },
+          select: { id: true },
+        })
+      : await database.studentAccountLink.findFirst({
+          where: { ...common, studentMembershipId: member.id },
+          select: { id: true },
+        });
+  assert.ok(
+    link?.id,
+    "Signed-in synthetic recipient has no verified exact-child link",
+  );
+}
+
+async function verifySignedInRecipient(
+  page,
+  origin,
+  database,
+  schoolId,
+  childId,
+  role,
+  email,
+) {
+  const response = await page.request.get(
+    new URL("/api/auth/get-session", origin).href,
+    { headers: { "Cache-Control": "no-store" } },
+  );
+  assert.equal(response.status(), 200, "Synthetic session request denied");
+  const userId = assertSyntheticSessionUser(await response.json(), email);
+  await assertSignedInRecipientLink(
+    database,
+    schoolId,
+    childId,
+    role,
+    userId,
+  );
+}
+
 function assertPrivateHeaders(response) {
   const headers = response.headers();
   assert.ok(headers["cache-control"]?.includes("no-store"));
@@ -281,6 +375,15 @@ export async function runRecipientBrowserAcceptance(
         env[`PHASE8_BROWSER_${role}_PASSWORD`],
       );
       contexts.push(users[role].context);
+      await verifySignedInRecipient(
+        users[role].page,
+        origin,
+        database,
+        schoolId,
+        childId,
+        role,
+        env[`PHASE8_BROWSER_${role}_EMAIL`],
+      );
     }
     const parent = await readReport(users.PARENT.page, origin, schoolId);
     let student = await readReport(users.STUDENT.page, origin, schoolId);
