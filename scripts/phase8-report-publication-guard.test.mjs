@@ -27,9 +27,13 @@ const tests = read("../src/modules/assessments/questions.integration.test.ts");
 const ownerUI = read("../src/components/report-release-workspace.tsx");
 const recipientUI = read("../src/components/published-report-workspace.tsx");
 const transport = read("../src/modules/results/recipient-browser-delivery.ts");
-const transportTests = read("../src/modules/results/recipient-browser-delivery.test.ts");
+const transportTests = read(
+  "../src/modules/results/recipient-browser-delivery.test.ts",
+);
 const home = read("../app/page.tsx");
-const publishedPage = read("../app/schools/[schoolId]/published-reports/page.tsx");
+const publishedPage = read(
+  "../app/schools/[schoolId]/published-reports/page.tsx",
+);
 const nextConfig = read("../next.config.ts");
 const nextConfigTests = read("../next.config.test.ts");
 
@@ -179,6 +183,7 @@ test("authenticated tests cover visibility revision changes, replay, role, revoc
 });
 
 test("recipient browser discards hidden/bfcache grades and reauthorizes every print", () => {
+  const normalizedRecipientUI = recipientUI.replace(/\s+/g, " ");
   for (const token of [
     'document.addEventListener("visibilitychange", onVisibility)',
     'window.addEventListener("focus", onFocus)',
@@ -191,21 +196,28 @@ test("recipient browser discards hidden/bfcache grades and reauthorizes every pr
     "setRows([])",
     "setPrintAllowed(false)",
     'data-print-authorized={printAllowed ? "true" : "false"}',
-    '.published-report-workspace[data-print-authorized=false] article',
-    'fetchCurrentRecipientRows<Subject>(',
+    '.published-report-workspace[data-print-authorized="false"] article',
+    "fetchCurrentRecipientRows<Subject>(",
     "window.print()",
     "flushSync(() => {",
-  ]) assert.ok(recipientUI.includes(token), token);
+  ])
+    assert.ok(normalizedRecipientUI.includes(token), token);
   // PARENT and STUDENT intentionally cannot open the staff academic page.
   assert.ok(publishedPage.includes('<Link href="/">Back to my schools</Link>'));
   assert.equal(publishedPage.includes("Back to school"), false);
-  assert.ok(publishedPage.includes(
-    '<PublishedReportWorkspace key={schoolId} schoolId={schoolId} />',
-  ));
+  assert.ok(
+    publishedPage.includes(
+      "<PublishedReportWorkspace key={schoolId} schoolId={schoolId} />",
+    ),
+  );
   // An acknowledgment, successful or not, changes what may be displayed.
   // Clear the old child rows before POST; refetch only after it settles.
   assert.ok(recipientUI.includes("fetchRef.current?.abort();"));
-  assert.ok(recipientUI.includes('setStatus("Rechecking school authorization after acknowledgment…")'));
+  assert.ok(
+    recipientUI.includes(
+      'setStatus("Rechecking school authorization after acknowledgment…")',
+    ),
+  );
   assert.ok(recipientUI.includes("setRows([]);"));
   assert.ok(recipientUI.includes("setRefresh((v) => v + 1);"));
   assert.ok(transport.includes("if (signal?.aborted)"));
@@ -213,7 +225,8 @@ test("recipient browser discards hidden/bfcache grades and reauthorizes every pr
   for (const marker of [
     "cancellation occurs while the network is pending",
     "cancellation happens before parsing resolves",
-  ]) assert.ok(transportTests.includes(marker), marker);
+  ])
+    assert.ok(transportTests.includes(marker), marker);
   for (const token of [
     'cache: "no-store"',
     'credentials: "same-origin"',
@@ -221,13 +234,15 @@ test("recipient browser discards hidden/bfcache grades and reauthorizes every pr
     "if (!response.ok)",
     "payload.reports.length > 100",
     "throw new Error",
-  ]) assert.ok(transport.includes(token), token);
+  ])
+    assert.ok(transport.includes(token), token);
   for (const token of [
     "same-origin, no-store",
     "refuses denied",
     "oversized server projections",
     "aborted request",
-  ]) assert.ok(transportTests.includes(token), token);
+  ])
+    assert.ok(transportTests.includes(token), token);
 });
 
 test("private academic and recipient page HTML sets independent cache and indexing controls", () => {
@@ -236,14 +251,18 @@ test("private academic and recipient page HTML sets independent cache and indexi
     "/schools/:schoolId/report-publication",
     "/schools/:schoolId/private-report-compositions",
     "/schools/:schoolId/guardian-links",
-  ]) assert.ok(nextConfig.includes(path), path);
+  ])
+    assert.ok(nextConfig.includes(path), path);
   for (const token of [
     "private, no-store, max-age=0",
     "noindex, noarchive, nosnippet",
     "no-referrer",
     "nosniff",
     "async headers()",
-  ]) assert.ok(nextConfig.includes(token), token);
-  assert.ok(nextConfigTests.includes("keeps the private-page header rules scoped"));
+  ])
+    assert.ok(nextConfig.includes(token), token);
+  assert.ok(
+    nextConfigTests.includes("keeps the private-page header rules scoped"),
+  );
   assert.ok(nextConfigTests.includes("private, no-store, max-age=0"));
 });

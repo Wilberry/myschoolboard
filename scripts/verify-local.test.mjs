@@ -143,15 +143,12 @@ test("Phase 8 full runner resolves its own clean worktree and preserves audit", 
     "node scripts/verify-phase8-checkpoint.mjs --run",
   );
   for (const key of ["test", "verify:local:guards"]) {
-    assert.match(
-      pkg.scripts[key],
-      /verify-phase8-checkpoint\.test\.mjs/,
-    );
+    assert.match(pkg.scripts[key], /verify-phase8-checkpoint\.test\.mjs/);
   }
   for (const required of [
     'new URL("../", import.meta.url)',
     'basename(resolve(info.topLevel)) !== "myschoolboard-phase8"',
-    'info.branch !== branchName',
+    "info.branch !== branchName",
     "info.status.trim()",
     "info.head !== info.trackingHead",
     "assertLocalVerificationTarget(environment)",

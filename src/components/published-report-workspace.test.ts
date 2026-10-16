@@ -19,7 +19,7 @@ describe("published subject report privacy and print shell", () => {
     // rows without the explicit, freshly reauthorized print workflow.
     expect(html).toContain('data-print-authorized="false"');
     expect(html).toContain(
-      '.published-report-workspace[data-print-authorized=false] article',
+      '.published-report-workspace[data-print-authorized="false"] article',
     );
     for (const sensitive of [
       "Admission number:",

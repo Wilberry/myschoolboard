@@ -5,9 +5,11 @@ describe("recipient browser transport", () => {
   const url = "/api/schools/synthetic/published-reports";
 
   it("fetches only same-origin, no-store, independently authorized released rows", async () => {
-    const request = vi.fn<typeof fetch>().mockResolvedValue(
-      Response.json({ reports: [{ releaseId: "synthetic-release" }] }),
-    );
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        Response.json({ reports: [{ releaseId: "synthetic-release" }] }),
+      );
     const controller = new AbortController();
     await expect(
       fetchCurrentRecipientRows<{ releaseId: string }>(
@@ -59,11 +61,7 @@ describe("recipient browser transport", () => {
           release = resolve;
         }),
     );
-    const pending = fetchCurrentRecipientRows(
-      url,
-      controller.signal,
-      request,
-    );
+    const pending = fetchCurrentRecipientRows(url, controller.signal, request);
     controller.abort();
     release(Response.json({ reports: [{ studentId: "previous-session" }] }));
     await expect(pending).rejects.toThrow("Recipient report request cancelled");

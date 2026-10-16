@@ -9,7 +9,7 @@ const branchName = "verify/phase8-local";
 /**
  * This entry point is intentionally tied to the separate Phase 8 worktree.
  * Resolve paths from this script, never the shell's possibly wrong cwd.
- * No checkout, branch switch, git restore/reset, Docker start or DB reset.
+ * No checkout, branch switch, destructive Git mutation, Docker start or DB reset.
  */
 export function assertPhase8Checkout(info) {
   if (
@@ -28,10 +28,7 @@ export function assertPhase8Checkout(info) {
       "Refusing: Phase 8 worktree has uncommitted or untracked files",
     );
   }
-  if (
-    !/^[a-f0-9]{40}$/.test(info.head) ||
-    info.head !== info.trackingHead
-  ) {
+  if (!/^[a-f0-9]{40}$/.test(info.head) || info.head !== info.trackingHead) {
     throw new Error(
       "Refusing: Phase 8 HEAD does not match origin/verify/phase8-local",
     );
@@ -116,22 +113,19 @@ export function preflightPhase8Checkpoint(environment = process.env) {
     ]),
   );
   assertDisposableCompose(compose.services?.["postgres-test"]);
-  execute(
-    "docker",
-    [
-      "compose",
-      "--profile",
-      "test",
-      "exec",
-      "-T",
-      "postgres-test",
-      "pg_isready",
-      "-U",
-      "myschoolboard",
-      "-d",
-      "myschoolboard_test",
-    ],
-  );
+  execute("docker", [
+    "compose",
+    "--profile",
+    "test",
+    "exec",
+    "-T",
+    "postgres-test",
+    "pg_isready",
+    "-U",
+    "myschoolboard",
+    "-d",
+    "myschoolboard_test",
+  ]);
   console.info(
     [
       `Phase 8 preflight passed: ${head.slice(0, 12)}`,
