@@ -1,5 +1,24 @@
 # Authorization Rules
 
+## Phase 9 owner-only manual reviewed-claim allocation (AUTHORED / NOT VERIFIED)
+
+Only a signed-in current active same-school `SCHOOL_SUPER_ADMIN` can
+create a reasoned, once-only `ManualPaymentAllocation` from a
+`VERIFIED`, explicitly bank-attested same-school payment reference
+claim. PostgreSQL locks the same school row as claim submission and
+review and checks independent original School Administrator submitter,
+review verdict/reference/obligation and exact source amount/currency.
+No rejected/pending/duplicate/foreign claim or forged allocator may
+create credits. The owner-only final SQL query repeats active school and
+membership authorization and returns bounded provisional arithmetic
+metadata with no official PAID/SETTLED/receipt semantics. No student,
+guardian, teacher, School Administrator or platform role inherits owner
+balance access. The POST is disabled without both master and allocation
+feature switches. Authoring is NOT acceptance; actual PostgreSQL,
+session, direct-SQL, concurrent transaction and strict security tests
+remain mandatory. D-P9-004 / ADR-P9-004.
+
+
 ## Phase 9 payment-reference submission and manual verification (AUTHORED / NOT VERIFIED)
 
 An actual signed-in current same-school `SCHOOL_ADMIN` may append only
