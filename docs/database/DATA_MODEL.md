@@ -1,5 +1,21 @@
 # Data Model
 
+## Phase 9 applied internal waiver ledger (AUTHORED, NOT VERIFIED)
+
+`FeeWaiverApplication` stores one immutable, separately initiated
+application from an independently APPROVED same-school WAIVER
+proposal and its exact school-owned debt. Reason, actual active
+School Super Admin applier, request UUID, original proposal,
+decision, minor-unit money and UTC time are audit bound by school
+composite FKs, SQL school row lock and unique source keys.
+Money and currency are copied in database from approved proposal
+and original charge. The application participates only in the
+internal adjusted-charge preview and blocks future verification
+or allocation beyond the reduced cap. It is not a payment,
+bank refund, official invoice, receipt or settlement.
+A CORRECTION_PROPOSAL remains advisory only.
+
+
 ## Phase 9 fee adjustment proposal schema (unverified)
 
 `FeeAdjustmentProposal` records immutable school/debt, actor,
