@@ -1,5 +1,20 @@
 # Permissions Matrix
 
+## Phase 9 internal applied waivers (AUTHORED, NOT VERIFIED)
+
+The current active same-school `SCHOOL_SUPER_ADMIN` alone may
+apply a previously independent APPROVED WAIVER, using a separate
+default-OFF feature switch and an explicit UUID/reason request.
+The original School Administrator proposer cannot apply the
+waiver or access the full adjusted-fee preview. Both the service
+and PostgreSQL enforce current active same-school membership,
+unique proposal/decision and cross-ledger cap. A Student,
+Guardian, Teacher or Platform Super Admin receives no finance
+view, authority to apply, bank refund or receipt rights. This
+changes an INTERNAL adjusted-charge preview only, not a published
+student fee account. D-P9-007 / ADR-P9-007.
+
+
 ## Phase 9 fee waiver proposal / advisory approval — AUTHORED ONLY
 
 Current active same-school SCHOOL_ADMIN may propose reasoned waiver or
