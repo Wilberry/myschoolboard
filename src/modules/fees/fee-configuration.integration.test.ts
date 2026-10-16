@@ -25,6 +25,8 @@ import { GET as ADJ_GET, POST as ADJ_POST } from
   "@/app/api/schools/[schoolId]/fee-adjustment-proposals/route";
 import { POST as ADJ_DECIDE } from
   "@/app/api/schools/[schoolId]/fee-adjustment-decisions/route";
+import { GET as WAIVER_GET, POST as WAIVER_POST } from
+  "@/app/api/schools/[schoolId]/fee-waiver-applications/route";
 import { prisma } from "@/src/lib/db";
 import { auth } from "@/src/lib/auth";
 import { env } from "@/src/lib/env";
@@ -50,6 +52,7 @@ let obligationId: string;
 let evidenceId: string;
 let verifiedDecisionId: string;
 let rejectedDecisionId: string;
+let waiverApprovedDecisionId: string;
 let allocatedManualId: string;
 const bankReferenceA = `SYNTH-BANK-A-${suffix.toUpperCase()}`;
 const bankReferenceB = `SYNTH-BANK-B-${suffix.toUpperCase()}`;
@@ -132,6 +135,14 @@ async function decideFee(actor: string, payload: unknown, schoolId = schoolA) {
   return ADJ_DECIDE(request(actor, schoolId, "fee-adjustment-decisions", "POST", payload),
     { params: Promise.resolve({ schoolId }) });
 }
+async function applyWaiver(actor: string, payload: unknown, schoolId = schoolA) {
+  return WAIVER_POST(request(actor, schoolId, "fee-waiver-applications", "POST", payload),
+    { params: Promise.resolve({ schoolId }) });
+}
+async function listWaivers(actor: string, schoolId = schoolA) {
+  return WAIVER_GET(request(actor, schoolId, "fee-waiver-applications", "GET"),
+    { params: Promise.resolve({ schoolId }) });
+}
 const revision = (scope: "SCHOOL" | "SECTION" | "CLASS", scopeId: string) => ({
   categoryId, sessionId, termId, scope, scopeId, amountMinor: "123456",
   currency: "NGN", reason: "Synthetic school fee configuration",
@@ -145,6 +156,7 @@ describe("Phase 9 school-only immutable fee configuration", () => {
     vi.stubEnv("PHASE9_MANUAL_ALLOCATION_ENABLED", "true");
     vi.stubEnv("PHASE9_MANUAL_REVERSAL_ENABLED", "true");
     vi.stubEnv("PHASE9_FEE_ADJUSTMENT_PROPOSALS_ENABLED", "true");
+    vi.stubEnv("PHASE9_EFFECTIVE_WAIVER_ENABLED", "true");
     for (const name of ["owner", "admin", "teacher", "foreign"]) {
       const email = `fee-${name}-${suffix}@example.test`;
       const registered = await auth.api.signUpEmail({
@@ -770,6 +782,7 @@ describe("Phase 9 school-only immutable fee configuration", () => {
     const ok = await decideFee("owner", reviewed);
     expect(ok.status).toBe(201);
     const decision = (await ok.json()).decision;
+    waiverApprovedDecisionId = decision.id;
     expect(decision.status).toBe("APPROVAL_NOT_EFFECTIVE_FINANCIAL_ADJUSTMENT");
     expect((await decideFee("owner", reviewed)).status).toBe(200);
     expect((await decideFee("owner", { ...reviewed, action: "REJECTED" })).status).toBe(409);
@@ -789,6 +802,128 @@ describe("Phase 9 school-only immutable fee configuration", () => {
       reason: "Forbidden teacher outcome forgery",
       reviewerMembershipId: members.teacher, reviewerUserId: actors.teacher,
     } })).rejects.toThrow();
+  });
+
+  it("applies approved WAIVER only under the net claim cap and remains non-settled", async () => {
+    const original = (await (await allocationPreview("owner")).json()).rows[0];
+    expect(original.originalChargeMinor).toBe("456789");
+    expect(original.appliedWaiverMinor).toBe("0");
+    expect(original.adjustedChargeMinor).toBe("456789");
+    expect(original.previewRemainingMinor).toBe("356789");
+
+    const application = {
+      decisionId: waiverApprovedDecisionId, requestKey: randomUUID(),
+      reason: "Synthetic independently approved exact fee waiver",
+    };
+    for (const [actor, status] of [["", 401], ["admin", 404],
+      ["teacher", 404], ["foreign", 404]] as const) {
+      expect((await applyWaiver(actor, application)).status).toBe(status);
+      expect((await listWaivers(actor)).status).toBe(status);
+    }
+    expect((await applyWaiver("owner", {
+      ...application, amountMinor: "1",
+    })).status).toBe(400);
+    expect((await applyWaiver("owner", {
+      ...application, status: "PAID",
+    })).status).toBe(400);
+    const saved = await applyWaiver("owner", application);
+    expect(saved.status).toBe(201);
+    const applied = (await saved.json()).waiver;
+    expect(applied.amountMinor).toBe("20000");
+    expect(applied.currency).toBe("NGN");
+    expect(applied.status).toBe("APPLIED_INTERNAL_WAIVER_NOT_SETTLEMENT");
+    expect(applied).not.toHaveProperty("applierMembershipId");
+    const duplicate = await applyWaiver("owner", application);
+    expect(duplicate.status).toBe(200);
+    expect((await duplicate.json()).waiver.id).toBe(applied.id);
+    expect((await applyWaiver("owner", { ...application,
+      reason: "Changed key reuse must conflict",
+    })).status).toBe(409);
+    expect((await applyWaiver("owner", { ...application,
+      requestKey: randomUUID(),
+    })).status).toBe(404);
+    const listed = await listWaivers("owner");
+    expect(listed.status).toBe(200);
+    expect(listed.headers.get("cache-control")).toBe("private, no-store");
+    const summary = (await (await allocationPreview("owner")).json()).rows[0];
+    expect(summary).toMatchObject({
+      originalChargeMinor: "456789",
+      appliedWaiverMinor: "20000",
+      adjustedChargeMinor: "436789",
+      independentlyReviewedMinor: "400000",
+      manuallyAllocatedMinor: "100000",
+      previewRemainingMinor: "336789",
+    });
+    const unchanged = await prisma.feeObligation.findUniqueOrThrow({
+      where: { id: obligationId },
+    });
+    expect(unchanged.amountMinor).toBe(BigInt(456789));
+    await expect(prisma.feeWaiverApplication.update({
+      where: { id: applied.id }, data: { amountMinor: BigInt(1) },
+    })).rejects.toThrow();
+    await expect(prisma.feeWaiverApplication.delete({
+      where: { id: applied.id },
+    })).rejects.toThrow();
+    await expect(prisma.feeWaiverApplication.create({ data: {
+      id: randomUUID(), schoolId: schoolA, obligationId,
+      proposalId: applied.proposalId, decisionId: waiverApprovedDecisionId,
+      requestKey: randomUUID(), amountMinor: BigInt(1), currency: "NGN",
+      reason: "Synthetic SQL forged teacher cannot apply waiver",
+      applierMembershipId: members.teacher, applierUserId: actors.teacher,
+    } })).rejects.toThrow();
+
+    // Remaining capacity is 456789 - 400000 verified - 20000 waived = 36789.
+    const nextProposal = await proposeFee("admin", {
+      obligationId, requestKey: randomUUID(), kind: "WAIVER",
+      proposedAmountMinor: "40000",
+      reason: "Synthetic waiver exceeding remaining reviewed claims cap",
+    });
+    expect(nextProposal.status).toBe(201);
+    const nextProposalId = (await nextProposal.json()).proposal.id;
+    const approved = await decideFee("owner", {
+      proposalId: nextProposalId, action: "APPROVED",
+      reason: "Synthetic advisory approval must not bypass SQL financial cap",
+    });
+    expect(approved.status).toBe(201);
+    const secondDecisionId = (await approved.json()).decision.id;
+    expect((await applyWaiver("owner", {
+      decisionId: secondDecisionId, requestKey: randomUUID(),
+      reason: "Must refuse already verified claims greater than adjusted debt",
+    })).status).toBe(404);
+
+    // CORRECTION_PROPOSAL is ambiguous: it cannot be applied as a WAIVER.
+    const correction = await proposeFee("admin", {
+      obligationId, requestKey: randomUUID(), kind: "CORRECTION_PROPOSAL",
+      proposedAmountMinor: "1000",
+      reason: "Synthetic correction requires another accounting policy",
+    });
+    expect(correction.status).toBe(201);
+    const correctionId = (await correction.json()).proposal.id;
+    const correctionApproval = await decideFee("owner", {
+      proposalId: correctionId, action: "APPROVED",
+      reason: "Advisory correction not executable as a waiver",
+    });
+    expect(correctionApproval.status).toBe(201);
+    expect((await applyWaiver("owner", {
+      decisionId: (await correctionApproval.json()).decision.id,
+      requestKey: randomUUID(), reason: "Reject non-waiver accounting kind",
+    })).status).toBe(404);
+
+    // A new VERIFIED claim must obey the reduced ceiling in SQL.
+    const afterWaiverReference = `SYNTH-BANK-D-${suffix.toUpperCase()}`;
+    const newClaim = await submitEvidence("admin", {
+      obligationId, requestKey: randomUUID(),
+      transferReference: afterWaiverReference,
+      claimedAmountMinor: "38000",
+      reason: "Synthetic claimed funds beyond adjusted fee ceiling",
+    });
+    expect(newClaim.status).toBe(201);
+    expect((await reviewEvidence("owner", {
+      evidenceId: (await newClaim.json()).evidence.id,
+      action: "VERIFIED", fundsConfirmed: true,
+      transferReference: afterWaiverReference,
+      reason: "Synthetic verification must honor applied fee waiver",
+    })).status).toBe(404);
   });
 
   it("keeps finance writes default-off unless test environment explicitly enables them", async () => {
@@ -819,6 +954,10 @@ describe("Phase 9 school-only immutable fee configuration", () => {
       expect((await proposeFee("admin", {
         obligationId, requestKey: randomUUID(), kind: "WAIVER",
         proposedAmountMinor: "100", reason: "Disabled fee adjustment",
+      })).status).toBe(404);
+      expect((await applyWaiver("owner", {
+        decisionId: waiverApprovedDecisionId, requestKey: randomUUID(),
+        reason: "Disabled controlled waiver application",
       })).status).toBe(404);
     } finally {
       vi.stubEnv("PHASE9_FEE_WRITE_ENABLED", "true");
