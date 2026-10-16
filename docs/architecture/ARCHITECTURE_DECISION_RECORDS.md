@@ -1,5 +1,42 @@
 # Architecture Decision Records
 
+## ADR-P9-007: Applied waivers are append-only and bounded by reviewed claims
+
+- **Status:** authored, not migration/runtime/CI accepted,
+  2026-10-16.
+- **Context:** independently approved school fee WAIVER
+  governance was advisory-only. Making it accounting-relevant
+  without considering previously VERIFIED bank-reference
+  claims would allow credit beyond the unchanged original fee.
+  A reversed manual allocation still represents an original
+  human bank-review attestation and cannot be silently
+  treated as refunded funds.
+- **Design:** append `FeeWaiverApplication` with same-school
+  composite obligation/proposal/decision/actor FKs and
+  unique proposal/decision/request keys. SQL School-row lock,
+  original active Super Admin, exact APPROVED WAIVER-only
+  decision, distinct proposer, and SQL-derived money protect
+  trusted amount. Existing owner-only manually reviewed
+  balance preview gains applied waivers and adjusted debt.
+- **Concurrency:** one application trigger enforces
+  `waived_total + verified_claim_total + new_waiver <= debt`;
+  new BEFORE INSERT guards on `PaymentVerificationDecision`
+  and `ManualPaymentAllocation` enforce adjusted ceiling
+  after an earlier waiver. Verified amount includes all
+  historic VERIFIED claims regardless of approved preview
+  reversal. Multi-school FKs and School locks serialize the
+  accounting write set. No historic table modification.
+- **Limitations:** this is an INTERNAL accounting preview, NOT
+  a bank provider, cash receipt, real funds settlement or
+  issued school statement. CORRECTION_PROPOSAL is still
+  advisory, and a waiver cannot be reversed without a future
+  reasoned append-only waiver revision/reversal ledger.
+  The application flag and master writes default OFF;
+  never enable on shared/live schools before disposable
+  PostgreSQL, Prisma, concurrency, security, browser and
+  strict dependency audit acceptance. D-P9-007.
+
+
 ## ADR-P9-006: Advisory fee-policy review before any effective waiver
 
 - **Status:** authored, unexecuted (2026-10-16).
