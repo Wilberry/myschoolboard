@@ -1,5 +1,28 @@
 # Architecture Decision Records
 
+## ADR-P9-001: Fee configuration is a versioned source, not a mutable payment balance
+
+- **Status:** Phase 9 proposal authored, schema/migration/SQL and authenticated
+  route tests NOT EXECUTED (2026-10-16).
+- **Context:** FEE-REQ-001 requires tenant-bound fees and separate payment
+  evidence verification. Concurrent Phase 8 work must remain isolated.
+- **Decision:** introduce school-composite FK-bound FeeCategory and append-only
+  FeeStructureRevision (school/category/session/term/scope + SQL-serialized
+  ordinal, money in minor-unit BIGINT, explicit currency and actor evidence).
+  Transactional application service obtains actual Better Auth session and
+  same-school active School Super Admin; PostgreSQL independently validates
+  actor, nonclosed period, school/section/class target and assigns version,
+  with immutable UPDATE/DELETE/TRUNCATE guards. Expose private bounded
+  configuration-only GET/POST, no provider callback or pupil release.
+- **Consequences:** prices can evolve without mutating original records.
+  Category renames require new category. Later obligations must pin exact
+  revision, payment evidence/verification must be separate append-only
+  ledgers with reversal/allocations, and genuine PostgreSQL tests must
+  validate triggers, deletion cascades and concurrent scope writes.
+  This makes no assumption that an uploaded transfer equals funds.
+  See D-P9-001.
+
+
 ## ADR-001: Modular domain design
 
 - Status: Approved
