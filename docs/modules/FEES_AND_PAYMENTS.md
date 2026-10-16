@@ -33,10 +33,19 @@ are tenant-bound and financial history must be attributable and non-silently mut
    idempotent only for exactly the original actor and payload. Full
    actual file upload, receipts, provider callbacks, refunds and
    reversals are not yet implemented.
-4. **Balance and reconciliation — NOT YET BUILT.** Compute payable amount,
-   allocated verified sums and outstanding balances from immutable events.
-   No fabricated credit, silent refund, unrestricted parent access, or
-   receipt before verified evidence. Provider callbacks must be replay-safe.
+4. **Manual allocation and provisional balance preview — AUTHORED,
+   NOT VERIFIED.** One `ManualPaymentAllocation` can apply the exact
+   claimed amount from a distinct independently VERIFIED manual
+   reference claim against its original school-owned debt, and only once.
+   A School Super Admin initiates a reasoned, UUID-idempotent allocation;
+   the database locks the school, derives exact money from evidence and
+   independently rechecks authorization, verified decision, currency,
+   reference digest and no-overallocation cap. An owner-only bounded
+   GET derives original debt, manually reviewed amount, allocated amount,
+   unallocated reviewed amount and an arithmetic remainder **for internal
+   preview only**. This is NOT bank settlement, verified official
+   student balance, generated receipt or accepted reconciliation.
+   Corrective reversals/refunds remain separate future evidence.
 5. **Private finance, student/guardian views and release checks — PENDING.**
    Apply verified same-school relationship and minimum-data access,
    actual synthetic PostgreSQL integration tests, privacy/browser checks,
@@ -141,6 +150,44 @@ are tenant-bound and financial history must be attributable and non-silently mut
   Future adjustment/reversal must preserve original evidence and add
   separate immutable transactions. This manual-review foundation alone
   is not a reliable production outstanding-balance calculation.
+
+## Phase 9 manual allocation/preview contract (authored, NOT verified)
+
+- `ManualPaymentAllocation` is an append-only link between one exact
+  same-school `PaymentVerificationDecision` with `action=VERIFIED`,
+  `confirmedBankFunds=true` and matching hashed reference, its source
+  `PaymentEvidence`, and the original `FeeObligation`. The school
+  admin who submitted evidence cannot allocate it; only a current active
+  same-school `SCHOOL_SUPER_ADMIN` can. No REJECTED or unreviewed
+  claim may be allocated; a decision/evidence may only be allocated once.
+- Database SQL locks the School row, validates the real active
+  allocation member, the exact verified evidence-decision-obligation
+  chain and same currency, refuses aggregate over-allocation, copies
+  actual amount/currency from immutable trusted evidence, assigns UTC
+  allocation time and rejects UPDATE/DELETE/TRUNCATE. School idempotency
+  request keys are unique; same actor/request/verification/reason replays
+  return the original allocation, changed replay is denied. A forged
+  client amount, currency, actor or student ID is rejected by strict API
+  input shape. No cash or bank account is modified.
+- `GET/POST /api/schools/:schoolId/manual-payment-allocations`
+  are private no-store School-Super-Admin-only. GET computes exact
+  PostgreSQL numeric-string columns `originalChargeMinor`,
+  `independentlyReviewedMinor`, `manuallyAllocatedMinor`,
+  `reviewedNotAllocatedMinor`, `previewRemainingMinor`,
+  with `NO_MANUAL_ALLOCATION`, `PARTIAL_MANUAL_ALLOCATION`
+  or `FULL_MANUAL_ALLOCATION`. The labels intentionally avoid PAID,
+  SETTLED, OFFICIAL, RECEIPT and FINANCIALLY CLEARED. The arithmetic
+  is an internal *manual reconciliation preview*, **not** a bank
+  settlement statement, parent-readable fee balance or financial
+  release.
+- `PHASE9_MANUAL_ALLOCATION_ENABLED=false` separately keeps this
+  POST off unless the existing `PHASE9_FEE_WRITE_ENABLED=true`
+  master switch is also set. Do not enable until full disposable-DB
+  verification, privacy and strict security gate acceptance.
+- No refund, reversal or charge adjustment ledger is included; no
+  immutable credit should become production-enforceable or described
+  as received funds without separately audited settlement and
+  correction models.
 
 ## Critical payment states (future obligations)
 
