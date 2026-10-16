@@ -1,5 +1,20 @@
 # Configuration Catalog
 
+## Phase 9 fee configuration development contract (not verified)
+
+Each school explicitly defines durable fee category codes and reasoned
+revisions for an existing category/session/term and SCHOOL/SECTION/CLASS
+scope; only a current same-school SCHOOL_SUPER_ADMIN may write in this
+initial candidate. The editable business choice is a *new version*, never
+an UPDATE of prior price evidence or an automatic repricing of obligations.
+Amounts use positive BIGINT minor units (initial conservative maximum
+1,000,000,000,000) and explicit upper-case three-letter currency;
+there is no auto-charge, auto-assignment or automatic payment verification.
+Fees may be configured for PLANNED or ACTIVE, never CLOSED periods.
+No extra fee authority, provider or historic default is assumed.
+D-P9-001 / ADR-P9-001. Not migrated, tested or production adopted.
+
+
 ## Attendance school calendar policy (development-only implementation default)
 
 | Setting | Default (no revision) | Scope / editor | Constraints | Audit / enforcement |
