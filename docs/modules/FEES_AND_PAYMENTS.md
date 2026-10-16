@@ -15,11 +15,14 @@ are tenant-bound and financial history must be attributable and non-silently mut
    the actual school's active resources. School Super Admin alone can
    configure this first slice; later bursar/delegated finance permission
    requires a separately defined verified authorization policy.
-2. **Student fee obligations — NOT YET BUILT.** Create exactly scoped,
-   student/enrollment/term-bound immutable debts from one chosen version,
-   with duplicate assignment prevention and no retroactive repricing.
-   Record any waiver/discount as separate reviewed adjustment evidence,
-   not an UPDATE to original charges.
+2. **Student fee obligations — AUTHORED, NOT VERIFIED.** An explicit
+   `FeeObligation` for an ENROLLED pupil with matching ACTIVE enrollment
+   and current school/category/session/term fee revision. Its PostgreSQL
+   INSERT trigger checks the issuer and scope then copies charge
+   money and context **from the database**, with one immutable pupil/
+   category/term charge, globally unique per-school idempotency key,
+   and no repricing. Waiver/discount/adjustment/reversal remains future
+   separately reviewed evidence, not mutation of the original charge.
 3. **Payment evidence and verification — NOT YET BUILT.** Submitted proof
    is unverified. A separately authorized verifier records a one-time
    outcome with distinct submitted, pending, verified, rejected, refunded
@@ -56,13 +59,27 @@ are tenant-bound and financial history must be attributable and non-silently mut
   rejected. SQL locks the School row, validates original active member
   and real class/period, assigns revision/timestamp, and rejects
   UPDATE/DELETE/TRUNCATE of fee history.
+- All Phase 9 configuration and charge POSTs are **disabled by default**
+  unless `PHASE9_FEE_WRITE_ENABLED=true`; do not enable against shared or
+  live data. The synthetic DB test stubs it on explicitly.
 - First internal-admin APIs: `GET/POST /api/schools/:schoolId/fee-categories`
   and `GET/POST /api/schools/:schoolId/fee-structures`. GET metadata is
   bounded, SQL rechecks current school/member for each query, and both
   routes require actual signed-in sessions, use `private, no-store`,
   and conceal other schools' identifiers.
-- This first milestone deliberately creates **no** payment evidence
-  records, payment provider calls, callbacks, receipt APIs, fee waivers,
+- Second internal-admin API: `GET/POST /api/schools/:schoolId/fee-obligations`.
+  POST requires exact `enrollmentId`, immutable `revisionId`, unique UUID
+  `requestKey` and reason, never caller amount/student/actor/currency.
+  Server checks the signed-in active School Super Admin, exact enrolled
+  pupil/class/session and scope, then PostgreSQL independently re-derives
+  all monetary and student fields under the school lock. The revision
+  must still be the latest in its own scope. Identical retry returns
+  the first immutable charge; changed-key/payload and repeated charge
+  for the same pupil/category/term are conflicts. GET returns owner-only
+  bounded charge metadata, not payment status or a verified balance.
+  A school fee obligation is not equivalent to funds being received.
+- These milestones deliberately create **no** payment evidence records,
+  payment provider calls, callbacks, receipt APIs, fee waivers,
   student/guardian finance views, or financial settlement side effects.
 
 ## Critical payment states (future obligations)
