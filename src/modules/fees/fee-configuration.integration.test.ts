@@ -21,6 +21,10 @@ import { GET as REVERSE_GET, POST as REVERSE_POST } from
   "@/app/api/schools/[schoolId]/manual-allocation-reversals/route";
 import { POST as REVERSAL_DECISION_POST } from
   "@/app/api/schools/[schoolId]/manual-allocation-reversal-decisions/route";
+import { GET as ADJ_GET, POST as ADJ_POST } from
+  "@/app/api/schools/[schoolId]/fee-adjustment-proposals/route";
+import { POST as ADJ_DECIDE } from
+  "@/app/api/schools/[schoolId]/fee-adjustment-decisions/route";
 import { prisma } from "@/src/lib/db";
 import { auth } from "@/src/lib/auth";
 import { env } from "@/src/lib/env";
@@ -116,6 +120,18 @@ async function decideManualReversal(actor: string, payload: unknown, schoolId = 
     request(actor, schoolId, "manual-allocation-reversal-decisions", "POST", payload),
     { params: Promise.resolve({ schoolId }) });
 }
+async function proposeFee(actor: string, payload: unknown, schoolId = schoolA) {
+  return ADJ_POST(request(actor, schoolId, "fee-adjustment-proposals", "POST", payload),
+    { params: Promise.resolve({ schoolId }) });
+}
+async function feeProposalQueue(actor: string, schoolId = schoolA) {
+  return ADJ_GET(request(actor, schoolId, "fee-adjustment-proposals", "GET"),
+    { params: Promise.resolve({ schoolId }) });
+}
+async function decideFee(actor: string, payload: unknown, schoolId = schoolA) {
+  return ADJ_DECIDE(request(actor, schoolId, "fee-adjustment-decisions", "POST", payload),
+    { params: Promise.resolve({ schoolId }) });
+}
 const revision = (scope: "SCHOOL" | "SECTION" | "CLASS", scopeId: string) => ({
   categoryId, sessionId, termId, scope, scopeId, amountMinor: "123456",
   currency: "NGN", reason: "Synthetic school fee configuration",
@@ -128,6 +144,7 @@ describe("Phase 9 school-only immutable fee configuration", () => {
     vi.stubEnv("PHASE9_PAYMENT_REVIEW_ENABLED", "true");
     vi.stubEnv("PHASE9_MANUAL_ALLOCATION_ENABLED", "true");
     vi.stubEnv("PHASE9_MANUAL_REVERSAL_ENABLED", "true");
+    vi.stubEnv("PHASE9_FEE_ADJUSTMENT_PROPOSALS_ENABLED", "true");
     for (const name of ["owner", "admin", "teacher", "foreign"]) {
       const email = `fee-${name}-${suffix}@example.test`;
       const registered = await auth.api.signUpEmail({
@@ -718,6 +735,62 @@ describe("Phase 9 school-only immutable fee configuration", () => {
       r.reversalState === "REJECTED_MANUAL_REVERSAL")).toBe(true);
   });
 
+  it("keeps school waiver decisions advisory and original debt invariant", async () => {
+    const proposal = {
+      obligationId, requestKey: randomUUID(), kind: "WAIVER",
+      proposedAmountMinor: "20000", reason: "Synthetic fee waiver review proposal",
+    };
+    for (const [actor, status] of [["", 401], ["owner", 404],
+      ["teacher", 404], ["foreign", 404]] as const) {
+      expect((await proposeFee(actor, proposal)).status).toBe(status);
+    }
+    expect((await feeProposalQueue("teacher")).status).toBe(404);
+    expect((await feeProposalQueue("foreign")).status).toBe(404);
+    expect((await proposeFee("admin", { ...proposal, paid: true })).status).toBe(400);
+    expect((await proposeFee("admin", { ...proposal, proposedAmountMinor: "999999" })).status).toBe(400);
+    const created = await proposeFee("admin", proposal);
+    expect(created.status).toBe(201);
+    const item = (await created.json()).proposal;
+    expect(item.proposedAmountMinor).toBe("20000");
+    expect(item.status).toBe("ADVISORY_FEE_ADJUSTMENT_PROPOSAL_ONLY");
+    expect((await proposeFee("admin", proposal)).status).toBe(200);
+    expect((await proposeFee("admin", { ...proposal,
+      reason: "Altered submitted proposal" })).status).toBe(409);
+    const queue = await feeProposalQueue("owner");
+    expect(queue.status).toBe(200);
+    expect(queue.headers.get("cache-control")).toBe("private, no-store");
+    expect((await queue.json()).proposals[0].state).toBe("PENDING");
+    const reviewed = { proposalId: item.id, action: "APPROVED",
+      reason: "Synthetic independent fee policy approval only" };
+    for (const [actor, status] of [["", 401], ["admin", 404],
+      ["teacher", 404], ["foreign", 404]] as const) {
+      expect((await decideFee(actor, reviewed)).status).toBe(status);
+    }
+    expect((await decideFee("owner", { ...reviewed, settlement: true })).status).toBe(400);
+    const ok = await decideFee("owner", reviewed);
+    expect(ok.status).toBe(201);
+    const decision = (await ok.json()).decision;
+    expect(decision.status).toBe("APPROVAL_NOT_EFFECTIVE_FINANCIAL_ADJUSTMENT");
+    expect((await decideFee("owner", reviewed)).status).toBe(200);
+    expect((await decideFee("owner", { ...reviewed, action: "REJECTED" })).status).toBe(409);
+    const sourceDebt = await prisma.feeObligation.findUniqueOrThrow({ where: { id: obligationId } });
+    expect(sourceDebt.amountMinor).toBe(BigInt(456789));
+    const preview = (await (await allocationPreview("owner")).json()).rows[0];
+    expect(preview.originalChargeMinor).toBe("456789");
+    expect(preview.previewRemainingMinor).toBe("356789");
+    expect((await (await feeProposalQueue("admin")).json()).proposals[0].state)
+      .toBe("ADVISORY_APPROVED_NOT_APPLIED");
+    await expect(prisma.feeAdjustmentProposal.update({ where: { id: item.id },
+      data: { proposedAmountMinor: BigInt(1) } })).rejects.toThrow();
+    await expect(prisma.feeAdjustmentDecision.delete({ where: { id: decision.id } }))
+      .rejects.toThrow();
+    await expect(prisma.feeAdjustmentDecision.create({ data: {
+      id: randomUUID(), schoolId: schoolA, proposalId: item.id, action: "REJECTED",
+      reason: "Forbidden teacher outcome forgery",
+      reviewerMembershipId: members.teacher, reviewerUserId: actors.teacher,
+    } })).rejects.toThrow();
+  });
+
   it("keeps finance writes default-off unless test environment explicitly enables them", async () => {
     vi.stubEnv("PHASE9_FEE_WRITE_ENABLED", "false");
     try {
@@ -742,6 +815,10 @@ describe("Phase 9 school-only immutable fee configuration", () => {
       expect((await requestManualReversal("admin", {
         allocationId: allocatedManualId, requestKey: randomUUID(),
         reason: "Disabled manual reversal request",
+      })).status).toBe(404);
+      expect((await proposeFee("admin", {
+        obligationId, requestKey: randomUUID(), kind: "WAIVER",
+        proposedAmountMinor: "100", reason: "Disabled fee adjustment",
       })).status).toBe(404);
     } finally {
       vi.stubEnv("PHASE9_FEE_WRITE_ENABLED", "true");
