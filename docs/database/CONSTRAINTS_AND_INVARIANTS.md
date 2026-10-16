@@ -1,5 +1,36 @@
 # Constraints and Invariants
 
+## Phase 9 append-only internal fee waivers (AUTHORED; SQL NOT VERIFIED)
+
+- One FeeWaiverApplication must reference an exact school-owned
+  FeeObligation, original `kind=WAIVER` FeeAdjustmentProposal
+  and independent terminal `action=APPROVED`
+  FeeAdjustmentDecision. Only an active same-school School
+  Super Admin other than the original School Administrator
+  proposer can apply; PostgreSQL copies exact source money
+  and stamps time, unique school/proposal, school/decision and
+  request UUID. SQL forbids history mutations.
+- School-row-locked SQL guarantees
+  `sum(applied waiver minor units)+
+  sum(independently VERIFIED reference claims)<=
+  original immutable obligation minor units`. All VERIFIED
+  claims are counted, even those with reversed preview
+  allocations; no implicit refunded funds. Companion
+  INSERT guards on future payment VERIFICATION and manual
+  ALLOCATION enforce the adjusted charge after a waiver.
+  Every amount remains PostgreSQL BIGINT/NUMERIC until HTTP
+  serializes exact decimal strings.
+- CORRECTION_PROPOSAL and REJECTED or undecided waiver proposals
+  are not effective adjustments. An approved proposal stays
+  advisory until an explicit once-only waiver application;
+  no PATCH/DELETE/receipt/refund or external settlement.
+- Only privileged current school owner reads the derived
+  adjustment balance preview. No student/guardian/teacher/other
+  school data access, and all writes are default OFF.
+  Actual disposable Postgres concurrency, direct SQL bypass,
+  membership revocation and migration tests remain BLOCKED.
+
+
 ## Phase 9 manual allocation reversal (AUTHORED / NOT VERIFIED)
 
 - Only an active same-school School Administrator can append one
