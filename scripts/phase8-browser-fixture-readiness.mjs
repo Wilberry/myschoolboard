@@ -142,7 +142,11 @@ if (
     const schoolId = assertBrowserFixtureTarget(process.env);
     const { PrismaClient } = await import("@prisma/client");
     prisma = new PrismaClient();
-    const summary = await inspectBrowserFixture(prisma, schoolId);
+    const summary = await inspectBrowserFixture(
+      prisma,
+      schoolId,
+      process.env.PHASE8_BROWSER_STUDENT_ID ?? null,
+    );
     console.info(JSON.stringify(summary, null, 2));
     if (!summary.browserFixtureReady) {
       console.error(
