@@ -544,3 +544,11 @@ All subsequent phases remain pending until their entry criteria and required pro
 - [x] Author read-only synthetic exact-school browser fixture inventory and optional separately installed Playwright real linked guardian/student UI checks with strict disposable local preflight, genuine report GET, policy mode isolation, invalid child selector, focus redaction and fresh-print capture. Guardian receipt POST occurs only under explicit test-only opt-in.
 - [ ] Create a truly synthetic fully approved/released Phase 8 report fixture (demo seed alone has no recipient pupils), run the new Node unit/fixture checks in the disposable database, install test-only browser driver outside the app lockfile and execute browser tests. Fix any failures. Record real screenshot/PDF only of synthetic identities; no real minors.
 - [ ] Complete actual link revocation, bfcache/session switch, multi-child, native Save as PDF and screen-reader acceptance, full **current HEAD** build/CI-equivalent suite and strict audit. Phase 8 not accepted; deployment flags stay disabled.
+
+## Phase 8 recipient browser assertions strengthened (2026-10-16)
+
+- [x] Ensure a linked pupil/guardian fixture must correspond to the **exact synthetic child** under test, not another linked child.
+- [x] Add pre-launch Compose tmpfs/loopback and `pg_isready` guard for the opt-in browser acceptance command; require a newly authorized private HTTP GET before simulated Print and immediate redaction after simulated `afterprint`.
+- [x] Add synthetic `pagehide` / persisted `pageshow` reauthorization test; record receipt-written status only on actual successful receipt.
+- [ ] Run local Prettier, Node regression tests and full local Phase 8 guarded suite on the **new** HEAD; verify Chrome via synthetic linked student/guardian sessions in the disposable Docker test environment. Source assertions alone do not count as runtime acceptance.
+- [ ] Complete genuine bfcache, native Save to PDF, screen-reader, revocation/account-switching tests, operational/privacy sign-off and strict audit remediation. Do not deploy or enable report gates outside synthetic test processes.
