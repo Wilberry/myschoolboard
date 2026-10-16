@@ -54,3 +54,20 @@ Commit and push the regenerated lockfile **only to this experimental branch afte
 Authored: scoped candidate override and fail-closed lock graph checker with pure unit regressions. **Not yet executed:** npm registry resolution, generated lock, npm ci, Prisma compatibility, Postgres test, build, strict audit, deployment. No production use, role expansion, school data or grading changes.
 
 Relevant upstream: https://github.com/advisories/GHSA-ggr8-5vv4-36mx ; https://github.com/prisma/orm/issues/30052 ; https://github.com/advisories/GHSA-vfj7-8cjw-p6xm .
+
+## 2026-10-16 read-only lock graph/advisory recheck (no resolution)
+
+From the experiment's **unchanged** committed npm lockfile v3 (550 package entries):
+
+| Package | Locked version | Direct importer | Interpretation |
+| --- | --- | --- | --- |
+| `@prisma/config` | `6.19.3` | Prisma | Exact declared dependency `deepmerge-ts: 7.1.5`. |
+| `deepmerge-ts` | `7.1.5` | `@prisma/config` | Candidate `package.json` override has **not** been resolved into the lockfile. |
+| `@next/eslint-plugin-next` | `16.4.0` | Project ESLint tooling | Pins `fast-glob: 3.3.1` in this lockfile. |
+| `fast-glob` | `3.3.1` | `@next/eslint-plugin-next` | Declares `micromatch: ^4.0.4`. |
+| `micromatch` | `4.0.8` | `fast-glob` | Declares `braces: ^3.0.3`. |
+| `braces` | `3.0.3` (`dev: true`) | `micromatch` | Listed in GHSA-vfj7-8cjw-p6xm; no patched npm release documented as of this check. |
+
+The installed lockfile identifies the braces path as **development tooling**. This is *not* proof of exclusion from every production artifact or proof that arbitrary external glob patterns cannot reach it; test that claim against an actual deployment bundle before any risk decision. Current public upstream references: <https://github.com/advisories/GHSA-vfj7-8cjw-p6xm>, <https://github.com/micromatch/braces/issues/84>, <https://osv.dev/vulnerability/GHSA-vfj7-8cjw-p6xm>, and for Prisma <https://github.com/prisma/orm/issues/30052>.
+
+**Remediation status remains BLOCKED.** No real npm resolution, tarball-integrity verification, `npm ci`, compatible Prisma config runtime, database migration, Vitest, Next build, or strict npm audit was executed in this source-only check. Do **not** claim the scoped override is accepted, alter the v7 lockfile manually, downgrade or remove the security gate, or use an exception without separately approved security risk ownership. Regenerate and test the lock only in the isolated experimental checkout with a trustworthy npm registry; keep it off `verify/phase8-local` until compatibility is substantiated.
