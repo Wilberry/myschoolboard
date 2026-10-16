@@ -201,11 +201,15 @@ export async function listSchoolPaymentEvidence(schoolId: string) {
   return prisma.$queryRaw<Array<{
     id: string; obligationId: string; claimedAmountMinor: string;
     currency: string; submittedAt: Date; reviewAction: string | null;
+    verificationState: "PENDING_VERIFICATION" | "VERIFIED" | "REJECTED";
   }>>(Prisma.sql`
     SELECT evidence."id", evidence."obligationId",
       evidence."claimedAmountMinor"::text AS "claimedAmountMinor",
       evidence."currency", evidence."submittedAt",
-      review."action"::text AS "reviewAction"
+      review."action"::text AS "reviewAction",
+      CASE WHEN review."action"='VERIFIED' THEN 'VERIFIED'
+        WHEN review."action"='REJECTED' THEN 'REJECTED'
+        ELSE 'PENDING_VERIFICATION' END AS "verificationState"
     FROM "PaymentEvidence" evidence
     JOIN "School" s ON s."id"=evidence."schoolId" AND s."isActive"=true
     JOIN "Membership" actor ON actor."schoolId"=s."id"
