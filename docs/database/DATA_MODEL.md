@@ -1,5 +1,17 @@
 # Data Model
 
+## Phase 9 fee adjustment proposal schema (unverified)
+
+`FeeAdjustmentProposal` records immutable school/debt, actor,
+WAIVER/CORRECTION_PROPOSAL, requested positive minor-unit amount,
+original currency, reason, UUID request key and time.
+`FeeAdjustmentDecision` records one separate current School Super
+Admin advisory APPROVED/REJECTED outcome, reason and time.
+Neither table represents an effective credit, accounting adjustment,
+payment refund or school-issued receipt. Tenant-composite FKs and
+School-row-locked INSERT validators are authored but unexecuted.
+
+
 ## Logical domains
 
 ### Platform and tenancy
