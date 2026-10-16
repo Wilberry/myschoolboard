@@ -71,7 +71,7 @@ test("owner-only allocation and provisional arithmetic never produce a paid rece
   assert.ok(route.includes('export async function GET'));
   assert.ok(route.includes('export async function POST'));
   assert.doesNotMatch(route, /export async function (DELETE|PATCH|PUT)/);
-  assert.ok(testSource.includes("concurrent manual allocation"));
+  assert.ok(testSource.includes("allocates only independently VERIFIED claims once"));
   assert.ok(testSource.includes("previewRemainingMinor: \"156789\""));
   assert.ok(testSource.includes("manuallyAllocatedMinor: \"300000\""));
   assert.ok(env.includes("PHASE9_MANUAL_ALLOCATION_ENABLED=false"));
