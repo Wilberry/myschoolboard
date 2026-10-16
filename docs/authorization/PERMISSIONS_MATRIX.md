@@ -2,6 +2,25 @@
 
 For assignment-administration list/detail reads **only**, the D-020/D-023 development implementation default is authenticated, active, same-school `school:configure` (currently School Administrator and School Super Admin), plus tenant-scoped resource checks and minimum needed fields. This does **not** grant general assignment-administration read to every `academic:read` role, Platform Super Admin, parents, or teachers. Teacher self-service requires a distinct exact-active-assignment-scoped design. Read handlers are not implemented or validated merely by recording this policy.
 
+## Phase 9 interim finance workflow (AUTHORED, NOT VERIFIED)
+
+The configuration catalog continues to reserve fee-category/policy authoring
+and explicit pupil-obligation issuance to the current same-school
+`SCHOOL_SUPER_ADMIN`, guarded independently in application and PostgreSQL.
+For reference-only school operational submissions, an active same-school
+`SCHOOL_ADMIN` may record **unverified** transfer-reference evidence for an
+existing exact-school obligation and see only their own evidence; this does
+**not** authorize fee edits, bank verification, receipts, payment callbacks,
+student-linked finance reports, exports or wider financial data reads.
+A **different** active same-school `SCHOOL_SUPER_ADMIN` must explicitly
+attest the claimed reference against independently observed bank funds to
+append one VERIFIED/REJECTED review; no same-user self-review, no automatic
+settlement or publication. Teachers, students, guardians, platform support
+and Platform Super Admin gain no implied finance access. Both operations
+are disabled by default pending database/security acceptance. D-P9-003,
+ADR-P9-003. This scoped development policy does not silently create a
+delegated bursar role.
+
 The matrix below expresses the governing permission model. Server-side governance is mandatory; UI hiding is not sufficient.
 
 | Role | View | Create | Edit | Submit | Approve | Publish | Export | Restore | Delete | Permanently delete | Manage permissions |
