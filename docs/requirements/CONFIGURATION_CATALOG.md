@@ -1,5 +1,17 @@
 # Configuration Catalog
 
+## Phase 9 advisory fee adjustment review (NOT VERIFIED)
+
+`PHASE9_FEE_ADJUSTMENT_PROPOSALS_ENABLED=false` defaults OFF in
+addition to `PHASE9_FEE_WRITE_ENABLED=false`. It controls only
+School Administrator-submitted WAIVER/CORRECTION_PROPOSAL records
+and separate School Super Admin advisory decisions. The decision
+never applies to an original fee debt or internal manual balance
+preview, and cannot trigger payment, refund or receipt. A separately
+audited adjustment ledger and release validation will be required
+to make school fees legally/accountingly effective. D-P9-006.
+
+
 ## Phase 9 manual allocation reversal controls — NOT VERIFIED
 
 `PHASE9_MANUAL_REVERSAL_ENABLED=false` is a new independent
