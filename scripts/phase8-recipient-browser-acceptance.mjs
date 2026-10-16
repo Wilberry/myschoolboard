@@ -1,0 +1,264 @@
+import assert from "node:assert/strict";
+import { isAbsolute, resolve } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { assertLocalVerificationTarget } from "./verify-local.mjs";
+import { inspectBrowserFixture } from "./phase8-browser-fixture-readiness.mjs";
+
+const modes = new Set(["STUDENT_ONLY", "GUARDIAN_ONLY", "GUARDIAN_FIRST_ACK"]);
+
+/**
+ * This runner never creates pupils, adopts school policy, releases reports,
+ * revokes links or changes feature flags. Synthetic receipts require a
+ * second explicit opt-in and remain visible in immutable test DB history.
+ */
+export function assertRecipientBrowserTarget(env) {
+  assertLocalVerificationTarget(env);
+  if (
+    env.PHASE8_BROWSER_DISPOSABLE_ACK !== "I_CONFIRMED_LOCAL_TEST_DB" ||
+    env.PHASE8_REPORT_RELEASE_ENABLED !== "true" ||
+    env.PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED !== "true"
+  ) {
+    throw new Error("Browser acceptance requires explicit synthetic-only flags");
+  }
+  const url = new URL(env.BETTER_AUTH_URL);
+  if (
+    url.protocol !== "http:" ||
+    url.port !== "3000" ||
+    !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname) ||
+    url.pathname !== "/" ||
+    url.search ||
+    url.hash ||
+    new URL(env.TEST_DATABASE_URL).searchParams.get("schema") !== "public"
+  ) {
+    throw new Error("Browser acceptance is restricted to the loopback test app");
+  }
+  const schoolId = env.PHASE8_BROWSER_SCHOOL_ID;
+  const childId = env.PHASE8_BROWSER_STUDENT_ID;
+  for (const value of [schoolId, childId]) {
+    if (!value || !/^[A-Za-z0-9_-]{1,128}$/.test(value)) {
+      throw new Error("Provide exact synthetic school and child IDs");
+    }
+  }
+  if (!modes.has(env.PHASE8_BROWSER_EXPECT_MODE)) {
+    throw new Error("Specify the expected adopted recipient policy mode");
+  }
+  for (const role of ["PARENT", "STUDENT"]) {
+    const email = env[`PHASE8_BROWSER_${role}_EMAIL`];
+    const password = env[`PHASE8_BROWSER_${role}_PASSWORD`];
+    if (!email?.endsWith(".test") || !password || password.length < 12) {
+      throw new Error("Recipient browser accounts must use synthetic .test credentials");
+    }
+  }
+  const entry = env.PHASE8_BROWSER_PLAYWRIGHT_ENTRY;
+  if (!entry || !isAbsolute(entry) || !entry.endsWith("/playwright/index.mjs")) {
+    throw new Error("Point to a separately installed Playwright index.mjs");
+  }
+  if (
+    env.PHASE8_BROWSER_ALLOW_RECEIPT_WRITE === "1" &&
+    env.PHASE8_BROWSER_EXPECT_MODE !== "GUARDIAN_FIRST_ACK"
+  ) {
+    throw new Error("Explicit receipt test applies only to guardian-first mode");
+  }
+  return { origin: url, schoolId, childId, entry };
+}
+
+function assertNoLeaks(rows, childId, role, mode, acknowledged) {
+  assert.ok(Array.isArray(rows), "Expected a reports array");
+  if (role === "STUDENT") {
+    assert.equal(rows.length > 0, mode === "STUDENT_ONLY" ||
+      (mode === "GUARDIAN_FIRST_ACK" && acknowledged));
+  } else {
+    assert.equal(rows.length > 0, mode !== "STUDENT_ONLY");
+  }
+  for (const row of rows) {
+    assert.equal(row.studentId, childId, "Foreign child disclosed");
+    assert.equal(row.recipientRole, role);
+    assert.equal(row.policyMode, mode);
+    for (const forbidden of [
+      "studentSourceCards",
+      "composedStudentCards",
+      "correctIndex",
+      "earnedPoints",
+    ]) {
+      assert.ok(!(forbidden in row), "Private academic source data leaked");
+    }
+  }
+}
+
+function assertPrivateHeaders(response) {
+  const headers = response.headers();
+  assert.ok(headers["cache-control"]?.includes("no-store"));
+  assert.ok(headers["x-robots-tag"]?.includes("noindex"));
+}
+
+async function signIn(browser, origin, email, password) {
+  const context = await browser.newContext({
+    serviceWorkers: "block",
+    acceptDownloads: false,
+  });
+  const page = await context.newPage();
+  await page.goto(origin.href);
+  await page.getByLabel("Email address").fill(email);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByRole("heading", { name: /Good to see you/ }).waitFor();
+  return { context, page };
+}
+
+async function readReport(page, origin, schoolId) {
+  const target = new URL(
+    `/api/schools/${encodeURIComponent(schoolId)}/published-reports`,
+    origin,
+  );
+  const pending = page.waitForResponse((response) =>
+    response.url() === target.href &&
+    response.request().method() === "GET",
+  );
+  await page.goto(new URL(
+    `/schools/${encodeURIComponent(schoolId)}/published-reports`,
+    origin,
+  ).href);
+  await page.getByRole("heading", { name: "My officially released subjects" }).waitFor();
+  const response = await pending;
+  assert.equal(response.status(), 200, "Recipient GET denied");
+  assertPrivateHeaders(response);
+  const data = await response.json();
+  assert.ok(Array.isArray(data.reports));
+  return { page, rows: data.reports };
+}
+
+async function checkPrintLifecycle(page) {
+  const button = page.getByRole("button", {
+    name: "Print authorized subject report / Save as PDF",
+  });
+  await button.waitFor();
+  assert.equal(await button.isDisabled(), false);
+  await page.emulateMedia({ media: "print" });
+  const hidden = await page.evaluate(() => {
+    const root = document.querySelector(".published-report-workspace");
+    const article = root?.querySelector("article");
+    return (
+      root?.getAttribute("data-print-authorized") === "false" &&
+      article &&
+      getComputedStyle(article).display === "none"
+    );
+  });
+  assert.ok(hidden, "Ctrl+P must not expose a cached result");
+  await page.emulateMedia({ media: "screen" });
+  await page.evaluate(() => {
+    window.__phase8SyntheticPrint = null;
+    window.print = () => {
+      const workspace = document.querySelector(".published-report-workspace");
+      window.__phase8SyntheticPrint = {
+        authorized: workspace?.getAttribute("data-print-authorized") === "true",
+        articles: workspace?.querySelectorAll("article").length ?? 0,
+      };
+      window.dispatchEvent(new Event("afterprint"));
+    };
+  });
+  await button.click();
+  await page.waitForFunction(() => window.__phase8SyntheticPrint !== null);
+  const captured = await page.evaluate(() => window.__phase8SyntheticPrint);
+  assert.equal(captured.authorized, true);
+  assert.ok(captured.articles > 0);
+}
+
+export async function runRecipientBrowserAcceptance(
+  env = process.env,
+  driver,
+  database,
+) {
+  const { origin, schoolId, childId } = assertRecipientBrowserTarget(env);
+  const fixture = await inspectBrowserFixture(database, schoolId);
+  assert.equal(fixture.browserFixtureReady, true, "Incomplete synthetic DB fixture");
+  assert.equal(fixture.currentPolicy, env.PHASE8_BROWSER_EXPECT_MODE);
+  const browser = await driver.chromium.launch({
+    headless: true,
+    ...(env.PHASE8_BROWSER_CHROMIUM_PATH
+      ? { executablePath: env.PHASE8_BROWSER_CHROMIUM_PATH }
+      : {}),
+  });
+  const contexts = [];
+  try {
+    const users = {};
+    for (const role of ["PARENT", "STUDENT"]) {
+      users[role] = await signIn(
+        browser,
+        origin,
+        env[`PHASE8_BROWSER_${role}_EMAIL`],
+        env[`PHASE8_BROWSER_${role}_PASSWORD`],
+      );
+      contexts.push(users[role].context);
+    }
+    let parent = await readReport(users.PARENT.page, origin, schoolId);
+    let student = await readReport(users.STUDENT.page, origin, schoolId);
+    const mode = env.PHASE8_BROWSER_EXPECT_MODE;
+    const acknowledged = env.PHASE8_BROWSER_EXPECT_ACKNOWLEDGED === "true";
+    assertNoLeaks(parent.rows, childId, "PARENT", mode, acknowledged);
+    assertNoLeaks(student.rows, childId, "STUDENT", mode, acknowledged);
+
+    const selectedChild = await users.STUDENT.page.request.get(
+      new URL(
+        `/api/schools/${encodeURIComponent(schoolId)}/published-reports?studentId=untrusted`,
+        origin,
+      ).href,
+    );
+    assert.equal(selectedChild.status(), 400);
+    assert.ok(selectedChild.headers()["cache-control"]?.includes("no-store"));
+
+    if (mode === "GUARDIAN_FIRST_ACK" && !acknowledged &&
+      env.PHASE8_BROWSER_ALLOW_RECEIPT_WRITE === "1") {
+      const acknowledge = users.PARENT.page.getByRole("button", {
+        name: "Acknowledge this published subject",
+      });
+      await acknowledge.first().click();
+      await users.PARENT.page.getByText("Acknowledged", { exact: true }).first().waitFor();
+      student = await readReport(users.STUDENT.page, origin, schoolId);
+      assertNoLeaks(student.rows, childId, "STUDENT", mode, true);
+    }
+
+    const printPage = student.rows.length
+      ? users.STUDENT.page
+      : parent.rows.length
+        ? users.PARENT.page
+        : null;
+    assert.ok(printPage, "Expected a verified linked synthetic recipient");
+    await checkPrintLifecycle(printPage);
+
+    // Focus must synchronously clear sensitive DOM before the fresh GET.
+    const beforeRefetch = await printPage.evaluate(() => {
+      window.dispatchEvent(new Event("focus"));
+      return document.querySelectorAll(
+        ".published-report-workspace article",
+      ).length;
+    });
+    assert.equal(beforeRefetch, 0, "Focus returned cached recipient grades");
+    return { browserChecks: "passed", mode, auditedReceiptWritten:
+      env.PHASE8_BROWSER_ALLOW_RECEIPT_WRITE === "1" };
+  } finally {
+    await Promise.all(contexts.map((context) => context.close()));
+    await browser.close();
+  }
+}
+
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  let db;
+  try {
+    const { entry } = assertRecipientBrowserTarget(process.env);
+    const { PrismaClient } = await import("@prisma/client");
+    const driver = await import(pathToFileURL(entry).href);
+    db = new PrismaClient();
+    const result = await runRecipientBrowserAcceptance(process.env, driver, db);
+    console.info(JSON.stringify(result));
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Synthetic browser acceptance failed",
+    );
+    process.exitCode = 1;
+  } finally {
+    if (db) await db.$disconnect();
+  }
+}
