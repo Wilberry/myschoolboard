@@ -509,3 +509,12 @@ All subsequent phases remain pending until their entry criteria and required pro
 - [x] Add four Node mocked HTTP/preflight negative-test cases to both local guard and full test registrations; isolated copied-source fixture tests **4/4 passed**. Leave GitHub Actions and mandatory `npm audit --audit-level=high` unchanged.
 - [ ] **Actually start** the isolated Next app and run the six live probes on this exact branch HEAD; inspect real document response headers (including redirects) and fix any failures.
 - [ ] Run full disposable Postgres/Prisma/Vitest/TypeScript/Next build, perform recipient authenticated browser/print/a11y acceptance and resolve outstanding high npm audit; do not mark Phase 8 accepted or turn on recipient release.
+
+## Phase 8 October 16 HTTP verification blocker follow-up
+
+- [x] Local Docker postgres-test confirmed healthy on disposable tmpfs/loopback port 5434; synthetic preflight passed with both report-disclosure flags false. Original Phase 1 branch/tracked worktree restored, pre-existing untracked files retained.
+- [ ] Latest local live six-probe `verify:local:http` did NOT pass (cold compilation timeout; subsequently a 307 with no-store but no private). New correction authored, **not yet rerun**.
+- [x] Restrict relaxed `private` requirement to exact, secure 307 login redirects only; still require no-store, noindex, no-referrer and prohibit public/positive-age caching or external/permanent redirects. Preserve `private, no-store` for nonredirect/API errors.
+- [x] Increase first-request HTTP timeout to bounded 60 seconds and add mock regressions for safe/unsafe redirects and nonredirect privacy.
+- [ ] Run updated Node smoke unit tests and live six-probe Next test against exact latest commit and disposable Docker env; correct any actual missing privacy headers without weakening required safeguards.
+- [ ] Complete cumulative full CI-equivalent local PostgreSQL/Vitest/Next/audit and real student/guardian browser/print/a11y tests. Phase 8 NOT ACCEPTED; production/publication flags remain disabled.
