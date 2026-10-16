@@ -15,7 +15,7 @@ const cleanCheckout = Object.freeze({
   trackingHead: "a".repeat(40),
 });
 
-test("allows only clean tracked Phase 8 worktree at fetched remote HEAD", () => {
+test("requires clean Phase 8 worktree and matching remote HEAD", () => {
   assert.doesNotThrow(() => assertPhase8Checkout(cleanCheckout));
   for (const changed of [
     { topLevel: "/home/wilberry/Desktop/project/myschoolboard" },
@@ -40,7 +40,7 @@ const validCompose = Object.freeze({
   ports: [{ host_ip: "127.0.0.1", published: "5434", target: 5432 }],
 });
 
-test("requires a tmpfs-backed PostgreSQL database on loopback port 5434", () => {
+test("requires tmpfs-backed loopback PostgreSQL", () => {
   assert.doesNotThrow(() => assertDisposableCompose(validCompose));
   for (const changed of [
     { tmpfs: [] },
@@ -78,7 +78,7 @@ const safeEnvironment = Object.freeze({
   PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED: "false",
 });
 
-test("refuses shared database targets or enabled disclosure flags before invoking Docker", () => {
+test("refuses shared targets or enabled disclosure flags", () => {
   assert.doesNotThrow(() => assertPhase8Environment(safeEnvironment));
   for (const changed of [
     { NODE_ENV: "production" },
