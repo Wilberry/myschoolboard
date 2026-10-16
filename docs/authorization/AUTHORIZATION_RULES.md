@@ -1,5 +1,19 @@
 # Authorization Rules
 
+## Phase 9 advisory fee adjustments — AUTHORED, NOT VERIFIED
+
+Actual signed-in current SCHOOL_ADMIN in the exact active school may
+submit a bounded WAIVER/CORRECTION_PROPOSAL attached to an issued
+fee obligation. A separate same-school active SCHOOL_SUPER_ADMIN
+may record one reasoned terminal advisory approval/rejection. School
+locking and composite database FKs recheck real actor, original debt
+and review independence. No effective school fee amount, paid status,
+manual balance preview or receipt changes. Admin reads own proposals;
+owner reads bounded queue. All write flags default OFF. D-P9-006 /
+ADR-P9-006. Runtime migration, concurrent SQL and authenticated
+privacy tests remain NOT EXECUTED.
+
+
 ## Phase 9 manual allocation preview reversal permissions (AUTHORED, NOT VERIFIED)
 
 Only an authenticated current same-school School Administrator may
