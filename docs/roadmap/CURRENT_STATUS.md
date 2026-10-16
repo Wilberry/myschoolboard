@@ -1,5 +1,40 @@
 # Current Status
 
+## Phase 9 — manual reviewed-claim allocation preview (AUTHORED, NOT VERIFIED, 2026-10-16)
+
+Following the immutable fee structure, student obligation, submitted
+bank-reference claim and independent VERIFIED/REJECTED review foundations,
+the isolated Phase 9 branch now includes additive
+`20261016150000_phase9_manual_claim_allocation` migration,
+`ManualPaymentAllocation` schema, typed service, one private no-store
+`GET/POST /api/schools/:schoolId/manual-payment-allocations` endpoint,
+synthetic authenticated data tests and source guards.
+
+Only a current same-school School Super Admin may allocate the full
+amount of one exact independent VERIFIED manual claim to the original
+student debt. Database checks School lock, actor, source decision
+attestation and reference, currency and verified sum caps; same
+evidence or verification cannot be allocated twice and original claim/
+decision/history remain immutable. An owner-only final SQL read returns
+original debt, reviewed claim sums, applied allocations, unallocated
+reviewed claim sums and preview remainder in decimal minor-unit strings.
+Even a zero remainder is `FULL_MANUAL_ALLOCATION`, **never** PAID,
+SETTLED, externally confirmed or a receipt. No student/guardian
+finance view, provider call, file upload, official account balance,
+reversal, refund or receipt is created.
+
+`PHASE9_MANUAL_ALLOCATION_ENABLED=false` independently disables POST
+in addition to `PHASE9_FEE_WRITE_ENABLED=false`; previous separate
+payment-evidence and review gates also remain OFF by default. The
+migration, Prisma generation, actual synthetic PostgreSQL integration,
+concurrent direct-SQL attackers, Node/Vitest, TypeScript, browser,
+build and strict high-severity dependency audit have **NOT EXECUTED**.
+Neither main, the Phase 8 verification worktree nor any shared DB was
+modified. FEE-REQ-001 and Phase 9 acceptance remain BLOCKED.
+See `docs/quality/PHASE9_MANUAL_ALLOCATION_CHECKPOINT_20261016.md`;
+D-P9-004 / ADR-P9-004.
+
+
 ## Phase 9 — unverified bank-reference claims and independent review (AUTHORED; 2026-10-16)
 
 The isolated branch `feature/phase9-fees-payments-foundation` extends
