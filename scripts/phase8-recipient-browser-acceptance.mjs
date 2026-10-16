@@ -463,9 +463,10 @@ export async function runRecipientBrowserAcceptance(
       !acknowledged &&
       env.PHASE8_BROWSER_ALLOW_RECEIPT_WRITE === "1"
     ) {
-      const acknowledge = users.PARENT.page.getByRole("button", {
+      const acknowledgeButtons = users.PARENT.page.getByRole("button", {
         name: "Acknowledge this published subject",
-      }).first();
+      });
+      const acknowledge = acknowledgeButtons.first();
       const selectedReleaseId = await acknowledge
         .locator("xpath=ancestor::tr[1]")
         .getAttribute("data-release-id");
