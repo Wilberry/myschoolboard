@@ -1,5 +1,24 @@
 # Authorization Rules
 
+## Phase 9 waiver application guard (AUTHORED / NOT VERIFIED)
+
+Only a signed-in active same-school School Super Admin can
+create an internal FeeWaiverApplication for an exact independent
+APPROVED `kind=WAIVER` proposal. The original current school
+administrator is the proposer. PostgreSQL holds School lock,
+rechecks actors, debt, proposal and decision and bounds all
+applied waivers plus independently verified manual bank
+reference claims to the original debt. Additional SQL INSERT
+guards on new VERIFIED evidence reviews and new manual
+allocations prevent post-waiver overcredit. Request/decision
+reuse is idempotent only on exact member/key/payload. School
+Super Admin-only no-store SQL reader rechecks current school
+and membership for each returned waiver. No receipts, refund,
+actual payment settlement, parent/student access or arbitrary
+fee re-pricing. The default-OFF waiver and master switches
+must both be enabled for writes. D-P9-007 / ADR-P9-007.
+
+
 ## Phase 9 advisory fee adjustments — AUTHORED, NOT VERIFIED
 
 Actual signed-in current SCHOOL_ADMIN in the exact active school may
