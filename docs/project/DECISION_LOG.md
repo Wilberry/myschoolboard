@@ -1,5 +1,31 @@
 # Decision Log
 
+## D-P9-005: Immutable correction request plus independent owner review
+
+- **Status:** authored, runtime NOT VERIFIED (2026-10-16).
+- **Decision:** allow only an active School Administrator to propose
+  one immutable reasoned full reversal of a specific previously
+  allocated manual payment claim. The request is not a refund,
+  settlement, payment correction or receipted ledger event.
+- **Review:** require a different current active School Super Admin
+  to record one terminal APPROVED or REJECTED decision and reason.
+  PostgreSQL serializes on School and checks actual tenant actors,
+  immutable allocation existence, matching original amount/currency
+  and duplicate outcome. Distinct request and decision audit rows
+  reject ordinary mutation and deletion.
+- **Projection:** only APPROVED subtracts the full allocation from the
+  owner-only internal manual preview. The original verified evidence,
+  allocation, original student debt and bank claim are preserved.
+  A REJECTED request leaves the original allocation active. Neither
+  outcome sends money; no refund or receipt may be issued.
+- **Constraint:** one reversal request per original allocation,
+  including rejected requests; no partial or repeat correction and no
+  reallocation of reversed evidence until a separate versioned policy
+  is independently verified. Input idempotency and exact replay are
+  protected; writes remain OFF without both master and reversal flags.
+  D-023, ADR-P9-005.
+
+
 ## D-P9-004: Manual-review allocation is a separate internal preview, not funds settlement
 
 - **Status:** AUTHORED, NOT RUNTIME-VERIFIED (2026-10-16).
