@@ -26,7 +26,15 @@ export function inspectDeepmergeCandidate(pkg, lock) {
     resolved.resolved?.startsWith("https://registry.npmjs.org/deepmerge-ts/"),
     "Unexpected package source",
   );
-  assert.equal(lock.packages[""].overrides?.["@prisma/config"]?.["deepmerge-ts"], "8.0.2");
+  for (const [path, details] of Object.entries(lock.packages)) {
+    if (path.endsWith("/deepmerge-ts")) {
+      assert.equal(
+        details.version,
+        "8.0.2",
+        `Unexpected vulnerable deepmerge-ts installed at ${path}`,
+      );
+    }
+  }
   return {
     prismaConfig: parent.version,
     deepmerge: resolved.version,
