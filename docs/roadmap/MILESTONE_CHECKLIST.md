@@ -1,5 +1,33 @@
 # Milestone Checklist
 
+## Phase 9 — append-only manually reviewed payment allocations (2026-10-16)
+
+- [x] Authored school-locked `ManualPaymentAllocation` with exact
+  obligation/reference/verified-decision chain, SQL-copied money,
+  one immutable allocation per evidence/decision, idempotency
+  request key, current School Super Admin author and reason.
+- [x] Authored owner-only no-store GET with scoped final SQL and
+  exact numeric-string charge/reviewed/allocated/unallocated/remaining
+  projections. A FULL_MANUAL_ALLOCATION is explicitly NOT paid/settled.
+- [x] Authored private default-OFF POST with strict actor/decision/
+  replay checking, serialized transactions and no client money input.
+- [x] Authored synthetic concurrent duplicate, foreign role, rejected
+  review, SQL actor tampering, history mutation, duplicate request,
+  default-disabled and preview arithmetic test cases; added Node
+  source guard to existing test and local guard scripts.
+- [ ] **NOT EXECUTED:** disposable PostgreSQL SQL migrations/
+  concurrency/tenant deletion, actual synthetic authenticated Vitest,
+  Prisma validation/generate, TypeScript, static lint/format/build,
+  browser/privacy checks and strict `npm audit --audit-level=high`.
+- [ ] Implement immutable adjustment/reversal/refund ledgers before
+  official outstanding balances. Distinguish banking settlement,
+  payment provider callbacks, receipts and independent reconciliation
+  from human-claimed references and manually allocated previews.
+- [ ] Phase 9 full requirements and security exit remains BLOCKED.
+  No production payments, receipt issue, parent/student finance views
+  or merge/deployment authorized.
+
+
 ## Phase 9 — payment reference evidence and separate manual review (2026-10-16)
 
 - [x] Authored append-only `PaymentEvidence` for one issued school
