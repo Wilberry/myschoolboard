@@ -27,6 +27,6 @@ export async function POST(request: Request,
     }
     const { schoolId } = await params;
     const decision = await decideInternalPaymentReference(schoolId, await request.json());
-    return Response.json({ decision }, { status: 201, headers });
+    return Response.json({ decision }, { status: decision.replay ? 200 : 201, headers });
   } catch (error) { return failure(error); }
 }
