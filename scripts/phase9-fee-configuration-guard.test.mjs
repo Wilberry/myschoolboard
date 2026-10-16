@@ -103,6 +103,8 @@ test("School-enrollment fee obligations preserve exact debt and cannot become a 
   assert.match(service, /PHASE9_FEE_WRITE_ENABLED/);
   assert.match(obligations, /requestKey: z\.string\(\)\.uuid\(\)/);
   assert.match(obligations, /replay: true/);
+  assert.match(obligations, /if \(allowed\.length !== 1\) throw new FeeError\("NOT_FOUND"\)/);
+  assert.match(obligations, /m\."userId"=\$\{userId\}/);
   assert.match(obligations, /BigInt|amountMinor: record\.amountMinor\.toString/);
   assert.match(obligationRoute, /"Cache-Control": "private, no-store"/);
   assert.doesNotMatch(obligationRoute, /export async function (PATCH|PUT|DELETE)/);
