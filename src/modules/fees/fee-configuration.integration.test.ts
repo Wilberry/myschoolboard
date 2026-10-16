@@ -346,6 +346,7 @@ describe("Phase 9 school-only immutable fee configuration", () => {
     const ownerList = await evidenceList("owner");
     const row = (await ownerList.json()).evidence[0];
     expect(row.reviewAction).toBeNull();
+    expect(row.verificationState).toBe("PENDING_VERIFICATION");
     expect(JSON.stringify(row)).not.toContain(bankReferenceA);
     expect(JSON.stringify(row)).not.toContain("referenceDigest");
     await expect(prisma.paymentEvidence.update({
@@ -408,7 +409,9 @@ describe("Phase 9 school-only immutable fee configuration", () => {
       where: { id: decision.id },
     })).rejects.toThrow();
     const listed = await evidenceList("admin");
-    expect((await listed.json()).evidence[0].reviewAction).toBe("VERIFIED");
+    const reviewed = (await listed.json()).evidence[0];
+    expect(reviewed.reviewAction).toBe("VERIFIED");
+    expect(reviewed.verificationState).toBe("VERIFIED");
 
     const second = await submitEvidence("admin", {
       obligationId, requestKey: randomUUID(), transferReference: bankReferenceB,
