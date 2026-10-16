@@ -1,5 +1,19 @@
 # Acceptance Criteria
 
+## Phase 9 advisory waiver review (unexecuted)
+
+- A current same-school School Administrator may submit a reasoned,
+  UUID-idempotent WAIVER/CORRECTION_PROPOSAL for one immutable
+  school-owned debt, with amount no greater than the original charge,
+  original currency and no caller-supplied actor or settled status.
+- Only a different, active same-school School Super Admin may decide
+  APPROVED or REJECTED once. Exact replay is safe; foreign-school,
+  changed replay, wrong role and direct SQL actor forgery must fail.
+- Even APPROVED remains ADVISORY_ONLY; the original obligation,
+  manual allocations, reviewed bank claims, internal financial
+  preview, payment settlement and receipt must remain unchanged.
+
+
 ## Phase 9 internal manual allocation reversal acceptance (authored; unexecuted)
 
 - Given an original manually verified payment allocation, only an
