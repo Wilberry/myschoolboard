@@ -143,7 +143,7 @@ async function readReport(page, origin, schoolId) {
   return { page, rows: data.reports };
 }
 
-async function checkPrintLifecycle(page) {
+async function checkPrintLifecycle(page, origin, schoolId, childId, mode) {
   const button = page.getByRole("button", {
     name: "Print authorized subject report / Save as PDF",
   });
@@ -172,11 +172,39 @@ async function checkPrintLifecycle(page) {
       window.dispatchEvent(new Event("afterprint"));
     };
   });
+  // Subscribe before clicking: a reused cached report or a stale React
+  // state snapshot must never count as a newly authorized print operation.
+  const reportUrl = new URL(
+    `/api/schools/${encodeURIComponent(schoolId)}/published-reports`,
+    origin,
+  ).href;
+  const verification = page.waitForResponse(
+    (response) =>
+      response.url() === reportUrl &&
+      response.request().method() === "GET",
+  );
   await button.click();
+  const freshResponse = await verification;
+  assert.equal(freshResponse.status(), 200, "Fresh print authorization denied");
+  assertPrivateHeaders(freshResponse);
+  const body = await freshResponse.json();
+  assert.ok(Array.isArray(body.reports));
+  assert.ok(body.reports.length > 0, "Printing had no newly authorized grades");
+  for (const row of body.reports) {
+    assert.equal(row.studentId, childId, "Print disclosed an unrelated pupil");
+    assert.equal(row.policyMode, mode);
+  }
   await page.waitForFunction(() => window.__phase8SyntheticPrint !== null);
   const captured = await page.evaluate(() => window.__phase8SyntheticPrint);
   assert.equal(captured.authorized, true);
   assert.ok(captured.articles > 0);
+  await page.waitForFunction(() => {
+    const root = document.querySelector(".published-report-workspace");
+    return (
+      root?.getAttribute("data-print-authorized") === "false" &&
+      !root.querySelector("article")
+    );
+  });
 }
 
 export async function runRecipientBrowserAcceptance(
@@ -185,7 +213,7 @@ export async function runRecipientBrowserAcceptance(
   database,
 ) {
   const { origin, schoolId, childId } = assertRecipientBrowserTarget(env);
-  const fixture = await inspectBrowserFixture(database, schoolId);
+  const fixture = await inspectBrowserFixture(database, schoolId, childId);
   assert.equal(
     fixture.browserFixtureReady,
     true,
@@ -239,8 +267,12 @@ export async function runRecipientBrowserAcceptance(
       assert.equal(foreign.status(), 404, "Foreign school exposed a report");
     }
 
-    if (mode === "GUARDIAN_FIRST_ACK" && !acknowledged &&
-      env.PHASE8_BROWSER_ALLOW_RECEIPT_WRITE === "1") {
+    let receiptWritten = false;
+    if (
+      mode === "GUARDIAN_FIRST_ACK" &&
+      !acknowledged &&
+      env.PHASE8_BROWSER_ALLOW_RECEIPT_WRITE === "1"
+    ) {
       const acknowledge = users.PARENT.page.getByRole("button", {
         name: "Acknowledge this published subject",
       });
@@ -251,6 +283,7 @@ export async function runRecipientBrowserAcceptance(
         .waitFor();
       student = await readReport(users.STUDENT.page, origin, schoolId);
       assertNoLeaks(student.rows, childId, "STUDENT", mode, true);
+      receiptWritten = true;
     }
 
     const printPage = student.rows.length
@@ -282,9 +315,12 @@ export async function runRecipientBrowserAcceptance(
     await printPage.getByRole("table", {
       name: "Individually authorized subject grades",
     }).first().waitFor();
-    await checkPrintLifecycle(printPage);
-    return { browserChecks: "passed", mode, auditedReceiptWritten:
-      env.PHASE8_BROWSER_ALLOW_RECEIPT_WRITE === "1" };
+    await checkPrintLifecycle(printPage, origin, schoolId, childId, mode);
+    return {
+      browserChecks: "passed",
+      mode,
+      auditedReceiptWritten: receiptWritten,
+    };
   } finally {
     await Promise.all(contexts.map((context) => context.close()));
     await browser.close();
