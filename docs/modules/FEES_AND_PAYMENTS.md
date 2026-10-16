@@ -1,5 +1,51 @@
 # Fees and Payments
 
+## Phase 9 internal applied waivers (AUTHORED, NOT VERIFIED)
+
+- A separately authorized active same-school School Super Admin may
+  append an immutable `FeeWaiverApplication` only after the exact
+  `FeeAdjustmentDecision` for that same obligation is APPROVED
+  and its original proposal kind is `WAIVER`. A
+  `CORRECTION_PROPOSAL`, REJECTED, pending, foreign or already
+  applied proposal can **never** be converted to a waiver.
+  The School Administrator proposer remains separate from the
+  applying School Super Admin. An APPROVED proposal alone still
+  has no accounting effect without an explicit application.
+- PostgreSQL locks the School row and checks active school owner,
+  exact proposal, approved decision, amount and currency; it copies
+  `amountMinor`, `currency` and UTC time from immutable source.
+  Uniqueness on same-school proposal, decision and UUID request
+  prevents double-application and incorrect idempotency replay.
+  Ordinary UPDATE/DELETE/TRUNCATE are prohibited.
+- **Cross-ledger protection:** when a waiver is applied, SQL checks
+  `SUM(existing applied waivers)+SUM(all VERIFIED reference claims)+
+  proposed waiver <= original charge`. Human VERIFIED claims
+  count even if their manual allocations were reversed. Additional
+  SQL INSERT guards on future VERIFIED decisions and manual
+  allocations enforce the new adjusted-charge limit under the
+  same school lock. No reviewed funds can be waived away
+  without a later separately authorized refund workflow.
+  This conservatively prevents waiver of already-attested money;
+  no actual external bank settlement is inferred.
+- Owner-only private no-store `GET/POST
+  /api/schools/:schoolId/fee-waiver-applications` creates one
+  explicit internal waiver or reads the bounded same-school
+  audit list. Strict inputs accept only decisionId, requestKey
+  and reason. No external receipt, payer account, bank callback,
+  guardian/student access or actual fee mutation.
+  New `PHASE9_EFFECTIVE_WAIVER_ENABLED=false` and existing
+  `PHASE9_FEE_WRITE_ENABLED=false` both guard writes.
+- The separate owner-only manual allocation preview retains
+  `originalChargeMinor` and adds `appliedWaiverMinor` and
+  `adjustedChargeMinor`; `previewRemainingMinor` subtracts
+  NET active manual allocation and applied waiver from original
+  charge. These are **internal, manually reviewed previews**
+  and not provider-certified settlement, official enforceable
+  fee statements or school receipts. Future adjustment reversal
+  must be a separately reviewed append-only event; original
+  waivers are never silently edited.
+
+
 ## Phase 9 advisory fee adjustment proposals (authored, NOT VERIFIED)
 
 - `FeeAdjustmentProposal` snapshots a reasoned current same-school
