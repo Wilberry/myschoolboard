@@ -1,5 +1,37 @@
 # Current Status
 
+## Phase 9 — audited internal manual allocation reversal (AUTHORED, NOT VERIFIED; 2026-10-16)
+
+The feature branch `feature/phase9-fees-payments-foundation` now
+contains an additive `20261016160000_phase9_manual_allocation_reversal_review`
+migration, immutable `ManualAllocationReversalRequest` (active current
+same-school School Administrator only), separate reasoned
+`ManualAllocationReversalDecision` (independent current
+same-school School Super Admin only), strict private no-store
+GET/POST school reversal request queue and independent decision
+POST. PostgreSQL guards are AUTHORED to lock the real school, bind
+source and actors, assign original allocation's exact amount/currency,
+reject duplicate request/decisions and preserve all history.
+
+Owner-only balance preview now displays gross manual allocations,
+approved reversed manual amounts, net active manual allocations and
+arithmetic remainder. APPROVED only offsets the full internal manual
+allocation, REJECTED leaves it intact. Neither action refunds money,
+changes source evidence, downgrades bank review, reuses the reference,
+creates an official payment balance or issues a receipt.
+
+The new flag `PHASE9_MANUAL_REVERSAL_ENABLED=false` keeps writes
+disabled alongside the `PHASE9_FEE_WRITE_ENABLED=false` master
+finance switch. Actual real-session Vitest, Prisma schema validate/
+generate, PostgreSQL migration/trigger and concurrent race tests,
+typecheck, build, browser/privacy tests and strict dependency audit
+remain NOT EXECUTED. No GitHub Actions, deployment, main merge or
+shared database work performed. Phase 8 remains separately
+unaccepted. Full Phase 9 FEE-REQ-001 remains PARTIAL/BLOCKED.
+See `docs/quality/PHASE9_MANUAL_REVERSAL_CHECKPOINT_20261016.md`,
+D-P9-005 and ADR-P9-005.
+
+
 ## Phase 9 — manual reviewed-claim allocation preview (AUTHORED, NOT VERIFIED, 2026-10-16)
 
 Following the immutable fee structure, student obligation, submitted
