@@ -1,5 +1,40 @@
 # Decision Log
 
+## D-P9-003: Separate school financial reference claims from bank reconciliation
+
+- **Status:** Phase 9 code/migration/tests AUTHORED, PostgreSQL/CI/security
+  NOT VERIFIED (2026-10-16). This is a reversible, default-off
+  development-only finance workflow under D-023, not real bank settlement.
+- **Decision:** permit only an active same-school `SCHOOL_ADMIN` to submit
+  reference-only, unverified manual bank-transfer claims to one exact
+  issued `FeeObligation`. Record immutable school-bound SHA-256 reference
+  digest (no raw account, screenshot, document or provider key), claimed
+  positive minor-unit amount <= the obligation and a UUID retry key.
+  Prevent reuse of one claimed bank reference across that school.
+- **Separate financial authority:** only a **different** current active
+  same-school `SCHOOL_SUPER_ADMIN` may independently make one terminal
+  `VERIFIED` or `REJECTED` decision after viewing the external bank
+  statement. VERIFIED requires explicit fundsConfirmed=true attestation,
+  matching transfer-reference digest, matching currency and a database
+  verified-sum check that may not exceed the immutable original charge.
+  A different reviewer cannot silently replay the event. Exact
+  repeat actor/action/reason/reference returns original decision;
+  any changed replay is rejected. REJECTED records no credit.
+- **Boundary:** submission always remains a `SUBMITTED` reference claim;
+  a human reviewer decision is not provider-certified settlement and does
+  not create a PaymentRecord, reconciliation, allocation, payment receipt,
+  refund or reversal. Those require separately audited future ledgers.
+  Parents/guardians and students have no finance endpoint until secure
+  relationship binding and authorization are available. Actual file
+  uploads are blocked until tenant-private storage and file scanning
+  are implemented and verified. All Phase 9 writes need the existing
+  default-OFF master flag; evidence and review additionally have separate
+  default-OFF flags.
+- **Status honesty:** no Prisma, PostgreSQL, authenticated browser, Node/
+  Vitest, full CI or strict dependency audit executed on this branch.
+  Static source guards are not runtime acceptance. ADR-P9-003.
+
+
 ## D-P9-002: Reasoned student-specific fee obligations preserve financial history
 
 - **Status:** Phase 9 obligation implementation authored, NOT DATABASE VERIFIED
