@@ -319,3 +319,7 @@ The read-only Phase 8 browser fixture prerequisite now requires an explicitly se
 ### RES-REQ-001 real signed-in identity binding for guardian-first acceptance (2026-10-16)
 
 Source-only Phase 8 browser-harness hardening now links each actual authenticated session to exact independently attested active school PARENT/STUDENT membership and selected enrolled child, with terminal revocation exclusion. This closes a false-positive possibility for pre-acknowledgment student tests that correctly see no report even under unrelated credentials. New negative mocked regressions are AUTHORED; installed Node/PostgreSQL/real Chromium remain pending. No schema, school policy, production flags, or release operations changed. RES-REQ-001/TEN-REQ-001/SEC-REQ-001 remain partial.
+
+### RES-REQ-001 exact-subject guardian receipt proof (2026-10-16)
+
+The opt-in browser harness now tests that a deliberately clicked `GUARDIAN_FIRST_ACK` button corresponds to a specific `releaseId`, that a fresh authenticated parent GET verifies that same release was acknowledged, and that the student's fresh report contains only the newly acknowledged subject. A generic "Acknowledged" label or any nonempty student response cannot satisfy the check. Added focused positive/negative mock coverage and an opaque `data-release-id` attribute on each authenticated report row. Actual Node/Postgres/Chromium acceptance pending; RES-REQ-001, TEN-REQ-001 and SEC-REQ-001 remain partial.

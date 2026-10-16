@@ -251,7 +251,7 @@ export function PublishedReportWorkspace({ schoolId }: { schoolId: string }) {
                 </thead>
                 <tbody>
                   {subjects.map((row) => (
-                    <tr key={row.releaseId}>
+                    <tr key={row.releaseId} data-release-id={row.releaseId}>
                       <th scope="row">{row.subjectName}</th>
                       <td>{row.displayPercent}%</td>
                       <td>{row.gradeCode}</td>

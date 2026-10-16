@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   assertBrowserComposeConfig,
+  assertExactGuardianReceipt,
   assertLocalDockerHost,
   assertNoLeaks,
   assertRecipientBrowserTarget,
@@ -272,6 +273,45 @@ test("each signed-in role requires its own current attested exact-child link", a
         "child-a",
         role,
         "login-a",
+      ),
+    );
+  }
+});
+
+test("guardian acknowledgment must unlock the exact clicked release, not another subject", () => {
+  const beforeParent = [
+    { releaseId: "subject-a", guardianHasAcknowledged: false },
+    { releaseId: "subject-b", guardianHasAcknowledged: false },
+  ];
+  const afterParent = [
+    { releaseId: "subject-a", guardianHasAcknowledged: true },
+    { releaseId: "subject-b", guardianHasAcknowledged: false },
+  ];
+  const student = [{ releaseId: "subject-a" }];
+  assert.doesNotThrow(() =>
+    assertExactGuardianReceipt(
+      beforeParent,
+      afterParent,
+      [],
+      student,
+      "subject-a",
+    ),
+  );
+  for (const modified of [
+    { release: "subject-b" },
+    { afterParent: beforeParent },
+    { beforeStudent: student },
+    { student: [{ releaseId: "subject-b" }] },
+    { student: [student[0], { releaseId: "subject-b" }] },
+    { student: [] },
+  ]) {
+    assert.throws(() =>
+      assertExactGuardianReceipt(
+        beforeParent,
+        modified.afterParent ?? afterParent,
+        modified.beforeStudent ?? [],
+        modified.student ?? student,
+        modified.release ?? "subject-a",
       ),
     );
   }

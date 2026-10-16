@@ -195,6 +195,49 @@ async function verifySignedInRecipient(
   );
 }
 
+/**
+ * Receipt acceptance must prove the very same released subject changed from
+ * unacknowledged to acknowledged. A different prior receipt is not evidence.
+ */
+export function assertExactGuardianReceipt(
+  parentBefore,
+  parentAfter,
+  studentBefore,
+  studentAfter,
+  releaseId,
+) {
+  assert.ok(typeof releaseId === "string" && releaseId.length > 0);
+  assert.ok(Array.isArray(parentBefore) && Array.isArray(parentAfter));
+  assert.ok(Array.isArray(studentBefore) && Array.isArray(studentAfter));
+  assert.equal(studentBefore.length, 0, "Student saw grades before receipt");
+  assert.ok(
+    parentBefore.some(
+      (row) =>
+        row.releaseId === releaseId &&
+        row.guardianHasAcknowledged === false,
+    ),
+    "Selected release was not awaiting guardian receipt",
+  );
+  assert.ok(
+    parentAfter.some(
+      (row) =>
+        row.releaseId === releaseId &&
+        row.guardianHasAcknowledged === true,
+    ),
+    "Fresh guardian GET did not confirm the exact receipt",
+  );
+  assert.equal(
+    studentAfter.length,
+    1,
+    "One new receipt should authorize exactly one subject for this child",
+  );
+  assert.equal(
+    studentAfter[0].releaseId,
+    releaseId,
+    "Student received a different subject than the acknowledged release",
+  );
+}
+
 function assertPrivateHeaders(response) {
   const headers = response.headers();
   assert.ok(headers["cache-control"]?.includes("no-store"));
@@ -422,14 +465,45 @@ export async function runRecipientBrowserAcceptance(
     ) {
       const acknowledge = users.PARENT.page.getByRole("button", {
         name: "Acknowledge this published subject",
-      });
-      await acknowledge.first().click();
-      await users.PARENT.page
-        .getByText("Acknowledged", { exact: true })
-        .first()
-        .waitFor();
+      }).first();
+      const selectedReleaseId = await acknowledge
+        .locator("xpath=ancestor::tr[1]")
+        .getAttribute("data-release-id");
+      assert.ok(selectedReleaseId, "Receipt button has no exact release ID");
+      const reportUrl = new URL(
+        `/api/schools/${encodeURIComponent(schoolId)}/published-reports`,
+        origin,
+      ).href;
+      const pendingFreshParent = users.PARENT.page.waitForResponse(
+        (response) =>
+          response.url() === reportUrl &&
+          response.request().method() === "GET",
+      );
+      await acknowledge.click();
+      const freshParent = await pendingFreshParent;
+      assert.equal(freshParent.status(), 200);
+      assertPrivateHeaders(freshParent);
+      const parentPayload = await freshParent.json();
+      assert.ok(Array.isArray(parentPayload.reports));
+      await users.PARENT.page.waitForFunction(
+        (id) =>
+          [...document.querySelectorAll("tr[data-release-id]")].some(
+            (row) =>
+              row.getAttribute("data-release-id") === id &&
+              row.textContent?.includes("Acknowledged"),
+          ),
+        selectedReleaseId,
+      );
+      const beforeStudent = student.rows;
       student = await readReport(users.STUDENT.page, origin, schoolId);
       assertNoLeaks(student.rows, childId, "STUDENT", mode, true);
+      assertExactGuardianReceipt(
+        parent.rows,
+        parentPayload.reports,
+        beforeStudent,
+        student.rows,
+        selectedReleaseId,
+      );
       receiptWritten = true;
     }
 
