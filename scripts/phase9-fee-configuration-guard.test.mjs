@@ -9,6 +9,9 @@ const service = source("../src/modules/fees/fee-configuration-service.ts");
 const categories = source("../app/api/schools/[schoolId]/fee-categories/route.ts");
 const structures = source("../app/api/schools/[schoolId]/fee-structures/route.ts");
 const integration = source("../src/modules/fees/fee-configuration.integration.test.ts");
+const obligationSql = source("../prisma/migrations/20261016130000_phase9_fee_obligation_ledger/migration.sql");
+const obligations = source("../src/modules/fees/fee-obligation-service.ts");
+const obligationRoute = source("../app/api/schools/[schoolId]/fee-obligations/route.ts");
 
 test("Phase 9 fee structures are school-scoped and append-only, not debt or payment", () => {
   for (const model of ["FeeCategory", "FeeStructureRevision"]) {
@@ -65,4 +68,44 @@ test("Fee configuration routes and service use session actor and cannot publish 
   assert.match(integration, /immutable school-owned category/);
   assert.match(integration, /prisma\.feeStructureRevision\.update/);
   assert.doesNotMatch(service, /paymentProvider|verifiedPayment|receiptIssued/);
+});
+
+test("School-enrollment fee obligations preserve exact debt and cannot become a payment", () => {
+  assert.match(schema, /model FeeObligation \\{/);
+  assert.match(schema, /@@unique\\(\\[schoolId, studentId, sessionId, termId, categoryId\\]/);
+  assert.match(schema, /@@unique\\(\\[schoolId, requestKey\\]/);
+  for (const fk of [
+    "FeeObligation_student_fkey",
+    "FeeObligation_enrollment_fkey",
+    "FeeObligation_term_fkey",
+    "FeeObligation_category_fkey",
+    "FeeObligation_revision_fkey",
+    "FeeObligation_issuer_fkey",
+  ]) {
+    assert.ok(schema.includes('map: "' + fk + '"'));
+    assert.ok(obligationSql.includes('"' + fk + '"'));
+  }
+  for (const name of ["FeeObligation_validate",
+    "FeeObligation_immutable", "FeeObligation_no_truncate"]) {
+    assert.ok(obligationSql.includes('"' + name + '"'), name);
+  }
+  assert.match(obligationSql, /"School" school[\\s\\S]*?FOR UPDATE/);
+  assert.match(obligationSql, /"status"='ENROLLED'/);
+  assert.match(obligationSql, /e\\."status"='ACTIVE'/);
+  assert.match(obligationSql, /source_revision\\."scope"='SCHOOL'/);
+  assert.match(obligationSql, /source_revision\\."scope"='SECTION'/);
+  assert.match(obligationSql, /source_revision\\."scope"='CLASS'/);
+  assert.match(obligationSql, /NEW\\."amountMinor":=source_revision\\."amountMinor"/);
+  assert.match(obligationSql, /NEW\\."currency":=source_revision\\."currency"/);
+  assert.match(obligationSql, /newer\\."version">revision\\."version"/);
+  assert.match(obligationSql, /"FeeObligation_student_category_period_key"/);
+  assert.match(obligations, /requirePhase9FeeWritesEnabled/);
+  assert.match(service, /PHASE9_FEE_WRITE_ENABLED/);
+  assert.match(obligations, /requestKey: z\\.string\\(\\)\\.uuid\\(\\)/);
+  assert.match(obligations, /replay: true/);
+  assert.match(obligations, /BigInt|amountMinor: record\\.amountMinor\\.toString/);
+  assert.match(obligationRoute, /"Cache-Control": "private, no-store"/);
+  assert.doesNotMatch(obligationRoute, /export async function (PATCH|PUT|DELETE)/);
+  assert.match(integration, /safe replay never fabricates payment/);
+  assert.match(integration, /default-off/);
 });
