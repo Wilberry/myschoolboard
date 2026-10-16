@@ -55,6 +55,8 @@ test("manual reviewer requires distinct authenticated actor and explicit funds a
   assert.ok(service.includes('createHash("sha256")'));
   assert.ok(service.includes('schoolId + "\\0" + value'));
   assert.ok(service.includes('status: "SUBMITTED_EVIDENCE_ONLY"'));
+  assert.ok(service.includes("'PENDING_VERIFICATION' END AS \"verificationState\""));
+  assert.ok(service.includes('review."action"::text AS "reviewAction"'));
   assert.ok(service.includes('replay: true'));
   assert.ok(service.includes('original.confirmedReferenceDigest !== digest'));
   assert.ok(service.includes('original.reviewerMembershipId !== memberId'));
