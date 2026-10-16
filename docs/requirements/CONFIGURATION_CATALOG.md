@@ -1,5 +1,20 @@
 # Configuration Catalog
 
+## Phase 9 manual allocation reversal controls — NOT VERIFIED
+
+`PHASE9_MANUAL_REVERSAL_ENABLED=false` is a new independent
+default-off switch for a reasoned School Administrator full-allocation
+correction request and separate School Super Admin APPROVED/REJECTED
+decision. It additionally requires `PHASE9_FEE_WRITE_ENABLED=true`;
+do not enable on shared or live schools. The school cannot configure a
+bypass. APPROVED only subtracts from INTERNAL net-manual-allocation
+preview, not a real payment, refund, financial receipt, or revised
+historical bank claim. One immutable request per original allocation
+is the initial strict development default; rejected claims cannot be
+re-opened without a future versioned review design.
+D-P9-005 / ADR-P9-005.
+
+
 ## Phase 9 manual allocation preview — NOT VERIFIED
 
 `PHASE9_MANUAL_ALLOCATION_ENABLED=false` disables reasoned manual
