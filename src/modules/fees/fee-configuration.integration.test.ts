@@ -387,9 +387,20 @@ describe("Phase 9 school-only immutable fee configuration", () => {
     expect(decision.action).toBe("VERIFIED");
     expect(decision.status).toBe("INDEPENDENT_MANUAL_REVIEW_ONLY");
     expect(decision).not.toHaveProperty("confirmedReferenceDigest");
+    expect(decision.replay).toBe(false);
+    const retry = await reviewEvidence("owner", {
+      evidenceId, action: "VERIFIED", transferReference: bankReferenceA,
+      fundsConfirmed: true, reason: "Synthetic independently matched bank statement",
+    });
+    expect(retry.status).toBe(200);
+    expect((await retry.json()).decision.id).toBe(decision.id);
     expect((await reviewEvidence("owner", {
       evidenceId, action: "REJECTED", reason: "Second terminal decision forbidden",
-    })).status).toBe(404);
+    })).status).toBe(409);
+    const persisted = await prisma.paymentVerificationDecision.findUniqueOrThrow({
+      where: { id: decision.id },
+    });
+    expect(persisted.confirmedBankFunds).toBe(true);
     await expect(prisma.paymentVerificationDecision.update({
       where: { id: decision.id }, data: { action: "REJECTED" },
     })).rejects.toThrow();
