@@ -1,5 +1,37 @@
 # Decision Log
 
+## D-P9-004: Manual-review allocation is a separate internal preview, not funds settlement
+
+- **Status:** AUTHORED, NOT RUNTIME-VERIFIED (2026-10-16).
+- **Decision:** after an active same-school `SCHOOL_ADMIN` submits a
+  reference claim and an independent active same-school
+  `SCHOOL_SUPER_ADMIN` separately records VERIFIED plus explicit
+  bank-funds matching attestation, an active current same-school
+  `SCHOOL_SUPER_ADMIN` may create one immutable
+  `ManualPaymentAllocation` for the *exact original* fee obligation
+  and whole verified claim amount. The original claim submitter cannot
+  allocate. A new attempt must supply UUID idempotency key and reason,
+  never a client amount, currency, receipt or payment status.
+- **Enforcement:** PostgreSQL School lock, real actor membership,
+  one-to-one verified decision and same-school evidence/obligation,
+  matching reference digest/currency and original fee amount, unique
+  evidence/verification allocation links, SQL-copied minor units, and
+  aggregate allocated amount <= the unchanged original fee obligation.
+  Final owner-only preview SQL independently repeats current school
+  Super Admin checks and returns bounded immutable-decimal arithmetic.
+- **No credit release:** A manually attested reference remains distinct
+  from verified external provider/bank settlement. Allocation and
+  `previewRemainingMinor` are INTERNAL diagnostic calculations, not
+  a PAID record, enforceable outstanding school fee, published student
+  status, receipt, refund, reversal or cashbook transaction. Later
+  independently audited transaction/reversal designs are mandatory.
+- **Safety:** `PHASE9_MANUAL_ALLOCATION_ENABLED=false` is required
+  plus the default-OFF master finance-write gate. No actual banking,
+  upload or shared database activity. Real Prisma/migration/role/
+  concurrency/security/browser acceptance still blocked. D-023;
+  ADR-P9-004.
+
+
 ## D-P9-003: Separate school financial reference claims from bank reconciliation
 
 - **Status:** Phase 9 code/migration/tests AUTHORED, PostgreSQL/CI/security
