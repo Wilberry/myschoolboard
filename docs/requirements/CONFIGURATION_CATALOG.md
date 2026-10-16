@@ -1,5 +1,28 @@
 # Configuration Catalog
 
+## Phase 9 bank-reference evidence and review — unverified development defaults
+
+School Administrator may submit an **unverified** reference-only
+bank-transfer claim against a previously issued same-school
+`FeeObligation`. Only a different current same-school School Super
+Admin may independently verify or reject after personally confirming
+the bank statement. No automatic paid/receipt status or provider
+callback is inferred. Original claims and review decisions are
+immutable. One school-scoped bank-reference digest cannot be reused
+to claim a second debt. Verified claims may not cumulatively exceed
+the original charge; refunds/reversals require separate future audit
+events, never overwriting history. No raw bank reference, document
+upload or confidential account data is persisted.
+
+Two additional independent switches default to OFF:
+`PHASE9_PAYMENT_EVIDENCE_ENABLED=false` for reference claims and
+`PHASE9_PAYMENT_REVIEW_ENABLED=false` for reviewer attestations.
+Both also require `PHASE9_FEE_WRITE_ENABLED=true` in an approved
+disposable synthetic test environment. There is no school-facing
+option to bypass these environment security controls.
+D-P9-003 / ADR-P9-003; no provider choice or production approval.
+
+
 ## Phase 9 fee configuration development contract (not verified)
 
 Each school explicitly defines durable fee category codes and reasoned
