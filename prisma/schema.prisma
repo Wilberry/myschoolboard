@@ -1770,6 +1770,7 @@ model FeeAdjustmentDecision {
   proposal FeeAdjustmentProposal @relation(fields: [schoolId, proposalId], references: [schoolId, id], onDelete: NoAction, map: "FeeAdjustmentDecision_proposal_fkey")
   reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "FeeAdjustmentDecision_reviewer_fkey")
 
+  @@unique([schoolId, id])
   @@unique([schoolId, proposalId])
   @@index([schoolId, decidedAt])
   feeWaiverApplications FeeWaiverApplication[]
