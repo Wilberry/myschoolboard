@@ -1,5 +1,37 @@
 # Current Status
 
+## Phase 9 — Fee configuration foundation (AUTHORED, NOT VERIFIED; 2026-10-16)
+
+Isolated GitHub branch `feature/phase9-fees-payments-foundation` was created
+from the committed, cumulative Phase 7 head `18d8b8292fc37e3f131986fe6d8ab9c3038ad2e0`,
+NOT from the moving `verify/phase8-local` verification worktree or its
+uncommitted fixes. This deliberately avoids interfering with Phase 8 acceptance.
+
+FEE-REQ-001 **partially authored**: immutable same-school FeeCategory and
+school/category/session/term/scope-versioned FeeStructureRevision with SCHOOL,
+SECTION and CLASS targets, positive BIGINT minor-unit money, explicit
+3-letter currency, SQL current school-super-admin actor guard, planned/active
+period checks, school-row-serialized versions, composite tenant FKs, UTC
+time evidence and UPDATE/DELETE/TRUNCATE history protections.
+Authenticated same-school-owner-only private no-store category/structure
+GET/POST and bounded final-query rereads are authored. Synthetic real-session
+role/tenant/forgery/foreign scope/version/immutability integration tests and
+non-DB structural guard are authored and hooked into unchanged suites.
+
+**Not executed:** Prisma validation/generation, SQL migrations, Node/Vitest,
+typecheck, lint, build, browser and `npm audit --audit-level=high`.
+No disposable local PostgreSQL runtime or installed repository checkout is
+available to this GitHub-only development session. Security and upstream
+Phase 6–8 acceptance remain blocked; none is marked complete.
+No actual fee debts, payment evidence, verifier decisions, receipts,
+balances, live integrations, merged code or deployed finance endpoint.
+The next milestone is independently reviewable student fee obligations
+pinning an exact fee revision, after validating the configuration SQL and
+tenant deletion/revision races on a disposable DB. See
+`docs/quality/PHASE9_FEE_CONFIGURATION_CHECKPOINT_20261016.md`
+and D-P9-001 / ADR-P9-001.
+
+
 ## Phase 7 reviewed-only manual academic gradebook foundation — AUTHORED, NOT VERIFIED
 
 `feature/phase7-reviewed-manual-gradebook` implements a distinct private, read-only **ACADEMIC_APPROVED_PREVIEW_ONLY** teacher gradebook for exact school/session/term/class/subject. Final SQL binds actual signed-in current TEACHER to matching ACTIVE class/subject/session assignment, active school/class/section/subject/period/term, ENROLLED student and exact ACTIVE class/session enrollment; results bounded 500 students, 30 written components, 15,500 rows and fail closed for duplicate enrollment/ambiguous component rows. This reader does not join assessment answer keys or CBT answers.
