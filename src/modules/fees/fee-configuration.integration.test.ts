@@ -15,6 +15,8 @@ import { GET as EVID_GET, POST as EVID_POST } from
   "@/app/api/schools/[schoolId]/payment-evidence/route";
 import { POST as REVIEW_POST } from
   "@/app/api/schools/[schoolId]/payment-verifications/route";
+import { GET as ALLOC_GET, POST as ALLOC_POST } from
+  "@/app/api/schools/[schoolId]/manual-payment-allocations/route";
 import { prisma } from "@/src/lib/db";
 import { auth } from "@/src/lib/auth";
 import { env } from "@/src/lib/env";
@@ -38,6 +40,8 @@ let categoryId: string;
 let latestSchoolRevisionId: string;
 let obligationId: string;
 let evidenceId: string;
+let verifiedDecisionId: string;
+let rejectedDecisionId: string;
 const bankReferenceA = `SYNTH-BANK-A-${suffix.toUpperCase()}`;
 const bankReferenceB = `SYNTH-BANK-B-${suffix.toUpperCase()}`;
 
@@ -86,6 +90,14 @@ async function reviewEvidence(actor: string, payload: unknown, schoolId = school
   return REVIEW_POST(request(actor, schoolId, "payment-verifications", "POST", payload),
     { params: Promise.resolve({ schoolId }) });
 }
+async function allocatePayment(actor: string, payload: unknown, schoolId = schoolA) {
+  return ALLOC_POST(request(actor, schoolId, "manual-payment-allocations", "POST", payload),
+    { params: Promise.resolve({ schoolId }) });
+}
+async function allocationPreview(actor: string, schoolId = schoolA) {
+  return ALLOC_GET(request(actor, schoolId, "manual-payment-allocations", "GET"),
+    { params: Promise.resolve({ schoolId }) });
+}
 const revision = (scope: "SCHOOL" | "SECTION" | "CLASS", scopeId: string) => ({
   categoryId, sessionId, termId, scope, scopeId, amountMinor: "123456",
   currency: "NGN", reason: "Synthetic school fee configuration",
@@ -96,6 +108,7 @@ describe("Phase 9 school-only immutable fee configuration", () => {
     vi.stubEnv("PHASE9_FEE_WRITE_ENABLED", "true");
     vi.stubEnv("PHASE9_PAYMENT_EVIDENCE_ENABLED", "true");
     vi.stubEnv("PHASE9_PAYMENT_REVIEW_ENABLED", "true");
+    vi.stubEnv("PHASE9_MANUAL_ALLOCATION_ENABLED", "true");
     for (const name of ["owner", "admin", "teacher", "foreign"]) {
       const email = `fee-${name}-${suffix}@example.test`;
       const registered = await auth.api.signUpEmail({
@@ -385,6 +398,7 @@ describe("Phase 9 school-only immutable fee configuration", () => {
     });
     expect(ok.status).toBe(201);
     const decision = (await ok.json()).decision;
+    verifiedDecisionId = decision.id;
     expect(decision.action).toBe("VERIFIED");
     expect(decision.status).toBe("INDEPENDENT_MANUAL_REVIEW_ONLY");
     expect(decision).not.toHaveProperty("confirmedReferenceDigest");
@@ -423,16 +437,114 @@ describe("Phase 9 school-only immutable fee configuration", () => {
       evidenceId: secondId, action: "VERIFIED", transferReference: bankReferenceB,
       fundsConfirmed: true, reason: "Synthetic claim exceeding verified amount",
     })).status).toBe(404);
-    expect((await reviewEvidence("owner", {
+    const rejected = await reviewEvidence("owner", {
       evidenceId: secondId, action: "REJECTED",
       reason: "Synthetic remaining amount not reconciled",
-    })).status).toBe(201);
+    });
+    expect(rejected.status).toBe(201);
+    rejectedDecisionId = (await rejected.json()).decision.id;
     await expect(prisma.paymentVerificationDecision.create({ data: {
       id: randomUUID(), schoolId: schoolA, evidenceId,
       action: "VERIFIED", confirmedBankFunds: true,
       confirmedReferenceDigest: "f".repeat(64),
       reason: "Direct SQL verification forgery",
       reviewerMembershipId: members.admin, reviewerUserId: actors.admin,
+    } })).rejects.toThrow();
+  });
+
+  it("allocates only independently VERIFIED claims once; shows a manual preview, never PAID", async () => {
+    for (const [actor, status] of [["", 401], ["admin", 404],
+      ["teacher", 404], ["foreign", 404]] as const) {
+      expect((await allocationPreview(actor)).status).toBe(status);
+      expect((await allocatePayment(actor, {
+        verificationId: verifiedDecisionId, requestKey: randomUUID(),
+        reason: "Synthetic allocation attempt from forbidden role",
+      })).status).toBe(status);
+    }
+
+    const before = await allocationPreview("owner");
+    expect(before.status).toBe(200);
+    expect(before.headers.get("Cache-Control")).toBe("private, no-store");
+    expect((await before.json()).rows).toMatchObject([{
+      obligationId, originalChargeMinor: "456789",
+      independentlyReviewedMinor: "300000", manuallyAllocatedMinor: "0",
+      reviewedNotAllocatedMinor: "300000", previewRemainingMinor: "456789",
+      previewState: "NO_MANUAL_ALLOCATION",
+    }]);
+    const allocation = {
+      verificationId: verifiedDecisionId, requestKey: randomUUID(),
+      reason: "Synthetic one-time manual allocation against school debt",
+    };
+    expect((await allocatePayment("owner", {
+      ...allocation, amountMinor: "999999",
+    })).status).toBe(400);
+    expect((await allocatePayment("owner", {
+      ...allocation, paid: true,
+    })).status).toBe(400);
+    expect((await allocatePayment("owner", {
+      ...allocation, verificationId: rejectedDecisionId,
+    })).status).toBe(404);
+    const concurrentA = allocation;
+    const concurrentB = { ...allocation, requestKey: randomUUID() };
+    const outcomes = await Promise.all([
+      allocatePayment("owner", concurrentA), allocatePayment("owner", concurrentB),
+    ]);
+    const statuses = outcomes.map(v => v.status).sort();
+    expect(statuses).toHaveLength(2);
+    expect(statuses).toContain(201);
+    expect(statuses.every(v => v === 201 || v === 404 || v === 409)).toBe(true);
+    const winnerIndex = outcomes.findIndex(v => v.status === 201);
+    const winner = (await outcomes[winnerIndex].json()).allocation;
+    const winnerRequest = winnerIndex === 0 ? concurrentA : concurrentB;
+    expect(winner.amountMinor).toBe("300000");
+    expect(winner.status).toBe("MANUAL_ALLOCATION_PREVIEW_ONLY");
+    expect(winner).not.toHaveProperty("allocatorMembershipId");
+    expect(winner).not.toHaveProperty("paid");
+    expect((await allocatePayment("owner", winnerRequest)).status).toBe(200);
+    expect((await allocatePayment("owner", {
+      ...winnerRequest, reason: "Changed allocation under existing idempotency key",
+    })).status).toBe(409);
+    expect((await allocatePayment("owner", {
+      verificationId: verifiedDecisionId, requestKey: randomUUID(),
+      reason: "Second allocation for the exact verified transfer",
+    })).status).toBe(404);
+    const actual = await prisma.manualPaymentAllocation.findMany({
+      where: { schoolId: schoolA, obligationId },
+    });
+    expect(actual).toHaveLength(1);
+    expect(actual[0].amountMinor).toBe(BigInt(300000));
+    expect(actual[0].currency).toBe("NGN");
+    await expect(prisma.manualPaymentAllocation.update({
+      where: { id: actual[0].id }, data: { amountMinor: BigInt(1) },
+    })).rejects.toThrow();
+    await expect(prisma.manualPaymentAllocation.delete({
+      where: { id: actual[0].id },
+    })).rejects.toThrow();
+
+    const after = await allocationPreview("owner");
+    const result = (await after.json()).rows[0];
+    expect(result).toMatchObject({
+      obligationId, originalChargeMinor: "456789",
+      independentlyReviewedMinor: "300000",
+      manuallyAllocatedMinor: "300000",
+      reviewedNotAllocatedMinor: "0", previewRemainingMinor: "156789",
+      previewState: "PARTIAL_MANUAL_ALLOCATION",
+    });
+    expect(JSON.stringify(result)).not.toContain("receipt");
+    expect(JSON.stringify(result)).not.toContain("PAID");
+    await expect(prisma.manualPaymentAllocation.create({ data: {
+      id: randomUUID(), schoolId: schoolA, obligationId, evidenceId,
+      verificationId: verifiedDecisionId, requestKey: randomUUID(),
+      amountMinor: BigInt(1), currency: "NGN",
+      reason: "Synthetic direct-SQL forbidden teacher allocation",
+      allocatorMembershipId: members.teacher, allocatorUserId: actors.teacher,
+    } })).rejects.toThrow();
+    await expect(prisma.manualPaymentAllocation.create({ data: {
+      id: randomUUID(), schoolId: schoolA, obligationId,
+      evidenceId: actual[0].evidenceId, verificationId: rejectedDecisionId,
+      requestKey: randomUUID(), amountMinor: BigInt(1), currency: "NGN",
+      reason: "Synthetic forged rejected-decision allocation",
+      allocatorMembershipId: members.owner, allocatorUserId: actors.owner,
     } })).rejects.toThrow();
   });
 
@@ -452,6 +564,10 @@ describe("Phase 9 school-only immutable fee configuration", () => {
       })).status).toBe(404);
       expect((await reviewEvidence("owner", {
         evidenceId, action: "REJECTED", reason: "Disabled verification",
+      })).status).toBe(404);
+      expect((await allocatePayment("owner", {
+        verificationId: verifiedDecisionId, requestKey: randomUUID(),
+        reason: "Disabled manual allocation",
       })).status).toBe(404);
     } finally {
       vi.stubEnv("PHASE9_FEE_WRITE_ENABLED", "true");
