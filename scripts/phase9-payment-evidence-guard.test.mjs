@@ -55,6 +55,13 @@ test("manual reviewer requires distinct authenticated actor and explicit funds a
   assert.ok(service.includes('createHash("sha256")'));
   assert.ok(service.includes('schoolId + "\\0" + value'));
   assert.ok(service.includes('status: "SUBMITTED_EVIDENCE_ONLY"'));
+  assert.ok(service.includes('replay: true'));
+  assert.ok(service.includes('original.confirmedReferenceDigest !== digest'));
+  assert.ok(service.includes('original.reviewerMembershipId !== memberId'));
+  assert.ok(reviewRoute.includes('decision.replay ? 200 : 201'));
+  assert.ok(sql.includes('candidate RECORD;'));
+  assert.ok(sql.includes('already_verified NUMERIC;'));
+  assert.ok(!sql.includes('DECLARE already_verified NUMERIC;'));
   assert.ok(!service.includes('status: "PAID"'));
   assert.ok(!service.includes('createPaymentRecord'));
   assert.ok(service.includes('if (allowed.length !== 1) throw new FeeError("NOT_FOUND")'));
