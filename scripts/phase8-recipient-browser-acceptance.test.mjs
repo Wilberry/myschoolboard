@@ -58,11 +58,15 @@ test("rejects unsafe browser targets and nonsynthetic users", () => {
 });
 
 test("rejects remote Docker contexts even with apparent loopback port", () => {
-  assert.doesNotThrow(() => assertLocalDockerHost("unix:///var/run/docker.sock"));
-  assert.doesNotThrow(() => assertLocalDockerHost(
-    "unix:///home/test/.docker/desktop/docker.sock",
-    "unix:///var/run/docker.sock",
-  ));
+  assert.doesNotThrow(() =>
+    assertLocalDockerHost("unix:///var/run/docker.sock"),
+  );
+  assert.doesNotThrow(() =>
+    assertLocalDockerHost(
+      "unix:///home/test/.docker/desktop/docker.sock",
+      "unix:///var/run/docker.sock",
+    ),
+  );
   for (const endpoint of [
     "",
     "ssh://remote-host",
@@ -73,7 +77,8 @@ test("rejects remote Docker contexts even with apparent loopback port", () => {
     assert.throws(() => assertLocalDockerHost(endpoint));
   }
   assert.throws(() =>
-    assertLocalDockerHost("unix:///var/run/docker.sock", "ssh://remote-host"));
+    assertLocalDockerHost("unix:///var/run/docker.sock", "ssh://remote-host"),
+  );
 });
 
 test("browser acceptance refuses non-disposable Docker Compose storage", () => {
@@ -81,9 +86,7 @@ test("browser acceptance refuses non-disposable Docker Compose storage", () => {
     services: {
       "postgres-test": {
         tmpfs: ["/var/lib/postgresql/data:rw,noexec,nosuid,size=256m"],
-        ports: [
-          { host_ip: "127.0.0.1", published: "5434", target: 5432 },
-        ],
+        ports: [{ host_ip: "127.0.0.1", published: "5434", target: 5432 }],
       },
     },
   };
@@ -99,9 +102,11 @@ test("browser acceptance refuses non-disposable Docker Compose storage", () => {
       ports: [{ host_ip: "127.0.0.1", published: "5433", target: 5432 }],
     },
   ]) {
-    assert.throws(() => assertBrowserComposeConfig({
-      services: { "postgres-test": service },
-    }));
+    assert.throws(() =>
+      assertBrowserComposeConfig({
+        services: { "postgres-test": service },
+      }),
+    );
   }
 });
 
@@ -119,11 +124,23 @@ test("guardian-first needs explicit receipt before student access", () => {
     assertNoLeaks(one("PARENT"), child, "PARENT", "GUARDIAN_FIRST_ACK", false);
     assertNoLeaks([], child, "STUDENT", "GUARDIAN_FIRST_ACK", false);
     assertNoLeaks(one("STUDENT"), child, "STUDENT", "GUARDIAN_FIRST_ACK", true);
-    assertNoLeaks(one("STUDENT", "STUDENT_ONLY"), child, "STUDENT", "STUDENT_ONLY", false);
+    assertNoLeaks(
+      one("STUDENT", "STUDENT_ONLY"),
+      child,
+      "STUDENT",
+      "STUDENT_ONLY",
+      false,
+    );
     assertNoLeaks([], child, "PARENT", "STUDENT_ONLY", false);
   });
   assert.throws(() =>
-    assertNoLeaks(one("STUDENT"), child, "STUDENT", "GUARDIAN_FIRST_ACK", false),
+    assertNoLeaks(
+      one("STUDENT"),
+      child,
+      "STUDENT",
+      "GUARDIAN_FIRST_ACK",
+      false,
+    ),
   );
   assert.throws(() =>
     assertNoLeaks(one("PARENT"), child, "PARENT", "STUDENT_ONLY", false),
@@ -266,8 +283,9 @@ test("each signed-in role requires its own current attested exact-child link", a
       assertSignedInRecipientLink(
         {
           ...database,
-          [role === "PARENT" ? "guardianStudentLink" : "studentAccountLink"]:
-            { findFirst: async () => null },
+          [role === "PARENT" ? "guardianStudentLink" : "studentAccountLink"]: {
+            findFirst: async () => null,
+          },
         },
         "school-a",
         "child-a",

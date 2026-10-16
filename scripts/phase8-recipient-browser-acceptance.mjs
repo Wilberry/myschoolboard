@@ -81,8 +81,11 @@ export function assertRecipientBrowserTarget(env) {
 export function assertNoLeaks(rows, childId, role, mode, acknowledged) {
   assert.ok(Array.isArray(rows), "Expected a reports array");
   if (role === "STUDENT") {
-    assert.equal(rows.length > 0, mode === "STUDENT_ONLY" ||
-      (mode === "GUARDIAN_FIRST_ACK" && acknowledged));
+    assert.equal(
+      rows.length > 0,
+      mode === "STUDENT_ONLY" ||
+        (mode === "GUARDIAN_FIRST_ACK" && acknowledged),
+    );
   } else {
     assert.equal(rows.length > 0, mode !== "STUDENT_ONLY");
   }
@@ -109,8 +112,7 @@ export function assertNoLeaks(rows, childId, role, mode, acknowledged) {
 export function assertSyntheticSessionUser(payload, expectedEmail) {
   const user = payload?.user;
   assert.ok(
-    typeof user?.id === "string" &&
-      /^[A-Za-z0-9_-]{1,128}$/.test(user.id),
+    typeof user?.id === "string" && /^[A-Za-z0-9_-]{1,128}$/.test(user.id),
     "Synthetic session is missing a valid user ID",
   );
   assert.ok(
@@ -186,13 +188,7 @@ async function verifySignedInRecipient(
   );
   assert.equal(response.status(), 200, "Synthetic session request denied");
   const userId = assertSyntheticSessionUser(await response.json(), email);
-  await assertSignedInRecipientLink(
-    database,
-    schoolId,
-    childId,
-    role,
-    userId,
-  );
+  await assertSignedInRecipientLink(database, schoolId, childId, role, userId);
 }
 
 /**
@@ -212,16 +208,14 @@ export function assertExactGuardianReceipt(
   assert.ok(
     parentBefore.some(
       (row) =>
-        row.releaseId === releaseId &&
-        row.guardianHasAcknowledged === false,
+        row.releaseId === releaseId && row.guardianHasAcknowledged === false,
     ),
     "Selected release was not awaiting guardian receipt",
   );
   assert.ok(
     parentAfter.some(
       (row) =>
-        row.releaseId === releaseId &&
-        row.guardianHasAcknowledged === true,
+        row.releaseId === releaseId && row.guardianHasAcknowledged === true,
     ),
     "Fresh guardian GET did not confirm the exact receipt",
   );
@@ -288,14 +282,16 @@ async function readReport(page, origin, schoolId) {
     `/api/schools/${encodeURIComponent(schoolId)}/published-reports`,
     origin,
   );
-  const pending = page.waitForResponse((response) =>
-    response.url() === target.href &&
-    response.request().method() === "GET",
+  const pending = page.waitForResponse(
+    (response) =>
+      response.url() === target.href && response.request().method() === "GET",
   );
-  await page.goto(new URL(
-    `/schools/${encodeURIComponent(schoolId)}/published-reports`,
-    origin,
-  ).href);
+  await page.goto(
+    new URL(
+      `/schools/${encodeURIComponent(schoolId)}/published-reports`,
+      origin,
+    ).href,
+  );
   await page
     .getByRole("heading", { name: "My officially released subjects" })
     .waitFor();
@@ -314,19 +310,22 @@ async function checkRestoredPageLifecycle(page, origin, schoolId, childId) {
   ).href;
   const verifying = page.waitForResponse(
     (response) =>
-      response.url() === reportUrl &&
-      response.request().method() === "GET",
+      response.url() === reportUrl && response.request().method() === "GET",
   );
   const counts = await page.evaluate(() => {
     const root = document.querySelector(".published-report-workspace");
     const before = root?.querySelectorAll("article").length ?? 0;
-    window.dispatchEvent(new PageTransitionEvent("pagehide", {
-      persisted: true,
-    }));
+    window.dispatchEvent(
+      new PageTransitionEvent("pagehide", {
+        persisted: true,
+      }),
+    );
     const hidden = root?.querySelectorAll("article").length ?? 0;
-    window.dispatchEvent(new PageTransitionEvent("pageshow", {
-      persisted: true,
-    }));
+    window.dispatchEvent(
+      new PageTransitionEvent("pageshow", {
+        persisted: true,
+      }),
+    );
     return {
       before,
       hidden,
@@ -345,9 +344,12 @@ async function checkRestoredPageLifecycle(page, origin, schoolId, childId) {
   for (const row of payload.reports) {
     assert.equal(row.studentId, childId);
   }
-  await page.getByRole("table", {
-    name: "Individually authorized subject grades",
-  }).first().waitFor();
+  await page
+    .getByRole("table", {
+      name: "Individually authorized subject grades",
+    })
+    .first()
+    .waitFor();
 }
 
 async function checkPrintLifecycle(page, origin, schoolId, childId, mode) {
@@ -390,8 +392,7 @@ async function checkPrintLifecycle(page, origin, schoolId, childId, mode) {
   ).href;
   const verification = page.waitForResponse(
     (response) =>
-      response.url() === reportUrl &&
-      response.request().method() === "GET",
+      response.url() === reportUrl && response.request().method() === "GET",
   );
   await button.click();
   const freshResponse = await verification;
@@ -501,8 +502,7 @@ export async function runRecipientBrowserAcceptance(
       ).href;
       const pendingFreshParent = users.PARENT.page.waitForResponse(
         (response) =>
-          response.url() === reportUrl &&
-          response.request().method() === "GET",
+          response.url() === reportUrl && response.request().method() === "GET",
       );
       await acknowledge.click();
       const freshParent = await pendingFreshParent;
@@ -546,9 +546,12 @@ export async function runRecipientBrowserAcceptance(
     assert.ok(printPage, "Expected a verified linked synthetic recipient");
     // Verify focus clears an actually visible confidential table, not a
     // previously redacted page after the native print test has finished.
-    await printPage.getByRole("table", {
-      name: "Individually authorized subject grades",
-    }).first().waitFor();
+    await printPage
+      .getByRole("table", {
+        name: "Individually authorized subject grades",
+      })
+      .first()
+      .waitFor();
     const beforeRefetch = await printPage.evaluate(() => {
       const previousCount = document.querySelectorAll(
         ".published-report-workspace article",
@@ -561,18 +564,17 @@ export async function runRecipientBrowserAcceptance(
     });
     assert.ok(beforeRefetch.previousCount > 0, "No rows before focus");
     assert.equal(
-      beforeRefetch.afterCount, 0,
+      beforeRefetch.afterCount,
+      0,
       "Focus returned cached recipient grades",
     );
-    await printPage.getByRole("table", {
-      name: "Individually authorized subject grades",
-    }).first().waitFor();
-    await checkRestoredPageLifecycle(
-      printPage,
-      origin,
-      schoolId,
-      childId,
-    );
+    await printPage
+      .getByRole("table", {
+        name: "Individually authorized subject grades",
+      })
+      .first()
+      .waitFor();
+    await checkRestoredPageLifecycle(printPage, origin, schoolId, childId);
     await checkPrintLifecycle(printPage, origin, schoolId, childId, mode);
     return {
       browserChecks: "passed",

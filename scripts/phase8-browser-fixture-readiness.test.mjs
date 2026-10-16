@@ -81,18 +81,12 @@ test("exact synthetic pupil cannot borrow another child's readiness", () => {
       ...fixture,
       linkedParentChildIds: ["child-a", requested],
     });
-    assert.equal(
-      parentOnly.browserFixtureReady,
-      mode === "GUARDIAN_ONLY",
-    );
+    assert.equal(parentOnly.browserFixtureReady, mode === "GUARDIAN_ONLY");
     const studentOnly = summarizeBrowserFixture({
       ...fixture,
       linkedStudentChildIds: ["child-a", requested],
     });
-    assert.equal(
-      studentOnly.browserFixtureReady,
-      mode === "STUDENT_ONLY",
-    );
+    assert.equal(studentOnly.browserFixtureReady, mode === "STUDENT_ONLY");
     const both = summarizeBrowserFixture({
       ...fixture,
       linkedParentChildIds: ["child-a", requested],
@@ -195,10 +189,15 @@ test("queries active, school-bound unrevoked links only", async () => {
   assert.equal(queries.length, 12);
   for (const [name, query] of queries) {
     if (name !== "release-child") {
-      assert.equal(query.where.schoolId ?? query.where.id, "synthetic-school-a");
+      assert.equal(
+        query.where.schoolId ?? query.where.id,
+        "synthetic-school-a",
+      );
     }
   }
-  for (const [, query] of queries.filter(([name]) => name === "release-child")) {
+  for (const [, query] of queries.filter(
+    ([name]) => name === "release-child",
+  )) {
     assert.match(query.sql, /jsonb_array_elements/);
     assert.match(query.sql, /NOT EXISTS/);
     assert.match(query.sql, /"visibilityPolicyId"/);
