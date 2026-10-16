@@ -17,6 +17,10 @@ import { POST as REVIEW_POST } from
   "@/app/api/schools/[schoolId]/payment-verifications/route";
 import { GET as ALLOC_GET, POST as ALLOC_POST } from
   "@/app/api/schools/[schoolId]/manual-payment-allocations/route";
+import { GET as REVERSE_GET, POST as REVERSE_POST } from
+  "@/app/api/schools/[schoolId]/manual-allocation-reversals/route";
+import { POST as REVERSAL_DECISION_POST } from
+  "@/app/api/schools/[schoolId]/manual-allocation-reversal-decisions/route";
 import { prisma } from "@/src/lib/db";
 import { auth } from "@/src/lib/auth";
 import { env } from "@/src/lib/env";
@@ -42,6 +46,7 @@ let obligationId: string;
 let evidenceId: string;
 let verifiedDecisionId: string;
 let rejectedDecisionId: string;
+let allocatedManualId: string;
 const bankReferenceA = `SYNTH-BANK-A-${suffix.toUpperCase()}`;
 const bankReferenceB = `SYNTH-BANK-B-${suffix.toUpperCase()}`;
 
@@ -98,6 +103,19 @@ async function allocationPreview(actor: string, schoolId = schoolA) {
   return ALLOC_GET(request(actor, schoolId, "manual-payment-allocations", "GET"),
     { params: Promise.resolve({ schoolId }) });
 }
+async function requestManualReversal(actor: string, payload: unknown, schoolId = schoolA) {
+  return REVERSE_POST(request(actor, schoolId, "manual-allocation-reversals", "POST", payload),
+    { params: Promise.resolve({ schoolId }) });
+}
+async function reversalQueue(actor: string, schoolId = schoolA) {
+  return REVERSE_GET(request(actor, schoolId, "manual-allocation-reversals", "GET"),
+    { params: Promise.resolve({ schoolId }) });
+}
+async function decideManualReversal(actor: string, payload: unknown, schoolId = schoolA) {
+  return REVERSAL_DECISION_POST(
+    request(actor, schoolId, "manual-allocation-reversal-decisions", "POST", payload),
+    { params: Promise.resolve({ schoolId }) });
+}
 const revision = (scope: "SCHOOL" | "SECTION" | "CLASS", scopeId: string) => ({
   categoryId, sessionId, termId, scope, scopeId, amountMinor: "123456",
   currency: "NGN", reason: "Synthetic school fee configuration",
@@ -109,6 +127,7 @@ describe("Phase 9 school-only immutable fee configuration", () => {
     vi.stubEnv("PHASE9_PAYMENT_EVIDENCE_ENABLED", "true");
     vi.stubEnv("PHASE9_PAYMENT_REVIEW_ENABLED", "true");
     vi.stubEnv("PHASE9_MANUAL_ALLOCATION_ENABLED", "true");
+    vi.stubEnv("PHASE9_MANUAL_REVERSAL_ENABLED", "true");
     for (const name of ["owner", "admin", "teacher", "foreign"]) {
       const email = `fee-${name}-${suffix}@example.test`;
       const registered = await auth.api.signUpEmail({
@@ -495,6 +514,7 @@ describe("Phase 9 school-only immutable fee configuration", () => {
     expect(statuses.every(v => v === 201 || v === 404 || v === 409)).toBe(true);
     const winnerIndex = outcomes.findIndex(v => v.status === 201);
     const winner = (await outcomes[winnerIndex].json()).allocation;
+    allocatedManualId = winner.id;
     const winnerRequest = winnerIndex === 0 ? concurrentA : concurrentB;
     expect(winner.amountMinor).toBe("300000");
     expect(winner.status).toBe("MANUAL_ALLOCATION_PREVIEW_ONLY");
@@ -548,6 +568,156 @@ describe("Phase 9 school-only immutable fee configuration", () => {
     } })).rejects.toThrow();
   });
 
+  it("independently approves a manual allocation reversal without money movement", async () => {
+    const request = {
+      allocationId: allocatedManualId, requestKey: randomUUID(),
+      reason: "Synthetic manual allocation correction requires independent review",
+    };
+    for (const [actor, status] of [["", 401], ["owner", 404],
+      ["teacher", 404], ["foreign", 404]] as const) {
+      expect((await requestManualReversal(actor, request)).status).toBe(status);
+    }
+    for (const [actor, status] of [["", 401], ["teacher", 404],
+      ["foreign", 404]] as const) {
+      expect((await reversalQueue(actor)).status).toBe(status);
+    }
+    expect((await requestManualReversal("admin", { ...request,
+      amountMinor: "1",
+    })).status).toBe(400);
+    expect((await requestManualReversal("admin", { ...request,
+      paid: true,
+    })).status).toBe(400);
+    expect((await requestManualReversal("admin", { ...request,
+      allocationId: "other-school-allocation",
+    })).status).toBe(404);
+    const proposed = await requestManualReversal("admin", request);
+    expect(proposed.status).toBe(201);
+    expect(proposed.headers.get("cache-control")).toBe("private, no-store");
+    const submitted = (await proposed.json()).reversal;
+    expect(submitted.amountMinor).toBe("300000");
+    expect(submitted.status).toBe("REVERSAL_REQUEST_ONLY");
+    expect(submitted).not.toHaveProperty("requesterMembershipId");
+    expect((await requestManualReversal("admin", request)).status).toBe(200);
+    expect((await requestManualReversal("admin", { ...request,
+      reason: "Different immutable request reason",
+    })).status).toBe(409);
+    expect((await requestManualReversal("admin", { ...request,
+      requestKey: randomUUID(),
+    })).status).toBe(404);
+    expect((await reversalQueue("admin")).status).toBe(200);
+    const queue = await reversalQueue("owner");
+    expect((await queue.json()).requests[0].reversalState).toBe("PENDING_REVERSAL_REVIEW");
+
+    const reviewed = {
+      requestId: submitted.id, action: "APPROVED",
+      reason: "Synthetic independent correction of manual ledger entry",
+    };
+    for (const [actor, status] of [["", 401], ["admin", 404],
+      ["teacher", 404], ["foreign", 404]] as const) {
+      expect((await decideManualReversal(actor, reviewed)).status).toBe(status);
+    }
+    expect((await decideManualReversal("owner", {
+      ...reviewed, refundMinor: "300000",
+    })).status).toBe(400);
+    const approved = await decideManualReversal("owner", reviewed);
+    expect(approved.status).toBe(201);
+    const decision = (await approved.json()).decision;
+    expect(decision.action).toBe("APPROVED");
+    expect(decision.status).toBe("MANUAL_ALLOCATION_REVERSAL_DECISION_ONLY");
+    const replay = await decideManualReversal("owner", reviewed);
+    expect(replay.status).toBe(200);
+    expect((await replay.json()).decision.id).toBe(decision.id);
+    expect((await decideManualReversal("owner", {
+      ...reviewed, action: "REJECTED",
+    })).status).toBe(409);
+    await expect(prisma.manualAllocationReversalRequest.update({
+      where: { id: submitted.id }, data: { amountMinor: BigInt(1) },
+    })).rejects.toThrow();
+    await expect(prisma.manualAllocationReversalDecision.delete({
+      where: { id: decision.id },
+    })).rejects.toThrow();
+    const original = await prisma.manualPaymentAllocation.findUniqueOrThrow({
+      where: { id: allocatedManualId },
+    });
+    expect(original.amountMinor).toBe(BigInt(300000));
+    expect(original.verificationId).toBe(verifiedDecisionId);
+    expect((await reversalQueue("owner")).status).toBe(200);
+    const after = await allocationPreview("owner");
+    expect((await after.json()).rows[0]).toMatchObject({
+      obligationId, originalChargeMinor: "456789",
+      independentlyReviewedMinor: "300000",
+      grossManuallyAllocatedMinor: "300000",
+      approvedReversedMinor: "300000",
+      manuallyAllocatedMinor: "0",
+      reviewedNotAllocatedMinor: "0",
+      previewRemainingMinor: "456789",
+      previewState: "REVERSED_MANUAL_ALLOCATION",
+    });
+    expect((await allocatePayment("owner", {
+      verificationId: verifiedDecisionId, requestKey: randomUUID(),
+      reason: "Reversed evidence cannot be allocated again",
+    })).status).toBe(404);
+    await expect(prisma.manualAllocationReversalRequest.create({ data: {
+      id: randomUUID(), schoolId: schoolA, allocationId: allocatedManualId,
+      requestKey: randomUUID(), amountMinor: BigInt(1), currency: "NGN",
+      reason: "Forged direct SQL teacher reversal request",
+      requesterMembershipId: members.teacher, requesterUserId: actors.teacher,
+    } })).rejects.toThrow();
+    await expect(prisma.manualAllocationReversalDecision.create({ data: {
+      id: randomUUID(), schoolId: schoolA, requestId: submitted.id,
+      action: "REJECTED",
+      reason: "Forged direct SQL teacher reversal approval",
+      reviewerMembershipId: members.teacher, reviewerUserId: actors.teacher,
+    } })).rejects.toThrow();
+  });
+
+  it("keeps a rejected manual reversal from subtracting the allocation preview", async () => {
+    const ref = `SYNTH-BANK-C-${suffix.toUpperCase()}`;
+    const claim = await submitEvidence("admin", {
+      obligationId, requestKey: randomUUID(), transferReference: ref,
+      claimedAmountMinor: "100000", reason: "Additional synthetic bank evidence",
+    });
+    expect(claim.status).toBe(201);
+    const eId = (await claim.json()).evidence.id;
+    const verified = await reviewEvidence("owner", {
+      evidenceId: eId, action: "VERIFIED", transferReference: ref,
+      fundsConfirmed: true, reason: "Synthetic independent bank match for secondary claim",
+    });
+    expect(verified.status).toBe(201);
+    const vId = (await verified.json()).decision.id;
+    const allocated = await allocatePayment("owner", {
+      verificationId: vId, requestKey: randomUUID(),
+      reason: "Additional synthetic manual claim allocation",
+    });
+    expect(allocated.status).toBe(201);
+    const aId = (await allocated.json()).allocation.id;
+    const proposed = await requestManualReversal("admin", {
+      allocationId: aId, requestKey: randomUUID(),
+      reason: "Synthetic reversal requested but not approved",
+    });
+    expect(proposed.status).toBe(201);
+    const rId = (await proposed.json()).reversal.id;
+    const rejected = await decideManualReversal("owner", {
+      requestId: rId, action: "REJECTED",
+      reason: "Synthetic independent reviewer retained allocation",
+    });
+    expect(rejected.status).toBe(201);
+    const summary = (await (await allocationPreview("owner")).json()).rows[0];
+    expect(summary).toMatchObject({
+      originalChargeMinor: "456789",
+      independentlyReviewedMinor: "400000",
+      grossManuallyAllocatedMinor: "400000",
+      approvedReversedMinor: "300000",
+      manuallyAllocatedMinor: "100000",
+      reviewedNotAllocatedMinor: "0",
+      previewRemainingMinor: "356789",
+      previewState: "PARTIAL_MANUAL_ALLOCATION",
+    });
+    const requests = (await (await reversalQueue("admin")).json()).requests;
+    expect(requests.some((r: { reversalState: string }) =>
+      r.reversalState === "REJECTED_MANUAL_REVERSAL")).toBe(true);
+  });
+
   it("keeps finance writes default-off unless test environment explicitly enables them", async () => {
     vi.stubEnv("PHASE9_FEE_WRITE_ENABLED", "false");
     try {
@@ -568,6 +738,10 @@ describe("Phase 9 school-only immutable fee configuration", () => {
       expect((await allocatePayment("owner", {
         verificationId: verifiedDecisionId, requestKey: randomUUID(),
         reason: "Disabled manual allocation",
+      })).status).toBe(404);
+      expect((await requestManualReversal("admin", {
+        allocationId: allocatedManualId, requestKey: randomUUID(),
+        reason: "Disabled manual reversal request",
       })).status).toBe(404);
     } finally {
       vi.stubEnv("PHASE9_FEE_WRITE_ENABLED", "true");
