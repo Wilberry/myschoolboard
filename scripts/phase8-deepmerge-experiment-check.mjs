@@ -13,7 +13,10 @@ export function inspectDeepmergeCandidate(pkg, lock) {
   );
   const parent = lock.packages?.["node_modules/@prisma/config"];
   assert.equal(parent?.version, "6.19.3");
-  assert.equal(parent?.dependencies?.["deepmerge-ts"], "7.1.5");
+  assert.ok(
+    ["7.1.5", "8.0.2"].includes(parent?.dependencies?.["deepmerge-ts"]),
+    "Unexpected Prisma config dependency metadata",
+  );
   const resolved = lock.packages?.["node_modules/deepmerge-ts"];
   assert.equal(
     resolved?.version,
