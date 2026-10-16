@@ -112,22 +112,30 @@ export async function listManualAllocationPreview(schoolId: string) {
     obligationId: string; studentId: string; sessionId: string;
     termId: string; categoryId: string; currency: string;
     originalChargeMinor: string; independentlyReviewedMinor: string;
+    grossManuallyAllocatedMinor: string; approvedReversedMinor: string;
     manuallyAllocatedMinor: string; reviewedNotAllocatedMinor: string;
     previewRemainingMinor: string;
     previewState: "NO_MANUAL_ALLOCATION" | "PARTIAL_MANUAL_ALLOCATION" |
-      "FULL_MANUAL_ALLOCATION";
+      "FULL_MANUAL_ALLOCATION" | "REVERSED_MANUAL_ALLOCATION";
   }>>(Prisma.sql`
     SELECT charge."id" AS "obligationId", charge."studentId",
       charge."sessionId", charge."termId", charge."categoryId",
       charge."currency",
       charge."amountMinor"::text AS "originalChargeMinor",
       COALESCE(reviewed."reviewedMinor",0)::text AS "independentlyReviewedMinor",
+      COALESCE(applied."grossAllocatedMinor",0)::text AS "grossManuallyAllocatedMinor",
+      COALESCE(applied."reversedMinor",0)::text AS "approvedReversedMinor",
       COALESCE(applied."allocatedMinor",0)::text AS "manuallyAllocatedMinor",
+      -- Reversed claims are NOT available for reallocation under the
+      -- one-evidence-one-allocation invariant. Show unallocated only.
       GREATEST(COALESCE(reviewed."reviewedMinor",0)-
-        COALESCE(applied."allocatedMinor",0),0)::text AS "reviewedNotAllocatedMinor",
+        COALESCE(applied."grossAllocatedMinor",0),0)::text AS "reviewedNotAllocatedMinor",
       GREATEST(charge."amountMinor"::numeric-
         COALESCE(applied."allocatedMinor",0),0)::text AS "previewRemainingMinor",
       CASE
+        WHEN COALESCE(applied."grossAllocatedMinor",0)>0
+          AND COALESCE(applied."allocatedMinor",0)=0
+          THEN 'REVERSED_MANUAL_ALLOCATION'
         WHEN COALESCE(applied."allocatedMinor",0)=0 THEN 'NO_MANUAL_ALLOCATION'
         WHEN COALESCE(applied."allocatedMinor",0)=charge."amountMinor"
           THEN 'FULL_MANUAL_ALLOCATION'
@@ -148,8 +156,19 @@ export async function listManualAllocationPreview(schoolId: string) {
         AND e."obligationId"=charge."id" AND e."currency"=charge."currency"
     ) reviewed ON true
     LEFT JOIN LATERAL (
-      SELECT SUM(alloc."amountMinor")::numeric AS "allocatedMinor"
+      SELECT
+        SUM(alloc."amountMinor")::numeric AS "grossAllocatedMinor",
+        SUM(CASE WHEN correction."action"='APPROVED'
+          THEN alloc."amountMinor" ELSE 0 END)::numeric AS "reversedMinor",
+        SUM(CASE WHEN correction."action"='APPROVED'
+          THEN 0 ELSE alloc."amountMinor" END)::numeric AS "allocatedMinor"
       FROM "ManualPaymentAllocation" alloc
+      LEFT JOIN "ManualAllocationReversalRequest" req
+        ON req."schoolId"=alloc."schoolId" AND req."allocationId"=alloc."id"
+      LEFT JOIN "ManualAllocationReversalDecision" correction
+        ON correction."schoolId"=req."schoolId"
+        AND correction."requestId"=req."id"
+        AND correction."action"='APPROVED'
       WHERE alloc."schoolId"=charge."schoolId"
         AND alloc."obligationId"=charge."id"
         AND alloc."currency"=charge."currency"
