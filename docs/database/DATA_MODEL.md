@@ -85,7 +85,11 @@
   exact money policy; **configuration only**, not a pupil debt or payment
 - FeeStructure — logical grouping of later effective structures (not a
   separate physical table in the initial Phase 9 foundation)
-- FeeObligation — not yet implemented
+- FeeObligation — **authored; unverified** immutable explicit per-student/category/
+  session/term charge referencing one school-owned current fee-structure revision
+  and exact ACTIVE pupil enrollment; trusted SQL snapshots minor-unit amount,
+  currency and academic identity with school-bound authorization. No payments
+  or verified balances are implied.
 - PaymentRecord
 - PaymentEvidence
 - Receipt
