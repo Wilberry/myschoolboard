@@ -30,6 +30,12 @@ enum ScopeType {
   CHILD
 }
 
+enum FeeScope {
+  SCHOOL
+  SECTION
+  CLASS
+}
+
 enum SchoolLifecycleStatus {
   PENDING
   ACTIVE
@@ -276,6 +282,8 @@ model School {
   assessmentManualMarkDecisions AssessmentManualMarkDecision[]
   assessmentManualCorrectionRequests AssessmentManualCorrectionRequest[]
   assessmentManualCorrectionDecisions AssessmentManualCorrectionDecision[]
+  feeCategories FeeCategory[]
+  feeStructureRevisions FeeStructureRevision[]
 }
 
 model Membership {
@@ -320,6 +328,8 @@ model Membership {
   assessmentManualMarkDecisions AssessmentManualMarkDecision[]
   assessmentManualCorrectionRequests AssessmentManualCorrectionRequest[]
   assessmentManualCorrectionDecisions AssessmentManualCorrectionDecision[]
+  authoredFeeCategories FeeCategory[]
+  authoredFeeStructureRevisions FeeStructureRevision[]
 }
 
 model ScopeGrant {
@@ -372,6 +382,7 @@ model SchoolClass {
   assessmentDrafts AssessmentDraft[]
   assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
   assessmentManualComponents AssessmentManualComponent[]
+  feeStructureRevisions FeeStructureRevision[]
 }
 
 model Subject {
@@ -488,6 +499,7 @@ model AcademicSession {
   assessmentDrafts AssessmentDraft[]
   assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
   assessmentManualComponents AssessmentManualComponent[]
+  feeStructureRevisions FeeStructureRevision[]
 }
 
 model AcademicTerm {
@@ -515,6 +527,7 @@ model AcademicTerm {
   assessmentDrafts AssessmentDraft[]
   assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
   assessmentManualComponents AssessmentManualComponent[]
+  feeStructureRevisions FeeStructureRevision[]
 }
 
 model SchoolConfigurationEvent {
@@ -714,6 +727,7 @@ model SchoolSection {
   @@unique([schoolId, id])
   @@unique([schoolId, name])
   @@index([schoolId, stage, isActive])
+  feeStructureRevisions FeeStructureRevision[]
 }
 
 model StudentRecord {
@@ -1426,4 +1440,58 @@ model AssessmentManualCorrectionDecision {
 
   @@unique([schoolId, requestId])
   @@index([schoolId, decidedAt])
+}
+
+
+/** Immutable category label. Historical renames require a new category. */
+model FeeCategory {
+  id String @id
+  schoolId String
+  code String @db.VarChar(32)
+  name String @db.VarChar(120)
+  actorMembershipId String
+  actorUserId String
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "FeeCategory_actor_fkey")
+  revisions FeeStructureRevision[]
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, code])
+  @@index([schoolId, createdAt])
+}
+
+/** Fee CONFIGURATION, not student debt or verified payment.
+ * A reasoned revision affects only subsequently created obligations.
+ * PostgreSQL validates school, actor, live period and exact scope target. */
+model FeeStructureRevision {
+  id String @id
+  schoolId String
+  categoryId String
+  sessionId String
+  termId String
+  scope FeeScope
+  scopeId String
+  sectionId String?
+  classId String?
+  version Int @default(1)
+  amountMinor BigInt
+  currency String @db.VarChar(3)
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  category FeeCategory @relation(fields: [schoolId, categoryId], references: [schoolId, id], onDelete: NoAction, map: "FeeStructureRevision_category_fkey")
+  session AcademicSession @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction, map: "FeeStructureRevision_session_fkey")
+  term AcademicTerm @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction, map: "FeeStructureRevision_term_fkey")
+  schoolSection SchoolSection? @relation(fields: [schoolId, sectionId], references: [schoolId, id], onDelete: NoAction, map: "FeeStructureRevision_section_fkey")
+  schoolClass SchoolClass? @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction, map: "FeeStructureRevision_class_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "FeeStructureRevision_actor_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, categoryId, sessionId, termId, scope, scopeId, version], map: "FeeStructureRevision_context_version_key")
+  @@index([schoolId, sessionId, termId, scope, scopeId])
 }
