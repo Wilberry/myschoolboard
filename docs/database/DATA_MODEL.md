@@ -106,6 +106,13 @@
   (no physical table) of immutable charge, independently reviewed
   claims, manual allocations and internal preview remainder; never
   a publicly published fee balance
+- ManualAllocationReversalRequest — **AUTHORED/UNVERIFIED:** immutable
+  School Administrator's reasoned request against one full original
+  allocation with school-bound actor, timestamp and SQL-copied money;
+  never a refund or new payment
+- ManualAllocationReversalDecision — **AUTHORED/UNVERIFIED:** distinct
+  School Super Admin APPROVED/REJECTED outcome; only APPROVED changes
+  a derived internal manual allocation preview, without updating history
 - PaymentRecord — later actual paid ledger, **not implemented**
 - Receipt
 - AdjustmentRecord
