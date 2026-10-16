@@ -125,8 +125,9 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE FUNCTION "validate_payment_verification_insert"() RETURNS trigger AS $$
-DECLARE candidate RECORD;
-DECLARE already_verified NUMERIC;
+DECLARE
+  candidate RECORD;
+  already_verified NUMERIC;
 BEGIN
   PERFORM 1 FROM "School" s WHERE s."id"=NEW."schoolId"
     AND s."isActive"=true FOR UPDATE;
