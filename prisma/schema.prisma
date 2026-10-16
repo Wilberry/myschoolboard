@@ -297,6 +297,7 @@ model School {
   feeObligations FeeObligation[]
   paymentEvidence PaymentEvidence[]
   paymentVerificationDecisions PaymentVerificationDecision[]
+  manualPaymentAllocations ManualPaymentAllocation[]
 }
 
 model Membership {
@@ -346,6 +347,7 @@ model Membership {
   issuedFeeObligations FeeObligation[]
   submittedPaymentEvidence PaymentEvidence[]
   reviewedPaymentEvidence PaymentVerificationDecision[]
+  manualPaymentAllocations ManualPaymentAllocation[]
 }
 
 model ScopeGrant {
@@ -1559,6 +1561,7 @@ model FeeObligation {
   @@unique([schoolId, studentId, sessionId, termId, categoryId], map: "FeeObligation_student_category_period_key")
   @@index([schoolId, enrollmentId, issuedAt])
   paymentEvidence PaymentEvidence[]
+  manualPaymentAllocations ManualPaymentAllocation[]
 }
 
 
@@ -1587,6 +1590,7 @@ model PaymentEvidence {
   @@unique([schoolId, requestKey])
   @@unique([schoolId, referenceDigest])
   @@index([schoolId, obligationId, submittedAt])
+  manualPaymentAllocations ManualPaymentAllocation[]
 }
 
 /** Independent School Super Admin bank-reconciliation attestation. No
@@ -1609,6 +1613,39 @@ model PaymentVerificationDecision {
   evidence PaymentEvidence @relation(fields: [schoolId, evidenceId], references: [schoolId, id], onDelete: NoAction, map: "PaymentVerificationDecision_evidence_fkey")
   reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "PaymentVerificationDecision_reviewer_fkey")
 
+  @@unique([schoolId, id])
   @@unique([schoolId, evidenceId])
   @@index([schoolId, decidedAt])
+  manualPaymentAllocations ManualPaymentAllocation[]
+}
+
+
+/** One exact manual-review amount allocated to the original fee obligation.
+ * Not a provider settlement, funds movement, actual payment or receipt.
+ * External settlement and reversals require independently accepted ledgers. */
+model ManualPaymentAllocation {
+  id String @id
+  schoolId String
+  obligationId String
+  evidenceId String
+  verificationId String
+  requestKey String @db.VarChar(64)
+  amountMinor BigInt
+  currency String @db.VarChar(3)
+  reason String @db.VarChar(500)
+  allocatorMembershipId String
+  allocatorUserId String
+  allocatedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  obligation FeeObligation @relation(fields: [schoolId, obligationId], references: [schoolId, id], onDelete: NoAction, map: "ManualPaymentAllocation_obligation_fkey")
+  evidence PaymentEvidence @relation(fields: [schoolId, evidenceId], references: [schoolId, id], onDelete: NoAction, map: "ManualPaymentAllocation_evidence_fkey")
+  verification PaymentVerificationDecision @relation(fields: [schoolId, verificationId], references: [schoolId, id], onDelete: NoAction, map: "ManualPaymentAllocation_verification_fkey")
+  allocator Membership @relation(fields: [schoolId, allocatorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ManualPaymentAllocation_allocator_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, requestKey])
+  @@unique([schoolId, evidenceId])
+  @@unique([schoolId, verificationId])
+  @@index([schoolId, obligationId, allocatedAt])
 }
