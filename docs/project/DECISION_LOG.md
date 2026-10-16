@@ -1,5 +1,35 @@
 # Decision Log
 
+## D-P9-007: Explicit applied waiver plus verified-claim anti-overcredit
+
+- **Status:** authored/isolated default-off development only,
+  2026-10-16. NOT migrated, runtime tested or security accepted.
+- **Decision:** keep advisory waiver approval separate from a
+  School Super Admin's reasoned, UUID-idempotent
+  `FeeWaiverApplication`. Only an independently APPROVED
+  `kind=WAIVER` proposal tied to the same unchanged school
+  obligation may be applied; CORRECTION_PROPOSAL is forbidden
+  until a distinct financial policy is designed.
+- **Database invariant:** serialize waiver applications,
+  payment verifications and manual allocations on the School
+  row. Enforce `waivers + all VERIFIED claims <= original debt`
+  and, for allocations, `waivers + gross allocations <= debt`.
+  An approved manual-allocation reversal does NOT allow the
+  previously verified reference to be waived or reused.
+  PostgreSQL copies waiver source money/currency, checks
+  actual membership and source approvals, and forbids any
+  UPDATE/DELETE/TRUNCATE of immutable history.
+- **Safety boundary:** original fee remains immutable; an
+  applied waiver contributes only to an INTERNAL owner-only
+  adjusted-charge preview. No bank-confirmed settlement,
+  refund, enforceable payment status, official student
+  statement, receipt, guardian access, provider calls, or
+  generated ledger cash movement. Every write is disabled
+  without both master and effective-waiver feature flags.
+  Full synthetic PostgreSQL security, concurrency and
+  strict dependency checks remain mandatory. ADR-P9-007.
+
+
 ## D-P9-006: Separate waiver/correction proposals from effective accounting adjustments
 
 - **Status:** authored and default-OFF; NOT migration/runtime/CI verified
