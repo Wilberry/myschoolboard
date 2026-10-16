@@ -1,5 +1,22 @@
 # Configuration Catalog
 
+## Phase 9 manual allocation preview — NOT VERIFIED
+
+`PHASE9_MANUAL_ALLOCATION_ENABLED=false` disables reasoned manual
+allocations unless explicitly enabled together with the existing
+`PHASE9_FEE_WRITE_ENABLED=true` in a confirmed disposable synthetic
+test environment. Read access to provisional aggregate finance metadata
+remains active-school School Super Admin only; no self-service fee
+balance/receipt permission is added. A VERIFIED decision plus external
+bank reconciliation attestation alone never creates a financial
+settlement; a separate immutable allocation is required for the
+arithmetic preview. Allocations cannot exceed the original charge,
+be repeated for a claim, or change the original debt/evidence.
+Production refund/reversal/receipt features require separate reviewed
+configuration and completion of all security gates.
+D-P9-004 / ADR-P9-004.
+
+
 ## Phase 9 bank-reference evidence and review — unverified development defaults
 
 School Administrator may submit an **unverified** reference-only
