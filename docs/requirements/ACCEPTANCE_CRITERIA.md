@@ -38,6 +38,20 @@ This document records the acceptance standard for the major product workflows.
   bank reference plus explicit manual funds confirmation may produce a
   one-time VERIFIED decision; REJECTED is distinct and immutable.
   Reusing a review payload is idempotent; changing it must be denied.
+- Given a review decision is REJECTED, PENDING or belongs to another
+  school, no allocation can be created by an unauthorized role or even
+  by a School Super Admin. A current School Super Admin may allocate
+  only an independently VERIFIED, bank-attested original school claim,
+  once; the SQL guard re-derives amount and currency.
+- Given duplicate concurrent allocation requests, at most one durable
+  immutable allocation may exist for any source verification and bank
+  reference; exact same actor/key/payload retries return the first
+  allocation, and changed retries do not overwrite it.
+- Given the original debt and one or more manual allocations,
+  the owner-only preview uses exact minor-unit arithmetic for charge,
+  reviewed amount, allocated amount, unallocated reviewed amount and
+  arithmetic remainder, with **no official PAID/SETTLED status or
+  receipt**, and no student/guardian balance access.
 - Given multiple claims for one obligation, independent verification must
   reject an aggregate verified amount exceeding the original charge.
   Cross-school, other-role, forged reviewer and replayed bank-reference
