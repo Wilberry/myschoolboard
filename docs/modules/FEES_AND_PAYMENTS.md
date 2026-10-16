@@ -23,11 +23,16 @@ are tenant-bound and financial history must be attributable and non-silently mut
    category/term charge, globally unique per-school idempotency key,
    and no repricing. Waiver/discount/adjustment/reversal remains future
    separately reviewed evidence, not mutation of the original charge.
-3. **Payment evidence and verification — NOT YET BUILT.** Submitted proof
-   is unverified. A separately authorized verifier records a one-time
-   outcome with distinct submitted, pending, verified, rejected, refunded
-   and reversed semantics, idempotency keys, amount/currency matching,
-   and immutable verification/reversal evidence.
+3. **Payment reference evidence and independent review — AUTHORED,
+   NOT VERIFIED.** School Administrator submits an immutable *manual bank
+   reference claim* for one school obligation. This records no file and
+   **does not prove funds have arrived**. A distinct active same-school
+   School Super Admin may attest a one-time VERIFIED or REJECTED review
+   after independent external bank reconciliation; verified sums cannot
+   exceed the recorded original debt. Claim and review retries are
+   idempotent only for exactly the original actor and payload. Full
+   actual file upload, receipts, provider callbacks, refunds and
+   reversals are not yet implemented.
 4. **Balance and reconciliation — NOT YET BUILT.** Compute payable amount,
    allocated verified sums and outstanding balances from immutable events.
    No fabricated credit, silent refund, unrestricted parent access, or
@@ -81,6 +86,59 @@ are tenant-bound and financial history must be attributable and non-silently mut
 - These milestones deliberately create **no** payment evidence records,
   payment provider calls, callbacks, receipt APIs, fee waivers,
   student/guardian finance views, or financial settlement side effects.
+
+## Phase 9 manual reference evidence contract (authored, NOT verified)
+
+- New append-only `PaymentEvidence` and `PaymentVerificationDecision`
+  tables tie to the exact same-school FeeObligation and actual submitting/
+  reviewing school memberships using composite tenant foreign keys.
+- Submission: only a signed-in, active same-school `SCHOOL_ADMIN`
+  may POST `obligationId`, UUID `requestKey`, uppercase 8–80-character
+  `transferReference`, positive integer-string `claimedAmountMinor`,
+  and nonempty reason. The PostgreSQL insert guard independently checks
+  actor, school, exact debt, upper claim bound and same currency; claims
+  remain `SUBMITTED` and are not payment credits.
+  Bank references are **not persisted in plaintext**: the service stores
+  only a school-bound SHA-256 digest. This digest is a duplicate-detection
+  aid, **not** proof of transfer or a secret authentication factor.
+  A repeat same request/payload is acknowledged; changed-key/payload,
+  repeated transfer reference or foreign school ID is rejected.
+- Review: only a separately signed-in, active same-school
+  `SCHOOL_SUPER_ADMIN`, not the submitting member, may POST
+  `evidenceId`, `action`, and reason. `VERIFIED` additionally
+  requires the reviewer to reconfirm the same normalized transfer
+  reference and explicitly attest `fundsConfirmed: true` after
+  external bank statement matching. `REJECTED` supplies no reference or
+  funds confirmation. Database SQL rechecks exact reviewer and evidence
+  identity, original reference digest, amount/currency and sum of all
+  earlier VERIFIED decisions for the obligation. It rejects an aggregate
+  greater than the immutable charge. Every decision is append-only,
+  one per claim; exact same reviewer/payload retry reuses the decision.
+  **Manual verification is not provider-certified settlement.**
+- Public HTTP surface (not production accepted):
+  `GET/POST /api/schools/:schoolId/payment-evidence` returns
+  no raw bank reference or digest and only shows a School Administrator
+  their own submissions (or the School Super Admin the full bounded
+  school review queue). `POST /api/schools/:schoolId/payment-verifications`
+  creates a separate immutable manual review; no read/export/PUT/DELETE
+  action exists on that endpoint. All replies use `private, no-store`.
+  `SUBMITTED_EVIDENCE_ONLY` is the permanent submission acknowledgment
+  even after later review; query `reviewAction` separately to see a
+  terminal verification result.
+- All three finance-related switches must be explicitly set to
+  `true` for the corresponding writes:
+  `PHASE9_FEE_WRITE_ENABLED`, `PHASE9_PAYMENT_EVIDENCE_ENABLED`
+  for reference submission, and `PHASE9_PAYMENT_REVIEW_ENABLED` for
+  review. **All default to false**. Do not use against live schools,
+  shared databases, real payments, or unidentified test environments.
+- No payment document upload until private tenant-scoped storage, file
+  type/size checking, malware inspection and authorized retrieval are
+  established per FILE_UPLOAD_AND_STORAGE_SECURITY.md. No user-supplied
+  provider status, callback, real settlement, verified receipt, refunds,
+  reversals, payment allocations or financial release is supported.
+  Future adjustment/reversal must preserve original evidence and add
+  separate immutable transactions. This manual-review foundation alone
+  is not a reliable production outstanding-balance calculation.
 
 ## Critical payment states (future obligations)
 
