@@ -39,7 +39,8 @@ function fixtureRequest(
         : 404
       : 307;
     calls.push({ url, options });
-    const result = modify(path, status, privacy, url);
+    const headers = status === 307 ? { ...privacy, Location: "/" } : privacy;
+    const result = modify(path, status, headers, url);
     return new Response(null, result);
   };
   return { calls, request };
@@ -111,6 +112,92 @@ test("rejects exposed pages, APIs and query-selector responses", async () => {
   }
 });
 
+test("accepts a Next.js 307 login redirect with no-store alone", async () => {
+  const { request } = fixtureRequest((_path, status, headers) => ({
+    status,
+    headers: {
+      ...headers,
+      "Cache-Control": status === 307 ? "no-store" : headers["Cache-Control"],
+    },
+  }));
+  assert.deepEqual(await runPhase8HttpSmoke(environment, request), {
+    passed: 6,
+    expected: 6,
+  });
+});
+
+test("still requires private for denied nonredirect pages and API responses", async () => {
+  for (const change of [
+    (path, status, headers) => ({
+      status,
+      headers: {
+        ...headers,
+        "Cache-Control": path.includes("/api/")
+          ? "no-store"
+          : headers["Cache-Control"],
+      },
+    }),
+    (path, status, headers) => ({
+      status: path.endsWith("/guardian-links") ? 404 : status,
+      headers: {
+        ...headers,
+        "Cache-Control": path.endsWith("/guardian-links")
+          ? "no-store"
+          : headers["Cache-Control"],
+      },
+    }),
+  ]) {
+    const { request } = fixtureRequest(change);
+    await assert.rejects(
+      runPhase8HttpSmoke(environment, request),
+      /missing secure/,
+    );
+  }
+});
+
+test("rejects missing or external redirects, permanent redirects and public caching", async () => {
+  for (const change of [
+    (path, status, headers) => ({
+      status,
+      headers: {
+        ...headers,
+        Location: path.endsWith("/published-reports")
+          ? "https://attacker.example/"
+          : "/",
+      },
+    }),
+    (path, status, headers) => ({
+      status,
+      headers: {
+        ...headers,
+        Location: path.endsWith("/published-reports") ? "/foreign" : "/",
+      },
+    }),
+    (path, status, headers) => ({
+      status,
+      headers: {
+        ...headers,
+        ...(path.endsWith("/published-reports") ? { Location: "" } : {}),
+      },
+    }),
+    (_path, status, headers) => ({
+      status: status === 307 ? 308 : status,
+      headers,
+    }),
+    (_path, status, headers) => ({
+      status,
+      headers: { ...headers, "Cache-Control": "public, no-store" },
+    }),
+    (_path, status, headers) => ({
+      status,
+      headers: { ...headers, "Cache-Control": "no-store, s-maxage=3600" },
+    }),
+  ]) {
+    const { request } = fixtureRequest(change);
+    await assert.rejects(runPhase8HttpSmoke(environment, request));
+  }
+});
+
 test("rejects missing no-store, noindex or no-referrer", async () => {
   for (const name of ["Cache-Control", "X-Robots-Tag", "Referrer-Policy"]) {
     const headers = { ...privacy };
@@ -121,7 +208,7 @@ test("rejects missing no-store, noindex or no-referrer", async () => {
     }));
     await assert.rejects(
       runPhase8HttpSmoke(environment, request),
-      /missing private/,
+      /missing secure/,
     );
   }
 });
