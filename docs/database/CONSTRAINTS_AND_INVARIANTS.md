@@ -1,5 +1,33 @@
 # Constraints and Invariants
 
+## Phase 9 manually verified claim allocation (AUTHORED, NOT VERIFIED)
+
+- A submitted manual bank reference is distinct from a VERIFIED
+  reviewer attestation, and both are distinct from a newly allocated
+  **internal preview credit**. No bank-confirmed settlement, official
+  balance, paid student status, receipt, refund or reversal is implied.
+- Every `ManualPaymentAllocation` references the same original school,
+  obligation, bank-reference evidence and one independently VERIFIED
+  payment-review decision through tenant composite foreign keys.
+  PostgreSQL holds the school's row lock and checks the actual active
+  School Super Admin allocator, distinct original School Administrator
+  evidence submitter, matching decision/reference, original debt and
+  currency, and SUM(previous allocations)+exact source claim amount
+  <= immutable charge.
+- A UNIQUE school/evidence and school/verification relation prohibits
+  repeated manual credit from the same reference under concurrent
+  writes. UUID request keys are unique per school and exact retries
+  require the original member, verification and reason. SQL stamps time
+  and copies amount/currency from trusted immutable evidence. INSERT
+  results cannot be UPDATEd, DELETEd or TRUNCATEd under ordinary writes.
+- Owner-only bounded final SQL projection of original obligation amount,
+  manually verified claim sum, allocated sum, unallocated reviewed sum
+  and arithmetic remainder uses PostgreSQL NUMERIC and decimal strings;
+  it is never an official published bank-cleared financial balance.
+  Tenant-specific reviewer and read revocation tests plus duplicate
+  concurrent SQL writes remain UNEXECUTED.
+
+
 ## Versioned attendance calendar and policy bounds (authored, unverified)
 
 - Each `SchoolAttendancePolicyRevision` row has an exact school and actor membership composite FK, a positive sequential per-school revision, IANA timezone, submissionBackdateDays 0–30, correctionWindowDays 0–365, reason and immutable actor/time history; POST and SQL trigger require active same-school School Administrator / School Super Admin and a valid timezone.
