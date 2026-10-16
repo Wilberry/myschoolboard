@@ -35,6 +35,19 @@ independently revalidated in PostgreSQL under a school lock. It is
 not production payment settlement; writes are disabled by default.
 D-P9-004 / ADR-P9-004.
 
+## Phase 9 correction of manual allocation preview (AUTHORED, NOT VERIFIED)
+
+Current same-school `SCHOOL_ADMIN` may submit only one immutable,
+reasoned full-manual-allocation reversal **request**. A distinct active
+same-school `SCHOOL_SUPER_ADMIN` may independently approve or reject.
+Only APPROVED adjusts the internal owner-only preview, not actual
+funds, original documents, payment status or receipt. Direct SQL
+checks role, school, exact historical allocation, and preserved
+amount/currency under the school lock. No student/guardian or staff
+refund, transfer, paid-status or official balance rights arise from
+this workflow. Both fee and reversal write flags remain OFF.
+D-P9-005 / ADR-P9-005.
+
 The matrix below expresses the governing permission model. Server-side governance is mandatory; UI hiding is not sufficient.
 
 | Role | View | Create | Edit | Submit | Approve | Publish | Export | Restore | Delete | Permanently delete | Manage permissions |
