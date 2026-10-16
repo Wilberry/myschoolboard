@@ -327,3 +327,7 @@ The opt-in browser harness now tests that a deliberately clicked `GUARDIAN_FIRST
 ### RES-REQ-001 multi-subject guardian receipt delta correctness (2026-10-16)
 
 The opt-in signed-in browser harness now tests *the difference* in visible subject release IDs after an exact `GUARDIAN_FIRST_ACK` receipt instead of requiring a single visible subject overall. Earlier independently acknowledged subjects must persist; the selected previously blocked release must be the **only new** release, with no duplicate, missing or wrong-child disclosures. A fresh parent GET is role/child/policy-validated. Mock-positive/negative cases authored; full installed Node, PostgreSQL, Chromium and native printing remain unexecuted. No schema, production flags, CI or security gates changed; RES-REQ-001/TEN-REQ-001/SEC-REQ-001 acceptance remains open.
+
+### Phase 8 worktree-pinned verification target hardening (2026-10-16)
+
+The existing full `verify-phase8-checkpoint` wrapper now rejects unknown or remote Docker context endpoints and remote `DOCKER_HOST` overrides before running migrations or synthetic seeding. Mock positive/negative predicates authored; installed Node/Prisma/PostgreSQL/Chromium acceptance remains pending. This preserves RES-REQ-001/TEN-REQ-001/SEC-REQ-001 safety gates without weakening npm audit or modifying Phase 1, Phase 9 or GitHub Actions.

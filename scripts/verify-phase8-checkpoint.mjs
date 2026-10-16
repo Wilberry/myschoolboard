@@ -56,6 +56,25 @@ export function assertDisposableCompose(service) {
   }
 }
 
+/**
+ * A remote Docker context can publish a fake local-looking port on another
+ * machine. Refuse that target before any database-mutating verification step.
+ */
+export function assertLocalDockerEndpoint(contextHost, configuredHost) {
+  const safeSocket = (value) =>
+    typeof value === "string" &&
+    value.startsWith("unix:///") &&
+    value.length > "unix:///".length &&
+    !value.includes(String.fromCharCode(10)) &&
+    !value.includes(String.fromCharCode(13));
+  if (!safeSocket(contextHost)) {
+    throw new Error("Refusing: Docker context is not a local Unix socket");
+  }
+  if (configuredHost && !safeSocket(configuredHost)) {
+    throw new Error("Refusing: DOCKER_HOST overrides local Docker context");
+  }
+}
+
 function execute(executable, args, extra = {}) {
   const result = spawnSync(executable, args, {
     cwd: root,
@@ -101,6 +120,14 @@ export function preflightPhase8Checkpoint(environment = process.env) {
     head,
     trackingHead,
   });
+
+  const contextHost = execute("docker", [
+    "context",
+    "inspect",
+    "--format",
+    "{{.Endpoints.docker.Host}}",
+  ]);
+  assertLocalDockerEndpoint(contextHost, environment.DOCKER_HOST);
 
   const compose = JSON.parse(
     execute("docker", [

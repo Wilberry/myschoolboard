@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   assertDisposableCompose,
+  assertLocalDockerEndpoint,
   assertPhase8Checkout,
   assertPhase8Environment,
 } from "./verify-phase8-checkpoint.mjs";
@@ -91,6 +92,41 @@ test("refuses shared targets or enabled disclosure flags", () => {
   ]) {
     assert.throws(() =>
       assertPhase8Environment({ ...safeEnvironment, ...changed }),
+    );
+  }
+});
+
+test("refuses remote or unknown Docker daemon before Phase 8 migrations", () => {
+  assert.doesNotThrow(() =>
+    assertLocalDockerEndpoint("unix:///var/run/docker.sock"),
+  );
+  assert.doesNotThrow(() =>
+    assertLocalDockerEndpoint(
+      "unix:///var/run/docker.sock",
+      "unix:///home/test/.docker/desktop/docker.sock",
+    ),
+  );
+  for (const endpoint of [
+    "",
+    "unix:///",
+    "ssh://remote",
+    "tcp://127.0.0.1:2375",
+    "tcp://remote:2376",
+    "https://docker.example",
+    "unix:///var/run/docker.sock" + String.fromCharCode(10),
+  ]) {
+    assert.throws(() => assertLocalDockerEndpoint(endpoint), /Refusing/);
+  }
+  for (const override of [
+    "ssh://remote",
+    "tcp://localhost:2375",
+    "http://remote",
+    "unix:///",
+    "unix:///var/run/docker.sock" + String.fromCharCode(13),
+  ]) {
+    assert.throws(
+      () => assertLocalDockerEndpoint("unix:///var/run/docker.sock", override),
+      /Refusing/,
     );
   }
 });
