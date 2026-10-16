@@ -118,6 +118,9 @@ test("registers a separate read-only HTTP smoke without weakening CI audit", () 
   }
   assert.match(smoke, /assertLocalVerificationTarget\(environment\)/);
   assert.match(smoke, /credentials: "omit"/);
+  assert.match(smoke, /response.status === 307/);
+  assert.match(smoke, /destination.href !== origin.href/);
+  assert.match(smoke, /AbortSignal.timeout\(60_000\)/);
   assert.match(smoke, /PHASE8_REPORT_RELEASE_ENABLED !== "false"/);
   assert.match(smoke, /PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED !== "false"/);
   assert.deepEqual(workflowCommands.at(-1), ["audit", "--audit-level=high"]);
