@@ -67,6 +67,40 @@ test("guardian-first needs same child and current release", () => {
   }
 });
 
+test("exact synthetic pupil cannot borrow another child's readiness", () => {
+  const requested = "child-b";
+  for (const mode of ["GUARDIAN_FIRST_ACK", "GUARDIAN_ONLY", "STUDENT_ONLY"]) {
+    const fixture = {
+      ...baseline,
+      policy: { id: "p", mode },
+      targetChildId: requested,
+    };
+    assert.equal(summarizeBrowserFixture(fixture).browserFixtureReady, false);
+    const parentOnly = summarizeBrowserFixture({
+      ...fixture,
+      linkedParentChildIds: ["child-a", requested],
+    });
+    assert.equal(
+      parentOnly.browserFixtureReady,
+      mode === "GUARDIAN_ONLY",
+    );
+    const studentOnly = summarizeBrowserFixture({
+      ...fixture,
+      linkedStudentChildIds: ["child-a", requested],
+    });
+    assert.equal(
+      studentOnly.browserFixtureReady,
+      mode === "STUDENT_ONLY",
+    );
+    const both = summarizeBrowserFixture({
+      ...fixture,
+      linkedParentChildIds: ["child-a", requested],
+      linkedStudentChildIds: ["child-a", requested],
+    });
+    assert.equal(both.browserFixtureReady, true);
+  }
+});
+
 test("distinguishes all school recipient policy modes", () => {
   for (const [mode, parents, students, ready] of [
     ["STUDENT_ONLY", [], ["child-a"], true],
@@ -119,9 +153,23 @@ test("queries active, school-bound unrevoked links only", async () => {
       },
     },
   };
-  const summary = await inspectBrowserFixture(database, "synthetic-school-a");
+  const summary = await inspectBrowserFixture(
+    database,
+    "synthetic-school-a",
+    "child-a",
+  );
   assert.equal(summary.browserFixtureReady, true);
-  assert.equal(queries.length, 5);
+  const wrongChild = await inspectBrowserFixture(
+    database,
+    "synthetic-school-a",
+    "child-unrelated",
+  );
+  assert.equal(wrongChild.browserFixtureReady, false);
+  await assert.rejects(
+    () => inspectBrowserFixture(database, "synthetic-school-a", "../unsafe"),
+    /Invalid synthetic fixture child ID/,
+  );
+  assert.equal(queries.length, 10);
   for (const [, query] of queries) {
     assert.equal(query.where.schoolId ?? query.where.id, "synthetic-school-a");
   }
