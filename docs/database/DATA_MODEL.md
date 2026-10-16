@@ -80,8 +80,12 @@
 
 ### Finance
 
-- FeeStructure
-- FeeObligation
+- FeeCategory — authored, immutable school label/code; Phase 9 not verified
+- FeeStructureRevision — authored, immutable tenant/period/scope/version/
+  exact money policy; **configuration only**, not a pupil debt or payment
+- FeeStructure — logical grouping of later effective structures (not a
+  separate physical table in the initial Phase 9 foundation)
+- FeeObligation — not yet implemented
 - PaymentRecord
 - PaymentEvidence
 - Receipt
