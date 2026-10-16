@@ -101,6 +101,13 @@ export async function issueInternalFeeObligation(schoolId: string, input: unknow
 export async function listOwnFeeObligations(schoolId: string) {
   checkSchoolId(schoolId);
   const userId = await currentUserId();
+  const allowed = await prisma.$queryRaw<Array<{ allowed: boolean }>>`
+    SELECT true AS "allowed"
+    FROM "School" s JOIN "Membership" m ON m."schoolId"=s."id"
+    WHERE s."id"=${schoolId} AND s."isActive"=true
+      AND m."userId"=${userId} AND m."isActive"=true
+      AND m."role"='SCHOOL_SUPER_ADMIN' LIMIT 1`;
+  if (allowed.length !== 1) throw new FeeError("NOT_FOUND");
   return prisma.$queryRaw<Array<{
     id: string; studentId: string; enrollmentId: string; classId: string;
     sessionId: string; termId: string; categoryId: string; revisionId: string;
