@@ -1,5 +1,35 @@
 # Current Status
 
+## Phase 9 — explicit immutable student fee obligation slice (AUTHORED, NOT VERIFIED; 2026-10-16)
+
+Following the isolated fee-configuration foundation on
+`feature/phase9-fees-payments-foundation`, schema adds `FeeObligation`
+and additive `20261016130000_phase9_fee_obligation_ledger` SQL.
+An authenticated School Super Admin may explicitly issue a single
+charge for one same-school ENROLLED pupil with ACTIVE exact class/session
+enrollment and matching latest context-version of fee policy; SQL
+revalidates actor/school/section/period, copies exact charge and currency
+from the pinned `FeeStructureRevision`, rejects a foreign/revoked/
+closed/stale context, imposes one pupil/category/term obligation,
+idempotency request key and UPDATE/DELETE/TRUNCATE protections.
+The server POST returns decimal-string money and same-key/same-payload
+replay metadata; mismatched replay is a conflict. School-owner GET
+is bounded, private/no-store and SQL rechecks active school/member.
+**All financial mutations are default OFF** behind
+`PHASE9_FEE_WRITE_ENABLED=true`; tests explicitly stub the flag in a
+disposable fixture. No payer portal, fake payment, auto-issue, balance,
+credit, payment-verification decision, receipt or provider integration.
+
+The Phase 9 Node guard's 3 structural predicates **PASSED when evaluated
+in isolated V8 against GitHub-fetched committed source**. This is NOT
+an executed Node test. Prisma/SQL/real-session Vitest/Next/browser/audit
+and full CI remain **NOT EXECUTED**; completion BLOCKED. The original
+Phase 1 and active Phase 8 local worktrees were untouched; Phase 8
+is not accepted/deployed. Next is payment evidence + separately
+reviewed verification and financial ledger under unchanged security
+gates. See `docs/quality/PHASE9_FEE_OBLIGATION_CHECKPOINT_20261016.md`.
+
+
 ## Phase 9 — Fee configuration foundation (AUTHORED, NOT VERIFIED; 2026-10-16)
 
 Isolated GitHub branch `feature/phase9-fees-payments-foundation` was created
