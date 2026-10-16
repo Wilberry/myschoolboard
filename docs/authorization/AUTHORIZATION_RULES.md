@@ -1,5 +1,22 @@
 # Authorization Rules
 
+## Phase 9 manual allocation preview reversal permissions (AUTHORED, NOT VERIFIED)
+
+Only an authenticated current same-school School Administrator may
+request one full manual-allocation preview reversal. They cannot
+approve it, submit a replacement amount or perform an actual refund.
+Only an active distinct same-school School Super Admin may append one
+terminal APPROVED or REJECTED decision, with actor, allocation, school
+and copied amount verified again by PostgreSQL under the School row
+lock. Original evidence and human verification remain unchanged.
+School Administrators see only their own requests; School Super
+Admins may see the bounded school queue. No other role has this
+permission or official fee-status access. All writes require the
+existing default-OFF master flag and the new default-OFF reversal
+flag. Runtime authorization, concurrency and privacy tests remain
+NOT EXECUTED. D-P9-005 / ADR-P9-005.
+
+
 ## Phase 9 owner-only manual reviewed-claim allocation (AUTHORED / NOT VERIFIED)
 
 Only a signed-in current active same-school `SCHOOL_SUPER_ADMIN` can
