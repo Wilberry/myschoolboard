@@ -23,7 +23,7 @@ const env = {
   PHASE8_BROWSER_SCHOOL_ID: "synthetic-school-a",
 };
 
-test("refuses shared targets, missing synthetic school or enabled disclosure", () => {
+test("rejects unsafe synthetic fixture database targets", () => {
   assert.equal(assertBrowserFixtureTarget(env), "synthetic-school-a");
   for (const patch of [
     { NODE_ENV: "production" },
@@ -32,8 +32,10 @@ test("refuses shared targets, missing synthetic school or enabled disclosure", (
     { PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED: "true" },
     { PHASE8_BROWSER_SCHOOL_ID: "../foreign" },
     { PHASE8_BROWSER_SCHOOL_ID: "" },
-    { TEST_DATABASE_URL: env.TEST_DATABASE_URL.replace("public", "other"),
-      DATABASE_URL: env.DATABASE_URL.replace("public", "other") },
+    {
+      TEST_DATABASE_URL: env.TEST_DATABASE_URL.replace("public", "other"),
+      DATABASE_URL: env.DATABASE_URL.replace("public", "other"),
+    },
   ]) {
     assert.throws(() => assertBrowserFixtureTarget({ ...env, ...patch }));
   }
@@ -47,21 +49,25 @@ const baseline = {
   linkedStudentChildIds: ["child-a"],
 };
 
-test("requires same child plus current release for guardian-first acceptance", () => {
+test("guardian-first needs same child and current release", () => {
   assert.equal(summarizeBrowserFixture(baseline).browserFixtureReady, true);
   for (const patch of [
     { schoolActive: false },
     { policy: { id: "p2", mode: "GUARDIAN_FIRST_ACK" } },
     { release: null },
     { release: { visibilityPolicyId: "p", studentCount: 0 } },
-    { linkedParentChildIds: ["child-a"] , linkedStudentChildIds: ["child-b"] },
+    {
+      linkedParentChildIds: ["child-a"],
+      linkedStudentChildIds: ["child-b"],
+    },
     { linkedParentChildIds: [] },
   ]) {
-    assert.equal(summarizeBrowserFixture({ ...baseline, ...patch }).browserFixtureReady, false);
+    const next = summarizeBrowserFixture({ ...baseline, ...patch });
+    assert.equal(next.browserFixtureReady, false);
   }
 });
 
-test("distinguishes student-only, guardian-only and school-only fixtures", () => {
+test("distinguishes all school recipient policy modes", () => {
   for (const [mode, parents, students, ready] of [
     ["STUDENT_ONLY", [], ["child-a"], true],
     ["STUDENT_ONLY", ["child-a"], [], false],
@@ -69,49 +75,64 @@ test("distinguishes student-only, guardian-only and school-only fixtures", () =>
     ["GUARDIAN_ONLY", [], ["child-a"], false],
     ["SCHOOL_ONLY", ["child-a"], ["child-a"], false],
   ]) {
-    assert.equal(
-      summarizeBrowserFixture({
-        ...baseline,
-        policy: { id: "p", mode },
-        linkedParentChildIds: parents,
-        linkedStudentChildIds: students,
-      }).browserFixtureReady,
-      ready,
-    );
+    const next = summarizeBrowserFixture({
+      ...baseline,
+      policy: { id: "p", mode },
+      linkedParentChildIds: parents,
+      linkedStudentChildIds: students,
+    });
+    assert.equal(next.browserFixtureReady, ready);
   }
 });
 
-test("queries only current, active, unrevoked relationship counts", async () => {
+test("queries active, school-bound unrevoked links only", async () => {
   const queries = [];
   const database = {
-    school: { findUnique: async (args) => {
-      queries.push(["school", args]); return { isActive: true };
-    } },
-    reportVisibilityPolicyRevision: { findFirst: async (args) => {
-      queries.push(["policy", args]); return baseline.policy;
-    } },
-    guardianStudentLink: { findMany: async (args) => {
-      queries.push(["guardian", args]); return [{ studentId: "child-a" }];
-    } },
-    studentAccountLink: { findMany: async (args) => {
-      queries.push(["student", args]); return [{ studentId: "child-a" }];
-    } },
-    reportRecipientRelease: { findFirst: async (args) => {
-      queries.push(["release", args]); return baseline.release;
-    } },
+    school: {
+      findUnique: async (args) => {
+        queries.push(["school", args]);
+        return { isActive: true };
+      },
+    },
+    reportVisibilityPolicyRevision: {
+      findFirst: async (args) => {
+        queries.push(["policy", args]);
+        return baseline.policy;
+      },
+    },
+    guardianStudentLink: {
+      findMany: async (args) => {
+        queries.push(["guardian", args]);
+        return [{ studentId: "child-a" }];
+      },
+    },
+    studentAccountLink: {
+      findMany: async (args) => {
+        queries.push(["student", args]);
+        return [{ studentId: "child-a" }];
+      },
+    },
+    reportRecipientRelease: {
+      findFirst: async (args) => {
+        queries.push(["release", args]);
+        return baseline.release;
+      },
+    },
   };
-  assert.equal(
-    (await inspectBrowserFixture(database, "synthetic-school-a")).browserFixtureReady,
-    true,
-  );
+  const summary = await inspectBrowserFixture(database, "synthetic-school-a");
+  assert.equal(summary.browserFixtureReady, true);
   assert.equal(queries.length, 5);
   for (const [, query] of queries) {
     assert.equal(query.where.schoolId ?? query.where.id, "synthetic-school-a");
   }
-  assert.deepEqual(queries.find(([name]) => name === "guardian")[1].where,
-    { schoolId: "synthetic-school-a", revocation: null,
-      guardian: { isActive: true, role: "PARENT" } });
-  assert.deepEqual(queries.find(([name]) => name === "student")[1].where,
-    { schoolId: "synthetic-school-a", revocation: null,
-      studentMembership: { isActive: true, role: "STUDENT" } });
+  assert.deepEqual(queries.find(([name]) => name === "guardian")[1].where, {
+    schoolId: "synthetic-school-a",
+    revocation: null,
+    guardian: { isActive: true, role: "PARENT" },
+  });
+  assert.deepEqual(queries.find(([name]) => name === "student")[1].where, {
+    schoolId: "synthetic-school-a",
+    revocation: null,
+    studentMembership: { isActive: true, role: "STUDENT" },
+  });
 });
