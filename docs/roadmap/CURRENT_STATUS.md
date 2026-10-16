@@ -1,5 +1,43 @@
 # Current Status
 
+## Phase 9 — explicit applied fee waivers with anti-overcredit (AUTHORED, NOT VERIFIED; 2026-10-16)
+
+The isolated `feature/phase9-fees-payments-foundation` branch
+now contains an immutable `FeeWaiverApplication`, additive
+`20261017000000_phase9_effective_fee_waiver_application`
+migration, default-OFF private same-school Super Admin GET/POST,
+and SQL cross-ledger guards protecting future bank-reference
+VERIFIED decisions and manual allocations after a waiver.
+Only a distinct independently APPROVED `kind=WAIVER`
+school-obligation proposal may be explicitly applied once.
+PostgreSQL source-copies exact minor-unit amount/currency and
+serializes the sum of applied waivers and ALL human VERIFIED
+claims against immutable original debt, including after
+manual allocation reversals.
+
+The School Super Admin-only internal balance preview now keeps
+original charge, applied waiver, adjusted charge, independently
+reviewed claims, gross/approved-reversed/net manual allocations
+and an exact arithmetic remainder as separate decimal strings.
+**No public paid status, provider-certified money settlement,
+receipt, bank refund, guardian/student financial reader,
+CORRECTION_PROPOSAL application, or real payment is implemented.**
+`PHASE9_EFFECTIVE_WAIVER_ENABLED=false` adds another
+default-OFF write switch beside the fee master.
+
+New synthetic real-session overcredit, same-actor/replay,
+foreign school, wrong policy/role, fee immutability, history
+mutation and post-waiver future verification tests have been
+authored. Structural source guards were evaluated but Prisma,
+real PostgreSQL migration/races, Vitest, TypeScript, build,
+browser/privacy and strict dependency audit remain NOT EXECUTED.
+No main merge, other worktree alteration, GitHub Actions,
+shared database activity or deployment. FEE-REQ-001,
+Phase 8 and Phase 9 acceptance remain NOT VERIFIED/BLOCKED.
+See `docs/quality/PHASE9_APPLIED_WAIVER_CHECKPOINT_20261016.md`
+and D-P9-007 / ADR-P9-007.
+
+
 ## Phase 9 — advisory waiver/correction proposals (AUTHORED, NOT VERIFIED; 2026-10-16)
 
 Isolated branch `feature/phase9-fees-payments-foundation` now adds
