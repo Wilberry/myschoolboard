@@ -97,8 +97,16 @@
   school-owner VERIFIED/REJECTED attestation, bank confirmation bit and
   reference digest check, unique claim decision and school-locked
   over-credit prevention; not automatically a settlement or receipt
+- ManualPaymentAllocation — **authored/unverified** one-time same-school
+  allocation from an independently VERIFIED reference claim and its exact
+  obligation. PostgreSQL derives minor-unit money, locks School, rejects
+  repeated evidence/decision, over-allocated totals and fabricated actors;
+  this does **not** establish actual funds settlement or receipt.
+- ManualAllocationPreview — derived owner-only numeric-string view
+  (no physical table) of immutable charge, independently reviewed
+  claims, manual allocations and internal preview remainder; never
+  a publicly published fee balance
 - PaymentRecord — later actual paid ledger, **not implemented**
-- PaymentEvidence
 - Receipt
 - AdjustmentRecord
 - ReconciliationRecord
