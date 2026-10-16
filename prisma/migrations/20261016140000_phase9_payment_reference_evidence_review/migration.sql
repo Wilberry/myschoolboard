@@ -67,7 +67,9 @@ CREATE TABLE "PaymentVerificationDecision" (
     AND char_length("reason") BETWEEN 5 AND 500
     AND (
       ("action"='VERIFIED' AND "confirmedBankFunds"=true
-        AND "confirmedReferenceDigest" ~ '^[a-f0-9]{64}
+        AND "confirmedReferenceDigest" ~ '^[a-f0-9]{64}$')
+      OR ("action"='REJECTED' AND "confirmedBankFunds"=false
+        AND "confirmedReferenceDigest" IS NULL)
     )
   )
 );
