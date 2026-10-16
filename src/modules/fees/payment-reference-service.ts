@@ -53,7 +53,7 @@ function digestReference(schoolId: string, value: string) {
   return createHash("sha256").update(schoolId + "\0" + value).digest("hex");
 }
 
-async function lockCurrentSubmitter(tx: Prisma.TransactionClient,
+export async function lockCurrentSubmitter(tx: Prisma.TransactionClient,
   schoolId: string, userId: string) {
   await tx.$queryRaw`SELECT "id" FROM "School"
     WHERE "id"=${schoolId} AND "isActive"=true FOR UPDATE`;
