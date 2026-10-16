@@ -1,5 +1,29 @@
 # Milestone Checklist
 
+## Phase 9 — advisory waiver / fee correction governance (2026-10-16)
+
+- [x] Authored immutable tenant-bound FeeAdjustmentProposal and
+  FeeAdjustmentDecision with reason, actor, time, original fee and
+  independent review (WAIVER/CORRECTION_PROPOSAL; APPROVED/REJECTED).
+- [x] Authored school-locked SQL validators for real SCHOOL_ADMIN
+  proposer, independent SCHOOL_SUPER_ADMIN reviewer, fee amount
+  <= unchanged original, no history mutation, unique request/review.
+- [x] Authored strict no-store own-admin proposal queue, owner queue
+  and independent decision route. No client actor/money spoofing,
+  actual adjustment application, paid status or receipt route.
+- [x] Authored synthetic real-session idempotency, denial, direct
+  SQL tamper and unchanged-fee/preview tests; source guard registered.
+- [x] Added separately default-OFF adjustment-proposal flag.
+- [ ] Execute cumulative disposable PostgreSQL migrations,
+  Prisma schema validation, actual integration/concurrency tests,
+  Node source guards, TS/lint/format/build, browser/privacy review
+  and strict dependency-security audit.
+- [ ] Design and verify actual accounting-effective adjustments,
+  refund and settlement events, reconciliation, receipts and
+  verified student/guardian access.
+- [ ] FEE-REQ-001 and Phase 9 are NOT ACCEPTED/DEPLOYED.
+
+
 ## Phase 9 — manual allocation correction and reversal review (2026-10-16)
 
 - [x] Authored immutable `ManualAllocationReversalRequest` tied to
