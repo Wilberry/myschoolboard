@@ -61,7 +61,7 @@ function feeFailure(error: unknown): never {
   if (error && typeof error === "object" && "code" in error) {
     if (["P2002", "P2034"].includes(String(error.code)))
       throw new FeeError("CONFLICT");
-    if (error.code === "P2003" || error.code === "P2010")
+    if (error.code === "P2003" || error.code === "P2004" || error.code === "P2010")
       throw new FeeError("NOT_FOUND");
   }
   throw new FeeError("INTERNAL");
