@@ -1,3 +1,7 @@
+## Phase 8 recipient fixture exact-release hardening — 2026-10-16 (remote source checkpoint)
+
+On `verify/phase8-local`, the synthetic browser fixture-readiness check now verifies that the requested child is actually present in a current-policy, non-superseded frozen subject release and has active enrollment. The SQL exposes an EXISTS boolean only and fails closed if release proof is absent; new mock-negative regressions are authored. This is remote source development, **not** a successful project Node/Vitest/Postgres/Chromium execution. No local filesystem, Docker database, installed project dependencies or npm registry is accessible from this isolated session; the last fully verified functional checkpoint remains `06bfb3a` and the strict high npm audit is still unresolved. Run mandatory full verification and native Chromium on a clean disposable Phase 8 worktree; do not accept, deploy or enable production result flags. The Prisma compatibility experiment and Phase 9 were not modified.
+
 # Current Status
 
 ## Phase 8 current acceptance checkpoint — 2026-10-14 (verified worktree 60eaa44)

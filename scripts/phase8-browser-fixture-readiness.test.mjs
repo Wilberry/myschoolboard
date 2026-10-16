@@ -47,6 +47,7 @@ const baseline = {
   release: { visibilityPolicyId: "p", studentCount: 1 },
   linkedParentChildIds: ["child-a"],
   linkedStudentChildIds: ["child-a"],
+  targetChildInCurrentRelease: true,
 };
 
 test("guardian-first needs same child and current release", () => {
@@ -101,6 +102,24 @@ test("exact synthetic pupil cannot borrow another child's readiness", () => {
   }
 });
 
+test("exact child readiness rejects unrelated or superseded frozen releases", () => {
+  const ready = summarizeBrowserFixture({
+    ...baseline,
+    targetChildId: "child-a",
+  });
+  assert.equal(ready.browserFixtureReady, true);
+  assert.equal(ready.targetChildInCurrentRelease, true);
+  for (const evidence of [false, null, undefined]) {
+    const denied = summarizeBrowserFixture({
+      ...baseline,
+      targetChildId: "child-a",
+      targetChildInCurrentRelease: evidence,
+    });
+    assert.equal(denied.targetChildInCurrentRelease, false);
+    assert.equal(denied.browserFixtureReady, false);
+  }
+});
+
 test("distinguishes all school recipient policy modes", () => {
   for (const [mode, parents, students, ready] of [
     ["STUDENT_ONLY", [], ["child-a"], true],
@@ -122,6 +141,10 @@ test("distinguishes all school recipient policy modes", () => {
 test("queries active, school-bound unrevoked links only", async () => {
   const queries = [];
   const database = {
+    $queryRaw: async (strings, ...bindings) => {
+      queries.push(["release-child", { sql: strings.join("?"), bindings }]);
+      return [{ matches: true }];
+    },
     school: {
       findUnique: async (args) => {
         queries.push(["school", args]);
@@ -169,9 +192,21 @@ test("queries active, school-bound unrevoked links only", async () => {
     () => inspectBrowserFixture(database, "synthetic-school-a", "../unsafe"),
     /Invalid synthetic fixture child ID/,
   );
-  assert.equal(queries.length, 10);
-  for (const [, query] of queries) {
-    assert.equal(query.where.schoolId ?? query.where.id, "synthetic-school-a");
+  assert.equal(queries.length, 12);
+  for (const [name, query] of queries) {
+    if (name !== "release-child") {
+      assert.equal(query.where.schoolId ?? query.where.id, "synthetic-school-a");
+    }
+  }
+  for (const [, query] of queries.filter(([name]) => name === "release-child")) {
+    assert.match(query.sql, /jsonb_array_elements/);
+    assert.match(query.sql, /NOT EXISTS/);
+    assert.match(query.sql, /"visibilityPolicyId"/);
+    assert.match(query.sql, /"status" = 'ACTIVE'/);
+    assert.ok(query.bindings.includes("child-a") ||
+      query.bindings.includes("child-unrelated"));
+    assert.ok(query.bindings.includes("synthetic-school-a"));
+    assert.ok(query.bindings.includes("p"));
   }
   assert.deepEqual(queries.find(([name]) => name === "guardian")[1].where, {
     schoolId: "synthetic-school-a",
@@ -183,4 +218,15 @@ test("queries active, school-bound unrevoked links only", async () => {
     revocation: null,
     studentMembership: { isActive: true, role: "STUDENT" },
   });
+  const missingReleasedChild = {
+    ...database,
+    $queryRaw: async () => [{ matches: false }],
+  };
+  const denied = await inspectBrowserFixture(
+    missingReleasedChild,
+    "synthetic-school-a",
+    "child-a",
+  );
+  assert.equal(denied.targetChildInCurrentRelease, false);
+  assert.equal(denied.browserFixtureReady, false);
 });
