@@ -100,7 +100,7 @@ export async function submitInternalPaymentReference(schoolId: string, input: un
           return { id: replay.id, obligationId: replay.obligationId,
             claimedAmountMinor: replay.claimedAmountMinor.toString(),
             currency: replay.currency, reason: replay.reason,
-            submittedAt: replay.submittedAt, status: "SUBMITTED_PENDING_VERIFICATION" as const,
+            submittedAt: replay.submittedAt, status: "SUBMITTED_EVIDENCE_ONLY" as const,
             replay: true };
         }
         const charge = await tx.feeObligation.findFirst({
@@ -120,7 +120,7 @@ export async function submitInternalPaymentReference(schoolId: string, input: un
         });
         return { ...created,
           claimedAmountMinor: created.claimedAmountMinor.toString(),
-          status: "SUBMITTED_PENDING_VERIFICATION" as const, replay: false };
+          status: "SUBMITTED_EVIDENCE_ONLY" as const, replay: false };
       }, { isolationLevel: "Serializable" });
     } catch (error) {
       if (error && typeof error === "object" && "code" in error &&
@@ -159,7 +159,8 @@ export async function decideInternalPaymentReference(schoolId: string, input: un
       return tx.paymentVerificationDecision.create({
         data: {
           id: randomUUID(), schoolId, evidenceId: choice.evidenceId,
-          action: choice.action, confirmedReferenceDigest: digest,
+          action: choice.action, confirmedBankFunds: choice.action === "VERIFIED",
+          confirmedReferenceDigest: digest,
           reason: choice.reason, reviewerMembershipId: memberId,
           reviewerUserId: userId,
         },
