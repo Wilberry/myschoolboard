@@ -1,5 +1,36 @@
 # Milestone Checklist
 
+## Phase 9 — manual allocation correction and reversal review (2026-10-16)
+
+- [x] Authored immutable `ManualAllocationReversalRequest` tied to
+  exactly one original manual allocation; current active School Admin
+  alone may request whole-amount correction with UUID request key
+  and reason; PostgreSQL copies original amount/currency/time.
+- [x] Authored separate immutable `ManualAllocationReversalDecision`
+  (APPROVED/REJECTED), requiring an independently verified same-school
+  School Super Admin, unique terminal decision, school-locked SQL
+  repeat authorization and no history mutation.
+- [x] Authored scoped private no-store request/list and independent
+  decision POST APIs, strict payloads and idempotent exact replay.
+  Default-OFF master and new manual reversal write switches retained.
+- [x] Updated owner-only internal preview to display gross allocation,
+  approved reversals, effective net allocation, non-reusable claims
+  and exact decimal remaining without PAID/refund/receipt claims.
+- [x] Authored synthetic role/tenant/duplicate/replay/direct database
+  forgery tests, approved/rejected state scenarios, nonmutating
+  history and preview arithmetic. New source guard added to full
+  existing `npm test` / local guard commands.
+- [ ] **NOT EXECUTED:** Prisma/schema and migration verification,
+  actual disposable PostgreSQL current-role/tenant/lock/concurrency
+  tests, Node/Vitest, lint/format/typecheck/build, privacy/browser
+  tests and strict dependency audit.
+- [ ] Plan separately audited actual settlement, refund/charge
+  adjustments/reversals, receipts, provider callbacks and
+  child-relationship-scoped finance views. This slice is
+  INTERNAL preview-only, not the final financial ledger.
+- [ ] Phase 9 FEE-REQ-001 acceptance remains BLOCKED.
+
+
 ## Phase 9 — append-only manually reviewed payment allocations (2026-10-16)
 
 - [x] Authored school-locked `ManualPaymentAllocation` with exact
