@@ -11,6 +11,10 @@ import { GET as REV_GET, POST as REV_POST } from
   "@/app/api/schools/[schoolId]/fee-structures/route";
 import { GET as OBL_GET, POST as OBL_POST } from
   "@/app/api/schools/[schoolId]/fee-obligations/route";
+import { GET as EVID_GET, POST as EVID_POST } from
+  "@/app/api/schools/[schoolId]/payment-evidence/route";
+import { POST as REVIEW_POST } from
+  "@/app/api/schools/[schoolId]/payment-verifications/route";
 import { prisma } from "@/src/lib/db";
 import { auth } from "@/src/lib/auth";
 import { env } from "@/src/lib/env";
@@ -32,6 +36,10 @@ const pupilId = `fee-student-${suffix}`;
 const enrollmentId = `fee-enrollment-${suffix}`;
 let categoryId: string;
 let latestSchoolRevisionId: string;
+let obligationId: string;
+let evidenceId: string;
+const bankReferenceA = `SYNTH-BANK-A-${suffix.toUpperCase()}`;
+const bankReferenceB = `SYNTH-BANK-B-${suffix.toUpperCase()}`;
 
 function request(actor: string, schoolId: string, endpoint: string,
   method: "GET" | "POST", payload?: unknown) {
@@ -66,6 +74,18 @@ async function obligationList(actor: string, schoolId = schoolA) {
   return OBL_GET(request(actor, schoolId, "fee-obligations", "GET"),
     { params: Promise.resolve({ schoolId }) });
 }
+async function submitEvidence(actor: string, payload: unknown, schoolId = schoolA) {
+  return EVID_POST(request(actor, schoolId, "payment-evidence", "POST", payload),
+    { params: Promise.resolve({ schoolId }) });
+}
+async function evidenceList(actor: string, schoolId = schoolA) {
+  return EVID_GET(request(actor, schoolId, "payment-evidence", "GET"),
+    { params: Promise.resolve({ schoolId }) });
+}
+async function reviewEvidence(actor: string, payload: unknown, schoolId = schoolA) {
+  return REVIEW_POST(request(actor, schoolId, "payment-verifications", "POST", payload),
+    { params: Promise.resolve({ schoolId }) });
+}
 const revision = (scope: "SCHOOL" | "SECTION" | "CLASS", scopeId: string) => ({
   categoryId, sessionId, termId, scope, scopeId, amountMinor: "123456",
   currency: "NGN", reason: "Synthetic school fee configuration",
@@ -74,6 +94,8 @@ const revision = (scope: "SCHOOL" | "SECTION" | "CLASS", scopeId: string) => ({
 describe("Phase 9 school-only immutable fee configuration", () => {
   beforeAll(async () => {
     vi.stubEnv("PHASE9_FEE_WRITE_ENABLED", "true");
+    vi.stubEnv("PHASE9_PAYMENT_EVIDENCE_ENABLED", "true");
+    vi.stubEnv("PHASE9_PAYMENT_REVIEW_ENABLED", "true");
     for (const name of ["owner", "admin", "teacher", "foreign"]) {
       const email = `fee-${name}-${suffix}@example.test`;
       const registered = await auth.api.signUpEmail({
@@ -251,6 +273,7 @@ describe("Phase 9 school-only immutable fee configuration", () => {
     expect(item.studentId).toBe(pupilId);
     expect(item.enrollmentId).toBe(enrollmentId);
     expect(item.status).toBe("ISSUED_UNPAID");
+    obligationId = item.id;
     expect(item.replay).toBe(false);
     expect(item).not.toHaveProperty("issuerUserId");
     const again = await issueObligation("owner", payload);
@@ -281,6 +304,123 @@ describe("Phase 9 school-only immutable fee configuration", () => {
     } })).rejects.toThrow();
   });
 
+  it("keeps submitted bank reference metadata UNVERIFIED and replay-safe", async () => {
+    const claim = {
+      obligationId, requestKey: randomUUID(), transferReference: bankReferenceA,
+      claimedAmountMinor: "300000", reason: "Synthetic transfer not yet verified",
+    };
+    for (const [actor, status] of [["", 401], ["owner", 404],
+      ["teacher", 404], ["foreign", 404]] as const) {
+      expect((await submitEvidence(actor, claim)).status).toBe(status);
+    }
+    expect((await evidenceList("teacher")).status).toBe(404);
+    expect((await evidenceList("foreign")).status).toBe(404);
+    expect((await submitEvidence("admin", {
+      ...claim, paymentStatus: "VERIFIED",
+    })).status).toBe(400);
+    expect((await submitEvidence("admin", {
+      ...claim, claimedAmountMinor: "456790",
+    })).status).toBe(400);
+    expect((await submitEvidence("admin", {
+      ...claim, transferReference: "bob@example.test",
+    })).status).toBe(400);
+    const created = await submitEvidence("admin", claim);
+    expect(created.status).toBe(201);
+    expect(created.headers.get("cache-control")).toBe("private, no-store");
+    const evidence = (await created.json()).evidence;
+    evidenceId = evidence.id;
+    expect(evidence.status).toBe("SUBMITTED_PENDING_VERIFICATION");
+    expect(evidence.claimedAmountMinor).toBe("300000");
+    expect(JSON.stringify(evidence)).not.toContain(bankReferenceA);
+    expect(JSON.stringify(evidence)).not.toContain("referenceDigest");
+    expect(JSON.stringify(evidence)).not.toContain("VERIFIED");
+    expect((await submitEvidence("admin", claim)).status).toBe(200);
+    expect((await submitEvidence("admin", {
+      ...claim, claimedAmountMinor: "299999",
+    })).status).toBe(409);
+    expect((await submitEvidence("admin", {
+      ...claim, requestKey: randomUUID(),
+    })).status).toBe(409);
+    expect((await evidenceList("admin")).status).toBe(200);
+    expect((await evidenceList("owner")).status).toBe(200);
+    const ownerList = await evidenceList("owner");
+    const row = (await ownerList.json()).evidence[0];
+    expect(row.reviewAction).toBeNull();
+    expect(JSON.stringify(row)).not.toContain(bankReferenceA);
+    expect(JSON.stringify(row)).not.toContain("referenceDigest");
+    await expect(prisma.paymentEvidence.update({
+      where: { id: evidenceId }, data: { claimedAmountMinor: BigInt(1) },
+    })).rejects.toThrow();
+    await expect(prisma.paymentEvidence.delete({
+      where: { id: evidenceId },
+    })).rejects.toThrow();
+    await expect(prisma.paymentEvidence.create({ data: {
+      id: randomUUID(), schoolId: schoolA, obligationId,
+      requestKey: randomUUID(), referenceDigest: "a".repeat(64),
+      claimedAmountMinor: BigInt(100), currency: "NGN",
+      reason: "Forged teacher claim cannot submit",
+      submitterMembershipId: members.teacher, submitterUserId: actors.teacher,
+    } })).rejects.toThrow();
+  });
+
+  it("requires independent explicit school-owner bank reconciliation decision", async () => {
+    for (const [actor, status] of [["", 401], ["admin", 404],
+      ["teacher", 404], ["foreign", 404]] as const) {
+      expect((await reviewEvidence(actor, {
+        evidenceId, action: "REJECTED", reason: "Synthetic bank check rejected",
+      })).status).toBe(status);
+    }
+    expect((await reviewEvidence("owner", {
+      evidenceId, action: "VERIFIED", transferReference: bankReferenceA,
+      reason: "Synthetic manual bank reconciliation",
+    })).status).toBe(400);
+    expect((await reviewEvidence("owner", {
+      evidenceId, action: "VERIFIED", transferReference: bankReferenceB,
+      fundsConfirmed: true, reason: "Synthetic wrong bank transaction",
+    })).status).toBe(404);
+    const ok = await reviewEvidence("owner", {
+      evidenceId, action: "VERIFIED", transferReference: bankReferenceA,
+      fundsConfirmed: true, reason: "Synthetic independently matched bank statement",
+    });
+    expect(ok.status).toBe(201);
+    const decision = (await ok.json()).decision;
+    expect(decision.action).toBe("VERIFIED");
+    expect(decision.status).toBe("INDEPENDENT_MANUAL_REVIEW_ONLY");
+    expect(decision).not.toHaveProperty("confirmedReferenceDigest");
+    expect((await reviewEvidence("owner", {
+      evidenceId, action: "REJECTED", reason: "Second terminal decision forbidden",
+    })).status).toBe(404);
+    await expect(prisma.paymentVerificationDecision.update({
+      where: { id: decision.id }, data: { action: "REJECTED" },
+    })).rejects.toThrow();
+    await expect(prisma.paymentVerificationDecision.delete({
+      where: { id: decision.id },
+    })).rejects.toThrow();
+    const listed = await evidenceList("admin");
+    expect((await listed.json()).evidence[0].reviewAction).toBe("VERIFIED");
+
+    const second = await submitEvidence("admin", {
+      obligationId, requestKey: randomUUID(), transferReference: bankReferenceB,
+      claimedAmountMinor: "300000", reason: "Another unverified synthetic claim",
+    });
+    expect(second.status).toBe(201);
+    const secondId = (await second.json()).evidence.id;
+    expect((await reviewEvidence("owner", {
+      evidenceId: secondId, action: "VERIFIED", transferReference: bankReferenceB,
+      fundsConfirmed: true, reason: "Synthetic claim exceeding verified amount",
+    })).status).toBe(404);
+    expect((await reviewEvidence("owner", {
+      evidenceId: secondId, action: "REJECTED",
+      reason: "Synthetic remaining amount not reconciled",
+    })).status).toBe(201);
+    await expect(prisma.paymentVerificationDecision.create({ data: {
+      id: randomUUID(), schoolId: schoolA, evidenceId,
+      action: "VERIFIED", confirmedReferenceDigest: "f".repeat(64),
+      reason: "Direct SQL verification forgery",
+      reviewerMembershipId: members.admin, reviewerUserId: actors.admin,
+    } })).rejects.toThrow();
+  });
+
   it("keeps finance writes default-off unless test environment explicitly enables them", async () => {
     vi.stubEnv("PHASE9_FEE_WRITE_ENABLED", "false");
     try {
@@ -290,6 +430,13 @@ describe("Phase 9 school-only immutable fee configuration", () => {
       expect((await issueObligation("owner", {
         enrollmentId, revisionId: latestSchoolRevisionId,
         requestKey: randomUUID(), reason: "Disabled issuance attempt",
+      })).status).toBe(404);
+      expect((await submitEvidence("admin", {
+        obligationId, requestKey: randomUUID(), transferReference: bankReferenceA,
+        claimedAmountMinor: "100", reason: "Disabled reference claim",
+      })).status).toBe(404);
+      expect((await reviewEvidence("owner", {
+        evidenceId, action: "REJECTED", reason: "Disabled verification",
       })).status).toBe(404);
     } finally {
       vi.stubEnv("PHASE9_FEE_WRITE_ENABLED", "true");
