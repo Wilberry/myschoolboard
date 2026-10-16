@@ -316,3 +316,44 @@ test("guardian acknowledgment must unlock the exact clicked release, not another
     );
   }
 });
+
+test("guardian receipt preserves earlier subjects and exposes exactly one new release", () => {
+  const parentBefore = [
+    { releaseId: "subject-a", guardianHasAcknowledged: false },
+    { releaseId: "subject-b", guardianHasAcknowledged: true },
+  ];
+  const parentAfter = [
+    { releaseId: "subject-a", guardianHasAcknowledged: true },
+    { releaseId: "subject-b", guardianHasAcknowledged: true },
+  ];
+  const existing = [{ releaseId: "subject-b" }];
+  const current = [{ releaseId: "subject-b" }, { releaseId: "subject-a" }];
+  assert.doesNotThrow(() =>
+    assertExactGuardianReceipt(
+      parentBefore,
+      parentAfter,
+      existing,
+      current,
+      "subject-a",
+    ),
+  );
+  for (const changed of [
+    [{ releaseId: "subject-b" }],
+    [{ releaseId: "subject-b" }, { releaseId: "subject-c" }],
+    [{ releaseId: "subject-a" }],
+    current.concat({ releaseId: "subject-c" }),
+    current.concat({ releaseId: "subject-a" }),
+    [{ releaseId: "subject-a" }, { releaseId: "subject-a" }],
+    [{ releaseId: "subject-b" }, { releaseId: "" }],
+  ]) {
+    assert.throws(() =>
+      assertExactGuardianReceipt(
+        parentBefore,
+        parentAfter,
+        existing,
+        changed,
+        "subject-a",
+      ),
+    );
+  }
+});

@@ -209,7 +209,6 @@ export function assertExactGuardianReceipt(
   assert.ok(typeof releaseId === "string" && releaseId.length > 0);
   assert.ok(Array.isArray(parentBefore) && Array.isArray(parentAfter));
   assert.ok(Array.isArray(studentBefore) && Array.isArray(studentAfter));
-  assert.equal(studentBefore.length, 0, "Student saw grades before receipt");
   assert.ok(
     parentBefore.some(
       (row) =>
@@ -226,16 +225,42 @@ export function assertExactGuardianReceipt(
     ),
     "Fresh guardian GET did not confirm the exact receipt",
   );
-  assert.equal(
-    studentAfter.length,
-    1,
-    "One new receipt should authorize exactly one subject for this child",
+  // Multiple subjects may already have separate acknowledged releases.
+  // Require the exact newly acknowledged release to be the sole ADDITION;
+  // never confuse it with an earlier authorized subject or permit duplicates.
+  const uniqueReleaseIds = (rows) => {
+    const ids = new Set();
+    for (const row of rows) {
+      assert.ok(
+        typeof row?.releaseId === "string" && row.releaseId.length > 0,
+        "Recipient report is missing a valid release ID",
+      );
+      assert.ok(!ids.has(row.releaseId), "Duplicate recipient release");
+      ids.add(row.releaseId);
+    }
+    return ids;
+  };
+  const previouslyVisible = uniqueReleaseIds(studentBefore);
+  const currentlyVisible = uniqueReleaseIds(studentAfter);
+  assert.ok(
+    !previouslyVisible.has(releaseId),
+    "Selected subject was visible before its acknowledgment",
   );
   assert.equal(
-    studentAfter[0].releaseId,
-    releaseId,
-    "Student received a different subject than the acknowledged release",
+    currentlyVisible.size,
+    previouslyVisible.size + 1,
+    "Acknowledgment must unlock exactly one additional subject",
   );
+  assert.ok(
+    currentlyVisible.has(releaseId),
+    "Student did not receive the exact acknowledged release",
+  );
+  for (const existingReleaseId of previouslyVisible) {
+    assert.ok(
+      currentlyVisible.has(existingReleaseId),
+      "A previously authorized subject changed during receipt acceptance",
+    );
+  }
 }
 
 function assertPrivateHeaders(response) {
@@ -460,7 +485,6 @@ export async function runRecipientBrowserAcceptance(
     let receiptWritten = false;
     if (
       mode === "GUARDIAN_FIRST_ACK" &&
-      !acknowledged &&
       env.PHASE8_BROWSER_ALLOW_RECEIPT_WRITE === "1"
     ) {
       const acknowledgeButtons = users.PARENT.page.getByRole("button", {
@@ -485,7 +509,13 @@ export async function runRecipientBrowserAcceptance(
       assert.equal(freshParent.status(), 200);
       assertPrivateHeaders(freshParent);
       const parentPayload = await freshParent.json();
-      assert.ok(Array.isArray(parentPayload.reports));
+      assertNoLeaks(
+        parentPayload.reports,
+        childId,
+        "PARENT",
+        mode,
+        acknowledged,
+      );
       await users.PARENT.page.waitForFunction(
         (id) =>
           [...document.querySelectorAll("tr[data-release-id]")].some(

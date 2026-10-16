@@ -1,3 +1,7 @@
+## Phase 8 multi-subject guardian receipt test hardening — 2026-10-16 (remote source checkpoint)
+
+The authenticated test harness on `verify/phase8-local` has been corrected to require one **newly disclosed exact subject** after guardian receipt while allowing unrelated **already authorized** subject releases to remain visible. This avoids a false failure of legitimate two-subject fixtures and preserves the no-new-unrelated-grade requirement. New mock regressions are authored; actual full Node/Vitest/PostgreSQL/Chromium/print/privacy/security gates must be executed against this exact HEAD. The local Phase 8 worktree, Docker socket and npm/GitHub network resolution are unavailable from this tool container; no release flags were enabled, no database changed, and no GitHub Actions or Phase 1/9 branches were touched. The strict npm audit remains outstanding.
+
 ## Phase 8 signed-in recipient fixture integrity — 2026-10-16 (source checkpoint)
 
 The `verify/phase8-local` browser acceptance harness now tests that actual PARENT and STUDENT sessions belong to the exact synthetic child linked in the fixture inventory, including before guardian acknowledgment when student grades are deliberately absent. Synthetic session and current exact-school role/link predicates are read-only. Mock tests authored; current-head installed Node/Prisma/PostgreSQL/Chromium and native PDF are not yet verified. Strict dependency audit and release readiness remain BLOCKED; no production publication, Phase 1/9 edits, deploy, or GitHub Actions.
