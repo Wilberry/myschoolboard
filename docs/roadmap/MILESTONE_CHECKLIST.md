@@ -1,5 +1,35 @@
 # Milestone Checklist
 
+## Phase 9 — exact student fee obligations (AUTHORED; 2026-10-16)
+
+- [x] Schema + additive migration: one immutable fee obligation per
+  school/pupil/session/term/category, reference exact immutable revision,
+  current school actor + active enrollment/section/period checked in SQL.
+- [x] SQL locks same School row as fee configuration, derives student,
+  class, period, price and currency from trusted rows, rejects stale
+  price version, prevents silent charge changes/deletions/truncations.
+- [x] Private no-store GET/POST, school-owner-only, with single UUID
+  idempotency key and same-payload replay; never accepts client money,
+  issuer, pupil, school period, or verification state.
+- [x] Default-OFF `PHASE9_FEE_WRITE_ENABLED` environment switch for
+  category, fee policy and charge POSTs; synthetic integration cases
+  stub ON only in test session.
+- [x] Source invariant guard extended with debt ledger; its **3
+  predicates passed** in GitHub-fetched isolated V8, not Node.
+- [ ] Run full Node test file and synthetic database integration suite
+  in an operator-confirmed disposable PostgreSQL environment, including
+  proper casefold/string issues, stale version, cross school, replay
+  collision race, revocation, invalid enrollment and triggers.
+- [ ] Inspect PostgreSQL migrations against Prisma generated schema,
+  audit previous trigger/deletion-cascade safety and concurrency races.
+- [ ] Run unchanged format, lint, typecheck, build, all tests and strict
+  `npm audit --audit-level=high`; no weakening security controls.
+- [ ] Design separate actual payment upload/evidence and independent
+  verification authorization, idempotent callbacks (simulation only),
+  refunds/reversals, verified receipt, allocation and reconciliation.
+- [ ] **Exit BLOCKED:** obligations not verified, no real collection.
+
+
 ## Phase 9 — fee configuration foundation checkpoint (2026-10-16)
 
 - [x] Select a committed Phase 7 baseline independent of uncommitted
