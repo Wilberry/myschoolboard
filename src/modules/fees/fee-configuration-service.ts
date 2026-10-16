@@ -34,12 +34,12 @@ const revisionInput = z.object({
 export function checkSchoolId(schoolId: string) {
   if (!id.safeParse(schoolId).success) throw new FeeError("INVALID_INPUT");
 }
-async export function currentUserId() {
+export async function currentUserId() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) throw new FeeError("UNAUTHENTICATED");
   return session.user.id;
 }
-async export function lockCurrentFinanceAdmin(tx: Prisma.TransactionClient,
+export async function lockCurrentFinanceAdmin(tx: Prisma.TransactionClient,
   schoolId: string, userId: string) {
   // Preserve lock ordering with school configuration/academic mutations.
   await tx.$queryRaw`SELECT "id" FROM "School"
