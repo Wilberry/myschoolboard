@@ -17,7 +17,8 @@ const lock = {
     "node_modules/deepmerge-ts": {
       version: "8.0.2",
       integrity: "sha512-synthetic-unit-test",
-      resolved: "https://registry.npmjs.org/deepmerge-ts/-/deepmerge-ts-8.0.2.tgz",
+      resolved:
+        "https://registry.npmjs.org/deepmerge-ts/-/deepmerge-ts-8.0.2.tgz",
     },
   },
 };
