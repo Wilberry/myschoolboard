@@ -1,5 +1,33 @@
 # Architecture Decision Records
 
+## ADR-P9-002: Version-pinned fee debt with database-derived amounts
+
+- **Status:** authored but not migrated or runtime verified (2026-10-16).
+- **Context:** creating a fee policy must not itself fabricate pupil debt;
+  issued debt must not be recalculated when the school changes fee policy.
+- **Decision:** `FeeObligation` stores immutable school/student/enrollment/
+  class/session/term/category/fee revision/amount/currency/issuer/reason
+  evidence. Composite school FKs bind the exact existing StudentEnrollment
+  and chosen FeeStructureRevision. A BEFORE INSERT PostgreSQL guard obtains
+  the school serialization lock, verifies current same-school School Super
+  Admin and ENROLLED pupil with ACTIVE exact enrollment, current
+  nonclosed period and exact SCHOOL/SECTION/CLASS fee applicability, and
+  re-derives **all** child/class/period/category/money fields. Only latest
+  selected context revision may create new debt; previously issued debts
+  retain their pinned historical price. One school-scoped UUID retry key
+  plus uniqueness on pupil/category/session/term prevents duplicate debt;
+  ordinary DELETE/UPDATE/TRUNCATE rejected.
+- **Operational boundary:** all Phase 9 POSTs are default OFF. Application
+  performs strict request and replay checks and returns string minor units.
+  No automatic roster batch issuance, parent visibility, verified payment,
+  balance, receipt, credit, refund or provider integration is added.
+- **Verification pending:** check SQL trigger semantics, composite FK and
+  tenant deletion lifecycle, concurrent SQL replay/version races, immutable
+  event triggers, Prisma schema/client/TypeScript, full CI/security gates
+  and synthetic authenticated browser in a confirmed disposable DB.
+  See D-P9-002.
+
+
 ## ADR-P9-001: Fee configuration is a versioned source, not a mutable payment balance
 
 - **Status:** Phase 9 proposal authored, schema/migration/SQL and authenticated
