@@ -68,7 +68,12 @@
    reviewed-claim cap; denial of approved CORRECTION_PROPOSAL
    as WAIVER; denial of future 38000 VERIFIED bank claim
    after the cap falls to 36789; forgery/history mutation
-   denials and master default-OFF behavior.
+   denials and master default-OFF behavior. Also authored a
+   concurrent two-request/different-UUID attempt to apply one
+   second 5000-unit approved WAIVER: exactly one accepted event,
+   exact-key retry returns original, and final preview must be
+   original 456789, waived 25000, adjusted 431789, and
+   remaining 331789 after 100000 active manual allocation.
 8. **Source guard:** `scripts/phase9-effective-waiver-guard.test.mjs`
    added without removing prior full project tests and included in
    both `package.json` `test` and `verify:local:guards`.
@@ -98,6 +103,14 @@
   remain disabled by default. No shared/live database work.
 
 ## Release-blocking validation NOT EXECUTED
+
+- **Final structural source check:** all 14 of 14 Phase 9 source
+  invariant predicates passed in isolated JavaScript over the latest
+  fetched remote code: 3 fee foundations, 2 payment evidence/review,
+  2 manual allocation, 2 manual reversal, 2 advisory adjustment and
+  3 applied waiver predicates. None of these results are real Node,
+  Prisma, SQL migration or synthetic authenticated test execution.
+
 
 Actual `npm ci` and unchanged project tests, `prisma validate`,
 client generation, real migrations on confirmed disposable
