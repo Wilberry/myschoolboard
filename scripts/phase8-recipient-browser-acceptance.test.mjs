@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   assertBrowserComposeConfig,
+  assertLocalDockerHost,
   assertNoLeaks,
   assertRecipientBrowserTarget,
 } from "./phase8-recipient-browser-acceptance.mjs";
@@ -51,6 +52,25 @@ test("rejects unsafe browser targets and nonsynthetic users", () => {
   ]) {
     assert.throws(() => assertRecipientBrowserTarget({ ...safe, ...patch }));
   }
+});
+
+test("rejects remote Docker contexts even with apparent loopback port", () => {
+  assert.doesNotThrow(() => assertLocalDockerHost("unix:///var/run/docker.sock"));
+  assert.doesNotThrow(() => assertLocalDockerHost(
+    "unix:///home/test/.docker/desktop/docker.sock",
+    "unix:///var/run/docker.sock",
+  ));
+  for (const endpoint of [
+    "",
+    "ssh://remote-host",
+    "tcp://127.0.0.1:2375",
+    "tcp://remote-host:2376",
+    "https://remote-host",
+  ]) {
+    assert.throws(() => assertLocalDockerHost(endpoint));
+  }
+  assert.throws(() =>
+    assertLocalDockerHost("unix:///var/run/docker.sock", "ssh://remote-host"));
 });
 
 test("browser acceptance refuses non-disposable Docker Compose storage", () => {
