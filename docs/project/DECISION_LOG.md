@@ -1,5 +1,30 @@
 # Decision Log
 
+## D-P9-001: Immutable, explicit school fee configuration before obligations
+
+- **Status:** Phase 9 authored, NOT DATABASE VERIFIED (2026-10-16).
+- **Decision:** implement immutable FeeCategory and versioned FeeStructureRevision
+  for one real same-school category, session/term and SCHOOL/SECTION/CLASS scope,
+  with an explicit positive integer minor-unit amount and uppercase
+  three-letter currency. No school charges, discounts, student debts,
+  payments or receipts are inferred or automatically issued.
+- **Permission/default:** only active same-school SCHOOL_SUPER_ADMIN
+  configures fee policy initially, consistent with the configuration
+  catalog. Class/section/academic period must currently exist and not be
+  closed. No default fee amount, auto-assignment, date-driven repricing,
+  waiver or national fee policy. BigInt upper bound of 1,000,000,000,000
+  minor units is a conservative reversible input ceiling pending a
+  school-configurable business policy; values are exchanged as strings.
+- **Integrity:** SQL validates actor and school, school-locks version
+  allocation, binds targets through school-composite FKs, rejects UPDATE,
+  DELETE and TRUNCATE. Future obligations must pin one immutable revision.
+  Deliberately defer delegated bursar roles, independent payment verification,
+  provider selection, trusted receipt issuance and ledger reconciliation.
+- **Boundary:** no live provider/real money and no billing integration.
+  This choice does not lift blocked security/CI or release gates.
+  See ADR-P9-001 and FEE-REQ-001.
+
+
 ## D-049: Derive effective reviewed manual marks without mutating grade history
 
 - Status: authored/unverified. Keep a teacher-only preview for matching active class/subject/session/term. Only independently APPROVED initial marks and latest APPROVED correction count; pending/RETURNED remain distinguished and final totals withheld until every manual component approved and corrections settled. No assumed CBT/manual merger or official report release. ADR-035.
