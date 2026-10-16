@@ -1,5 +1,38 @@
 # Milestone Checklist
 
+## Phase 9 — fee configuration foundation checkpoint (2026-10-16)
+
+- [x] Select a committed Phase 7 baseline independent of uncommitted
+  Phase 8 verification changes; create isolated `feature/phase9-fees-payments-foundation`.
+- [x] Author school-owned immutable FeeCategory and FeeStructureRevision:
+  explicit category/session/term/target/currency/positive minor-unit amount,
+  version and actor evidence; no payment or obligation side effects.
+- [x] Author additive PostgreSQL migration: active school and current
+  School Super Admin actor, exact live scope, nonclosed academic periods,
+  composite tenant FKs, school-lock revision serializing, immutable guards.
+- [x] Author private configuration-only GET/POST routes with actual auth
+  session, server-derived actor ID, strict request validation, bounded
+  school-authorized reads and no-store responses.
+- [x] Author synthetic authenticated integration tests and Node source guard;
+  register guard in full test commands without weakening prior tests.
+- [ ] Apply full cumulative Prisma SQL migrations to **only** operator-confirmed
+  disposable PostgreSQL, verify migration history/checksums, schema generate
+  and validate. Never migrate or reset a shared DB.
+- [ ] Execute Phase 9 node guards, synthetic Vitest DB tests, SQL direct
+  insert forged actor/foreign tenant checks, immutable UPDATE/DELETE/TRUNCATE,
+  exact school-deletion cascade and simultaneous version concurrency.
+- [ ] Execute unchanged format/lint/typecheck/build/CI-equivalent and strict
+  high-severity dependency audit; resolve actual failures before acceptance.
+- [ ] Validate school-only finance UI, identity, privacy, browser access,
+  keyboard/navigation and explicit class/term selection before enabling.
+- [ ] Next: pin each issued immutable student/enrollment fee obligation to
+  its exact fee-structure revision, deduplicate issue requests, preserve
+  historical charge amounts, create adjustment/reversal ledger and then
+  separate upload evidence/verification/reconciliation and receipt control.
+- [ ] Phase 9 FEE-REQ-001 exit gate: **BLOCKED / NOT VERIFIED**;
+  neither Phase 8 nor Phase 9 is accepted or deployed.
+
+
 ## Phase 7 reviewed-only manual academic gradebook foundation — AUTHORED, NOT VERIFIED
 
 `feature/phase7-reviewed-manual-gradebook` implements a distinct private, read-only **ACADEMIC_APPROVED_PREVIEW_ONLY** teacher gradebook for exact school/session/term/class/subject. Final SQL binds actual signed-in current TEACHER to matching ACTIVE class/subject/session assignment, active school/class/section/subject/period/term, ENROLLED student and exact ACTIVE class/session enrollment; results bounded 500 students, 30 written components, 15,500 rows and fail closed for duplicate enrollment/ambiguous component rows. This reader does not join assessment answer keys or CBT answers.
