@@ -1,5 +1,40 @@
 # Milestone Checklist
 
+## Phase 9 — bounded applied fee waivers (2026-10-16)
+
+- [x] Authored append-only `FeeWaiverApplication` with
+  same-school original debt, WAIVER proposal, independent
+  APPROVED decision and actual School Super Admin actor.
+  UUID request/key and source-linked unique constraints
+  prevent double application; SQL copies exact minor units.
+- [x] Authored SQL school-locked
+  `sum(all VERIFIED bank-reference claims)+sum(applied waivers)
+  <= original debt`, including manually reversed allocations.
+  Added companion INSERT guards for future VERIFIED reviews
+  and manual allocations after an applied waiver.
+- [x] Owner-only private no-store GET/POST, strict
+  decisionId/UUID/reason and exact retry, distinct default-OFF
+  waiver + master finance switches. Non-WAIVER corrections
+  remain advisory.
+- [x] Extended exact-decimal owner-only internal preview
+  with applied waived money, adjusted charge and adjusted
+  arithmetic remainder. Original fee and historic verified
+  claims remain immutable. No settlement, refund or receipt.
+- [x] Authored synthetic actor/tenant/policy/cap/replay and
+  future-after-waiver verified-claim guard tests and
+  source-invariant predicates.
+- [ ] **NOT EXECUTED:** actual cumulative migration against
+  confirmed disposable PostgreSQL, Prisma schema validation/
+  generation, authenticated Vitest and concurrency/SQL forgery
+  tests, TS/lint/format/build, browser/privacy review, strict
+  dependency audit and full release gates.
+- [ ] Design separately audited effective CORRECTION_PROPOSAL,
+  waiver correction/reversal, real settled payments, actual
+  refunds, reconciliation and verified receipts.
+- [ ] FEE-REQ-001 Phase 9 acceptance remains BLOCKED and
+  writes must remain default-OFF on shared/live data.
+
+
 ## Phase 9 — advisory waiver / fee correction governance (2026-10-16)
 
 - [x] Authored immutable tenant-bound FeeAdjustmentProposal and
