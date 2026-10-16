@@ -62,7 +62,7 @@ export function assertRecipientBrowserTarget(env) {
   return { origin: url, schoolId, childId, entry };
 }
 
-function assertNoLeaks(rows, childId, role, mode, acknowledged) {
+export function assertNoLeaks(rows, childId, role, mode, acknowledged) {
   assert.ok(Array.isArray(rows), "Expected a reports array");
   if (role === "STUDENT") {
     assert.equal(rows.length > 0, mode === "STUDENT_ONLY" ||
@@ -206,6 +206,19 @@ export async function runRecipientBrowserAcceptance(
     assert.equal(selectedChild.status(), 400);
     assert.ok(selectedChild.headers()["cache-control"]?.includes("no-store"));
 
+    if (env.PHASE8_BROWSER_FOREIGN_SCHOOL_ID) {
+      const foreignId = env.PHASE8_BROWSER_FOREIGN_SCHOOL_ID;
+      assert.match(foreignId, /^[A-Za-z0-9_-]{1,128}$/);
+      assert.notEqual(foreignId, schoolId);
+      const foreign = await users.STUDENT.page.request.get(
+        new URL(
+          `/api/schools/${encodeURIComponent(foreignId)}/published-reports`,
+          origin,
+        ).href,
+      );
+      assert.equal(foreign.status(), 404, "Foreign school exposed a report");
+    }
+
     if (mode === "GUARDIAN_FIRST_ACK" && !acknowledged &&
       env.PHASE8_BROWSER_ALLOW_RECEIPT_WRITE === "1") {
       const acknowledge = users.PARENT.page.getByRole("button", {
@@ -223,16 +236,30 @@ export async function runRecipientBrowserAcceptance(
         ? users.PARENT.page
         : null;
     assert.ok(printPage, "Expected a verified linked synthetic recipient");
-    await checkPrintLifecycle(printPage);
-
-    // Focus must synchronously clear sensitive DOM before the fresh GET.
+    // Verify focus clears an actually visible confidential table, not a
+    // previously redacted page after the native print test has finished.
+    await printPage.getByRole("table", {
+      name: "Individually authorized subject grades",
+    }).first().waitFor();
     const beforeRefetch = await printPage.evaluate(() => {
-      window.dispatchEvent(new Event("focus"));
-      return document.querySelectorAll(
+      const previousCount = document.querySelectorAll(
         ".published-report-workspace article",
       ).length;
+      window.dispatchEvent(new Event("focus"));
+      const afterCount = document.querySelectorAll(
+        ".published-report-workspace article",
+      ).length;
+      return { previousCount, afterCount };
     });
-    assert.equal(beforeRefetch, 0, "Focus returned cached recipient grades");
+    assert.ok(beforeRefetch.previousCount > 0, "No rows before focus");
+    assert.equal(
+      beforeRefetch.afterCount, 0,
+      "Focus returned cached recipient grades",
+    );
+    await printPage.getByRole("table", {
+      name: "Individually authorized subject grades",
+    }).first().waitFor();
+    await checkPrintLifecycle(printPage);
     return { browserChecks: "passed", mode, auditedReceiptWritten:
       env.PHASE8_BROWSER_ALLOW_RECEIPT_WRITE === "1" };
   } finally {
