@@ -284,6 +284,7 @@ model School {
   assessmentManualCorrectionDecisions AssessmentManualCorrectionDecision[]
   feeCategories FeeCategory[]
   feeStructureRevisions FeeStructureRevision[]
+  feeObligations FeeObligation[]
 }
 
 model Membership {
@@ -330,6 +331,7 @@ model Membership {
   assessmentManualCorrectionDecisions AssessmentManualCorrectionDecision[]
   authoredFeeCategories FeeCategory[]
   authoredFeeStructureRevisions FeeStructureRevision[]
+  issuedFeeObligations FeeObligation[]
 }
 
 model ScopeGrant {
@@ -383,6 +385,7 @@ model SchoolClass {
   assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
   assessmentManualComponents AssessmentManualComponent[]
   feeStructureRevisions FeeStructureRevision[]
+  feeObligations FeeObligation[]
 }
 
 model Subject {
@@ -500,6 +503,7 @@ model AcademicSession {
   assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
   assessmentManualComponents AssessmentManualComponent[]
   feeStructureRevisions FeeStructureRevision[]
+  feeObligations FeeObligation[]
 }
 
 model AcademicTerm {
@@ -528,6 +532,7 @@ model AcademicTerm {
   assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
   assessmentManualComponents AssessmentManualComponent[]
   feeStructureRevisions FeeStructureRevision[]
+  feeObligations FeeObligation[]
 }
 
 model SchoolConfigurationEvent {
@@ -749,6 +754,7 @@ model StudentRecord {
   accountLink StudentAccountLink?
   assessmentAttempts AssessmentAttempt[]
   assessmentManualMarkProposals AssessmentManualMarkProposal[]
+  feeObligations FeeObligation[]
 }
 
 model StudentEnrollment {
@@ -776,6 +782,7 @@ model StudentEnrollment {
   @@index([schoolId, classId, sessionId, status])
   assessmentAttempts AssessmentAttempt[]
   assessmentManualMarkProposals AssessmentManualMarkProposal[]
+  feeObligations FeeObligation[]
 }
 
 model StudentEvent {
@@ -1460,6 +1467,7 @@ model FeeCategory {
   @@unique([schoolId, id])
   @@unique([schoolId, code])
   @@index([schoolId, createdAt])
+  feeObligations FeeObligation[]
 }
 
 /** Fee CONFIGURATION, not student debt or verified payment.
@@ -1492,6 +1500,48 @@ model FeeStructureRevision {
   actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "FeeStructureRevision_actor_fkey")
 
   @@unique([schoolId, id])
+  @@unique([schoolId, id, categoryId, sessionId, termId], map: "FeeStructureRevision_charge_identity")
   @@unique([schoolId, categoryId, sessionId, termId, scope, scopeId, version], map: "FeeStructureRevision_context_version_key")
   @@index([schoolId, sessionId, termId, scope, scopeId])
+  feeObligations FeeObligation[]
+}
+
+
+/** Explicit, immutable student debt, NOT a payment, verified balance or
+ * receipt. PostgreSQL copies money/context from the pinned current fee
+ * revision and exact active school enrollment, never client-supplied amounts.
+ * One issued obligation per pupil/category/term until a future audited
+ * adjustment/reversal ledger is designed. */
+model FeeObligation {
+  id String @id
+  schoolId String
+  studentId String
+  enrollmentId String
+  classId String
+  sessionId String
+  termId String
+  categoryId String
+  revisionId String
+  amountMinor BigInt
+  currency String @db.VarChar(3)
+  requestKey String @db.VarChar(64)
+  reason String @db.VarChar(500)
+  issuerMembershipId String
+  issuerUserId String
+  issuedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student StudentRecord @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction, map: "FeeObligation_student_fkey")
+  enrollment StudentEnrollment @relation(fields: [schoolId, enrollmentId, studentId, classId, sessionId], references: [schoolId, id, studentId, classId, sessionId], onDelete: NoAction, map: "FeeObligation_enrollment_fkey")
+  schoolClass SchoolClass @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction, map: "FeeObligation_class_fkey")
+  session AcademicSession @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction, map: "FeeObligation_session_fkey")
+  term AcademicTerm @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction, map: "FeeObligation_term_fkey")
+  category FeeCategory @relation(fields: [schoolId, categoryId], references: [schoolId, id], onDelete: NoAction, map: "FeeObligation_category_fkey")
+  revision FeeStructureRevision @relation(fields: [schoolId, revisionId, categoryId, sessionId, termId], references: [schoolId, id, categoryId, sessionId, termId], onDelete: NoAction, map: "FeeObligation_revision_fkey")
+  issuer Membership @relation(fields: [schoolId, issuerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "FeeObligation_issuer_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, requestKey])
+  @@unique([schoolId, studentId, sessionId, termId, categoryId], map: "FeeObligation_student_category_period_key")
+  @@index([schoolId, enrollmentId, issuedAt])
 }
