@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { isAbsolute, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { assertLocalVerificationTarget } from "./verify-local.mjs";
 import { inspectBrowserFixture } from "./phase8-browser-fixture-readiness.mjs";
+import { assertDisposableCompose } from "./verify-phase8-checkpoint.mjs";
 
 const modes = new Set(["STUDENT_ONLY", "GUARDIAN_ONLY", "GUARDIAN_FIRST_ACK"]);
 
@@ -326,6 +328,55 @@ export async function runRecipientBrowserAcceptance(
   }
 }
 
+/**
+ * Before enabling synthetic recipient gates, verify the *running* Compose
+ * configuration and PostgreSQL readiness. Docker context/port forwards must
+ * still be checked by the local operator; this never provisions a database.
+ */
+export function assertBrowserComposeConfig(config) {
+  assertDisposableCompose(config.services?.["postgres-test"]);
+}
+
+export function verifyBrowserDockerTarget() {
+  const cwd = fileURLToPath(new URL("../", import.meta.url));
+  const commands = [
+    ["compose", "--profile", "test", "config", "--format", "json"],
+    [
+      "compose",
+      "--profile",
+      "test",
+      "exec",
+      "-T",
+      "postgres-test",
+      "pg_isready",
+      "-U",
+      "myschoolboard",
+      "-d",
+      "myschoolboard_test",
+    ],
+  ];
+  for (const [index, args] of commands.entries()) {
+    const result = spawnSync("docker", args, {
+      cwd,
+      encoding: "utf8",
+      stdio: "pipe",
+      timeout: 10_000,
+    });
+    if (result.error || result.status !== 0 || result.signal) {
+      throw new Error("Refusing browser test: disposable Docker is not ready");
+    }
+    if (index === 0) {
+      let config;
+      try {
+        config = JSON.parse(result.stdout);
+      } catch {
+        throw new Error("Refusing browser test: invalid Docker configuration");
+      }
+      assertBrowserComposeConfig(config);
+    }
+  }
+}
+
 if (
   process.argv[1] &&
   resolve(process.argv[1]) === fileURLToPath(import.meta.url)
@@ -333,6 +384,7 @@ if (
   let db;
   try {
     const { entry } = assertRecipientBrowserTarget(process.env);
+    verifyBrowserDockerTarget();
     const { PrismaClient } = await import("@prisma/client");
     const driver = await import(pathToFileURL(entry).href);
     db = new PrismaClient();
