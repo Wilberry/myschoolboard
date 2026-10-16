@@ -2,16 +2,70 @@
 
 ## Scope
 
-Fee structures, amounts, obligations, payment evidence, verification, receipts, and reconciliation.
+School-defined fee categories, period-specific fee structures, student fee obligations,
+payment evidence, independent verification, receipts, and reconciliation. All records
+are tenant-bound and financial history must be attributable and non-silently mutable.
 
-## Key requirements
+## Phase 9 delivery order (FEE-REQ-001)
 
-- Payment evidence is distinct from verified payment status.
-- Bank transfer upload does not constitute automatic confirmation of funds.
-- Payment processing must be idempotent and auditable.
-- Payment provider secrets must never be stored in application records.
+1. **Fee configuration foundation — authored, NOT VERIFIED.** One immutable
+   `FeeCategory` per school and uppercase code; versioned, explicitly
+   priced `FeeStructureRevision` per school/category/session/term and
+   `SCHOOL`, `SECTION`, or `CLASS` scope. All classes and sections are
+   the actual school's active resources. School Super Admin alone can
+   configure this first slice; later bursar/delegated finance permission
+   requires a separately defined verified authorization policy.
+2. **Student fee obligations — NOT YET BUILT.** Create exactly scoped,
+   student/enrollment/term-bound immutable debts from one chosen version,
+   with duplicate assignment prevention and no retroactive repricing.
+   Record any waiver/discount as separate reviewed adjustment evidence,
+   not an UPDATE to original charges.
+3. **Payment evidence and verification — NOT YET BUILT.** Submitted proof
+   is unverified. A separately authorized verifier records a one-time
+   outcome with distinct submitted, pending, verified, rejected, refunded
+   and reversed semantics, idempotency keys, amount/currency matching,
+   and immutable verification/reversal evidence.
+4. **Balance and reconciliation — NOT YET BUILT.** Compute payable amount,
+   allocated verified sums and outstanding balances from immutable events.
+   No fabricated credit, silent refund, unrestricted parent access, or
+   receipt before verified evidence. Provider callbacks must be replay-safe.
+5. **Private finance, student/guardian views and release checks — PENDING.**
+   Apply verified same-school relationship and minimum-data access,
+   actual synthetic PostgreSQL integration tests, privacy/browser checks,
+   unchanged CI and strict high-severity dependency audit before release.
 
-## Critical states
+## Phase 9 fee configuration implementation contract
+
+- `FeeCategory` identifies an immutable school-specific label/code.
+  A new label requires a new category rather than rewriting history.
+- `FeeStructureRevision` is a policy proposal, **not** an issued debt,
+  verified payment, or receivable; each context has SQL-assigned version.
+  `amountMinor` is a strictly positive PostgreSQL BIGINT and the HTTP
+  contract accepts/returns its decimal-string representation to avoid
+  JavaScript floating-point money loss. Currency is explicit ISO-style
+  three-letter uppercase code; no automatic conversion or default charge.
+- Scope: `SCHOOL` uses `scopeId=schoolId` with no section/class;
+  `SECTION` uses exactly its same-school section; `CLASS` uses an
+  active class with an active same-school section. Cross-tenant links
+  are prohibited by composite FKs and checked again inside SQL.
+- A period may be `PLANNED` or `ACTIVE`; `CLOSED` sessions/terms
+  cannot receive new price versions. A fee revision never rewrites
+  older revisions or already-created obligations.
+- A current active `SCHOOL_SUPER_ADMIN` in the actual school may create
+  categories and fee revisions. Client actor/owner identifiers are
+  rejected. SQL locks the School row, validates original active member
+  and real class/period, assigns revision/timestamp, and rejects
+  UPDATE/DELETE/TRUNCATE of fee history.
+- First internal-admin APIs: `GET/POST /api/schools/:schoolId/fee-categories`
+  and `GET/POST /api/schools/:schoolId/fee-structures`. GET metadata is
+  bounded, SQL rechecks current school/member for each query, and both
+  routes require actual signed-in sessions, use `private, no-store`,
+  and conceal other schools' identifiers.
+- This first milestone deliberately creates **no** payment evidence
+  records, payment provider calls, callbacks, receipt APIs, fee waivers,
+  student/guardian finance views, or financial settlement side effects.
+
+## Critical payment states (future obligations)
 
 - Submitted
 - Pending verification
@@ -20,4 +74,14 @@ Fee structures, amounts, obligations, payment evidence, verification, receipts, 
 - Refunded
 - Reversed
 
-These must remain explicit and not collapsed into a single status.
+Upload evidence and provider callbacks must never automatically equate
+to verified funds. Payment processing must be idempotent and auditable.
+Provider secrets must never be stored in application records.
+
+## Validation status
+
+Migration, Prisma generation/validation, real-session synthetic PostgreSQL
+integration, financial lifecycle, browser and unchanged CI/security audit
+remain **NOT EXECUTED**. This branch is a non-production candidate only.
+See `docs/quality/PHASE9_FEE_CONFIGURATION_CHECKPOINT_20261016.md`,
+D-P9-001 and ADR-P9-001.
