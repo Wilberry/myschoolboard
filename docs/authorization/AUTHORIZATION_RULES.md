@@ -1,5 +1,24 @@
 # Authorization Rules
 
+## Phase 9 payment-reference submission and manual verification (AUTHORED / NOT VERIFIED)
+
+An actual signed-in current same-school `SCHOOL_ADMIN` may append only
+`SUBMITTED` manual bank-reference metadata for one school-owned
+FeeObligation and see **only that member's submitted claims**.
+No teacher, student, guardian, unrelated admin, platform operator or
+School Super Admin may impersonate this submitter. A distinct actual
+signed-in active same-school `SCHOOL_SUPER_ADMIN` is independently
+responsible for the one immutable `VERIFIED`/`REJECTED` review;
+self-review, cross-school review, forged actor IDs, wrong reference,
+over-verified sum and changed replay are rejected again by PostgreSQL
+under the shared school lock. Review `VERIFIED` explicitly records
+manual fundsConfirmed attestation and does not grant proof of external
+settlement, verified receipt, parent access or balance disclosure.
+All three finance write switches are OFF by default. D-P9-003 /
+ADR-P9-003. File uploads remain unavailable until secure storage and
+scanning. Database and browser tests remain unexecuted.
+
+
 ## Phase 7 reviewed-only manual academic gradebook foundation — AUTHORED, NOT VERIFIED
 
 `feature/phase7-reviewed-manual-gradebook` implements a distinct private, read-only **ACADEMIC_APPROVED_PREVIEW_ONLY** teacher gradebook for exact school/session/term/class/subject. Final SQL binds actual signed-in current TEACHER to matching ACTIVE class/subject/session assignment, active school/class/section/subject/period/term, ENROLLED student and exact ACTIVE class/session enrollment; results bounded 500 students, 30 written components, 15,500 rows and fail closed for duplicate enrollment/ambiguous component rows. This reader does not join assessment answer keys or CBT answers.
