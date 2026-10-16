@@ -1,5 +1,24 @@
 # Architecture Decision Records
 
+## ADR-P9-006: Advisory fee-policy review before any effective waiver
+
+- **Status:** authored, unexecuted (2026-10-16).
+- An immutable `FeeAdjustmentProposal` snapshots original school
+  debt, currency, bounded requested amount, kind and authenticated
+  School Administrator. `FeeAdjustmentDecision` records one
+  independent current same-school School Super Admin advisory
+  APPROVED/REJECTED event; SQL guards concurrency by School lock
+  and forbids history updates/deletes/truncation.
+- The resulting decision NEVER creates a payment, settlement,
+  rebate, charge mutation, waiver, verified balance or receipt.
+  Future separately approved accounting event projections must
+  explicitly handle existing verified manual claims, original
+  debt, reversals, over-credit races and term closure.
+- Requests and decisions remain default-OFF and confined to
+  same-school private no-store endpoints. No provider, file upload
+  or student/guardian financial reader is included. D-P9-006.
+
+
 ## ADR-P9-005: Append-only manual allocation correction ledger
 
 - **Status:** code, SQL and tests authored, not migrated or verified,
