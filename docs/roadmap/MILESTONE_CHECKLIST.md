@@ -552,3 +552,9 @@ All subsequent phases remain pending until their entry criteria and required pro
 - [x] Add synthetic `pagehide` / persisted `pageshow` reauthorization test; record receipt-written status only on actual successful receipt.
 - [ ] Run local Prettier, Node regression tests and full local Phase 8 guarded suite on the **new** HEAD; verify Chrome via synthetic linked student/guardian sessions in the disposable Docker test environment. Source assertions alone do not count as runtime acceptance.
 - [ ] Complete genuine bfcache, native Save to PDF, screen-reader, revocation/account-switching tests, operational/privacy sign-off and strict audit remediation. Do not deploy or enable report gates outside synthetic test processes.
+
+## Phase 8 remote-Docker guard and database test serialization
+
+- [x] Reject remote/non-Unix Docker context and `DOCKER_HOST` override before starting test-only recipient browser verification; add negative host tests (isolated predicates 5/5).
+- [ ] Inspect active Docker context/socket and run full local Prettier, Node guard/Vitest/build, actual synthetic browser tests; investigate missing exact-child fixture or test failure without making actual reports public.
+- [ ] Serialize Prisma experimental migration/seed/full-suite work and Chromium browser acceptance against the same disposable PostgreSQL port 5434; do not contaminate one branch's evidence with the other's synthetic writes.
