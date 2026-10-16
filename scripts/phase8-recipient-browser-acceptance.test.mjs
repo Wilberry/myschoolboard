@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  assertBrowserComposeConfig,
   assertNoLeaks,
   assertRecipientBrowserTarget,
 } from "./phase8-recipient-browser-acceptance.mjs";
@@ -49,6 +50,35 @@ test("rejects unsafe browser targets and nonsynthetic users", () => {
     { BETTER_AUTH_URL: "https://public.example/" },
   ]) {
     assert.throws(() => assertRecipientBrowserTarget({ ...safe, ...patch }));
+  }
+});
+
+test("browser acceptance refuses non-disposable Docker Compose storage", () => {
+  const allowed = {
+    services: {
+      "postgres-test": {
+        tmpfs: ["/var/lib/postgresql/data:rw,noexec,nosuid,size=256m"],
+        ports: [
+          { host_ip: "127.0.0.1", published: "5434", target: 5432 },
+        ],
+      },
+    },
+  };
+  assert.doesNotThrow(() => assertBrowserComposeConfig(allowed));
+  for (const service of [
+    { tmpfs: [], ports: allowed.services["postgres-test"].ports },
+    {
+      tmpfs: allowed.services["postgres-test"].tmpfs,
+      ports: [{ host_ip: "0.0.0.0", published: "5434", target: 5432 }],
+    },
+    {
+      tmpfs: allowed.services["postgres-test"].tmpfs,
+      ports: [{ host_ip: "127.0.0.1", published: "5433", target: 5432 }],
+    },
+  ]) {
+    assert.throws(() => assertBrowserComposeConfig({
+      services: { "postgres-test": service },
+    }));
   }
 });
 
