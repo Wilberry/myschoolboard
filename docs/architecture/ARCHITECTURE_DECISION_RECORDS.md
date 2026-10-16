@@ -1,5 +1,37 @@
 # Architecture Decision Records
 
+## ADR-P9-005: Append-only manual allocation correction ledger
+
+- **Status:** code, SQL and tests authored, not migrated or verified,
+  2026-10-16.
+- **Context:** manual bank-reference approval is not external payment
+  settlement; silently editing an original manual allocation would
+  destroy traceability. Actual money refunds require a different
+  independent bank/provider workflow.
+- **Decision:** introduce `ManualAllocationReversalRequest` and
+  `ManualAllocationReversalDecision` with school-composite source
+  and actor FKs, school-lock SQL validators, stamped timestamps,
+  strict one-to-one allocation request and terminal reviewer outcome
+  uniqueness and no UPDATE/DELETE/TRUNCATE. School Administrator
+  requests; different active same-school School Super Admin approves
+  or rejects. Service validates actual session and exact
+  idempotent-retry behavior; independent SQL repeats authority checks.
+- **Projection:** original evidence, verified decision and
+  `ManualPaymentAllocation` are never updated. A bounded owner-only
+  preview joins APPROVED decisions and computes gross allocated,
+  approved reversed, net active manual allocated, non-reusable
+  reviewed claims and arithmetic remainder using PostgreSQL NUMERIC
+  decimal strings. Rejected and pending requests have no effect.
+  The projection expressly forbids PAID/SETTLED/refund/receipt claims.
+- **Consequences:** a reversed claim cannot be reapplied due to
+  existing per-evidence and per-decision allocation uniqueness.
+  No partial repeat request after rejection; a future versioned
+  adjustment model must be designed and tested for those operations.
+  Private reference uploads and real refunds remain out of scope.
+  Release requires actual disposable PostgreSQL, Prisma, browser,
+  full CI and strict dependency-security tests. D-P9-005.
+
+
 ## ADR-P9-004: School-locked immutable verified-reference allocation and numeric preview
 
 - **Status:** authored / unexecuted, 2026-10-16.
