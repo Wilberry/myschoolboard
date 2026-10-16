@@ -1,5 +1,47 @@
 # Current Status
 
+## Phase 9 — unverified bank-reference claims and independent review (AUTHORED; 2026-10-16)
+
+The isolated branch `feature/phase9-fees-payments-foundation` extends
+immutable fee configuration and exact student debt with `PaymentEvidence`
+and `PaymentVerificationDecision` (additive
+`20261016140000_phase9_payment_reference_evidence_review`).
+An active same-school SCHOOL_ADMIN may explicitly submit an **unverified**
+manual reference claim for a pre-existing same-school obligation and
+positive bounded claimed amount, with school-bound SHA-256 reference digest,
+UUID request replay protection, immutable actor/time evidence and no raw
+bank details/files. An active **different** same-school
+SCHOOL_SUPER_ADMIN may independently attest matching bank reference,
+`fundsConfirmed: true`, reason and VERIFIED/REJECTED outcome. PostgreSQL
+rechecks actor, school, exact debt/reference/currency and caps summed
+VERIFIED claim amounts at the original charge. Identical reviewer replay
+returns original immutable decision; changed replay is denied.
+No actual money is collected; a manual reviewer decision is not an
+external bank/provider confirmation, payment settlement or receipt.
+
+Private no-store GET/POST `payment-evidence` projects own school-admin
+claims or the school-owner bounded queue; private `payment-verifications`
+supports only independent review POST. All Phase 9 finance writes remain
+default-off: `PHASE9_FEE_WRITE_ENABLED=false`,
+`PHASE9_PAYMENT_EVIDENCE_ENABLED=false`, and
+`PHASE9_PAYMENT_REVIEW_ENABLED=false`. No private file storage,
+malware scanning, parent/student finance view, actual PaymentRecord,
+refund, reversal, allocation, balance or receipt exists.
+
+**Actual source check:** Five combined Phase 9 source-invariant predicates
+were evaluated and PASSED over the final GitHub-fetched committed files
+in isolated V8, including duplicate PL/pgSQL function checks. This does
+**not** execute Node, Prisma, PostgreSQL, synthetic Vitest, TypeScript,
+Next browser or `npm audit --audit-level=high`; those gates remain
+**NOT EXECUTED / BLOCKED**, and the prior dependency-security findings
+remain open. No local Phase 1/8 worktrees were modified, no GitHub
+Actions, deployment or main merge. FEE-REQ-001 is PARTIAL.
+See `docs/quality/PHASE9_PAYMENT_EVIDENCE_CHECKPOINT_20261016.md`;
+D-P9-003 and ADR-P9-003. Next: actual disposable-PostgreSQL
+verification before acceptance, then an independent append-only
+adjustment/reversal/payment allocation/receipt and balance milestone.
+
+
 ## Phase 9 — explicit immutable student fee obligation slice (AUTHORED, NOT VERIFIED; 2026-10-16)
 
 Following the isolated fee-configuration foundation on
