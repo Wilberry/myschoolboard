@@ -317,6 +317,7 @@ model School {
   manualAllocationReversalDecisions ManualAllocationReversalDecision[]
   feeAdjustmentProposals FeeAdjustmentProposal[]
   feeAdjustmentDecisions FeeAdjustmentDecision[]
+  feeWaiverApplications FeeWaiverApplication[]
 }
 
 model Membership {
@@ -371,6 +372,7 @@ model Membership {
   manualReversalDecisions ManualAllocationReversalDecision[]
   feeAdjustmentProposals FeeAdjustmentProposal[]
   feeAdjustmentDecisions FeeAdjustmentDecision[]
+  feeWaiverApplications FeeWaiverApplication[]
 }
 
 model ScopeGrant {
@@ -1586,6 +1588,7 @@ model FeeObligation {
   paymentEvidence PaymentEvidence[]
   manualPaymentAllocations ManualPaymentAllocation[]
   feeAdjustmentProposals FeeAdjustmentProposal[]
+  feeWaiverApplications FeeWaiverApplication[]
 }
 
 
@@ -1747,6 +1750,7 @@ model FeeAdjustmentProposal {
   @@unique([schoolId, id])
   @@unique([schoolId, requestKey])
   @@index([schoolId, obligationId, proposedAt])
+  feeWaiverApplications FeeWaiverApplication[]
 }
 
 /** Independent human approval/rejection records policy review only.
@@ -1768,4 +1772,37 @@ model FeeAdjustmentDecision {
 
   @@unique([schoolId, proposalId])
   @@index([schoolId, decidedAt])
+  feeWaiverApplications FeeWaiverApplication[]
+}
+
+
+/** INTERNAL accounting-waiver application from an independently APPROVED
+ * WAIVER policy decision only. No external bank settlement, refund or
+ * official receipt. Money and currency are copied by a PostgreSQL trigger.
+ * Existing human-reviewed claims must fit the adjusted charge. */
+model FeeWaiverApplication {
+  id String @id
+  schoolId String
+  obligationId String
+  proposalId String
+  decisionId String
+  requestKey String @db.VarChar(64)
+  amountMinor BigInt
+  currency String @db.VarChar(3)
+  reason String @db.VarChar(500)
+  applierMembershipId String
+  applierUserId String
+  appliedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  obligation FeeObligation @relation(fields: [schoolId, obligationId], references: [schoolId, id], onDelete: NoAction, map: "FeeWaiverApplication_obligation_fkey")
+  proposal FeeAdjustmentProposal @relation(fields: [schoolId, proposalId], references: [schoolId, id], onDelete: NoAction, map: "FeeWaiverApplication_proposal_fkey")
+  decision FeeAdjustmentDecision @relation(fields: [schoolId, decisionId], references: [schoolId, id], onDelete: NoAction, map: "FeeWaiverApplication_decision_fkey")
+  applier Membership @relation(fields: [schoolId, applierMembershipId], references: [schoolId, id], onDelete: NoAction, map: "FeeWaiverApplication_applier_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, requestKey])
+  @@unique([schoolId, proposalId])
+  @@unique([schoolId, decisionId])
+  @@index([schoolId, obligationId, appliedAt])
 }
