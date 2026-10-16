@@ -52,6 +52,15 @@ enum ManualAllocationReversalAction {
   REJECTED
 }
 
+enum FeeAdjustmentKind {
+  WAIVER
+  CORRECTION_PROPOSAL
+}
+enum FeeAdjustmentDecisionAction {
+  APPROVED
+  REJECTED
+}
+
 enum SchoolLifecycleStatus {
   PENDING
   ACTIVE
@@ -306,6 +315,8 @@ model School {
   manualPaymentAllocations ManualPaymentAllocation[]
   manualAllocationReversalRequests ManualAllocationReversalRequest[]
   manualAllocationReversalDecisions ManualAllocationReversalDecision[]
+  feeAdjustmentProposals FeeAdjustmentProposal[]
+  feeAdjustmentDecisions FeeAdjustmentDecision[]
 }
 
 model Membership {
@@ -358,6 +369,8 @@ model Membership {
   manualPaymentAllocations ManualPaymentAllocation[]
   manualReversalRequests ManualAllocationReversalRequest[]
   manualReversalDecisions ManualAllocationReversalDecision[]
+  feeAdjustmentProposals FeeAdjustmentProposal[]
+  feeAdjustmentDecisions FeeAdjustmentDecision[]
 }
 
 model ScopeGrant {
@@ -1572,6 +1585,7 @@ model FeeObligation {
   @@index([schoolId, enrollmentId, issuedAt])
   paymentEvidence PaymentEvidence[]
   manualPaymentAllocations ManualPaymentAllocation[]
+  feeAdjustmentProposals FeeAdjustmentProposal[]
 }
 
 
@@ -1706,5 +1720,52 @@ model ManualAllocationReversalDecision {
   reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ManualAllocationReversalDecision_reviewer_fkey")
 
   @@unique([schoolId, requestId])
+  @@index([schoolId, decidedAt])
+}
+
+
+/** Immutable fee adjustment PROPOSAL ONLY; no charge mutation, approved
+ * balance reduction, refund, payment allocation, waiver execution or receipt. */
+model FeeAdjustmentProposal {
+  id String @id
+  schoolId String
+  obligationId String
+  requestKey String @db.VarChar(64)
+  kind FeeAdjustmentKind
+  proposedAmountMinor BigInt
+  currency String @db.VarChar(3)
+  reason String @db.VarChar(500)
+  proposerMembershipId String
+  proposerUserId String
+  proposedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  obligation FeeObligation @relation(fields: [schoolId, obligationId], references: [schoolId, id], onDelete: NoAction, map: "FeeAdjustmentProposal_obligation_fkey")
+  proposer Membership @relation(fields: [schoolId, proposerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "FeeAdjustmentProposal_proposer_fkey")
+  decision FeeAdjustmentDecision?
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, requestKey])
+  @@index([schoolId, obligationId, proposedAt])
+}
+
+/** Independent human approval/rejection records policy review only.
+ * Even APPROVED creates NO effective waiver or balance mutation:
+ * operational effect requires its own later accepted ledger design. */
+model FeeAdjustmentDecision {
+  id String @id
+  schoolId String
+  proposalId String
+  action FeeAdjustmentDecisionAction
+  reason String @db.VarChar(500)
+  reviewerMembershipId String
+  reviewerUserId String
+  decidedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  proposal FeeAdjustmentProposal @relation(fields: [schoolId, proposalId], references: [schoolId, id], onDelete: NoAction, map: "FeeAdjustmentDecision_proposal_fkey")
+  reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "FeeAdjustmentDecision_reviewer_fkey")
+
+  @@unique([schoolId, proposalId])
   @@index([schoolId, decidedAt])
 }
