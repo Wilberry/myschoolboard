@@ -9,6 +9,8 @@ import { GET as CAT_GET, POST as CAT_POST } from
   "@/app/api/schools/[schoolId]/fee-categories/route";
 import { GET as REV_GET, POST as REV_POST } from
   "@/app/api/schools/[schoolId]/fee-structures/route";
+import { GET as OBL_GET, POST as OBL_POST } from
+  "@/app/api/schools/[schoolId]/fee-obligations/route";
 import { prisma } from "@/src/lib/db";
 import { auth } from "@/src/lib/auth";
 import { env } from "@/src/lib/env";
@@ -26,7 +28,10 @@ const actors: Record<string, string> = {};
 const members: Record<string, string> = {};
 const cookies: Record<string, string> = {};
 const password = "synthetic-fee-configuration-password";
+const pupilId = `fee-student-${suffix}`;
+const enrollmentId = `fee-enrollment-${suffix}`;
 let categoryId: string;
+let latestSchoolRevisionId: string;
 
 function request(actor: string, schoolId: string, endpoint: string,
   method: "GET" | "POST", payload?: unknown) {
@@ -53,6 +58,14 @@ async function revisionList(actor: string, schoolId = schoolA) {
   return REV_GET(request(actor, schoolId, "fee-structures", "GET"),
     { params: Promise.resolve({ schoolId }) });
 }
+async function issueObligation(actor: string, payload: unknown, schoolId = schoolA) {
+  return OBL_POST(request(actor, schoolId, "fee-obligations", "POST", payload),
+    { params: Promise.resolve({ schoolId }) });
+}
+async function obligationList(actor: string, schoolId = schoolA) {
+  return OBL_GET(request(actor, schoolId, "fee-obligations", "GET"),
+    { params: Promise.resolve({ schoolId }) });
+}
 const revision = (scope: "SCHOOL" | "SECTION" | "CLASS", scopeId: string) => ({
   categoryId, sessionId, termId, scope, scopeId, amountMinor: "123456",
   currency: "NGN", reason: "Synthetic school fee configuration",
@@ -60,6 +73,7 @@ const revision = (scope: "SCHOOL" | "SECTION" | "CLASS", scopeId: string) => ({
 
 describe("Phase 9 school-only immutable fee configuration", () => {
   beforeAll(async () => {
+    vi.stubEnv("PHASE9_FEE_WRITE_ENABLED", "true");
     for (const name of ["owner", "admin", "teacher", "foreign"]) {
       const email = `fee-${name}-${suffix}@example.test`;
       const registered = await auth.api.signUpEmail({
@@ -110,12 +124,22 @@ describe("Phase 9 school-only immutable fee configuration", () => {
         startsOn: new Date(now - 86400000), endsOn: new Date(now + 86400000 * 45),
         status: "PLANNED" },
     });
+    await prisma.studentRecord.create({
+      data: { id: pupilId, schoolId: schoolA,
+        admissionNumber: `FEE-SYNTHETIC-${suffix}`,
+        givenName: "Synthetic", familyName: "Pupil", status: "ENROLLED" },
+    });
+    await prisma.studentEnrollment.create({
+      data: { id: enrollmentId, schoolId: schoolA,
+        studentId: pupilId, classId: classA, sessionId, status: "ACTIVE" },
+    });
   });
   afterAll(async () => {
     await prisma.school.deleteMany({ where: { id: { in: [schoolA, schoolB] } } });
     await prisma.session.deleteMany({ where: { userId: { in: Object.values(actors) } } });
     await prisma.user.deleteMany({ where: { id: { in: Object.values(actors) } } });
     await prisma.$disconnect();
+    vi.unstubAllEnvs();
   });
 
   it("denies anonymous, ordinary school admin, teacher and cross-school owner", async () => {
@@ -123,6 +147,7 @@ describe("Phase 9 school-only immutable fee configuration", () => {
       ["teacher", 404], ["foreign", 404]] as const) {
       expect((await categoryList(actor)).status).toBe(expected);
       expect((await revisionList(actor)).status).toBe(expected);
+      expect((await obligationList(actor)).status).toBe(expected);
       expect((await createCategory(actor, {
         code: "TUITION", name: "Tuition Fees",
       })).status).toBe(expected);
@@ -185,7 +210,9 @@ describe("Phase 9 school-only immutable fee configuration", () => {
         reason: "Synthetic revised school fee amount",
       });
       expect(second.status).toBe(201);
-      expect((await second.json()).revision.version).toBe(2);
+      const revised = (await second.json()).revision;
+      expect(revised.version).toBe(2);
+      if (scope === "SCHOOL") latestSchoolRevisionId = revised.id;
       await expect(prisma.feeStructureRevision.update({ where: { id: original.id },
         data: { amountMinor: BigInt(2) } })).rejects.toThrow();
       await expect(prisma.feeStructureRevision.delete({ where: { id: original.id } }))
@@ -199,6 +226,76 @@ describe("Phase 9 school-only immutable fee configuration", () => {
       typeof v.amountMinor === "string")).toBe(true);
     expect(JSON.stringify(body)).not.toContain("actorMembershipId");
   });
+  it("issues explicit same-school debt once; safe replay never fabricates payment", async () => {
+    const payload = {
+      enrollmentId, revisionId: latestSchoolRevisionId,
+      requestKey: randomUUID(), reason: "Synthetic explicitly issued student debt",
+    };
+    for (const [actor, status] of [["", 401], ["admin", 404],
+      ["teacher", 404], ["foreign", 404]] as const) {
+      expect((await issueObligation(actor, payload)).status).toBe(status);
+    }
+    expect((await issueObligation("owner", {
+      ...payload, amountMinor: "1",
+    })).status).toBe(400);
+    expect((await issueObligation("owner", {
+      ...payload, issuerMembershipId: members.owner,
+    })).status).toBe(400);
+    expect((await issueObligation("owner", {
+      ...payload, revisionId: "foreign-revision",
+    })).status).toBe(404);
+    const issued = await issueObligation("owner", payload);
+    expect(issued.status).toBe(201);
+    const item = (await issued.json()).obligation;
+    expect(item.amountMinor).toBe("456789");
+    expect(item.studentId).toBe(pupilId);
+    expect(item.enrollmentId).toBe(enrollmentId);
+    expect(item.status).toBe("ISSUED_UNPAID");
+    expect(item.replay).toBe(false);
+    expect(item).not.toHaveProperty("issuerUserId");
+    const again = await issueObligation("owner", payload);
+    expect(again.status).toBe(200);
+    expect((await again.json()).obligation.id).toBe(item.id);
+    expect((await issueObligation("owner", {
+      ...payload, reason: "Changed request under reused key",
+    })).status).toBe(409);
+    expect((await issueObligation("owner", {
+      ...payload, requestKey: randomUUID(),
+    })).status).toBe(409);
+    const own = await obligationList("owner");
+    expect(own.status).toBe(200);
+    expect((await own.json()).obligations).toHaveLength(1);
+    await expect(prisma.feeObligation.update({
+      where: { id: item.id }, data: { amountMinor: BigInt(1) },
+    })).rejects.toThrow();
+    await expect(prisma.feeObligation.delete({
+      where: { id: item.id },
+    })).rejects.toThrow();
+    await expect(prisma.feeObligation.create({ data: {
+      id: randomUUID(), schoolId: schoolA, studentId: pupilId,
+      enrollmentId, classId: classA, sessionId, termId, categoryId,
+      revisionId: latestSchoolRevisionId, amountMinor: BigInt(1),
+      currency: "NGN", requestKey: randomUUID(),
+      reason: "Forged invoice by an unauthorized school teacher",
+      issuerMembershipId: members.teacher, issuerUserId: actors.teacher,
+    } })).rejects.toThrow();
+  });
+
+  it("keeps finance writes default-off unless test environment explicitly enables them", async () => {
+    vi.stubEnv("PHASE9_FEE_WRITE_ENABLED", "false");
+    try {
+      expect((await createCategory("owner", {
+        code: "OFFLINE", name: "Offline Category",
+      })).status).toBe(404);
+      expect((await issueObligation("owner", {
+        enrollmentId, revisionId: latestSchoolRevisionId,
+        requestKey: randomUUID(), reason: "Disabled issuance attempt",
+      })).status).toBe(404);
+    } finally {
+      vi.stubEnv("PHASE9_FEE_WRITE_ENABLED", "true");
+    }
+  });
+
   it("rejects closed academic periods and forged direct SQL actor", async () => {
     await expect(prisma.feeStructureRevision.create({ data: {
       id: randomUUID(), schoolId: schoolA, categoryId, sessionId, termId,
@@ -210,5 +307,9 @@ describe("Phase 9 school-only immutable fee configuration", () => {
       data: { status: "CLOSED" } });
     expect((await createRevision("owner", revision("SCHOOL", schoolA))).status)
       .toBe(404);
+    expect((await issueObligation("owner", {
+      enrollmentId, revisionId: latestSchoolRevisionId,
+      requestKey: randomUUID(), reason: "Closed term cannot accept debt",
+    })).status).toBe(404);
   });
 });
