@@ -97,6 +97,13 @@
 
 ## Verification honesty and remaining exit blockers
 
+**Verified source-only:** Seven of seven Phase 9 source-guard predicates
+passed over the final GitHub-fetched schema, migration, route, service
+and synthetic-test source files, using isolated JavaScript evaluation:
+three fee-configuration/obligation, two reference-evidence/reviewer,
+and two manual-allocation/preview predicates. This was NOT Node
+`node --test`, PostgreSQL or Vitest execution.
+
 The guard predicates can be evaluated against GitHub-fetched text
 in an isolated JavaScript tool, but that is NOT a substitute for
 `node --test` or actual runtime SQL. **NOT EXECUTED:** `npm ci`,
