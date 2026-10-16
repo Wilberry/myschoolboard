@@ -31,6 +31,23 @@ This document records the acceptance standard for the major product workflows.
 
 ## Payments
 
+- Given a School Administrator submits a bank transfer reference, an
+  immutable `SUBMITTED` claim is created under the same school and exact
+  fee obligation; **no payment status or credit is automatically verified**.
+- Given an independent School Super Admin reviews a claim, only a matching
+  bank reference plus explicit manual funds confirmation may produce a
+  one-time VERIFIED decision; REJECTED is distinct and immutable.
+  Reusing a review payload is idempotent; changing it must be denied.
+- Given multiple claims for one obligation, independent verification must
+  reject an aggregate verified amount exceeding the original charge.
+  Cross-school, other-role, forged reviewer and replayed bank-reference
+  attempts must fail, including under concurrent requests.
+- No file upload counts as acceptable proof until private tenant storage,
+  approved file types, malware controls and scoped readers are verified.
+- No school or parent sees a receipt or settled/paid account merely from
+  evidence submission or a manual reviewer decision before full
+  reconciliation and receipt acceptance.
+
 - Given a payment transfer is uploaded, the system must not automatically mark the payment as verified without a verification decision.
 - When a duplicate callback is received, it must be idempotently handled.
 
