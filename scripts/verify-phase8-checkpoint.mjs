@@ -16,13 +16,17 @@ export function assertPhase8Checkout(info) {
     basename(resolve(info.topLevel)) !== "myschoolboard-phase8" ||
     resolve(info.topLevel) !== resolve(info.scriptRoot)
   ) {
-    throw new Error("Refusing: this is not the separate myschoolboard-phase8 worktree");
+    throw new Error(
+      "Refusing: this is not the separate myschoolboard-phase8 worktree",
+    );
   }
   if (info.branch !== branchName) {
     throw new Error(`Refusing: expected ${branchName}, got ${info.branch}`);
   }
   if (info.status.trim()) {
-    throw new Error("Refusing: Phase 8 worktree has uncommitted or untracked files");
+    throw new Error(
+      "Refusing: Phase 8 worktree has uncommitted or untracked files",
+    );
   }
   if (
     !/^[a-f0-9]{40}$/.test(info.head) ||
@@ -102,7 +106,14 @@ export function preflightPhase8Checkpoint(environment = process.env) {
   });
 
   const compose = JSON.parse(
-    execute("docker", ["compose", "--profile", "test", "config", "--format", "json"]),
+    execute("docker", [
+      "compose",
+      "--profile",
+      "test",
+      "config",
+      "--format",
+      "json",
+    ]),
   );
   assertDisposableCompose(compose.services?.["postgres-test"]);
   execute(
@@ -122,16 +133,25 @@ export function preflightPhase8Checkpoint(environment = process.env) {
     ],
   );
   console.info(
-    `Phase 8 preflight passed: ${head.slice(0, 12)}, clean separate worktree, disposable PostgreSQL healthy`,
+    [
+      `Phase 8 preflight passed: ${head.slice(0, 12)}`,
+      "clean separate worktree",
+      "disposable PostgreSQL healthy",
+    ].join("; "),
   );
   return head;
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
   try {
     const [mode] = process.argv.slice(2);
     if (!["--preflight", "--run"].includes(mode) || process.argv.length !== 3) {
-      throw new Error("Use --preflight (read-only) or --run (full test-only verification)");
+      throw new Error(
+        "Use --preflight (read-only) or --run (full test-only verification)",
+      );
     }
     preflightPhase8Checkpoint();
     if (mode === "--run") {
@@ -143,7 +163,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       });
     }
   } catch (error) {
-    console.error(error instanceof Error ? error.message : "Phase 8 preflight failed");
+    console.error(
+      error instanceof Error ? error.message : "Phase 8 preflight failed",
+    );
     process.exitCode = 1;
   }
 }
