@@ -21,6 +21,20 @@ are disabled by default pending database/security acceptance. D-P9-003,
 ADR-P9-003. This scoped development policy does not silently create a
 delegated bursar role.
 
+## Phase 9 manual allocation scope (AUTHORED, NOT VERIFIED)
+
+Only a current same-school `SCHOOL_SUPER_ADMIN` may allocate a previously
+independently VERIFIED manual evidence claim to its original same-school
+obligation or read the **internal, provisional** school-wide allocation
+preview. `SCHOOL_ADMIN` can submit unverified reference evidence but
+cannot allocate, issue receipts, read the full balance preview or bypass
+the School Super Admin's separate verification. Student/guardian and
+teacher roles gain no fee balance, credit or payment receipt endpoint.
+The allocator's same-school identity and exact source evidence are
+independently revalidated in PostgreSQL under a school lock. It is
+not production payment settlement; writes are disabled by default.
+D-P9-004 / ADR-P9-004.
+
 The matrix below expresses the governing permission model. Server-side governance is mandatory; UI hiding is not sufficient.
 
 | Role | View | Create | Edit | Submit | Approve | Publish | Export | Restore | Delete | Permanently delete | Manage permissions |
