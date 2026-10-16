@@ -924,6 +924,42 @@ describe("Phase 9 school-only immutable fee configuration", () => {
       transferReference: afterWaiverReference,
       reason: "Synthetic verification must honor applied fee waiver",
     })).status).toBe(404);
+
+    // Race two distinct idempotency keys against one second valid waiver.
+    const minorProposal = await proposeFee("admin", {
+      obligationId, requestKey: randomUUID(), kind: "WAIVER",
+      proposedAmountMinor: "5000",
+      reason: "Synthetic small waiver for concurrent anti-double-apply proof",
+    });
+    expect(minorProposal.status).toBe(201);
+    const minorApproval = await decideFee("owner", {
+      proposalId: (await minorProposal.json()).proposal.id,
+      action: "APPROVED",
+      reason: "Synthetic independently authorized minor waiver policy",
+    });
+    expect(minorApproval.status).toBe(201);
+    const minorDecision = (await minorApproval.json()).decision.id;
+    const reqOne = { decisionId: minorDecision, requestKey: randomUUID(),
+      reason: "Synthetic concurrent waiver application" };
+    const reqTwo = { ...reqOne, requestKey: randomUUID() };
+    const attempts = await Promise.all([
+      applyWaiver("owner", reqOne), applyWaiver("owner", reqTwo),
+    ]);
+    const results = attempts.map(v => v.status).sort();
+    expect(results).toContain(201);
+    expect(results.every(v => v === 201 || v === 404 || v === 409)).toBe(true);
+    const winner = attempts.findIndex(v => v.status === 201);
+    const correctRetry = winner === 0 ? reqOne : reqTwo;
+    expect((await applyWaiver("owner", correctRetry)).status).toBe(200);
+    expect((await prisma.feeWaiverApplication.count({
+      where: { schoolId: schoolA, decisionId: minorDecision },
+    }))).toBe(1);
+    const finalPreview = (await (await allocationPreview("owner")).json()).rows[0];
+    expect(finalPreview).toMatchObject({
+      originalChargeMinor: "456789", appliedWaiverMinor: "25000",
+      adjustedChargeMinor: "431789",
+      independentlyReviewedMinor: "400000", previewRemainingMinor: "331789",
+    });
   });
 
   it("keeps finance writes default-off unless test environment explicitly enables them", async () => {
