@@ -3,7 +3,7 @@
 **Project:** MySchoolBoard  
 **Required checkout:** `/home/wilberry/Desktop/project/myschoolboard-phase8`  
 **Branch:** `verify/phase8-local`  
-**Exact remote code checkpoint:** `a325b5816c3e983e5760a3f3ae93782266f4b2cc`  
+**Latest code-change checkpoint:** `a325b5816c3e983e5760a3f3ae93782266f4b2cc` (this execution record is a subsequent documentation-only commit; use the actual current branch HEAD for local verification).  
 **Disposition:** **BLOCKED — NOT ACCEPTED, NOT RELEASED, NOT DEPLOYED.**
 
 ## Proven historical evidence (not rerun against this HEAD)
