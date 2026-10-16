@@ -147,16 +147,27 @@ export async function decideInternalPaymentReference(schoolId: string, input: un
       const claim = await tx.paymentEvidence.findFirst({
         where: { schoolId, id: choice.evidenceId },
         select: { id: true, referenceDigest: true, submitterMembershipId: true,
-          verification: { select: { id: true } } },
+          verification: { select: { id: true, action: true, reason: true,
+            confirmedReferenceDigest: true, reviewerMembershipId: true,
+            evidenceId: true, decidedAt: true } } },
       });
-      if (!claim || claim.verification || claim.submitterMembershipId === memberId) {
+      if (!claim || claim.submitterMembershipId === memberId) {
         throw new FeeError("NOT_FOUND");
       }
       const digest = choice.action === "VERIFIED"
         ? digestReference(schoolId, choice.transferReference) : null;
       if (choice.action === "VERIFIED" && digest !== claim.referenceDigest)
         throw new FeeError("NOT_FOUND");
-      return tx.paymentVerificationDecision.create({
+      if (claim.verification) {
+        const original = claim.verification;
+        if (original.reviewerMembershipId !== memberId) throw new FeeError("NOT_FOUND");
+        if (original.action !== choice.action || original.reason !== choice.reason ||
+            original.confirmedReferenceDigest !== digest) throw new FeeError("CONFLICT");
+        return { id: original.id, evidenceId: original.evidenceId,
+          action: original.action, reason: original.reason,
+          decidedAt: original.decidedAt, replay: true };
+      }
+      const inserted = await tx.paymentVerificationDecision.create({
         data: {
           id: randomUUID(), schoolId, evidenceId: choice.evidenceId,
           action: choice.action, confirmedBankFunds: choice.action === "VERIFIED",
@@ -167,6 +178,7 @@ export async function decideInternalPaymentReference(schoolId: string, input: un
         select: { id: true, evidenceId: true, action: true,
           reason: true, decidedAt: true },
       });
+      return { ...inserted, replay: false };
     }, { isolationLevel: "Serializable" });
     return { ...decision, status: "INDEPENDENT_MANUAL_REVIEW_ONLY" as const };
   } catch (error) { feeFailure(error); }
