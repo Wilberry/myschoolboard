@@ -329,7 +329,7 @@ describe("Phase 9 school-only immutable fee configuration", () => {
     expect(created.headers.get("cache-control")).toBe("private, no-store");
     const evidence = (await created.json()).evidence;
     evidenceId = evidence.id;
-    expect(evidence.status).toBe("SUBMITTED_PENDING_VERIFICATION");
+    expect(evidence.status).toBe("SUBMITTED_EVIDENCE_ONLY");
     expect(evidence.claimedAmountMinor).toBe("300000");
     expect(JSON.stringify(evidence)).not.toContain(bankReferenceA);
     expect(JSON.stringify(evidence)).not.toContain("referenceDigest");
@@ -415,7 +415,8 @@ describe("Phase 9 school-only immutable fee configuration", () => {
     })).status).toBe(201);
     await expect(prisma.paymentVerificationDecision.create({ data: {
       id: randomUUID(), schoolId: schoolA, evidenceId,
-      action: "VERIFIED", confirmedReferenceDigest: "f".repeat(64),
+      action: "VERIFIED", confirmedBankFunds: true,
+      confirmedReferenceDigest: "f".repeat(64),
       reason: "Direct SQL verification forgery",
       reviewerMembershipId: members.admin, reviewerUserId: actors.admin,
     } })).rejects.toThrow();
