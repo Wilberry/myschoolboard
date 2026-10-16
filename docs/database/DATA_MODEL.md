@@ -90,7 +90,14 @@
   and exact ACTIVE pupil enrollment; trusted SQL snapshots minor-unit amount,
   currency and academic identity with school-bound authorization. No payments
   or verified balances are implied.
-- PaymentRecord
+- PaymentEvidence — **authored/unverified:** immutable school-obligation-bound
+  manual reference claim, bank reference digest, exact positive claimed amount,
+  submitter and UUID replay key; SUBMITTED is never verified funds
+- PaymentVerificationDecision — **authored/unverified:** independent current
+  school-owner VERIFIED/REJECTED attestation, bank confirmation bit and
+  reference digest check, unique claim decision and school-locked
+  over-credit prevention; not automatically a settlement or receipt
+- PaymentRecord — later actual paid ledger, **not implemented**
 - PaymentEvidence
 - Receipt
 - AdjustmentRecord
