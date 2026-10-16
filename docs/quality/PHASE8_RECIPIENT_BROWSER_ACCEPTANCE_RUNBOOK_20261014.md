@@ -73,3 +73,37 @@ This smoke does **not** create guardian/student memberships, prove a signed-in s
 The first 2026-10-16 local Docker+Next HTTP smoke found two distinct issues: an initial five-second request timeout while the development server compiled a cold page, and an anonymous HTTP **307** with `Cache-Control: no-store` but no `private`. The smoke now allows up to 60 seconds *per request* for first compilation. RFC 9111 says `no-store` forbids every conforming cache from storing the response. Accept **only** a temporary 307 with `no-store` alone (no `public`, `s-maxage`, positive `max-age`); it must include `noindex` and `no-referrer` and redirect to the **same configured local app's root**. A missing or external Location and all 308 permanent redirects are failures. Nonredirect error pages and recipient API responses still require `private, no-store`. Actual success requires all six live probes, not just the mock-helper unit tests.
 
 The synthetic verification agent should start its existing test Docker Postgres and Next app with both Phase 8 flags explicitly **false**, wait for the app to become responsive, then run `npm run verify:local:http` in the same verified test environment (with `PHASE8_HTTP_SMOKE_BASE_URL="$BETTER_AUTH_URL"`). Record the exact branch SHA, live status and security header values for each route without disclosing cookies or real pupil data. Keep the existing `npm run verify:local` full audit gate separate and unchanged. No GitHub Actions, real recipients or shared DB are allowed.
+
+## 2026-10-16 optional real-Chromium synthetic-account acceptance harness — AUTHORED, NOT EXECUTED
+
+The verified-branch continuation now provides two independent tools. Both use the existing `assertLocalVerificationTarget` disposable Postgres guard, require `schema=public`, and never infer relationships from shared surnames or email addresses.
+
+**1. Read-only fixture readiness:**
+
+With the test Docker `postgres-test` running, synthetic database environment from `docs/quality/LOCAL_CI_RUNBOOK.md`, and BOTH report-disclosure flags still `false`, set `PHASE8_BROWSER_SCHOOL_ID` to the exact disposable test school's generated ID and run `npm run verify:phase8:browser:fixtures`. The inventory returns ONLY booleans and counts: active school, current visibility mode, whether the latest policy has an independently released composition, numbers of active/unrevoked guardian/student linked pupils, and same-child overlap for `GUARDIAN_FIRST_ACK`. It refuses a missing release or unverifiable relationship and deliberately does **not** print pupil IDs, names, grades or credentials. This is an initial prerequisite, not proof that each matched child is in the frozen release. **The basic two-school demo seed cannot satisfy this check**: it seeds school owners, not student/guardian links or published academic compositions. Create a completely synthetic positive fixture through the existing Phase 7–8 academic, identity, owner approval and explicit release workflows; never bypass SQL/guardian security checks or leave fabricated records in shared data.
+
+**2. Browser acceptance using independently signed-in synthetic PARENT and STUDENT accounts:**
+
+Install Playwright as *test-only tooling outside the MySchoolBoard checkout*, for example in `/tmp/myschoolboard-browser-tools`, without editing this project's `package-lock.json`, dependency overrides or CI workflow. Supply an absolute `PHASE8_BROWSER_PLAYWRIGHT_ENTRY=/tmp/myschoolboard-browser-tools/node_modules/playwright/index.mjs`. If your local Chromium installation requires it, point `PHASE8_BROWSER_CHROMIUM_PATH` at the actual browser executable. The browser runner dynamically loads that external driver only when invoked; there is no added application dependency.
+
+For this browser run **only**, start the Next.js app bound to loopback with the existing disposable synthetic `DATABASE_URL` and `TEST_DATABASE_URL`. Set both `PHASE8_REPORT_RELEASE_ENABLED=true` and `PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED=true` in that isolated test-app process to exercise the existing independently approved frozen synthetic release. **Never enable either flag in a shared, deployed, production or live-school environment.** The browser process must use the same approved synthetic DB/Better Auth environment and set:
+
+```sh
+export PHASE8_BROWSER_DISPOSABLE_ACK=I_CONFIRMED_LOCAL_TEST_DB
+export PHASE8_BROWSER_SCHOOL_ID='<exact synthetic school id>'
+export PHASE8_BROWSER_STUDENT_ID='<exact linked synthetic child id>'
+export PHASE8_BROWSER_EXPECT_MODE=GUARDIAN_FIRST_ACK  # or STUDENT_ONLY/GUARDIAN_ONLY
+export PHASE8_BROWSER_EXPECT_ACKNOWLEDGED=false
+export PHASE8_BROWSER_PARENT_EMAIL='synthetic-parent@example.test'
+export PHASE8_BROWSER_PARENT_PASSWORD='<synthetic test password>'
+export PHASE8_BROWSER_STUDENT_EMAIL='synthetic-student@example.test'
+export PHASE8_BROWSER_STUDENT_PASSWORD='<synthetic test password>'
+export PHASE8_BROWSER_PLAYWRIGHT_ENTRY=/tmp/myschoolboard-browser-tools/node_modules/playwright/index.mjs
+npm run verify:phase8:browser:acceptance
+```
+
+The browser runner requires exact localhost port 3000, a schema-public loopback Docker test URL, synthetic `.test` account emails and the explicit disposable acknowledgment. It does **not** set disclosure flags itself. It starts two isolated browser contexts, signs in via the real login page, fetches genuine authorized recipient APIs and rendered grades, verifies the school-policy role boundaries for `STUDENT_ONLY`, `GUARDIAN_ONLY`, or `GUARDIAN_FIRST_ACK` before/after receipt, denies URL child selectors, checks `no-store/noindex`, confirms cached grades cannot print with the raw browser shortcut, checks that a **fresh** authenticated read precedes the explicit Print button, and verifies synchronous DOM redaction on window focus. An optional `PHASE8_BROWSER_FOREIGN_SCHOOL_ID` enables a 404 cross-tenant GET check for a school where the synthetic pupil has no role.
+
+For a **pre-acknowledgment `GUARDIAN_FIRST_ACK` fixture only**, setting `PHASE8_BROWSER_ALLOW_RECEIPT_WRITE=1` makes the harness click the exact published subject acknowledgment button and then verify the linked STUDENT's separately authorized access. This writes one **immutable synthetic receipt** to the disposable database; it is OFF by default. Do not use this option on a reused receipt or the wrong policy. Never use the real parent, pupil or staff credentials.
+
+**Limits:** This script currently exercises genuine authenticated browser/API routing and a stubbed `window.print()` capture to verify what would enter the print pipeline; it does **not** generate or visually inspect a native PDF, run a screen reader, provision test identities, emulate real revocation itself or demonstrate bfcache restoration across a real login change. Those remain manual acceptance tasks from the matrix above, along with checking all four policy changes and multi-child segregation. Browser script and fixture tests are newly AUTHORED; no real Chromium acceptance result is claimed for the latest branch revision. Keep evidence redacted and record exact SHA, Chromium/Playwright version, synthetic fixture identifiers held locally (not in the report), cases and failures. Turn report feature flags OFF after the isolated run; no production/report release follows from a green browser harness.
