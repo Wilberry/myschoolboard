@@ -68,7 +68,7 @@ function execute(executable, args, extra = {}) {
       `Verification preflight failed: ${executable} ${args.join(" ")}`,
     );
   }
-  return result.stdout.trim();
+  return (result.stdout ?? "").trim();
 }
 
 export function assertPhase8Environment(environment) {
