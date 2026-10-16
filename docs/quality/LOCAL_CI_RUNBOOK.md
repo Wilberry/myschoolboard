@@ -87,3 +87,24 @@ Report the exact commit SHA, Node/npm versions, Docker test service confirmation
 Before `npm run verify:local` on the previously specified **disposable loopback-only** test service, inspect `_prisma_migrations` for `20261013100000_phase8_result_sheet_evidence_review`. The unmerged branch corrected three invalid repeated PL/pgSQL `DECLARE` sections in this draft migration, leaving all nine variable names/types intact. An already-applied migration with a different checksum **must not be silently rewritten or replayed**. If the disposable DB was used with earlier branch artifacts, stop and inspect migration history/failed attempts first; a fresh disposable-only test instance may be provisioned according to the documented operator-controlled procedure, never by resetting a shared database.
 
 Run the newly registered structural guard in the normal `npm test`/`verify:local:guards` path before declaring local acceptance. This guard does not replace actual PostgreSQL syntax checking, data/tenant audit tests, Vitest, Prisma migration status or strict `npm audit --audit-level=high`. The existing `npm run verify:local` command order and CI workflow remain unchanged. This checkpoint did **not** execute migrations or seeding.
+
+## Phase 8 worktree-pinned verification entry point (2026-10-16)
+
+After two accidental fast-forwards from the separate original Phase 1 checkout (both safely repaired with its untracked files preserved), the Phase 8 development branch now provides a deliberately stricter **non-destructive entry point** at `scripts/verify-phase8-checkpoint.mjs`.
+
+Invoke the script with its **absolute path**, independent of which folder the terminal opens in:
+
+```sh
+# Read-only preflight only; no Docker start, database migration or seed
+node /home/wilberry/Desktop/project/myschoolboard-phase8/scripts/verify-phase8-checkpoint.mjs --preflight
+
+# Only after verifying that database is the intended disposable Docker test service
+# This runs the existing full npm CI-equivalent pipeline, including the strict audit
+node /home/wilberry/Desktop/project/myschoolboard-phase8/scripts/verify-phase8-checkpoint.mjs --run
+```
+
+Set the existing synthetic variables in this runbook beforehand, plus **both** `PHASE8_REPORT_RELEASE_ENABLED=false` and `PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED=false`. The wrapper determines the root **from its own file**, never from shell cwd, and rejects anything except the separate `myschoolboard-phase8` checkout on branch `verify/phase8-local` with no staged, unstaged or untracked changes and with local HEAD identical to `origin/verify/phase8-local`. Fetch/fast-forward **only** within the Phase 8 worktree beforehand, and inspect the branch/commit yourself. The wrapper also reads Docker Compose configuration, requires a tmpfs-backed `postgres-test` with a single loopback published 5434-to-5432 port mapping, and checks `pg_isready`. It never restores, resets, cleans, switches or fetches a Git branch, starts/stops Docker, migrates databases in preflight mode, or changes feature flags.
+
+`--run` requires this read-only preflight to pass and then launches the **unchanged** `scripts/verify-local.mjs` sequence from the verified Phase 8 root; its checksum-before-deploy protection, installed guards, full Vitest/Next checks, and final `npm audit --audit-level=high` remain mandatory. This command can modify **only** the explicitly disposable synthetic database as authorized by the existing mandate and the operator's verified local Docker context. No shared/production data, real pupils, branch updates or GitHub Actions are authorized by these commands.
+
+The wrapper has a pure three-test Node regression file in both local guard and full-test npm registrations. Isolated source-level harness assertions 12/12 passed in this chat; **the actual new Node tests and full wrapper pipeline have not been run** in the local worktree yet. A clean worktree alone does not prove the Docker context is local; inspect the active context, external forwards and port before running.
