@@ -98,10 +98,14 @@
 
 ## Verification and release blockers
 
-- **Source-only:** this new reversal guard's two source-invariant
-  predicates passed evaluation over fetched committed GitHub
-  files in an isolated V8 tool. This is NOT the actual Node
-  `node --test` command, a real DB migration, or a Vitest run.
+- **Source-only:** **9/9 Phase 9 structural source predicates
+  passed** against current committed GitHub files in an isolated
+  V8 tool: 3 school-fee/obligation, 2 payment evidence/review,
+  2 manual allocation, and 2 manual reversal/preview checks.
+  The SQL reversal file contains exactly one request and one
+  decision trigger function definition. This does NOT execute
+  the actual Node `node --test` command, Prisma validation,
+  a real DB migration, or Vitest.
 - **NOT EXECUTED:** Prisma validate/generate, cumulative Phase 6–9
   PostgreSQL migrations, synthetic authenticated Vitest and
   privileged direct-SQL/concurrent writes, role revocation,
