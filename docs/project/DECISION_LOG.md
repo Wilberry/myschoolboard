@@ -1,5 +1,26 @@
 # Decision Log
 
+## D-P9-006: Separate waiver/correction proposals from effective accounting adjustments
+
+- **Status:** authored and default-OFF; NOT migration/runtime/CI verified
+  (2026-10-16). Continuing mandate D-023.
+- **Decision:** School Administrator may append only a reasoned
+  school-obligation WAIVER or CORRECTION_PROPOSAL with immutable
+  positive amount not greater than original debt and original
+  currency; independent same-school School Super Admin reviews
+  APPROVED/REJECTED once. Idempotent same-actor/payload retry only.
+- **Guard:** school composite FKs, school row lock, real active
+  member and reviewer separation, unique school/requestKey and
+  school/proposal decision keys, preserved actor/time and SQL
+  immutable UPDATE/DELETE/TRUNCATE triggers.
+- **Crucial limit:** approved proposal never reduces the original
+  fee, changes an internal balance preview, refunds money, adjusts
+  received funds, issues a receipt or makes parent data visible.
+  Effective adjustments await separate auditable ledger,
+  accounting/currency invariants and real security tests.
+  ADR-P9-006.
+
+
 ## D-P9-005: Immutable correction request plus independent owner review
 
 - **Status:** authored, runtime NOT VERIFIED (2026-10-16).
