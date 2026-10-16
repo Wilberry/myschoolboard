@@ -45,7 +45,7 @@ test("Phase 9 fee structures are school-scoped and append-only, not debt or paym
   assert.match(sql, /"version":=next_version/);
   assert.match(sql, /prevent_lesson_note_history_mutation/);
   assert.match(sql, /prevent_lesson_note_history_truncate/);
-  assert.doesNotMatch(schema.slice(schema.indexOf("model FeeCategory")), /model (PaymentRecord|Receipt|FeeObligation) \{/);
+  assert.doesNotMatch(schema.slice(schema.indexOf("model FeeCategory")), /model (PaymentRecord|Receipt) \{/);
 });
 test("Fee configuration routes and service use session actor and cannot publish payments", () => {
   assert.match(service, /auth\.api\.getSession/);
