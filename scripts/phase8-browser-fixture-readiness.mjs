@@ -37,6 +37,7 @@ export function summarizeBrowserFixture({
   release,
   linkedParentChildIds,
   linkedStudentChildIds,
+  targetChildId = null,
 }) {
   const parents = new Set(linkedParentChildIds);
   const students = new Set(linkedStudentChildIds);
@@ -46,13 +47,23 @@ export function summarizeBrowserFixture({
     Boolean(release) &&
     release.visibilityPolicyId === policy?.id &&
     release.studentCount > 0;
+  // When accepting a particular browser account, a link to SOME other
+  // child is not evidence that this exact synthetic pupil is testable.
+  const hasParent = targetChildId
+    ? parents.has(targetChildId)
+    : parents.size > 0;
+  const hasStudent = targetChildId
+    ? students.has(targetChildId)
+    : students.size > 0;
   const relationshipReady =
     mode === "STUDENT_ONLY"
-      ? students.size > 0
+      ? hasStudent
       : mode === "GUARDIAN_ONLY"
-        ? parents.size > 0
+        ? hasParent
         : mode === "GUARDIAN_FIRST_ACK"
-          ? sharedChildren > 0
+          ? targetChildId
+            ? hasParent && hasStudent
+            : sharedChildren > 0
           : false;
   return {
     activeSchool: Boolean(schoolActive),
@@ -66,7 +77,18 @@ export function summarizeBrowserFixture({
   };
 }
 
-export async function inspectBrowserFixture(prisma, schoolId) {
+export async function inspectBrowserFixture(
+  prisma,
+  schoolId,
+  targetChildId = null,
+) {
+  if (
+    targetChildId !== null &&
+    (typeof targetChildId !== "string" ||
+      !/^[A-Za-z0-9_-]{1,128}$/.test(targetChildId))
+  ) {
+    throw new Error("Invalid synthetic fixture child ID");
+  }
   const [school, policy, parents, students] = await Promise.all([
     prisma.school.findUnique({
       where: { id: schoolId },
@@ -107,6 +129,7 @@ export async function inspectBrowserFixture(prisma, schoolId) {
     release,
     linkedParentChildIds: parents.map((row) => row.studentId),
     linkedStudentChildIds: students.map((row) => row.studentId),
+    targetChildId,
   });
 }
 
