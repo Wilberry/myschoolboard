@@ -1,5 +1,33 @@
 # Decision Log
 
+## D-P9-002: Reasoned student-specific fee obligations preserve financial history
+
+- **Status:** Phase 9 obligation implementation authored, NOT DATABASE VERIFIED
+  (2026-10-16), subject to disposable PostgreSQL and security acceptance.
+- **Decision:** current same-school School Super Admin may explicitly issue
+  one immutable student debt per school/ENROLLED pupil/category/session/term
+  only for an exact ACTIVE enrollment and latest applicable immutable policy
+  revision. Application accepts enrollmentId, revisionId, UUID requestKey
+  and reason—not student identity, monetary amount, status, or actor. SQL
+  re-derives and snapshots pupil/class/period/category, currency and positive
+  minor-unit amount from trusted tenant-bound tables.
+- **Idempotency and history:** identical request-key/payload replay returns
+  the original obligation; changed replay is denied, and unique pupil/
+  category/term constraint prevents a second issue. Price changes append
+  revisions, never reprice historical debt. Credits, discounts, disputes,
+  withdrawals, actual payments and reversals require separate audited
+  append-only events; never silently mutate the original charge.
+- **Safety boundary:** `PHASE9_FEE_WRITE_ENABLED` defaults OFF for all
+  Phase 9 writes until full DB and authorization acceptance. The school-
+  owner-only read is not a guardian or student finance portal; `ISSUED_UNPAID`
+  means issued charge only, never confirmed outstanding balance or receipt.
+  No live payment provider, upload, settlement or verification workflow.
+- **Verification:** synthetic integration test code authored only; three
+  structural source-guard predicates passed against GitHub-fetched files
+  in isolated V8, not Node. Schema/migrations/CI/security still unexecuted.
+  See ADR-P9-002, FEE-REQ-001.
+
+
 ## D-P9-001: Immutable, explicit school fee configuration before obligations
 
 - **Status:** Phase 9 authored, NOT DATABASE VERIFIED (2026-10-16).
