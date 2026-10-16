@@ -46,6 +46,12 @@ enum PaymentVerificationAction {
   REJECTED
 }
 
+/** Human correction decision, not a refund or money movement. */
+enum ManualAllocationReversalAction {
+  APPROVED
+  REJECTED
+}
+
 enum SchoolLifecycleStatus {
   PENDING
   ACTIVE
@@ -298,6 +304,8 @@ model School {
   paymentEvidence PaymentEvidence[]
   paymentVerificationDecisions PaymentVerificationDecision[]
   manualPaymentAllocations ManualPaymentAllocation[]
+  manualAllocationReversalRequests ManualAllocationReversalRequest[]
+  manualAllocationReversalDecisions ManualAllocationReversalDecision[]
 }
 
 model Membership {
@@ -348,6 +356,8 @@ model Membership {
   submittedPaymentEvidence PaymentEvidence[]
   reviewedPaymentEvidence PaymentVerificationDecision[]
   manualPaymentAllocations ManualPaymentAllocation[]
+  manualReversalRequests ManualAllocationReversalRequest[]
+  manualReversalDecisions ManualAllocationReversalDecision[]
 }
 
 model ScopeGrant {
@@ -1648,4 +1658,53 @@ model ManualPaymentAllocation {
   @@unique([schoolId, evidenceId])
   @@unique([schoolId, verificationId])
   @@index([schoolId, obligationId, allocatedAt])
+  reversalRequest ManualAllocationReversalRequest?
+}
+
+
+/** One immutable correction REQUEST per original manual allocation.
+ * Requesting a reversal is not approval, refund, money movement, credit
+ * or a change to the preserved original allocation. */
+model ManualAllocationReversalRequest {
+  id String @id
+  schoolId String
+  allocationId String
+  requestKey String @db.VarChar(64)
+  amountMinor BigInt
+  currency String @db.VarChar(3)
+  reason String @db.VarChar(500)
+  requesterMembershipId String
+  requesterUserId String
+  requestedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  allocation ManualPaymentAllocation @relation(fields: [schoolId, allocationId], references: [schoolId, id], onDelete: NoAction, map: "ManualAllocationReversalRequest_allocation_fkey")
+  requester Membership @relation(fields: [schoolId, requesterMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ManualAllocationReversalRequest_requester_fkey")
+  decision ManualAllocationReversalDecision?
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, requestKey])
+  @@unique([schoolId, allocationId])
+  @@index([schoolId, requestedAt])
+}
+
+/** Independent and immutable human judgment about a reversal request.
+ * Only APPROVED reverses the MANUAL PREVIEW allocation; it is NOT
+ * an actual refund, charge cancellation, bank transfer or receipt. */
+model ManualAllocationReversalDecision {
+  id String @id
+  schoolId String
+  requestId String
+  action ManualAllocationReversalAction
+  reason String @db.VarChar(500)
+  reviewerMembershipId String
+  reviewerUserId String
+  decidedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  request ManualAllocationReversalRequest @relation(fields: [schoolId, requestId], references: [schoolId, id], onDelete: NoAction, map: "ManualAllocationReversalDecision_request_fkey")
+  reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ManualAllocationReversalDecision_reviewer_fkey")
+
+  @@unique([schoolId, requestId])
+  @@index([schoolId, decidedAt])
 }
