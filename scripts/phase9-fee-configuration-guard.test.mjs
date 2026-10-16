@@ -71,9 +71,9 @@ test("Fee configuration routes and service use session actor and cannot publish 
 });
 
 test("School-enrollment fee obligations preserve exact debt and cannot become a payment", () => {
-  assert.match(schema, /model FeeObligation \\{/);
-  assert.match(schema, /@@unique\\(\\[schoolId, studentId, sessionId, termId, categoryId\\]/);
-  assert.match(schema, /@@unique\\(\\[schoolId, requestKey\\]/);
+  assert.match(schema, /model FeeObligation \{/);
+  assert.match(schema, /@@unique\(\[schoolId, studentId, sessionId, termId, categoryId\]/);
+  assert.match(schema, /@@unique\(\[schoolId, requestKey\]/);
   for (const fk of [
     "FeeObligation_student_fkey",
     "FeeObligation_enrollment_fkey",
@@ -89,21 +89,21 @@ test("School-enrollment fee obligations preserve exact debt and cannot become a 
     "FeeObligation_immutable", "FeeObligation_no_truncate"]) {
     assert.ok(obligationSql.includes('"' + name + '"'), name);
   }
-  assert.match(obligationSql, /"School" school[\\s\\S]*?FOR UPDATE/);
+  assert.match(obligationSql, /"School" school[\s\S]*?FOR UPDATE/);
   assert.match(obligationSql, /"status"='ENROLLED'/);
-  assert.match(obligationSql, /e\\."status"='ACTIVE'/);
-  assert.match(obligationSql, /source_revision\\."scope"='SCHOOL'/);
-  assert.match(obligationSql, /source_revision\\."scope"='SECTION'/);
-  assert.match(obligationSql, /source_revision\\."scope"='CLASS'/);
-  assert.match(obligationSql, /NEW\\."amountMinor":=source_revision\\."amountMinor"/);
-  assert.match(obligationSql, /NEW\\."currency":=source_revision\\."currency"/);
-  assert.match(obligationSql, /newer\\."version">revision\\."version"/);
+  assert.match(obligationSql, /e\."status"='ACTIVE'/);
+  assert.match(obligationSql, /source_revision\."scope"='SCHOOL'/);
+  assert.match(obligationSql, /source_revision\."scope"='SECTION'/);
+  assert.match(obligationSql, /source_revision\."scope"='CLASS'/);
+  assert.match(obligationSql, /NEW\."amountMinor":=source_revision\."amountMinor"/);
+  assert.match(obligationSql, /NEW\."currency":=source_revision\."currency"/);
+  assert.match(obligationSql, /newer\."version">revision\."version"/);
   assert.match(obligationSql, /"FeeObligation_student_category_period_key"/);
   assert.match(obligations, /requirePhase9FeeWritesEnabled/);
   assert.match(service, /PHASE9_FEE_WRITE_ENABLED/);
-  assert.match(obligations, /requestKey: z\\.string\\(\\)\\.uuid\\(\\)/);
+  assert.match(obligations, /requestKey: z\.string\(\)\.uuid\(\)/);
   assert.match(obligations, /replay: true/);
-  assert.match(obligations, /BigInt|amountMinor: record\\.amountMinor\\.toString/);
+  assert.match(obligations, /BigInt|amountMinor: record\.amountMinor\.toString/);
   assert.match(obligationRoute, /"Cache-Control": "private, no-store"/);
   assert.doesNotMatch(obligationRoute, /export async function (PATCH|PUT|DELETE)/);
   assert.match(integration, /safe replay never fabricates payment/);
