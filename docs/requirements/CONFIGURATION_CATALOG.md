@@ -1,5 +1,21 @@
 # Configuration Catalog
 
+## Phase 9 internal waiver application (AUTHORED / NOT VERIFIED)
+
+`PHASE9_EFFECTIVE_WAIVER_ENABLED=false` independently defaults
+OFF beside `PHASE9_FEE_WRITE_ENABLED=false`. When explicitly
+enabled in a verified disposable test environment, only a
+current School Super Admin can apply a distinct independently
+approved original WAIVER policy decision to the INTERNAL
+adjusted-charge preview. Non-waiver correction proposals remain
+advisory only. The full cumulative verified-claim total,
+even if allocations were reversed, and prior waiver sum may not
+exceed original debt. Real payment settlement, refunds,
+public student/guardian fee balances and receipts are out of
+scope. Do not enable until all tenant, financial, browser and
+strict dependency security gates pass. D-P9-007 / ADR-P9-007.
+
+
 ## Phase 9 advisory fee adjustment review (NOT VERIFIED)
 
 `PHASE9_FEE_ADJUSTMENT_PROPOSALS_ENABLED=false` defaults OFF in
