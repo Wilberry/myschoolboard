@@ -1,5 +1,39 @@
 # Architecture Decision Records
 
+## ADR-P9-004: School-locked immutable verified-reference allocation and numeric preview
+
+- **Status:** authored / unexecuted, 2026-10-16.
+- **Context:** verified manual bank-reference attestation is not itself
+  an official payment or receipted settlement; claims may be partial,
+  duplicate, rejected or pending. Aggregating claimed sums directly
+  would fabricate money. Corrections, refunds and reversals are not yet
+  designed or accepted.
+- **Decision:** introduce `ManualPaymentAllocation` with immutable
+  same-school obligation/evidence/verified-decision links, exact source
+  claim minor-unit money and currency, actor/reason/idempotency and
+  database-stamped UTC time. Strict school-row-locked trigger checks
+  current SCHOOL_SUPER_ADMIN, independent SCHOOL_ADMIN claim submitter,
+  exact VERIFIED and funds-confirmed decision/reference, money and
+  cumulative allocation cap. SQL unique per-school evidence/decision/
+  request keys plus no-update/delete/truncate protect history.
+- **Reader:** private no-store School Super Admin GET derives a bounded
+  exact PostgreSQL NUMERIC-string preview for original charge,
+  independently reviewed claims, allocated claims, reviewed unallocated
+  claims and arithmetic remainder. Every projection row rechecks actual
+  school/membership in the final SQL. Labels intentionally avoid PAID
+  or FINAL; this is not an external settlement statement, receipt,
+  parent account or official school financial report.
+- **Feature/security:** additional default-OFF
+  `PHASE9_MANUAL_ALLOCATION_ENABLED` and existing master finance
+  gate; strict authenticated input schemas, serializable writes,
+  exact retry, denial of foreign/unauthorized reads and writes, no
+  payment provider/file upload. Deferred: signed bank settlement,
+  audited corrections/reversals/refunds, receipts, tenant-private
+  financial documents and independently verified guardian views.
+  No release before cumulative disposable PostgreSQL and strict
+  dependency/privacy acceptance. D-P9-004.
+
+
 ## ADR-P9-003: Immutable manual reference-claim ledger and independent attestation
 
 - **Status:** authored; NOT migrated, integrated or security accepted
