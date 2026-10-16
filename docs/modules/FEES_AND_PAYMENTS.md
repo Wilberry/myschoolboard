@@ -1,5 +1,34 @@
 # Fees and Payments
 
+## Phase 9 advisory fee adjustment proposals (authored, NOT VERIFIED)
+
+- `FeeAdjustmentProposal` snapshots a reasoned current same-school
+  School Administrator's proposed WAIVER or CORRECTION_PROPOSAL for
+  one existing immutable FeeObligation, explicitly bounded to the
+  original charge and same currency. UUID retry key, actor, school,
+  full precision minor units and timestamp remain immutable.
+- An independent active same-school School Super Admin may append
+  one `FeeAdjustmentDecision` APPROVED/REJECTED judgment and reason.
+  Exactly matching reviewer/payload retry reuses the decision. SQL
+  independently rechecks real actors and source under School lock,
+  tenant-composite foreign keys and no-update/delete/truncate guards.
+- **Even APPROVED is ADVISORY ONLY:** there is deliberately no effective
+  waiver, repricing, charge adjustment, allocation reduction, refund,
+  official amount due, receipt or school/student-facing balance change.
+  Executing an adjustment requires a separate accounting ledger and
+  independent acceptance, including concurrency and cumulative
+  over-credit protection.
+- Private no-store `GET/POST /api/schools/:schoolId/fee-adjustment-proposals`
+  projects only an active School Administrator's own proposals or the
+  School Super Admin's bounded queue; independent
+  `POST /api/schools/:schoolId/fee-adjustment-decisions` creates
+  one terminal advisory review. No DELETE/PATCH/export, parent/guardian
+  or student finance routes.
+- `PHASE9_FEE_ADJUSTMENT_PROPOSALS_ENABLED=false` additionally guards
+  writes beside `PHASE9_FEE_WRITE_ENABLED=false`. Both default OFF
+  pending disposable database and security gates.
+
+
 ## Scope
 
 School-defined fee categories, period-specific fee structures, student fee obligations,
