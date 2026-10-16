@@ -1,5 +1,28 @@
 # Acceptance Criteria
 
+## Phase 9 internal effective fee waiver application (AUTHORED; NOT TESTED)
+
+- A signed-in same-school active School Super Admin may apply
+  only an independently approved original WAIVER proposal for
+  its unchanged original obligation, once, with UUID request
+  key and reason. Client cannot choose amount, currency,
+  actor or a paid status. Foreign tenant, incorrect reviewer,
+  REJECTED, pending and CORRECTION_PROPOSAL are rejected.
+- SQL must keep `waived_total+VERIFIED_claims<=original_charge`
+  under a School lock across concurrent waiver applications,
+  new verified reviews and manual allocations. A reversal of a
+  manual allocation does not erase prior human VERIFIED amount
+  from this conservative cap. Duplicate source applications,
+  forged direct database actors or historic row mutation fail.
+- Original charge remains unchanged, and owner-only internal
+  preview derives applied waiver, adjusted charge and arithmetic
+  remainder in exact decimal minor units. No provider-paid
+  status, bank settlement, refund, invoice release, receipt
+  or student/guardian finance view may be implied. Actual
+  runtime PostgreSQL, Prisma, security and browser validation
+  remains mandatory.
+
+
 ## Phase 9 advisory waiver review (unexecuted)
 
 - A current same-school School Administrator may submit a reasoned,
