@@ -3,8 +3,6 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 
-const projectRoot = fileURLToPath(new URL("../", import.meta.url));
-
 export function inspectDeepmergeCandidate(pkg, lock) {
   assert.equal(pkg.dependencies["@prisma/client"], "^6.19.3");
   assert.equal(pkg.devDependencies.prisma, "^6.19.3");
