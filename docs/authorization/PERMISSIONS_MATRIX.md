@@ -1,5 +1,18 @@
 # Permissions Matrix
 
+## Phase 9 fee waiver proposal / advisory approval — AUTHORED ONLY
+
+Current active same-school SCHOOL_ADMIN may propose reasoned waiver or
+fee correction to an existing immutable school fee debt, bounded to
+its original currency and charge. Only a **different**, current
+same-school SCHOOL_SUPER_ADMIN may record one immutable APPROVED or
+REJECTED advisory decision. Neither role may thereby cancel a student
+debt, produce an effective waiver, refund money or issue a receipt.
+Admin sees only own proposals; owner sees bounded same-school queue.
+All finance writes are default-OFF, and no guardians/students/staff/
+platform roles acquire financial access. D-P9-006.
+
+
 For assignment-administration list/detail reads **only**, the D-020/D-023 development implementation default is authenticated, active, same-school `school:configure` (currently School Administrator and School Super Admin), plus tenant-scoped resource checks and minimum needed fields. This does **not** grant general assignment-administration read to every `academic:read` role, Platform Super Admin, parents, or teachers. Teacher self-service requires a distinct exact-active-assignment-scoped design. Read handlers are not implemented or validated merely by recording this policy.
 
 ## Phase 9 interim finance workflow (AUTHORED, NOT VERIFIED)
