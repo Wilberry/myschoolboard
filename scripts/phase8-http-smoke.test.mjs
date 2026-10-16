@@ -126,7 +126,7 @@ test("accepts a Next.js 307 login redirect with no-store alone", async () => {
   });
 });
 
-test("still requires private for denied nonredirect pages and API responses", async () => {
+test("requires private on error pages and APIs", async () => {
   for (const change of [
     (path, status, headers) => ({
       status,
@@ -155,7 +155,7 @@ test("still requires private for denied nonredirect pages and API responses", as
   }
 });
 
-test("rejects missing or external redirects, permanent redirects and public caching", async () => {
+test("rejects unsafe redirects and public caching", async () => {
   for (const change of [
     (path, status, headers) => ({
       status,
