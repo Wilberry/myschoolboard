@@ -30,6 +30,8 @@ export function assertRecipientBrowserTarget(env) {
     url.pathname !== "/" ||
     url.search ||
     url.hash ||
+    url.username ||
+    url.password ||
     new URL(env.TEST_DATABASE_URL).searchParams.get("schema") !== "public"
   ) {
     throw new Error(
