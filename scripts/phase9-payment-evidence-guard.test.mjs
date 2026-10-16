@@ -62,6 +62,10 @@ test("manual reviewer requires distinct authenticated actor and explicit funds a
   assert.ok(sql.includes('candidate RECORD;'));
   assert.ok(sql.includes('already_verified NUMERIC;'));
   assert.ok(!sql.includes('DECLARE already_verified NUMERIC;'));
+  assert.equal(sql.split('CREATE FUNCTION "validate_payment_verification_insert"').length, 2);
+  assert.equal(sql.split('CREATE FUNCTION "validate_payment_evidence_insert"').length, 2);
+  assert.ok(sql.includes('"confirmedReferenceDigest" ~ ' + "'^[a-f0-9]{64}$'"));
+  assert.ok(sql.includes("OR (\"action\"='REJECTED' AND \"confirmedBankFunds\"=false"));
   assert.ok(!service.includes('status: "PAID"'));
   assert.ok(!service.includes('createPaymentRecord'));
   assert.ok(service.includes('if (allowed.length !== 1) throw new FeeError("NOT_FOUND")'));
