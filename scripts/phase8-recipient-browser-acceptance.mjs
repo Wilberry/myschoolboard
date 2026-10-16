@@ -145,6 +145,49 @@ async function readReport(page, origin, schoolId) {
   return { page, rows: data.reports };
 }
 
+async function checkRestoredPageLifecycle(page, origin, schoolId, childId) {
+  const reportUrl = new URL(
+    `/api/schools/${encodeURIComponent(schoolId)}/published-reports`,
+    origin,
+  ).href;
+  const verifying = page.waitForResponse(
+    (response) =>
+      response.url() === reportUrl &&
+      response.request().method() === "GET",
+  );
+  const counts = await page.evaluate(() => {
+    const root = document.querySelector(".published-report-workspace");
+    const before = root?.querySelectorAll("article").length ?? 0;
+    window.dispatchEvent(new PageTransitionEvent("pagehide", {
+      persisted: true,
+    }));
+    const hidden = root?.querySelectorAll("article").length ?? 0;
+    window.dispatchEvent(new PageTransitionEvent("pageshow", {
+      persisted: true,
+    }));
+    return {
+      before,
+      hidden,
+      printAllowed: root?.getAttribute("data-print-authorized"),
+    };
+  });
+  assert.ok(counts.before > 0, "No grade rows before pagehide");
+  assert.equal(counts.hidden, 0, "Pagehide retained sensitive grade rows");
+  assert.equal(counts.printAllowed, "false");
+  const checked = await verifying;
+  assert.equal(checked.status(), 200, "Restored page was not reauthorized");
+  assertPrivateHeaders(checked);
+  const payload = await checked.json();
+  assert.ok(Array.isArray(payload.reports));
+  assert.ok(payload.reports.length > 0);
+  for (const row of payload.reports) {
+    assert.equal(row.studentId, childId);
+  }
+  await page.getByRole("table", {
+    name: "Individually authorized subject grades",
+  }).first().waitFor();
+}
+
 async function checkPrintLifecycle(page, origin, schoolId, childId, mode) {
   const button = page.getByRole("button", {
     name: "Print authorized subject report / Save as PDF",
@@ -316,6 +359,12 @@ export async function runRecipientBrowserAcceptance(
     await printPage.getByRole("table", {
       name: "Individually authorized subject grades",
     }).first().waitFor();
+    await checkRestoredPageLifecycle(
+      printPage,
+      origin,
+      schoolId,
+      childId,
+    );
     await checkPrintLifecycle(printPage, origin, schoolId, childId, mode);
     return {
       browserChecks: "passed",
