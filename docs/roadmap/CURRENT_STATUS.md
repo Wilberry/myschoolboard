@@ -1,5 +1,28 @@
 # Current Status
 
+## Phase 9 — advisory waiver/correction proposals (AUTHORED, NOT VERIFIED; 2026-10-16)
+
+Isolated branch `feature/phase9-fees-payments-foundation` now adds
+`FeeAdjustmentProposal` and `FeeAdjustmentDecision`, an additive
+`20261016230000_phase9_fee_adjustment_proposals` migration, strict
+same-school School Administrator proposal and independent School Super
+Admin advisory decision APIs, own-only/bounded private no-store reads,
+synthetic real-session tests and source invariants. Advisory APPROVED
+waiver/correction proposals **do not** change issued debt, allocations,
+manual preview balances, settlement, refunds or receipts. All original
+fee and bank-reference evidence remains immutable.
+
+`PHASE9_FEE_ADJUSTMENT_PROPOSALS_ENABLED=false` is a new independent
+default-off write switch beside the master default-off finance switch.
+PostgreSQL migration, Prisma generation, synthetic Vitest, concurrent
+SQL and tenant security, typecheck, build, browser/privacy and strict
+dependency audit remain NOT EXECUTED. No main, Phase 8 checkout,
+shared database, GitHub Actions or deployment was touched.
+FEE-REQ-001 and Phase 9 acceptance remain BLOCKED.
+See `docs/quality/PHASE9_FEE_ADJUSTMENT_PROPOSALS_CHECKPOINT_20261016.md`,
+D-P9-006, ADR-P9-006.
+
+
 ## Phase 9 — audited internal manual allocation reversal (AUTHORED, NOT VERIFIED; 2026-10-16)
 
 The feature branch `feature/phase9-fees-payments-foundation` now
