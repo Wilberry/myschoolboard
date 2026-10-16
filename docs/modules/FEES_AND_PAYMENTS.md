@@ -46,7 +46,15 @@ are tenant-bound and financial history must be attributable and non-silently mut
    preview only**. This is NOT bank settlement, verified official
    student balance, generated receipt or accepted reconciliation.
    Corrective reversals/refunds remain separate future evidence.
-5. **Private finance, student/guardian views and release checks — PENDING.**
+5. **Manual allocation reversal requests and independent review — AUTHORED,
+   NOT VERIFIED.** An active same-school School Administrator proposes
+   one reasoned request to correct an existing manually allocated
+   preview amount. A distinct current School Super Admin approves
+   or rejects it. Only APPROVED subtracts the **entire original
+   manual allocation** from the internal preview, never altering
+   historical fee, claim, review or allocation records. No refund,
+   bank movement, official student balance or receipt is created.
+6. **Private finance, student/guardian views and release checks — PENDING.**
    Apply verified same-school relationship and minimum-data access,
    actual synthetic PostgreSQL integration tests, privacy/browser checks,
    unchanged CI and strict high-severity dependency audit before release.
@@ -188,6 +196,42 @@ are tenant-bound and financial history must be attributable and non-silently mut
   immutable credit should become production-enforceable or described
   as received funds without separately audited settlement and
   correction models.
+
+## Phase 9 manual allocation reversal/correction contract (authored, NOT verified)
+
+- `ManualAllocationReversalRequest` is an immutable reasoned current
+  School Administrator request for one existing same-school allocation.
+  PostgreSQL checks actor/tenant/source under School lock, then copies
+  the allocation's full minor-unit amount and currency from original
+  ledger records. Strict HTTP input accepts allocationId, UUID requestKey
+  and reason, never caller money, refund target, paid state or actor.
+- Only a distinct current same-school School Super Admin can append
+  one immutable `ManualAllocationReversalDecision`: APPROVED or
+  REJECTED. PostgreSQL repeats actor/source checks and rejects history
+  mutation or a second decision. Same reviewer/action/reason retry
+  returns the first decision; changed retry is a conflict.
+- Exactly **one** request is permitted for each allocation, including
+  if rejected; partial reversal, reopening a rejected request or
+  reusing the original verified claim after approval requires a later
+  separately audited policy. REJECTED never subtracts allocation;
+  APPROVED subtracts its **full amount from internal preview only**.
+  The source allocation and VERIFIED human attestation remain
+  permanently preserved and are not reusable.
+- Private no-store `GET/POST /api/schools/:schoolId/manual-allocation-reversals`
+  lists an Administrator's **own** requests or the School Super
+  Admin's bounded queue and accepts only Admin requests.
+  `POST /api/schools/:schoolId/manual-allocation-reversal-decisions`
+  records the independent School Super Admin decision; no PATCH,
+  DELETE, actual bank refund, provider callback, or document export.
+  Writes require both `PHASE9_FEE_WRITE_ENABLED=true` and new
+  `PHASE9_MANUAL_REVERSAL_ENABLED=true`; BOTH default OFF.
+- Owner-only preview now separates `grossManuallyAllocatedMinor`,
+  `approvedReversedMinor`, NET `manuallyAllocatedMinor` and
+  `previewRemainingMinor`. `reviewedNotAllocatedMinor` excludes
+  already reversed **non-reusable** claims, and
+  `REVERSED_MANUAL_ALLOCATION` explicitly distinguishes a fully
+  corrected preview from an untouched obligation. No data is a
+  bank-settled financial balance or student/guardian payment status.
 
 ## Critical payment states (future obligations)
 
