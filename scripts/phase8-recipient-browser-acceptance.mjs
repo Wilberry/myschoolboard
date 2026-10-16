@@ -386,8 +386,36 @@ export function assertBrowserComposeConfig(config) {
   assertDisposableCompose(config.services?.["postgres-test"]);
 }
 
+export function assertLocalDockerHost(contextHost, configuredHost) {
+  // A remote Docker daemon's "127.0.0.1" port mapping refers to its own
+  // host, not this machine. Only local Unix sockets are permitted here.
+  for (const value of [contextHost, configuredHost].filter(Boolean)) {
+    if (
+      !value.startsWith("unix:///") ||
+      value.includes("\n") ||
+      value.includes("\r")
+    ) {
+      throw new Error(
+        "Refusing browser acceptance: Docker daemon is not a local Unix socket",
+      );
+    }
+  }
+  if (!contextHost) {
+    throw new Error("Refusing browser acceptance: unknown Docker endpoint");
+  }
+}
+
 export function verifyBrowserDockerTarget() {
   const cwd = fileURLToPath(new URL("../", import.meta.url));
+  const context = spawnSync(
+    "docker",
+    ["context", "inspect", "--format", "{{.Endpoints.docker.Host}}"],
+    { cwd, encoding: "utf8", stdio: "pipe", timeout: 10_000 },
+  );
+  if (context.error || context.status !== 0 || context.signal) {
+    throw new Error("Refusing browser acceptance: Docker context unavailable");
+  }
+  assertLocalDockerHost(context.stdout.trim(), process.env.DOCKER_HOST);
   const commands = [
     ["compose", "--profile", "test", "config", "--format", "json"],
     [
