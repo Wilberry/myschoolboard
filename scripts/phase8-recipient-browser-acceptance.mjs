@@ -18,7 +18,9 @@ export function assertRecipientBrowserTarget(env) {
     env.PHASE8_REPORT_RELEASE_ENABLED !== "true" ||
     env.PHASE8_REPORT_RECIPIENT_ACCESS_ENABLED !== "true"
   ) {
-    throw new Error("Browser acceptance requires explicit synthetic-only flags");
+    throw new Error(
+      "Browser acceptance requires explicit synthetic-only flags",
+    );
   }
   const url = new URL(env.BETTER_AUTH_URL);
   if (
@@ -30,7 +32,9 @@ export function assertRecipientBrowserTarget(env) {
     url.hash ||
     new URL(env.TEST_DATABASE_URL).searchParams.get("schema") !== "public"
   ) {
-    throw new Error("Browser acceptance is restricted to the loopback test app");
+    throw new Error(
+      "Browser acceptance is restricted to the loopback test app",
+    );
   }
   const schoolId = env.PHASE8_BROWSER_SCHOOL_ID;
   const childId = env.PHASE8_BROWSER_STUDENT_ID;
@@ -46,18 +50,26 @@ export function assertRecipientBrowserTarget(env) {
     const email = env[`PHASE8_BROWSER_${role}_EMAIL`];
     const password = env[`PHASE8_BROWSER_${role}_PASSWORD`];
     if (!email?.endsWith(".test") || !password || password.length < 12) {
-      throw new Error("Recipient browser accounts must use synthetic .test credentials");
+      throw new Error(
+        "Recipient browser accounts must use synthetic .test credentials",
+      );
     }
   }
   const entry = env.PHASE8_BROWSER_PLAYWRIGHT_ENTRY;
-  if (!entry || !isAbsolute(entry) || !entry.endsWith("/playwright/index.mjs")) {
+  if (
+    !entry ||
+    !isAbsolute(entry) ||
+    !entry.endsWith("/playwright/index.mjs")
+  ) {
     throw new Error("Point to a separately installed Playwright index.mjs");
   }
   if (
     env.PHASE8_BROWSER_ALLOW_RECEIPT_WRITE === "1" &&
     env.PHASE8_BROWSER_EXPECT_MODE !== "GUARDIAN_FIRST_ACK"
   ) {
-    throw new Error("Explicit receipt test applies only to guardian-first mode");
+    throw new Error(
+      "Explicit receipt test applies only to guardian-first mode",
+    );
   }
   return { origin: url, schoolId, childId, entry };
 }
@@ -118,7 +130,9 @@ async function readReport(page, origin, schoolId) {
     `/schools/${encodeURIComponent(schoolId)}/published-reports`,
     origin,
   ).href);
-  await page.getByRole("heading", { name: "My officially released subjects" }).waitFor();
+  await page
+    .getByRole("heading", { name: "My officially released subjects" })
+    .waitFor();
   const response = await pending;
   assert.equal(response.status(), 200, "Recipient GET denied");
   assertPrivateHeaders(response);
@@ -170,7 +184,11 @@ export async function runRecipientBrowserAcceptance(
 ) {
   const { origin, schoolId, childId } = assertRecipientBrowserTarget(env);
   const fixture = await inspectBrowserFixture(database, schoolId);
-  assert.equal(fixture.browserFixtureReady, true, "Incomplete synthetic DB fixture");
+  assert.equal(
+    fixture.browserFixtureReady,
+    true,
+    "Incomplete synthetic DB fixture",
+  );
   assert.equal(fixture.currentPolicy, env.PHASE8_BROWSER_EXPECT_MODE);
   const browser = await driver.chromium.launch({
     headless: true,
@@ -190,7 +208,7 @@ export async function runRecipientBrowserAcceptance(
       );
       contexts.push(users[role].context);
     }
-    let parent = await readReport(users.PARENT.page, origin, schoolId);
+    const parent = await readReport(users.PARENT.page, origin, schoolId);
     let student = await readReport(users.STUDENT.page, origin, schoolId);
     const mode = env.PHASE8_BROWSER_EXPECT_MODE;
     const acknowledged = env.PHASE8_BROWSER_EXPECT_ACKNOWLEDGED === "true";
@@ -225,7 +243,10 @@ export async function runRecipientBrowserAcceptance(
         name: "Acknowledge this published subject",
       });
       await acknowledge.first().click();
-      await users.PARENT.page.getByText("Acknowledged", { exact: true }).first().waitFor();
+      await users.PARENT.page
+        .getByText("Acknowledged", { exact: true })
+        .first()
+        .waitFor();
       student = await readReport(users.STUDENT.page, origin, schoolId);
       assertNoLeaks(student.rows, childId, "STUDENT", mode, true);
     }
@@ -282,7 +303,9 @@ if (
     console.info(JSON.stringify(result));
   } catch (error) {
     console.error(
-      error instanceof Error ? error.message : "Synthetic browser acceptance failed",
+      error instanceof Error
+        ? error.message
+        : "Synthetic browser acceptance failed",
     );
     process.exitCode = 1;
   } finally {
