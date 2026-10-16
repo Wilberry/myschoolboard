@@ -12,7 +12,19 @@ Amounts use positive BIGINT minor units (initial conservative maximum
 there is no auto-charge, auto-assignment or automatic payment verification.
 Fees may be configured for PLANNED or ACTIVE, never CLOSED periods.
 No extra fee authority, provider or historic default is assumed.
-D-P9-001 / ADR-P9-001. Not migrated, tested or production adopted.
+Explicit student charge issuance pins one immutable exact-scope fee revision
+and the enrolled pupil's school, class and academic term. No automatic issuance:
+only a reasoned same-school School Super Admin action with one UUID replay key;
+current scope/period/enrollment validated again in PostgreSQL. A later policy
+revision does not alter an issued amount. This is a development-only default.
+
+`PHASE9_FEE_WRITE_ENABLED=false` disables fee-category, fee-structure and
+student-obligation POSTs unless explicitly set to `true` in a strictly
+isolated synthetic test environment. It is not a school-level option or
+a production risk acceptance.
+
+D-P9-001 / D-P9-002; ADR-P9-001 / ADR-P9-002.
+Neither migration, runtime behavior nor production adoption is verified.
 
 
 ## Attendance school calendar policy (development-only implementation default)
