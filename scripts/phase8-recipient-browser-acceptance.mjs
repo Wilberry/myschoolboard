@@ -170,6 +170,9 @@ async function checkPrintLifecycle(page, origin, schoolId, childId, mode) {
         articles: workspace?.querySelectorAll("article").length ?? 0,
       };
       window.dispatchEvent(new Event("afterprint"));
+      window.__phase8SyntheticPrint.clearedAfterprint =
+        workspace?.getAttribute("data-print-authorized") === "false" &&
+        !workspace.querySelector("article");
     };
   });
   // Subscribe before clicking: a reused cached report or a stale React
@@ -198,13 +201,9 @@ async function checkPrintLifecycle(page, origin, schoolId, childId, mode) {
   const captured = await page.evaluate(() => window.__phase8SyntheticPrint);
   assert.equal(captured.authorized, true);
   assert.ok(captured.articles > 0);
-  await page.waitForFunction(() => {
-    const root = document.querySelector(".published-report-workspace");
-    return (
-      root?.getAttribute("data-print-authorized") === "false" &&
-      !root.querySelector("article")
-    );
-  });
+  // Inspect synchronously in the synthetic afterprint callback before
+  // a successful permission refresh may legitimately repopulate the page.
+  assert.equal(captured.clearedAfterprint, true);
 }
 
 export async function runRecipientBrowserAcceptance(
