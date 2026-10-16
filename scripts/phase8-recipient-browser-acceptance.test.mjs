@@ -31,8 +31,11 @@ const safe = {
     "/tmp/myschoolboard-browser-tools/node_modules/playwright/index.mjs",
 };
 
-test("requires local disposable test DB, synthetic users and explicit flags", () => {
-  assert.equal(assertRecipientBrowserTarget(safe).schoolId, "synthetic-school-a");
+test("rejects unsafe browser targets and nonsynthetic users", () => {
+  assert.equal(
+    assertRecipientBrowserTarget(safe).schoolId,
+    "synthetic-school-a",
+  );
   for (const patch of [
     { TEST_DATABASE_DISPOSABLE: "0" },
     { NODE_ENV: "production" },
@@ -49,41 +52,37 @@ test("requires local disposable test DB, synthetic users and explicit flags", ()
   }
 });
 
-test("requires separate authorization for synthetic student and guardian", () => {
-  const one = (role, mode = "GUARDIAN_FIRST_ACK") => [{
-    studentId: "synthetic-child-a",
-    recipientRole: role,
-    policyMode: mode,
-    gradeCode: "A",
-  }];
-  assert.doesNotThrow(() =>
-    assertNoLeaks(one("PARENT"), "synthetic-child-a", "PARENT",
-      "GUARDIAN_FIRST_ACK", false));
-  assert.doesNotThrow(() =>
-    assertNoLeaks([], "synthetic-child-a", "STUDENT",
-      "GUARDIAN_FIRST_ACK", false));
-  assert.doesNotThrow(() =>
-    assertNoLeaks(one("STUDENT"), "synthetic-child-a", "STUDENT",
-      "GUARDIAN_FIRST_ACK", true));
-  assert.doesNotThrow(() =>
-    assertNoLeaks(one("STUDENT", "STUDENT_ONLY"),
-      "synthetic-child-a", "STUDENT", "STUDENT_ONLY", false));
-  assert.doesNotThrow(() =>
-    assertNoLeaks([], "synthetic-child-a", "PARENT", "STUDENT_ONLY", false));
+test("guardian-first needs explicit receipt before student access", () => {
+  const one = (role, mode = "GUARDIAN_FIRST_ACK") => [
+    {
+      studentId: "synthetic-child-a",
+      recipientRole: role,
+      policyMode: mode,
+      gradeCode: "A",
+    },
+  ];
+  const child = "synthetic-child-a";
+  assert.doesNotThrow(() => {
+    assertNoLeaks(one("PARENT"), child, "PARENT", "GUARDIAN_FIRST_ACK", false);
+    assertNoLeaks([], child, "STUDENT", "GUARDIAN_FIRST_ACK", false);
+    assertNoLeaks(one("STUDENT"), child, "STUDENT", "GUARDIAN_FIRST_ACK", true);
+    assertNoLeaks(one("STUDENT", "STUDENT_ONLY"), child, "STUDENT", "STUDENT_ONLY", false);
+    assertNoLeaks([], child, "PARENT", "STUDENT_ONLY", false);
+  });
   assert.throws(() =>
-    assertNoLeaks(one("STUDENT"), "synthetic-child-a", "STUDENT",
-      "GUARDIAN_FIRST_ACK", false));
+    assertNoLeaks(one("STUDENT"), child, "STUDENT", "GUARDIAN_FIRST_ACK", false),
+  );
   assert.throws(() =>
-    assertNoLeaks(one("PARENT"), "synthetic-child-a", "PARENT",
-      "STUDENT_ONLY", false));
+    assertNoLeaks(one("PARENT"), child, "PARENT", "STUDENT_ONLY", false),
+  );
 });
 
-test("rejects foreign pupil, leaked answer data and incorrect role", () => {
-  const base = [{
+test("rejects foreign child, leaked answers and role mismatch", () => {
+  const base = {
     studentId: "synthetic-child-a",
     recipientRole: "PARENT",
     policyMode: "GUARDIAN_ONLY",
-  }];
+  };
   for (const modified of [
     { studentId: "other-child" },
     { recipientRole: "STUDENT" },
@@ -93,24 +92,30 @@ test("rejects foreign pupil, leaked answer data and incorrect role", () => {
     { composedStudentCards: [] },
     { earnedPoints: 7 },
   ]) {
-    assert.throws(() => assertNoLeaks(
-      [{ ...base[0], ...modified }],
-      "synthetic-child-a",
-      "PARENT",
-      "GUARDIAN_ONLY",
-      false,
-    ));
+    assert.throws(() =>
+      assertNoLeaks(
+        [{ ...base, ...modified }],
+        "synthetic-child-a",
+        "PARENT",
+        "GUARDIAN_ONLY",
+        false,
+      ),
+    );
   }
 });
 
-test("allows synthetic receipt writes only under guardian-first", () => {
-  assert.doesNotThrow(() => assertRecipientBrowserTarget({
-    ...safe,
-    PHASE8_BROWSER_ALLOW_RECEIPT_WRITE: "1",
-  }));
-  assert.throws(() => assertRecipientBrowserTarget({
-    ...safe,
-    PHASE8_BROWSER_EXPECT_MODE: "STUDENT_ONLY",
-    PHASE8_BROWSER_ALLOW_RECEIPT_WRITE: "1",
-  }));
+test("allows receipt writes only under guardian-first mode", () => {
+  assert.doesNotThrow(() =>
+    assertRecipientBrowserTarget({
+      ...safe,
+      PHASE8_BROWSER_ALLOW_RECEIPT_WRITE: "1",
+    }),
+  );
+  assert.throws(() =>
+    assertRecipientBrowserTarget({
+      ...safe,
+      PHASE8_BROWSER_EXPECT_MODE: "STUDENT_ONLY",
+      PHASE8_BROWSER_ALLOW_RECEIPT_WRITE: "1",
+    }),
+  );
 });
