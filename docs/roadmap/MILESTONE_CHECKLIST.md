@@ -1,5 +1,37 @@
 # Milestone Checklist
 
+## Phase 9 — payment reference evidence and separate manual review (2026-10-16)
+
+- [x] Authored append-only `PaymentEvidence` for one issued school
+  obligation; `SUBMITTED` is not verified funds. Unique school
+  request and reference-digest keys, amount/currency bounds, explicit
+  submitter evidence, immutable history and tenant-composite foreign keys.
+- [x] Authored independent `PaymentVerificationDecision`: active
+  same-school SCHOOL_SUPER_ADMIN different from submitting SCHOOL_ADMIN,
+  one terminal VERIFIED/REJECTED event, explicit bank-funds attestation
+  only on verified, same bank reference digest and SQL school-locked
+  verified-amount cap. No silent UPDATE or second decision.
+- [x] Authored private no-store claim GET/POST and independent review
+  POST; role-based per-school school-admin own-only claim projection;
+  school-owner bounded queue. No file/provider/status spoofing,
+  student/parent read, payment record, receipt or actual settlement.
+- [x] Authored synthetic authenticated tests: duplicate idempotency,
+  changed request, wrong reference, excess verified amount, spoofed
+  actor/tenant, separated reviewer and immutable decisions.
+- [x] Added independent default-OFF evidence and review environment
+  flags in addition to existing Phase 9 master finance-write switch.
+- [ ] **NOT EXECUTED:** PostgreSQL migration and trigger acceptance,
+  Prisma validation/generation, database/role/replay/concurrent-approval
+  tests, Node/Vitest, lint/typecheck/build, full CI security audit and
+  browser/privacy review on a confirmed disposable environment.
+- [ ] Implement private file uploads only after malware/type/size,
+  secure tenant storage and scoped retrieval.
+- [ ] Next roadmap slice: append-only verified payment allocations,
+  reasoned reversals/refunds, arithmetic balance projection, verified
+  receipts and reconciliation with strict school relationship access.
+- [ ] Phase 9 FEE-REQ-001 exit remains BLOCKED; this is not live.
+
+
 ## Phase 9 — exact student fee obligations (AUTHORED; 2026-10-16)
 
 - [x] Schema + additive migration: one immutable fee obligation per
