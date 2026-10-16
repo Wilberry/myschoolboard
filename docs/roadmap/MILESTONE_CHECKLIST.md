@@ -518,3 +518,12 @@ All subsequent phases remain pending until their entry criteria and required pro
 - [x] Increase first-request HTTP timeout to bounded 60 seconds and add mock regressions for safe/unsafe redirects and nonredirect privacy.
 - [ ] Run updated Node smoke unit tests and live six-probe Next test against exact latest commit and disposable Docker env; correct any actual missing privacy headers without weakening required safeguards.
 - [ ] Complete cumulative full CI-equivalent local PostgreSQL/Vitest/Next/audit and real student/guardian browser/print/a11y tests. Phase 8 NOT ACCEPTED; production/publication flags remain disabled.
+
+## Phase 8 Docker HTTP checkpoint passed; worktree-safe cumulative check prepared — 2026-10-16
+
+- [x] `a5ef65d` local report: **7/7** HTTP smoke unit tests, synthetic disposable test preflight, healthy loopback/tmpfs Docker PostgreSQL, and **6/6** live anonymous Next.js privacy probes passed; both report-disclosure flags remained OFF.
+- [x] Preserve original Phase 1 branch/tracked worktree at `2c7c6b9`, retain pre-existing untracked files, and leave the separate Phase 8 worktree clean.
+- [x] Implement a no-GitHub-Actions, script-root-resolving `--preflight` / `--run` wrapper that refuses incorrect worktree/branch/head, dirty changes, unsafe Docker port/storage and enabled publication flags. Add three Node regression tests to existing local/full guard lists; isolated 12/12 checks passed.
+- [ ] Run **actual** `node --test scripts/verify-phase8-checkpoint.test.mjs` in the Phase 8 checkout with the shell in any directory, then exercise absolute-path `--preflight`; after operator verifies intended disposable local Docker context, execute `--run` to repeat **full current-HEAD** migration checksums, Prisma generate/deploy, synthetic seed, Node guards, all Vitest integrations, Prettier, lint, TypeScript, Next build, and strict `npm audit --audit-level=high`. Stop and investigate non-audit failures.
+- [ ] Complete real synthetic signed-in student/guardian printing, bfcache, receipt/revocation, wrong-school access, multiple children and accessibility acceptance per runbook. Document privacy review and safe report retention/operations.
+- [ ] Independently close `braces` and Prisma `deepmerge-ts` high advisories by compatible verified remediation, or explicitly resolve production risk with the responsible owner; never silently waive strict audit. Phase 8 remains NOT ACCEPTED and school report publication OFF.
