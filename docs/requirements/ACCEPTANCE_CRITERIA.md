@@ -1,5 +1,27 @@
 # Acceptance Criteria
 
+## Phase 9 internal manual allocation reversal acceptance (authored; unexecuted)
+
+- Given an original manually verified payment allocation, only an
+  active same-school School Administrator can request its **whole**
+  internal reversal once, with reason, UUID idempotency and school-
+  copied money. Changing a retry or targeting a foreign allocation
+  must be rejected.
+- Given a pending reversal request, only an independent active
+  same-school School Super Admin can append one immutable APPROVED
+  or REJECTED terminal decision with reason; exact replay returns
+  the original, changed or concurrent duplicates are denied.
+- APPROVED must preserve the original claim, reviewer attestation
+  and full manual allocation while subtracting the entire amount
+  only from the school-owner internal NET preview. REJECTED must
+  not affect net amounts; reversed claims must not be reusable.
+- A manual reversal must never send funds, invent a bank refund,
+  invalidate an original evidence record, grant any student/guardian
+  access, or issue a receipt or official balance. Actual PostgreSQL,
+  authenticated role, concurrency and financial security tests are
+  required before release.
+
+
 This document records the acceptance standard for the major product workflows.
 
 ## Platform onboarding
