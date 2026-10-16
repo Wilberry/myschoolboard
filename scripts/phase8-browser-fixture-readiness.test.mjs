@@ -203,8 +203,10 @@ test("queries active, school-bound unrevoked links only", async () => {
     assert.match(query.sql, /NOT EXISTS/);
     assert.match(query.sql, /"visibilityPolicyId"/);
     assert.match(query.sql, /"status" = 'ACTIVE'/);
-    assert.ok(query.bindings.includes("child-a") ||
-      query.bindings.includes("child-unrelated"));
+    assert.ok(
+      query.bindings.includes("child-a") ||
+        query.bindings.includes("child-unrelated"),
+    );
     assert.ok(query.bindings.includes("synthetic-school-a"));
     assert.ok(query.bindings.includes("p"));
   }
