@@ -1,5 +1,33 @@
 # Milestone Checklist
 
+## Phase 9 — cumulative verification and database target attestation (2026-10-18)
+
+- [x] Audited the existing loopback-only local runner and
+  identified the absence of a proof INSIDE the target database;
+  TCP forwarding can make a shared database look local.
+- [x] Authored Phase 9 stricter wrapper requiring an
+  operator-provisioned per-disposable-test-DB secret nonce,
+  existing synthetic target controls, all finance write
+  gates OFF, sanitized libpq connection parameters and
+  read-only psql attestation **before migrations/seed**.
+- [x] Authored fake-spawn cases for missing/incorrect nonce,
+  untrusted PG overrides, unsafe URL options, wrong DB,
+  command ordering and abort-before-npm. Registered
+  tests and source guard in existing test/local guard scripts
+  without changing GitHub CI or local CI command order.
+- [x] Added exact safe runbook and D-P9-008 / ADR-P9-008.
+- [x] Isolated V8 static guard: 2/2 structural predicates
+  passed against freshly fetched GitHub source files.
+- [ ] **NOT EXECUTED:** actual Node test suite,
+  physical disposable DB attestation, Prisma schema
+  validation/generation, cumulative PostgreSQL migrations,
+  authenticated finance integration/races, typecheck,
+  build and strict `npm audit --audit-level=high`.
+- [ ] Phase 9 FEE-REQ-001 and full security acceptance
+  remain BLOCKED; never run on shared/live DB or enable
+  live payment writes.
+
+
 ## Phase 9 — bounded applied fee waivers (2026-10-16)
 
 - [x] Authored append-only `FeeWaiverApplication` with
