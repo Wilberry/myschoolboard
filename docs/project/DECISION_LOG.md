@@ -1,5 +1,35 @@
 # Decision Log
 
+## D-P9-008: Verify actual disposable database identity before Phase 9 local migrations
+
+- **Status:** safety code, mocked checks and runbook authored, not executed
+  against a PostgreSQL server (2026-10-18).
+- **Context:** checking only `localhost:5434/myschoolboard_test` and
+  an operator-declared disposable flag does not prove the actual
+  PostgreSQL instance is disposable. SSH port forwarding or a
+  substituted local proxy could route migration/seed to shared
+  school data despite apparently safe connection strings.
+- **Decision:** Phase 9's local cumulative verification uses a
+  separate `verify:phase9:local` wrapper. It preserves all existing
+  `verify:local` CI commands but FIRST checks the existing
+  loopback/synthetic environment safeguards and the 32-128-character
+  random lowercase-hex nonce stored INSIDE an operator-confirmed
+  disposable test DB. The new check uses `psql` with no shell,
+  no URI credentials in CLI argv, no inherited libpq overrides
+  and read-only `PGOPTIONS`. A missing/mismatched marker, unsafe
+  URI, psql failure or enabled Phase 9 finance-write flag refuses
+  every migration and seed stage.
+- **Trust limit:** the operator must independently confirm the
+  physical test container; a marker can be copied and is NOT
+  cryptographic proof of physical database identity. Never
+  generate or insert it into a shared database. No marker
+  creation or mutation is automated by the wrapper.
+- **Release:** source assertions alone do not constitute actual
+  `node --test`, disposable SQL migrations, auth-browser,
+  privacy or strict `npm audit` acceptance. Phase 9 remains
+  default OFF, FEE-REQ-001 blocked. ADR-P9-008.
+
+
 ## D-P9-007: Explicit applied waiver plus verified-claim anti-overcredit
 
 - **Status:** authored/isolated default-off development only,
