@@ -22,6 +22,22 @@ const tokenPattern = /^[a-f0-9]{32,128}$/;
 export function assertPhase9Target(environment) {
   assertLocalVerificationTarget(environment);
 
+  // The cumulative runner must never inherit unlocked finance routes,
+  // even if an operator previously tested a feature in this terminal.
+  for (const flag of [
+    "PHASE9_FEE_WRITE_ENABLED",
+    "PHASE9_PAYMENT_EVIDENCE_ENABLED",
+    "PHASE9_PAYMENT_REVIEW_ENABLED",
+    "PHASE9_MANUAL_ALLOCATION_ENABLED",
+    "PHASE9_MANUAL_REVERSAL_ENABLED",
+    "PHASE9_FEE_ADJUSTMENT_PROPOSALS_ENABLED",
+    "PHASE9_EFFECTIVE_WAIVER_ENABLED",
+  ]) {
+    if (environment[flag] === "true") {
+      throw new Error("Phase 9 verification requires all finance writes disabled");
+    }
+  }
+
   if (!tokenPattern.test(environment.PHASE9_TEST_DATABASE_NONCE ?? "")) {
     throw new Error("Phase 9 requires a 32-128 character lowercase hex disposable DB nonce");
   }
