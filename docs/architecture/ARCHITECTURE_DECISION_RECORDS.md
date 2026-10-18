@@ -1,5 +1,38 @@
 # Architecture Decision Records
 
+## ADR-P9-008: Fail-closed Phase 9 disposable-DB read-only attestation
+
+- **Status:** code and fake-spawn tests authored, PostgreSQL runtime
+  unexecuted (2026-10-18).
+- **Context:** named loopback DB targets may resolve through SSH
+  tunnels/port forwards. The existing `verify-local` runner safely
+  checks target strings but cannot identify physical DB provenance.
+  New Phase 9 financial migration/seed changes must not proceed
+  against a shared/production DB on string checks alone.
+- **Decision:** add an *opt-in stricter wrapper* preceding the
+  existing local CI runner; require an operator-provisioned
+  nonce at `public.myschoolboard_disposable_verification_marker`,
+  verify it through a read-only `psql` SELECT on the actual target,
+  sanitize Prisma URI to libpq and strip inherited `PG*`
+  connection defaults. The expected nonce lives in an
+  ephemeral shell variable, never a committed config.
+  Explicitly reject any finance-write toggle set to true.
+- **Behavior:** missing marker, mismatch, unsafe connection
+  option, missing psql or error => no migration, seed or
+  local CI command is launched. On positive attestation,
+  invoke the untouched `verify:local` chain (npm ci, Prisma,
+  migrations, seed, format/lint/types, full tests, build,
+  high-severity dependency audit). The wrapper never creates
+  a database, marker, school/pupil/payee or payment record.
+- **Caveat:** a deliberately copied nonce or malicious
+  server operator can defeat the guard. The human must verify
+  an actual disposable container separately; the nonce
+  prevents common accidental forwarded-database mistakes,
+  not malicious actors or runtime environment drift. The
+  application remains unverified until real cumulative tests
+  run and all security gates pass. D-P9-008.
+
+
 ## ADR-P9-007: Applied waivers are append-only and bounded by reviewed claims
 
 - **Status:** authored, not migration/runtime/CI accepted,
