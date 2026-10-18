@@ -1,5 +1,44 @@
 # Current Status
 
+## Phase 9 — disposable PostgreSQL verification boundary hardened (2026-10-18)
+
+The existing cumulative `verify:local` runner is **not sufficient
+proof of a truly disposable PostgreSQL server**, since a loopback
+socket may be forwarded to a shared/production database. Without
+altering that runner or GitHub Actions, the isolated Phase 9 branch
+adds `scripts/verify-phase9-disposable.mjs`, mocked safety tests
+and strict `verify:phase9:static`, `verify:phase9:preflight` and
+`verify:phase9:local` commands. Before any existing
+`npm ci`, Prisma migration, seed or full test chain is launched,
+this wrapper demands the previous synthetic local test flags,
+all Phase 9 finance writes OFF, and a matching random nonce
+stored inside the **operator-confirmed physically disposable**
+`myschoolboard_test` database.
+
+The new psql step uses a read-only SELECT, strips inherited
+libpq overrides, sanitizes Prisma URL query handling,
+rejects unsafe query parameters or wrong nonce, and keeps
+credentials/nonces out of command-line arguments and logs.
+It never creates the marker or modifies a database. Only a
+positive read-only attestation starts the unchanged cumulative
+local CI runner. This is accident prevention, NOT a substitute
+for the operator's independent verification of DB provenance,
+and NOT a full database-security acceptance.
+
+**Validation performed here:** isolated JavaScript evaluation
+of 2 structural source-guard predicates over freshly fetched
+committed files: **2/2 passed**. Mocked actual Node tests were
+authored but have NOT been executed in the repository.
+There was no PostgreSQL instance/checkout accessible in this
+environment, no `psql` binary, no npm dependency install,
+no real migrations/seed, no Node/Vitest/Prisma/TS/build,
+browser/privacy check or strict dependency audit. All financial
+runtime/release gates remain BLOCKED; Phase 8 stays unaccepted.
+No main, worktree, actions, shared DB, or deployment changed.
+See `docs/quality/PHASE9_DISPOSABLE_DATABASE_VERIFICATION_RUNBOOK.md`
+and D-P9-008 / ADR-P9-008.
+
+
 ## Phase 9 — explicit applied fee waivers with anti-overcredit (AUTHORED, NOT VERIFIED; 2026-10-16)
 
 The isolated `feature/phase9-fees-payments-foundation` branch
