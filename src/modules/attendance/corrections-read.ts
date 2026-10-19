@@ -238,10 +238,10 @@ export async function readPendingCorrectionQueue(schoolId: string) {
       ON reviewer."schoolId" = register."schoolId"
       AND reviewer."userId" = ${userId} AND reviewer."isActive" = true
       AND reviewer."role" IN ('HEAD_OF_SECTION', 'PRINCIPAL')
-    JOIN "ScopeGrant" grant
-      ON grant."membershipId" = reviewer."id"
-      AND grant."scopeId" = section."id"
-      AND grant."type" = 'SECTION' AND grant."verified" = true
+    JOIN "ScopeGrant" scope_grant
+      ON scope_grant."membershipId" = reviewer."id"
+      AND scope_grant."scopeId" = section."id"
+      AND scope_grant."type" = 'SECTION' AND scope_grant."verified" = true
     WHERE correction."schoolId" = ${schoolId} AND decision."id" IS NULL
       AND (
         (reviewer."role" = 'HEAD_OF_SECTION' AND section."stage" = 'PRIMARY')
@@ -307,10 +307,10 @@ export async function readPendingCorrectionDetail(
       ON reviewer."schoolId" = register."schoolId"
       AND reviewer."userId" = ${userId} AND reviewer."isActive" = true
       AND reviewer."role" IN ('HEAD_OF_SECTION', 'PRINCIPAL')
-    JOIN "ScopeGrant" grant
-      ON grant."membershipId" = reviewer."id"
-      AND grant."scopeId" = section."id"
-      AND grant."type" = 'SECTION' AND grant."verified" = true
+    JOIN "ScopeGrant" scope_grant
+      ON scope_grant."membershipId" = reviewer."id"
+      AND scope_grant."scopeId" = section."id"
+      AND scope_grant."type" = 'SECTION' AND scope_grant."verified" = true
     WHERE correction."schoolId" = ${schoolId} AND correction."id" = ${requestId}
       AND decision."id" IS NULL
       AND (
