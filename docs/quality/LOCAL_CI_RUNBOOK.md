@@ -81,3 +81,25 @@ docker compose --profile test rm -f postgres-test
 This addresses **only** `postgres-test`; do not run `docker compose down -v`, which could remove the separate development database volume.
 
 Report the exact commit SHA, Node/npm versions, Docker test service confirmation, commands executed and outcomes, test counts, migrations applied, audit findings, and residual blockers. If GitHub billing/runner scheduling is restored later, the **unchanged** GitHub workflow must also be run and reviewed before any production release.
+
+## Private school route prerender validation
+
+With Next.js 16 Cache Components enabled, school portal pages can read
+`headers()`, `params` and school-specific PostgreSQL data only after an
+incoming request. The shared `app/schools/[schoolId]/layout.tsx` renders an
+authorization-neutral, non-identifying `Suspense` placeholder around school
+pages. The child pages retain all their separate active-membership,
+role, verified-section and tenant-specific authorization checks. The layout
+does **not** authorize requests, cache private data or provide access to a
+school. Do not insert personally identifiable data or school identities into
+the shared fallback.
+
+Run `node --test scripts/school-private-rendering-guard.test.mjs` as a
+focused regression check; the guard also runs through the repository's
+existing `npm test` and `npm run verify:local:guards` commands.
+A passing source guard does not replace the `npm run build` prerender gate
+or signed-in, revoked, foreign-tenant and unauthenticated browser checks.
+If the build reports another uncached-runtime page, preserve the route name
+and first useful error without weakening authorization or using
+`instant = false` just to bypass the failure.
+
