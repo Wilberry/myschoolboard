@@ -31,7 +31,11 @@ export function AssessmentManualMarkEditor({
   const [maxPoints, setMaxPoints] = useState(20);
   const [components, setComponents] = useState<Component[]>([]);
   const [componentId, setComponentId] = useState("");
-  const [students, setStudents] = useState<Pupil[]>([]);
+  const [roster, setRoster] = useState<{
+    componentId: string;
+    refresh: number;
+    students: Pupil[];
+  } | null>(null);
   const [points, setPoints] = useState<Record<string, string>>({});
   const [reason, setReason] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -42,6 +46,10 @@ export function AssessmentManualMarkEditor({
     (t) => t.sessionId === assignment?.sessionId,
   );
   const component = components.find((c) => c.id === componentId);
+  const students =
+    roster?.componentId === componentId && roster.refresh === refresh
+      ? roster.students
+      : [];
   const api = `/api/schools/${encodeURIComponent(schoolId)}`;
   useEffect(() => {
     let live = true;
@@ -64,10 +72,7 @@ export function AssessmentManualMarkEditor({
     };
   }, [api, refresh]);
   useEffect(() => {
-    if (!componentId) {
-      setStudents([]);
-      return;
-    }
+    if (!componentId) return;
     let live = true;
     fetch(
       `${api}/assessment-manual-components/${encodeURIComponent(componentId)}/students`,
@@ -81,11 +86,11 @@ export function AssessmentManualMarkEditor({
         return r.json();
       })
       .then((data) => {
-        if (live) setStudents(data.students);
+        if (live) setRoster({ componentId, refresh, students: data.students });
       })
       .catch(() => {
         if (live) {
-          setStudents([]);
+          setRoster(null);
           setMessage("Student roster no longer authorized.");
         }
       });
@@ -246,7 +251,6 @@ export function AssessmentManualMarkEditor({
         value={componentId}
         onChange={(e) => {
           setComponentId(e.target.value);
-          setStudents([]);
         }}
       >
         <option value="">Select component</option>
