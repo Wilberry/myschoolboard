@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -6,18 +7,38 @@ import { resolveSchoolPrincipal } from "@/src/modules/tenancy/context";
 import { hasLessonReviewWorkspace } from "@/src/modules/lesson-notes/review-navigation";
 import { AssessmentReviewEditor } from "@/src/components/assessment-review-editor";
 
-export default async function AssessmentReviewsPage({
-  params,
-}: {
+interface AssessmentReviewsPageProps {
   params: Promise<{ schoolId: string }>;
-}) {
+}
+
+export default function AssessmentReviewsPage({
+  params,
+}: AssessmentReviewsPageProps) {
+  return (
+    <main className="workspace">
+      <Suspense
+        fallback={
+          <p className="workspace-note" role="status">
+            Checking assessment review access…
+          </p>
+        }
+      >
+        <AuthorizedAssessmentReview params={params} />
+      </Suspense>
+    </main>
+  );
+}
+
+async function AuthorizedAssessmentReview({
+  params,
+}: AssessmentReviewsPageProps) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/");
   const { schoolId } = await params;
   const principal = await resolveSchoolPrincipal(session.user.id, schoolId);
   if (!(await hasLessonReviewWorkspace(principal))) notFound();
   return (
-    <main className="workspace">
+    <>
       <header className="topbar">
         <Link className="brand" href="/">
           MySchoolBoard
@@ -29,6 +50,6 @@ export default async function AssessmentReviewsPage({
         <h1>Assessment configuration review</h1>
         <AssessmentReviewEditor schoolId={schoolId} />
       </section>
-    </main>
+    </>
   );
 }
