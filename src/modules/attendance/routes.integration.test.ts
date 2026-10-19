@@ -352,7 +352,7 @@ describe("Phase 6 tenant-scoped attendance submission and review", () => {
           attendanceDate: "1990-01-01",
         })
       ).status,
-    ).toBe(404);
+    ).toBe(400);
     const futureDate = new Date(Date.now() + 5 * 86400000)
       .toISOString()
       .slice(0, 10);
