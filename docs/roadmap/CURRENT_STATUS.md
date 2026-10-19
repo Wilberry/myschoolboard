@@ -1,5 +1,30 @@
 # Current Status
 
+## Phase 1–7 cumulative verification — 2026-10-19 checkpoint (PARTIAL; NOT ACCEPTED)
+
+On exact experimental commit `2b361ed` (draft PR #85, not `main`),
+the project owner's local command report confirms `npm ci`, Prisma Client
+7.10.1 generation, Prettier, ESLint, TypeScript, both private-rendering
+source guards (**6/6**), and the Next.js production build (**31 static pages
+generated**) all passed; the Git worktree remained clean.
+The preceding commit `7c30263` independently passed targeted
+teacher-assignment/concurrency integration testing (**58/58**) on the
+verified disposable localhost:5434 PostgreSQL 17 tmpfs container.
+These are **distinct commit-scoped results**, not one all-green full run.
+
+Pending: cumulative `npm test` across all suites (previous attendance
+corrections, question bank and lesson review fixture setup hit the 10s
+Vitest `beforeAll` timeout), authenticated-browser tenant, student/guardian,
+revocation and private-data/print/accessibility checks, the strict full
+`npm audit --audit-level=high` (previously five high `braces` chain
+package findings, unpatched advisory), and applicable historical migration
+checksum/release-readiness reviews. The bounded 45-second **fixture-only**
+hook timeout changes on the follow-up `fix/phase1-7-integration-setup-timeouts`
+branch are authored but **not yet executed**; all assertion/security
+timeouts remain as before. Phases 1–7 are NOT accepted for release,
+Phase 8 remains separately unaccepted, and no merge/deployment occurred.
+
+
 ## Phase 7 returned-original-mark correction remediation — AUTHORED, UNVERIFIED
 
 `feature/phase7-returned-manual-mark-remediation` resolves the returned-proposal dead end in the original manual grade review workflow. A **terminally RETURNED initial manual mark** may now be amended only through a new immutable reasoned `AssessmentManualCorrectionRequest` by its current exact assigned teacher, followed by the same independently verified PRIMARY HEAD_OF_SECTION or SECONDARY PRINCIPAL academic decision. SQL requires the original initial review to exist (APPROVED or RETURNED), the same active original teacher/enrollment/school and mark limits, a changed bounded value, and no already pending correction. It does **not** change or overwrite the original mark or returned decision.
