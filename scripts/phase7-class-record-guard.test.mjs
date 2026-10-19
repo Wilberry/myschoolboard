@@ -94,49 +94,54 @@ test(
   },
 );
 
-test("attendance correction and assessment draft pages keep private data behind Suspense", () => {
-  for (const entry of [
-    {
-      path: "../app/schools/[schoolId]/attendance-correction-reviews/page.tsx",
-      pageName: "AttendanceCorrectionReviewPage",
-      component: "AuthorizedAttendanceCorrectionReview",
-      permission: "readAttendanceReviewerOptions(session.user.id, schoolId)",
-      denial: "if (!access) notFound();",
-      privateWorkspace: "AttendanceCorrectionReviewEditor",
+test(
+  "attendance correction and assessment draft pages keep private data behind Suspense",
+  () => {
+    for (const entry of [
+      {
+        path: "../app/schools/[schoolId]/attendance-correction-reviews/page.tsx",
+        pageName: "AttendanceCorrectionReviewPage",
+        component: "AuthorizedAttendanceCorrectionReview",
+        permission: "readAttendanceReviewerOptions(session.user.id, schoolId)",
+        denial: "if (!access) notFound();",
+        privateWorkspace: "AttendanceCorrectionReviewEditor",
+      },
+      {
+        path: "../app/schools/[schoolId]/assessment-drafts/page.tsx",
+        pageName: "AssessmentDraftPage",
+        component: "AuthorizedAssessmentDraft",
+        permission: "readLessonWritingOptions(session.user.id, schoolId)",
+        denial: "if (!options || !options.assignments.length) notFound();",
+        privateWorkspace: "AssessmentDraftEditor",
+      },
+    ]) {
+      const page = read(entry.path);
+      const split = page.indexOf(`async function ${entry.component}(`);
+      assert.ok(split > 0, entry.path);
+      const shell = page.slice(
+        page.indexOf(`export default function ${entry.pageName}(`),
+        split,
+      );
+      const authorized = page.slice(split);
+      assert.match(shell, /<Suspense/, entry.path);
+      assert.ok(
+        shell.includes(`<${entry.component} params={params} />`),
+        entry.path,
+      );
+      assert.doesNotMatch(
+        shell,
+        /auth\.api\.getSession|await headers\(\)|await params/,
+        entry.path,
+      );
+      assert.ok(!shell.includes(entry.privateWorkspace), entry.path);
+      assert.match(
+        authorized,
+        /auth\.api\.getSession\(\{ headers: await headers\(\) \}\)/,
+      );
+      assert.match(authorized, /if \(!session\) redirect\("\/"\)/);
+      assert.match(authorized, /const \{ schoolId \} = await params/);
+      assert.ok(authorized.includes(entry.permission), entry.path);
+      assert.ok(authorized.includes(entry.denial), entry.path);
+      assert.ok(authorized.includes(entry.privateWorkspace), entry.path);
     },
-    {
-      path: "../app/schools/[schoolId]/assessment-drafts/page.tsx",
-      pageName: "AssessmentDraftPage",
-      component: "AuthorizedAssessmentDraft",
-      permission: "readLessonWritingOptions(session.user.id, schoolId)",
-      denial: "if (!options || !options.assignments.length) notFound();",
-      privateWorkspace: "AssessmentDraftEditor",
-    },
-  ]) {
-    const page = read(entry.path);
-    const split = page.indexOf(`async function ${entry.component}(`);
-    assert.ok(split > 0, entry.path);
-    const shell = page.slice(
-      page.indexOf(`export default function ${entry.pageName}(`),
-      split,
-    );
-    const authorized = page.slice(split);
-    assert.match(shell, /<Suspense/, entry.path);
-    assert.ok(
-      shell.includes(`<${entry.component} params={params} />`),
-      entry.path,
-    );
-    assert.doesNotMatch(
-      shell,
-      /auth\.api\.getSession|await headers\(\)|await params/,
-      entry.path,
-    );
-    assert.ok(!shell.includes(entry.privateWorkspace), entry.path);
-    assert.match(authorized, /auth\.api\.getSession\(\{ headers: await headers\(\) \}\)/);
-    assert.match(authorized, /if \(!session\) redirect\("\/"\)/);
-    assert.match(authorized, /const \{ schoolId \} = await params/);
-    assert.ok(authorized.includes(entry.permission), entry.path);
-    assert.ok(authorized.includes(entry.denial), entry.path);
-    assert.ok(authorized.includes(entry.privateWorkspace), entry.path);
-  }
-});
+);
