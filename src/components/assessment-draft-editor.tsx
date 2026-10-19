@@ -187,7 +187,7 @@ export function AssessmentDraftEditor({
             setPoints({});
           }}
         >
-          <option value="">Select term in the assignment's session</option>
+          <option value="">Select term in the assignment&apos;s session</option>
           {terms.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}

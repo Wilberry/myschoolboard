@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
 interface ReviewSummary {
   id: string;
@@ -37,16 +37,15 @@ export function LessonReviewWorkspace({
   initialNotes: ReviewSummary[];
 }) {
   const router = useRouter();
-  const [notes, setNotes] = useState(initialNotes);
+  const [dismissed, setDismissed] = useState<string[]>([]);
+  const notes = initialNotes.filter(
+    (note) => !dismissed.includes(`${schoolId}:${note.id}:${note.currentRevision}`),
+  );
   const [active, setActive] = useState<ReviewDetail | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const base = `/api/schools/${encodeURIComponent(schoolId)}/lesson-note-reviews`;
-
-  useEffect(() => {
-    setNotes(initialNotes);
-  }, [initialNotes]);
 
   function errorMessage(status: number) {
     return status === 409
@@ -110,6 +109,7 @@ export function LessonReviewWorkspace({
     setError(null);
     setSuccess(null);
     const noteId = active.id;
+    const noteRevision = active.currentRevision;
     try {
       const response = await fetch(
         `${base}/${encodeURIComponent(noteId)}/decision`,
@@ -133,7 +133,10 @@ export function LessonReviewWorkspace({
         }
         return;
       }
-      setNotes((previous) => previous.filter((item) => item.id !== noteId));
+      setDismissed((previous) => [
+        ...previous,
+        `${schoolId}:${noteId}:${noteRevision}`,
+      ]);
       setActive(null);
       form.reset();
       setSuccess(
