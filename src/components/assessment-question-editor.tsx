@@ -131,7 +131,7 @@ export function AssessmentQuestionEditor({
           value={termId}
           onChange={(e) => setTermId(e.target.value)}
         >
-          <option value="">Select a term in that assignment's session</option>
+          <option value="">Select a term in that assignment&apos;s session</option>
           {terms.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}
