@@ -51,3 +51,23 @@ test("marking queue is scoped to teacher, no answers or keys; score POST accepts
   assert.match(scoringRoute, /scoreInternalSubmittedAttempt/);
   assert.match(scoringRoute, /"Cache-Control": "private, no-store"/);
 });
+
+test("private class-record page defers request-scoped authentication and params behind Suspense", () => {
+  const page = read("../app/schools/[schoolId]/assessment-class-records/page.tsx");
+  const authorizedStart = page.indexOf("async function AuthorizedClassRecords(");
+  assert.ok(authorizedStart > 0);
+  const publicShell = page.slice(
+    page.indexOf("export default function ClassRecordsPage("),
+    authorizedStart,
+  );
+  const authorized = page.slice(authorizedStart);
+  assert.match(publicShell, /<Suspense/);
+  assert.match(publicShell, /<AuthorizedClassRecords params=\{params\}/);
+  assert.doesNotMatch(publicShell, /auth\.api\.getSession|await headers\(\)|await params/);
+  assert.match(authorized, /auth\.api\.getSession\(\{ headers: await headers\(\) \}\)/);
+  assert.match(authorized, /if \(!session\) redirect\("\/"\)/);
+  assert.match(authorized, /const \{ schoolId \} = await params/);
+  assert.match(authorized, /readLessonWritingOptions\(session\.user\.id, schoolId\)/);
+  assert.match(authorized, /if \(!options \|\| !options\.assignments\.length\) notFound\(\)/);
+  assert.doesNotMatch(publicShell, /AssessmentClassRecordWorkspace|options\.school\.name/);
+});
