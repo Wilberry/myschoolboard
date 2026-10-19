@@ -4,6 +4,7 @@ import { z } from "zod";
 import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
 import { authorize } from "@/src/modules/authorization/policy";
+import { classifyAssignmentDatabaseError } from "./database-error";
 
 const identifier = z
   .string()
@@ -118,31 +119,9 @@ async function assertActorCanManage(
 }
 
 function mapDatabaseError(error: unknown): never {
-  const prismaCode =
-    typeof error === "object" && error !== null && "code" in error
-      ? error.code
-      : undefined;
-  const databaseCode =
-    typeof error === "object" &&
-    error !== null &&
-    "meta" in error &&
-    typeof error.meta === "object" &&
-    error.meta !== null &&
-    "code" in error.meta
-      ? error.meta.code
-      : undefined;
-  if (prismaCode === "P2002") {
-    throw new AssignmentServiceError("CONFLICT");
-  }
-  if (
-    prismaCode === "P2034" ||
-    databaseCode === "40001" ||
-    databaseCode === "40P01"
-  ) {
-    throw new AssignmentServiceError("CONFLICT");
-  }
-  throw new AssignmentServiceError("INTERNAL");
+  throw new AssignmentServiceError(classifyAssignmentDatabaseError(error));
 }
+
 
 function requireReason(reason: string | undefined): string {
   if (!reason) throw new AssignmentServiceError("INVALID_INPUT");
