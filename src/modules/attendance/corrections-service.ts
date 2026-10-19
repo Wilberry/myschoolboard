@@ -126,15 +126,15 @@ export async function requestAttendanceCorrection(
         tx.attendanceCorrectionRequest.findFirst({
           where: { schoolId, entryId: entry.id },
           orderBy: { revision: "desc" },
-          select: { revision: true, decision: { select: { id: true } } },
+          select: { revision: true, decisions: { select: { id: true } } },
         }),
         tx.attendanceCorrectionRequest.findFirst({
-          where: { schoolId, entryId: entry.id, decision: { is: { approved: true } } },
+          where: { schoolId, entryId: entry.id, decisions: { some: { approved: true } } },
           orderBy: { revision: "desc" },
           select: { proposedMark: true },
         }),
       ]);
-      if (latest && !latest.decision) throw new AttendanceError("CONFLICT");
+      if (latest && latest.decisions.length === 0) throw new AttendanceError("CONFLICT");
       const effective = latestApproved?.proposedMark ?? entry.mark;
       if (effective !== value.expectedMark) throw new AttendanceError("CONFLICT");
 
@@ -205,7 +205,7 @@ export async function decideAttendanceCorrection(
         where: { id: requestId, schoolId, registerId: provisional.registerId },
         select: {
           id: true, registerId: true, requestedByMembershipId: true,
-          decision: { select: { id: true } },
+          decisions: { select: { id: true } },
           entry: {
             select: {
               register: {
@@ -220,7 +220,7 @@ export async function decideAttendanceCorrection(
         },
       });
       const register = correction?.entry.register;
-      if (!correction || !register || correction.decision ||
+      if (!correction || !register || correction.decisions.length > 0 ||
           register.status !== "APPROVED" || register.session.status !== "ACTIVE" ||
           !register.schoolClass.isActive || !register.schoolClass.sectionId) {
         throw new AttendanceError("NOT_FOUND");

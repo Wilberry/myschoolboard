@@ -321,7 +321,9 @@ async function changeOwnDraft(
           return result;
         }
 
-        if (!("topic" in data) || !("objectives" in data) || !("content" in data)) {
+        if (!("topic" in data) || typeof data.topic !== "string" ||
+            !("objectives" in data) || typeof data.objectives !== "string" ||
+            !("content" in data) || typeof data.content !== "string") {
           throw new LessonNoteError("INVALID_INPUT");
         }
         const nextRevision = note.currentRevision + 1;

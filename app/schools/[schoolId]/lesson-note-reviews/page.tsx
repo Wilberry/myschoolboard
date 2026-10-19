@@ -31,6 +31,9 @@ export default async function LessonReviewPage({
   const pending = notes.map((note) => ({
     id: note.id,
     topic: note.topic,
+    kind: note.kind,
+    weekStart: note.weekStart,
+    weekEnd: note.weekEnd,
     classId: note.classId,
     className: note.className,
     sectionName: note.sectionName,

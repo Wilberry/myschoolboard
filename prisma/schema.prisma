@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum PlatformRole {
@@ -864,7 +863,7 @@ model AttendanceCorrectionRequest {
   school                  School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   entry                   AttendanceEntry @relation(fields: [schoolId, entryId, registerId], references: [schoolId, id, registerId], onDelete: NoAction, map: "AttendanceCorrectionRequest_entry_fkey")
   requester               Membership @relation("AttendanceCorrectionRequester", fields: [schoolId, requestedByMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AttendanceCorrectionRequest_requester_fkey")
-  decision                AttendanceCorrectionDecision?
+  decisions               AttendanceCorrectionDecision[]
 
   @@unique([schoolId, id, registerId], map: "AttendanceCorrectionRequest_decision_identity")
   @@unique([schoolId, entryId, revision])

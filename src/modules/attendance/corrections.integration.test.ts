@@ -345,9 +345,9 @@ describe("Phase 6 immutable reasoned attendance corrections", () => {
     expect(created.revision).toBe(2);
     expect((await decide("head", request2, "APPROVE")).status).toBe(200);
     const accepted = await prisma.attendanceCorrectionRequest.findFirstOrThrow({
-      where: { id: request2 }, include: { decision: true },
+      where: { id: request2 }, include: { decisions: true },
     });
-    expect(accepted.decision?.approved).toBe(true);
+    expect(accepted.decisions[0]?.approved).toBe(true);
     expect((await prisma.attendanceEntry.findUniqueOrThrow({
       where: { id: entryA },
     })).mark).toBe("PRESENT");
@@ -366,9 +366,9 @@ describe("Phase 6 immutable reasoned attendance corrections", () => {
     expect((await decide("head", request3, "RETURN")).status).toBe(200);
     const rows = await prisma.attendanceCorrectionRequest.findMany({
       where: { schoolId: schoolA, entryId: entryA }, orderBy: { revision: "asc" },
-      include: { decision: true },
+      include: { decisions: true },
     });
-    expect(rows.map(x => [x.revision, x.decision?.approved])).toEqual([
+    expect(rows.map(x => [x.revision, x.decisions[0]?.approved])).toEqual([
       [1, false], [2, true], [3, false],
     ]);
     expect(rows[0].reason).toContain("Synthetic");
