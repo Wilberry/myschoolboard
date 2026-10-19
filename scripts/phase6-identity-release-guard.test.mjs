@@ -97,3 +97,17 @@ test("section-review migration SQL never uses reserved grant as an alias", () =>
     assert.match(sql, /scope_grant\."verified"/, path);
   }
 });
+
+test("attendance runtime reviewer SQL uses nonreserved exact section-grant aliases", () => {
+  for (const path of [
+    "../src/modules/attendance/navigation.ts",
+    "../src/modules/attendance/read-service.ts",
+    "../src/modules/attendance/corrections-read.ts",
+  ]) {
+    const source = read(path);
+    assert.doesNotMatch(source, /JOIN\s+"ScopeGrant"\s+grant\b/i, path);
+    assert.match(source, /JOIN\s+"ScopeGrant"\s+scope_grant\b/i, path);
+    assert.match(source, /scope_grant\."verified"\s*=\s*true/, path);
+    assert.match(source, /scope_grant\."scopeId"/, path);
+  }
+});
