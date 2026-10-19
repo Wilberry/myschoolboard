@@ -147,7 +147,7 @@ export function StudentAccountLinkEditor({ schoolId }: { schoolId: string }) {
             checked={confirmed}
             onChange={(e) => setConfirmed(e.target.checked)}
           />
-          I independently verified this student's identity and account
+          I independently verified this student&apos;s identity and account
           membership.
         </label>
         <button
