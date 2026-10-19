@@ -122,7 +122,6 @@ function mapDatabaseError(error: unknown): never {
   throw new AssignmentServiceError(classifyAssignmentDatabaseError(error));
 }
 
-
 function requireReason(reason: string | undefined): string {
   if (!reason) throw new AssignmentServiceError("INVALID_INPUT");
   return reason;
