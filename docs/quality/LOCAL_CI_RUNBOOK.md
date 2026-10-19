@@ -103,3 +103,21 @@ If the build reports another uncached-runtime page, preserve the route name
 and first useful error without weakening authorization or using
 `instant = false` just to bypass the failure.
 
+## Synthetic fixture setup and hook timeouts
+
+The Phase 6 attendance corrections, Phase 7 private question bank, and
+section-scoped lesson-review integration suites each register multiple
+synthetic users through real Better Auth sign-up and sign-in operations,
+then construct a tenant-bound academic test fixture before running assertions.
+On the verified local laptop, their implicit Vitest 10-second `beforeAll`
+timeout intermittently expired even when other authenticated suites passed.
+
+Only those three **fixture-setup hooks** have an explicit 45-second timeout.
+Test-case timeouts, authorization checks, tenant scoping, assertions,
+transaction semantics and the global `vitest.config.ts` timeout remain
+unchanged. This is not evidence that the suites pass: rerun each against the
+previously inspected disposable, loopback-only PostgreSQL service and report
+the full suite results. A hook timeout after 45 seconds is a real failing gate;
+do not skip or silently retry until green. No migration/reset is required
+when the expected schema already exists.
+

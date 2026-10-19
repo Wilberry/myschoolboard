@@ -1,5 +1,38 @@
 # Dependency Advisory Assessment
 
+## Prisma 7 experimental lockfile checkpoint (2026-10-19)
+
+This is **additional current experimental evidence**, not a retroactive
+change to the 2026-10-11 Prisma 6 checkpoint or its historical decisions.
+
+The local experimental stack now pins Prisma / `@prisma/client` /
+`@prisma/adapter-pg` **7.10.1** and Next.js **16.4.0**.
+The tracked `package-lock.json` on
+`fix/phase1-7-school-private-suspense-layout` contains
+`braces@3.0.3`, `micromatch@4.0.8`,
+`fast-glob@3.3.1`, and a development-only ESLint plugin chain.
+Those inspected lockfile entries are marked `dev: true`.
+The previous experimental local verification reported **five high**
+findings in `npm audit --audit-level=high` and **zero production**
+findings in `npm audit --omit=dev --audit-level=high`; neither audit
+has been rerun on the latest validated commit `2b361ed`.
+The package count is not the advisory count.
+
+GitHub's reviewed `GHSA-vfj7-8cjw-p6xm` still affects
+`braces <=3.0.3`, lists **no patched version**, and the npm latest
+version inspected on October 19 remains 3.0.3. The exact source
+reachability/configuration is bounded as assessed above and must be
+reconfirmed for changes in tooling. Do not claim that the package is
+safe, pin the same vulnerable version as a "fix", or disable the
+strict audit. Await a compatible published patch/upstream dependency
+change, or obtain a distinct future security-risk disposition before
+any merge/release, under the governing project policies.
+
+Evidence links:
+[GHSA advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm),
+[npm braces versions](https://www.npmjs.com/package/braces?activeTab=versions).
+
+
 ## Development governance clarification (2026-10-12)
 
 The Project Owner's [Standing Development Mandate](../project/STANDING_DEVELOPMENT_MANDATE.md), recorded as D-023, authorizes ongoing **non-production** roadmap implementation, reviewed development feature-branch pushes, and draft PRs without repeated per-feature approval. This document records the actual security findings and **historical scope** of the original D-022 exception; its 2026-10-18 review/expiry is **not** a project development deadline, does not stop normal coding, and is neither renewed nor expanded by D-023. The current findings remain unresolved and block any claim of passing security audit, production readiness, or release. **Keep `npm audit --audit-level=high` enabled and report its actual local results without suppression.** Merging to `main`, deploying, and accepting a failing production gate still require distinct review and authorization.

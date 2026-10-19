@@ -271,7 +271,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
         status: "ACTIVE",
       },
     });
-  });
+  }, 45_000);
   afterAll(async () => {
     await prisma.school.deleteMany({
       where: { id: { in: [schoolA, schoolB] } },
