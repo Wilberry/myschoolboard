@@ -1,6 +1,4 @@
-import { headers } from "next/headers";
 import { z } from "zod";
-import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
 import {
   AcademicConfigError,
