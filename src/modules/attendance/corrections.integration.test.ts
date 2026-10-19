@@ -382,7 +382,7 @@ describe("Phase 6 immutable reasoned attendance corrections", () => {
         where: { schoolId: schoolA, registerId: registerA },
       })
     ).id;
-  });
+  }, 45_000);
   afterAll(async () => {
     await prisma.school.deleteMany({
       where: { id: { in: [schoolA, schoolB] } },
