@@ -64,7 +64,7 @@ function retryable(error: unknown): boolean {
   if (!error || typeof error !== "object" || !("code" in error)) return false;
   if (error.code === "P2034") return true;
   return error.code === "P2010" &&
-    "meta" in error && Boolean(error.meta) &&
+    "meta" in error && error.meta !== null &&
     typeof error.meta === "object" && "code" in error.meta &&
     error.meta.code === "40001";
 }

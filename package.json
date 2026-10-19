@@ -23,22 +23,25 @@
     "verify:local:guards": "node --test scripts/verify-local.test.mjs scripts/attendance-ledger-guard.test.mjs scripts/phase6-identity-release-guard.test.mjs scripts/phase7-question-bank-guard.test.mjs scripts/phase7-assessment-draft-guard.test.mjs scripts/phase7-cbt-review-guard.test.mjs scripts/phase7-publication-guard.test.mjs scripts/phase7-attempt-admission-guard.test.mjs scripts/phase7-cbt-answer-guard.test.mjs scripts/phase7-cbt-resume-guard.test.mjs scripts/phase7-objective-scoring-guard.test.mjs scripts/phase7-class-record-guard.test.mjs scripts/phase7-grading-policy-guard.test.mjs scripts/phase7-manual-mark-proposal-guard.test.mjs scripts/phase7-manual-mark-review-guard.test.mjs scripts/phase7-manual-mark-correction-guard.test.mjs scripts/phase7-reviewed-manual-gradebook-guard.test.mjs"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.3",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
     "better-auth": "^1.7.7",
     "next": "16.4.0",
+    "pg": "8.23.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
+    "@types/pg": "8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv": "^18.0.7",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
     "prettier": "^3.9.9",
-    "prisma": "^6.19.3",
+    "prisma": "7.10.1",
     "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.0.3"
