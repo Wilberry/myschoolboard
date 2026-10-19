@@ -156,6 +156,8 @@ describe("teacher lesson-note form options isolation", () => {
       {
         id: assignmentA,
         sessionId: sessionA,
+        classId: classA,
+        subjectId: subjectA,
         label: "Primary One · Mathematics",
       },
     ]);
