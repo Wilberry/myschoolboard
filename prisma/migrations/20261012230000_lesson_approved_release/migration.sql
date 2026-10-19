@@ -66,9 +66,9 @@ BEGIN
     JOIN "Membership" reviewer ON reviewer."id" = NEW."actorMembershipId"
       AND reviewer."schoolId" = n."schoolId" AND reviewer."isActive" = true
       AND reviewer."userId" = NEW."actorUserId"
-    JOIN "ScopeGrant" grant ON grant."membershipId" = reviewer."id"
-      AND grant."scopeId" = section."id" AND grant."type" = 'SECTION'
-      AND grant."verified" = true
+    JOIN "ScopeGrant" scope_grant ON scope_grant."membershipId" = reviewer."id"
+      AND scope_grant."scopeId" = section."id" AND scope_grant."type" = 'SECTION'
+      AND scope_grant."verified" = true
     WHERE n."id" = NEW."noteId" AND n."schoolId" = NEW."schoolId"
       AND n."status" = 'APPROVED'
       AND n."currentRevision" = NEW."revisionNumber"

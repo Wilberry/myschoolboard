@@ -57,3 +57,18 @@ test("additive migrations never bulk-link by names or rewrite lesson content", (
   assert.doesNotMatch(identitySQL, /\b(?:UPDATE\s+"StudentRecord"|DELETE\s+FROM|TRUNCATE\s+TABLE|DROP\s+TABLE)\b/i);
   assert.doesNotMatch(kindSQL, /\b(?:DELETE\s+FROM|DROP\s+TABLE|TRUNCATE\s+TABLE|UPDATE\s+"LessonNoteRevision")\b/i);
 });
+
+test("section-review migration SQL never uses reserved grant as an alias", () => {
+  const migrationFiles = [
+    "../prisma/migrations/20261012160100_lesson_review_decisions/migration.sql",
+    "../prisma/migrations/20261012180000_attendance_register_ledger/migration.sql",
+    "../prisma/migrations/20261012190000_attendance_immutable_corrections/migration.sql",
+    "../prisma/migrations/20261012230000_lesson_approved_release/migration.sql",
+  ];
+  for (const path of migrationFiles) {
+    const sql = read(path);
+    assert.doesNotMatch(sql, /JOIN\s+"ScopeGrant"\s+grant\b/i, path);
+    assert.match(sql, /JOIN\s+"ScopeGrant"\s+scope_grant\b/i, path);
+    assert.match(sql, /scope_grant\."verified"/, path);
+  }
+});
