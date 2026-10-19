@@ -10,7 +10,9 @@ interface AssessmentDraftPageProps {
   params: Promise<{ schoolId: string }>;
 }
 
-export default function AssessmentDraftPage({ params }: AssessmentDraftPageProps) {
+export default function AssessmentDraftPage({
+  params,
+}: AssessmentDraftPageProps) {
   return (
     <main className="workspace">
       <Suspense
