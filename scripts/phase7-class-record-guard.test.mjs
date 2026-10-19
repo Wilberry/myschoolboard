@@ -143,5 +143,6 @@ test(
       assert.ok(authorized.includes(entry.permission), entry.path);
       assert.ok(authorized.includes(entry.denial), entry.path);
       assert.ok(authorized.includes(entry.privateWorkspace), entry.path);
-    },
+    }
+  },
 );
