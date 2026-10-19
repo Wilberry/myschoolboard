@@ -39,7 +39,8 @@ export function LessonReviewWorkspace({
   const router = useRouter();
   const [dismissed, setDismissed] = useState<string[]>([]);
   const notes = initialNotes.filter(
-    (note) => !dismissed.includes(`${schoolId}:${note.id}:${note.currentRevision}`),
+    (note) =>
+      !dismissed.includes(`${schoolId}:${note.id}:${note.currentRevision}`),
   );
   const [active, setActive] = useState<ReviewDetail | null>(null);
   const [pending, setPending] = useState(false);
