@@ -83,7 +83,7 @@ export function AssessmentManualReviewWorkspace({
       <p>
         Head of Section reviews Primary; Principal reviews Secondary. Your
         SECTION grant must be verified and current. Approvals retain the
-        teacher's original mark and are not official result publication.
+        teacher&apos;s original mark and are not official result publication.
       </p>
       <ul>
         {items.map((x) => (
