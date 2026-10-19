@@ -18,14 +18,22 @@ export default async function StudentAdministrationPage({
   return (
     <main className="workspace">
       <header className="topbar">
-        <Link className="brand" href="/">MySchoolBoard</Link>
-        <Link className="secondary-link" href={`/schools/${schoolId}`}>Back to school</Link>
+        <Link className="brand" href="/">
+          MySchoolBoard
+        </Link>
+        <Link className="secondary-link" href={`/schools/${schoolId}`}>
+          Back to school
+        </Link>
       </header>
       <section className="workspace-content">
         <p className="eyebrow">SCHOOL ADMINISTRATION</p>
         <h1>Student records and enrollment</h1>
         <p className="lede">{snapshot.school.name}</p>
-        <p>Private administrator workspace. Showing up to 50 students and 30 historical enrollments per student; no student or guardian accounts are created.</p>
+        <p>
+          Private administrator workspace. Showing up to 50 students and 30
+          historical enrollments per student; no student or guardian accounts
+          are created.
+        </p>
         <StudentWorkspaceEditor schoolId={schoolId} snapshot={snapshot} />
       </section>
     </main>

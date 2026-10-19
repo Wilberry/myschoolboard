@@ -5,33 +5,56 @@ import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
 import { authorize } from "@/src/modules/authorization/policy";
 
-const identifier = z.string().min(1).max(128).refine((value) => value.trim() === value);
-const noteText = z.object({
-  topic: z.string().trim().min(2).max(180),
-  objectives: z.string().trim().min(5).max(4000),
-  content: z.string().trim().min(10).max(20000),
-}).strict();
-const createInput = noteText.extend({
-  termId: identifier,
-  assignmentId: identifier,
-  kind: z.enum(["LESSON_NOTE", "SCHEME_OF_WORK"]).default("LESSON_NOTE"),
-  weekStart: z.number().int().min(1).max(53).optional(),
-  weekEnd: z.number().int().min(1).max(53).optional(),
-}).strict().superRefine((value, context) => {
-  if (value.kind === "SCHEME_OF_WORK") {
-    if (!value.weekStart || !value.weekEnd || value.weekEnd < value.weekStart) {
-      context.addIssue({ code: "custom", message: "Scheme must have valid week range" });
+const identifier = z
+  .string()
+  .min(1)
+  .max(128)
+  .refine((value) => value.trim() === value);
+const noteText = z
+  .object({
+    topic: z.string().trim().min(2).max(180),
+    objectives: z.string().trim().min(5).max(4000),
+    content: z.string().trim().min(10).max(20000),
+  })
+  .strict();
+const createInput = noteText
+  .extend({
+    termId: identifier,
+    assignmentId: identifier,
+    kind: z.enum(["LESSON_NOTE", "SCHEME_OF_WORK"]).default("LESSON_NOTE"),
+    weekStart: z.number().int().min(1).max(53).optional(),
+    weekEnd: z.number().int().min(1).max(53).optional(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (value.kind === "SCHEME_OF_WORK") {
+      if (
+        !value.weekStart ||
+        !value.weekEnd ||
+        value.weekEnd < value.weekStart
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "Scheme must have valid week range",
+        });
+      }
+    } else if (value.weekStart !== undefined || value.weekEnd !== undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "Lesson notes do not have scheme weeks",
+      });
     }
-  } else if (value.weekStart !== undefined || value.weekEnd !== undefined) {
-    context.addIssue({ code: "custom", message: "Lesson notes do not have scheme weeks" });
-  }
-});
-const reviseInput = noteText.extend({
-  expectedRevision: z.number().int().min(1),
-}).strict();
-const submitInput = z.object({
-  expectedRevision: z.number().int().min(1),
-}).strict();
+  });
+const reviseInput = noteText
+  .extend({
+    expectedRevision: z.number().int().min(1),
+  })
+  .strict();
+const submitInput = z
+  .object({
+    expectedRevision: z.number().int().min(1),
+  })
+  .strict();
 
 export type LessonNoteErrorCode =
   | "UNAUTHENTICATED"
@@ -207,8 +230,12 @@ export async function createLessonNote(schoolId: string, input: unknown) {
       async (tx) => {
         const member = await teacherMembership(tx, schoolId, userId);
         const { assignment, term } = await requireActiveLessonSource(
-          tx, schoolId, userId, member.id,
-          parsed.data.termId, parsed.data.assignmentId,
+          tx,
+          schoolId,
+          userId,
+          member.id,
+          parsed.data.termId,
+          parsed.data.assignmentId,
         );
 
         const note = await tx.lessonNote.create({
@@ -265,9 +292,10 @@ async function changeOwnDraft(
 ) {
   checkId(schoolId);
   checkId(noteId);
-  const parsed = action === "revise"
-    ? reviseInput.safeParse(input)
-    : submitInput.safeParse(input);
+  const parsed =
+    action === "revise"
+      ? reviseInput.safeParse(input)
+      : submitInput.safeParse(input);
   if (!parsed.success) throw new LessonNoteError("INVALID_INPUT");
   const data = parsed.data;
   const userId = await actorUserId();
@@ -283,8 +311,12 @@ async function changeOwnDraft(
         if (!reference) throw new LessonNoteError("NOT_FOUND");
 
         await requireActiveLessonSource(
-          tx, schoolId, userId, member.id,
-          reference.termId, reference.assignmentId,
+          tx,
+          schoolId,
+          userId,
+          member.id,
+          reference.termId,
+          reference.assignmentId,
         );
 
         await tx.$queryRaw`SELECT "id" FROM "LessonNote"
@@ -295,9 +327,10 @@ async function changeOwnDraft(
           select: { id: true, status: true, currentRevision: true },
         });
         if (!note) throw new LessonNoteError("NOT_FOUND");
-        const canChange = action === "revise"
-          ? note.status === "DRAFT" || note.status === "RETURNED"
-          : note.status === "DRAFT";
+        const canChange =
+          action === "revise"
+            ? note.status === "DRAFT" || note.status === "RETURNED"
+            : note.status === "DRAFT";
         if (!canChange || note.currentRevision !== data.expectedRevision) {
           throw new LessonNoteError("CONFLICT");
         }
@@ -321,9 +354,14 @@ async function changeOwnDraft(
           return result;
         }
 
-        if (!("topic" in data) || typeof data.topic !== "string" ||
-            !("objectives" in data) || typeof data.objectives !== "string" ||
-            !("content" in data) || typeof data.content !== "string") {
+        if (
+          !("topic" in data) ||
+          typeof data.topic !== "string" ||
+          !("objectives" in data) ||
+          typeof data.objectives !== "string" ||
+          !("content" in data) ||
+          typeof data.content !== "string"
+        ) {
           throw new LessonNoteError("INVALID_INPUT");
         }
         const nextRevision = note.currentRevision + 1;
@@ -370,11 +408,19 @@ async function changeOwnDraft(
   }
 }
 
-export function reviseLessonNote(schoolId: string, noteId: string, input: unknown) {
+export function reviseLessonNote(
+  schoolId: string,
+  noteId: string,
+  input: unknown,
+) {
   return changeOwnDraft(schoolId, noteId, input, "revise");
 }
 
-export function submitLessonNote(schoolId: string, noteId: string, input: unknown) {
+export function submitLessonNote(
+  schoolId: string,
+  noteId: string,
+  input: unknown,
+) {
   return changeOwnDraft(schoolId, noteId, input, "submit");
 }
 

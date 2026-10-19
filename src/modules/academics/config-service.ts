@@ -41,7 +41,10 @@ export class AcademicConfigError extends Error {
 
 function parseDate(value: string): Date {
   const date = new Date(`${value}T00:00:00.000Z`);
-  if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
+  if (
+    !Number.isFinite(date.getTime()) ||
+    date.toISOString().slice(0, 10) !== value
+  ) {
     throw new AcademicConfigError("INVALID_INPUT");
   }
   return date;
@@ -118,7 +121,8 @@ export function mapError(error: unknown): never {
 }
 
 export async function createAcademicSession(schoolId: string, input: unknown) {
-  if (!id.safeParse(schoolId).success) throw new AcademicConfigError("INVALID_INPUT");
+  if (!id.safeParse(schoolId).success)
+    throw new AcademicConfigError("INVALID_INPUT");
   const parsed = sessionSchema.safeParse(input);
   if (!parsed.success) throw new AcademicConfigError("INVALID_INPUT");
   const dates = validateDateRange(parsed.data.startsOn, parsed.data.endsOn);
@@ -187,7 +191,10 @@ export async function createAcademicTerm(
         if (!session || session.status === "CLOSED") {
           throw new AcademicConfigError("NOT_FOUND");
         }
-        if (dates.startsOn < session.startsOn || dates.endsOn > session.endsOn) {
+        if (
+          dates.startsOn < session.startsOn ||
+          dates.endsOn > session.endsOn
+        ) {
           throw new AcademicConfigError("INVALID_INPUT");
         }
         const term = await tx.academicTerm.create({
@@ -233,7 +240,8 @@ export async function createCatalogResource(
   kind: "class" | "subject",
   input: unknown,
 ) {
-  if (!id.safeParse(schoolId).success) throw new AcademicConfigError("INVALID_INPUT");
+  if (!id.safeParse(schoolId).success)
+    throw new AcademicConfigError("INVALID_INPUT");
   const parsed = catalogSchema.safeParse(input);
   if (!parsed.success) throw new AcademicConfigError("INVALID_INPUT");
   const userId = await actorId();
@@ -247,11 +255,21 @@ export async function createCatalogResource(
           kind === "class"
             ? await tx.schoolClass.create({
                 data,
-                select: { id: true, schoolId: true, name: true, isActive: true },
+                select: {
+                  id: true,
+                  schoolId: true,
+                  name: true,
+                  isActive: true,
+                },
               })
             : await tx.subject.create({
                 data,
-                select: { id: true, schoolId: true, name: true, isActive: true },
+                select: {
+                  id: true,
+                  schoolId: true,
+                  name: true,
+                  isActive: true,
+                },
               });
         await tx.schoolConfigurationEvent.create({
           data: {

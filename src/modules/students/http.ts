@@ -28,10 +28,12 @@ function failure(error: unknown) {
     return reply({ error: "Invalid request" }, 400);
   }
   try {
-    console.warn(JSON.stringify({
-      event: "student_enrollment_mutation_failed",
-      requestId: randomUUID(),
-    }));
+    console.warn(
+      JSON.stringify({
+        event: "student_enrollment_mutation_failed",
+        requestId: randomUUID(),
+      }),
+    );
   } catch {
     // Never log student identities, names, admission codes or private data.
   }
@@ -58,16 +60,25 @@ export async function handleStudentMutation(
     }
     if (!studentId) return reply({ error: "Invalid request" }, 400);
     if (action === "enroll") {
-      return reply({
-        enrollment: await enrollStudent(schoolId, studentId, input),
-      }, 201);
+      return reply(
+        {
+          enrollment: await enrollStudent(schoolId, studentId, input),
+        },
+        201,
+      );
     }
     if (!enrollmentId) return reply({ error: "Invalid request" }, 400);
-    return reply({
-      enrollment: await withdrawStudent(
-        schoolId, studentId, enrollmentId, input,
-      ),
-    }, 200);
+    return reply(
+      {
+        enrollment: await withdrawStudent(
+          schoolId,
+          studentId,
+          enrollmentId,
+          input,
+        ),
+      },
+      200,
+    );
   } catch (error) {
     return failure(error);
   }

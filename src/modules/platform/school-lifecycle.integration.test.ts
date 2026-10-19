@@ -47,18 +47,28 @@ async function createSchool(cookie: string, slugValue = slug) {
   return onboard(
     new Request("http://localhost/api/platform/schools", {
       method: "POST",
-      body: JSON.stringify({ name: "Synthetic Platform School", slug: slugValue }),
+      body: JSON.stringify({
+        name: "Synthetic Platform School",
+        slug: slugValue,
+      }),
     }),
   );
 }
 
-async function move(cookie: string, status: string, reason = "Synthetic platform lifecycle test") {
+async function move(
+  cookie: string,
+  status: string,
+  reason = "Synthetic platform lifecycle test",
+) {
   setCookie(cookie);
   return changeLifecycle(
-    new Request(`http://localhost/api/platform/schools/${createdSchoolId}/lifecycle`, {
-      method: "POST",
-      body: JSON.stringify({ status, reason }),
-    }),
+    new Request(
+      `http://localhost/api/platform/schools/${createdSchoolId}/lifecycle`,
+      {
+        method: "POST",
+        body: JSON.stringify({ status, reason }),
+      },
+    ),
     { params: Promise.resolve({ schoolId: createdSchoolId }) },
   );
 }
@@ -99,9 +109,7 @@ describe("platform school onboarding and lifecycle", () => {
       expect(response.status).toBe(cookie ? 404 : 401);
       expect(response.headers.get("cache-control")).toBe("private, no-store");
     }
-    expect(
-      await prisma.school.count({ where: { slug } }),
-    ).toBe(0);
+    expect(await prisma.school.count({ where: { slug } })).toBe(0);
   });
 
   it("onboards pending and records audited status changes without academic access", async () => {
@@ -155,7 +163,8 @@ describe("platform school onboarding and lifecycle", () => {
   });
 
   it("preserves append-only lifecycle events", async () => {
-    if (!createdSchoolId) throw new Error("Expected previous onboarding fixture");
+    if (!createdSchoolId)
+      throw new Error("Expected previous onboarding fixture");
     const event = await prisma.schoolLifecycleEvent.findFirstOrThrow({
       where: { schoolId: createdSchoolId },
     });

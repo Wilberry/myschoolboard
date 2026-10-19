@@ -3,7 +3,8 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/src/lib/db";
 import { AssessmentError, assessmentUserId } from "./question-service";
 
-const id = (value: string) => Boolean(value && value === value.trim() && value.length <= 128);
+const id = (value: string) =>
+  Boolean(value && value === value.trim() && value.length <= 128);
 
 interface Candidate {
   studentId: string;
@@ -27,19 +28,21 @@ export interface ReservedAttempt {
  * SQL BEFORE INSERT revalidates every eligibility edge under row locks,
  * generates the attempt number and sets all timestamps from the DB clock. */
 export async function reserveInternalCbtAttempt(
-  schoolId: string, draftId: string,
+  schoolId: string,
+  draftId: string,
 ): Promise<ReservedAttempt> {
   if (!id(schoolId) || !id(draftId)) throw new AssessmentError("INVALID_INPUT");
   const userId = await assessmentUserId();
   try {
-    return await prisma.$transaction(async tx => {
-      await tx.$queryRaw`SELECT "id" FROM "School"
+    return await prisma.$transaction(
+      async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "School"
         WHERE "id"=${schoolId} AND "isActive"=true FOR UPDATE`;
-      await tx.$queryRaw`SELECT "id" FROM "AssessmentDraft"
+        await tx.$queryRaw`SELECT "id" FROM "AssessmentDraft"
         WHERE "schoolId"=${schoolId} AND "id"=${draftId} FOR UPDATE`;
-      // Resolve the candidate by exact attested identity and active enrollment.
-      // Reject ambiguous school/student enrollments; do not guess the class.
-      const candidates = await tx.$queryRaw<Candidate[]>(Prisma.sql`
+        // Resolve the candidate by exact attested identity and active enrollment.
+        // Reject ambiguous school/student enrollments; do not guess the class.
+        const candidates = await tx.$queryRaw<Candidate[]>(Prisma.sql`
         SELECT pupil."id" AS "studentId", enrollment."id" AS "enrollmentId",
           draft."classId", draft."sessionId",
           member."id" AS "studentMembershipId", binding."id" AS "linkId"
@@ -81,9 +84,9 @@ export async function reserveInternalCbtAttempt(
           )
         LIMIT 2
       `);
-      if (candidates.length !== 1) throw new AssessmentError("NOT_FOUND");
-      const candidate = candidates[0];
-      const result = await tx.$queryRaw<ReservedAttempt[]>(Prisma.sql`
+        if (candidates.length !== 1) throw new AssessmentError("NOT_FOUND");
+        const candidate = candidates[0];
+        const result = await tx.$queryRaw<ReservedAttempt[]>(Prisma.sql`
         INSERT INTO "AssessmentAttempt" (
           "id", "schoolId", "draftId", "studentId", "enrollmentId",
           "classId", "sessionId", "studentMembershipId",
@@ -97,17 +100,24 @@ export async function reserveInternalCbtAttempt(
         )
         RETURNING "id", "draftId", "attemptNumber", "startedAt", "deadlineAt"
       `);
-      if (result.length !== 1) throw new AssessmentError("INTERNAL");
-      return result[0];
-    }, { isolationLevel: "Serializable" });
+        if (result.length !== 1) throw new AssessmentError("INTERNAL");
+        return result[0];
+      },
+      { isolationLevel: "Serializable" },
+    );
   } catch (error) {
     if (error instanceof AssessmentError) throw error;
     if (error && typeof error === "object" && "code" in error) {
       if (error.code === "P2034" || error.code === "P2002") {
         throw new AssessmentError("CONFLICT");
       }
-      if (error.code === "P2010" && "meta" in error && error.meta &&
-        typeof error.meta === "object" && "code" in error.meta) {
+      if (
+        error.code === "P2010" &&
+        "meta" in error &&
+        error.meta &&
+        typeof error.meta === "object" &&
+        "code" in error.meta
+      ) {
         if (error.meta.code === "23505" || error.meta.code === "23514") {
           throw new AssessmentError("CONFLICT");
         }

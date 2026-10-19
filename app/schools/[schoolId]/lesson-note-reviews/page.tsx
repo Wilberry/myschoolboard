@@ -19,10 +19,12 @@ export default async function LessonReviewPage({
   try {
     notes = await readSubmittedLessonNotes(schoolId);
   } catch (error) {
-    if (error instanceof LessonNoteError &&
+    if (
+      error instanceof LessonNoteError &&
       (error.code === "FORBIDDEN" ||
-       error.code === "NOT_FOUND" ||
-       error.code === "INVALID_INPUT")) {
+        error.code === "NOT_FOUND" ||
+        error.code === "INVALID_INPUT")
+    ) {
       notFound();
     }
     throw error;

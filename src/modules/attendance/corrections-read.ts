@@ -9,7 +9,11 @@ import {
 } from "./navigation";
 import { AttendanceError } from "./service";
 
-const id = z.string().min(1).max(128).refine(v => v.trim() === v);
+const id = z
+  .string()
+  .min(1)
+  .max(128)
+  .refine((v) => v.trim() === v);
 function checkId(value: string) {
   if (!id.safeParse(value).success) throw new AttendanceError("INVALID_INPUT");
 }
@@ -48,7 +52,7 @@ interface ApprovedRegisterRow {
 export async function readCorrectableRegisters(schoolId: string) {
   checkId(schoolId);
   const userId = await actorId();
-  if (!await readFormTeacherAttendanceOptions(userId, schoolId)) {
+  if (!(await readFormTeacherAttendanceOptions(userId, schoolId))) {
     throw new AttendanceError("NOT_FOUND");
   }
   const rows = await prisma.$queryRaw<RegisterRow[]>(Prisma.sql`
@@ -78,8 +82,9 @@ export async function readCorrectableRegisters(schoolId: string) {
     ORDER BY register."attendanceDate" DESC, register."id" ASC
     LIMIT 100
   `);
-  return rows.map(row => ({
-    ...row, attendanceDate: row.attendanceDate.toISOString().slice(0, 10),
+  return rows.map((row) => ({
+    ...row,
+    attendanceDate: row.attendanceDate.toISOString().slice(0, 10),
   }));
 }
 
@@ -88,7 +93,10 @@ export async function readCorrectableRegisters(schoolId: string) {
  * pupil identity is constrained by the existing immutable exact-enrollment
  * entry and by the Form Teacher's CURRENT class/session responsibility.
  */
-export async function readCorrectableEntryDetail(schoolId: string, registerId: string) {
+export async function readCorrectableEntryDetail(
+  schoolId: string,
+  registerId: string,
+) {
   checkId(schoolId);
   checkId(registerId);
   const userId = await actorId();
@@ -203,7 +211,7 @@ interface CorrectionDetailRow extends QueueRow {
 export async function readPendingCorrectionQueue(schoolId: string) {
   checkId(schoolId);
   const userId = await actorId();
-  if (!await readAttendanceReviewerOptions(userId, schoolId)) {
+  if (!(await readAttendanceReviewerOptions(userId, schoolId))) {
     throw new AttendanceError("NOT_FOUND");
   }
   const rows = await prisma.$queryRaw<QueueRow[]>(Prisma.sql`
@@ -242,7 +250,7 @@ export async function readPendingCorrectionQueue(schoolId: string) {
     ORDER BY correction."createdAt" ASC, correction."id" ASC
     LIMIT 100
   `);
-  return rows.map(row => ({
+  return rows.map((row) => ({
     ...row,
     attendanceDate: row.attendanceDate.toISOString().slice(0, 10),
     createdAt: row.createdAt.toISOString(),
@@ -252,7 +260,10 @@ export async function readPendingCorrectionQueue(schoolId: string) {
 /** Opening one queued request independently repeats the full exact grant,
  * active role and stored class.stage join before projecting pupil mark detail.
  */
-export async function readPendingCorrectionDetail(schoolId: string, requestId: string) {
+export async function readPendingCorrectionDetail(
+  schoolId: string,
+  requestId: string,
+) {
   checkId(schoolId);
   checkId(requestId);
   const userId = await actorId();

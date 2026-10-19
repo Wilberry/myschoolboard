@@ -41,7 +41,12 @@ async function signIn(email: string) {
   return cookie;
 }
 
-function post(cookie: string, resource: string, status: string, reason: string) {
+function post(
+  cookie: string,
+  resource: string,
+  status: string,
+  reason: string,
+) {
   ctx.headers = new Headers(cookie ? { cookie } : {});
   return new Request(`http://localhost/api/schools/${schoolA}/${resource}`, {
     method: "POST",
@@ -56,7 +61,12 @@ async function sessionStatus(
   sessionId = sessionA,
 ) {
   return changeSession(
-    post(cookie, `academic/sessions/${sessionId}/status`, status, "Synthetic period change"),
+    post(
+      cookie,
+      `academic/sessions/${sessionId}/status`,
+      status,
+      "Synthetic period change",
+    ),
     { params: Promise.resolve({ schoolId, sessionId }) },
   );
 }
@@ -155,7 +165,9 @@ describe("academic session and term lifecycle", () => {
       expect((await sessionStatus(cookie, "ACTIVE")).status).toBe(expected);
       expect((await termStatus(cookie, "ACTIVE")).status).toBe(expected);
     }
-    expect((await sessionStatus(adminCookie, "ACTIVE", schoolA, sessionB)).status).toBe(404);
+    expect(
+      (await sessionStatus(adminCookie, "ACTIVE", schoolA, sessionB)).status,
+    ).toBe(404);
   });
 
   it("rejects activating a term before the session is active", async () => {
@@ -186,8 +198,13 @@ describe("academic session and term lifecycle", () => {
     });
     expect(events).toHaveLength(4);
     expect(events.every((event) => event.actorUserId === adminId)).toBe(true);
-    expect(events.every((event) => event.reason === "Synthetic period change" ||
-      event.reason === "Synthetic term change")).toBe(true);
+    expect(
+      events.every(
+        (event) =>
+          event.reason === "Synthetic period change" ||
+          event.reason === "Synthetic term change",
+      ),
+    ).toBe(true);
     expect(events.map((event) => event.eventType).sort()).toEqual([
       "ACADEMIC_SESSION_ACTIVATED",
       "ACADEMIC_SESSION_CLOSED",

@@ -21,9 +21,7 @@ const approvedEnvironment = {
 };
 
 test("accepts only explicitly opted-in disposable test target", () => {
-  assert.doesNotThrow(() =>
-    assertLocalVerificationTarget(approvedEnvironment),
-  );
+  assert.doesNotThrow(() => assertLocalVerificationTarget(approvedEnvironment));
 });
 
 for (const [name, changes] of [

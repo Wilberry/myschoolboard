@@ -57,7 +57,11 @@ async function createSession(
   schoolId = schoolA,
 ) {
   return newSession(
-    request(cookie, `http://localhost/api/schools/${schoolId}/academic/sessions`, data),
+    request(
+      cookie,
+      `http://localhost/api/schools/${schoolId}/academic/sessions`,
+      data,
+    ),
     { params: Promise.resolve({ schoolId }) },
   );
 }
@@ -114,7 +118,12 @@ describe("tenant-owned academic configuration routes", () => {
     });
     await prisma.membership.createMany({
       data: [
-        { id: memberId, userId: userIds[0], schoolId: schoolA, role: "SCHOOL_ADMIN" },
+        {
+          id: memberId,
+          userId: userIds[0],
+          schoolId: schoolA,
+          role: "SCHOOL_ADMIN",
+        },
         { userId: userIds[1], schoolId: schoolA, role: "PRINCIPAL" },
         { userId: userIds[2], schoolId: schoolB, role: "SCHOOL_ADMIN" },
       ],
@@ -162,9 +171,11 @@ describe("tenant-owned academic configuration routes", () => {
         expect(result.headers.get("cache-control")).toBe("private, no-store");
       }
     }
-    expect(await prisma.schoolConfigurationEvent.count({
-      where: { schoolId: schoolA },
-    })).toBe(0);
+    expect(
+      await prisma.schoolConfigurationEvent.count({
+        where: { schoolId: schoolA },
+      }),
+    ).toBe(0);
   });
 
   it("creates school-owned sessions and terms with audit events", async () => {
@@ -195,12 +206,17 @@ describe("tenant-owned academic configuration routes", () => {
       status: "PLANNED",
     });
 
-    const foreign = await createTerm(adminCookie, sessionId, {
-      name: "Second Term",
-      position: 2,
-      startsOn: "2027-01-01",
-      endsOn: "2027-04-01",
-    }, schoolB);
+    const foreign = await createTerm(
+      adminCookie,
+      sessionId,
+      {
+        name: "Second Term",
+        position: 2,
+        startsOn: "2027-01-01",
+        endsOn: "2027-04-01",
+      },
+      schoolB,
+    );
     expect(foreign.status).toBe(404);
 
     const outOfRange = await createTerm(adminCookie, sessionId, {
@@ -224,7 +240,9 @@ describe("tenant-owned academic configuration routes", () => {
     });
     expect(events).toHaveLength(2);
     expect(events.every((event) => event.actorUserId === adminId)).toBe(true);
-    expect(events.every((event) => event.actorMembershipId === memberId)).toBe(true);
+    expect(events.every((event) => event.actorMembershipId === memberId)).toBe(
+      true,
+    );
   });
 
   it("creates class and subject catalogs without mixing tenants", async () => {
@@ -249,9 +267,11 @@ describe("tenant-owned academic configuration routes", () => {
       schoolId: schoolB,
     });
     expect(forged.status).toBe(400);
-    expect(await prisma.schoolConfigurationEvent.count({
-      where: { schoolId: schoolA },
-    })).toBe(4);
+    expect(
+      await prisma.schoolConfigurationEvent.count({
+        where: { schoolId: schoolA },
+      }),
+    ).toBe(4);
   });
 
   it("rejects invalid dates, duplicates, and inactive membership", async () => {
@@ -267,11 +287,13 @@ describe("tenant-owned academic configuration routes", () => {
       expect(response.status).toBe(400);
     }
     expect(
-      (await createSession(adminCookie, {
-        name: "2026/2027",
-        startsOn: "2026-09-01",
-        endsOn: "2027-07-31",
-      })).status,
+      (
+        await createSession(adminCookie, {
+          name: "2026/2027",
+          startsOn: "2026-09-01",
+          endsOn: "2027-07-31",
+        })
+      ).status,
     ).toBe(409);
     await prisma.membership.update({
       where: { id: memberId },
@@ -294,12 +316,16 @@ describe("tenant-owned academic configuration routes", () => {
     const event = await prisma.schoolConfigurationEvent.findFirstOrThrow({
       where: { schoolId: schoolA },
     });
-    await expect(prisma.schoolConfigurationEvent.update({
-      where: { id: event.id },
-      data: { resourceId: "tampered" },
-    })).rejects.toThrow();
-    await expect(prisma.schoolConfigurationEvent.delete({
-      where: { id: event.id },
-    })).rejects.toThrow();
+    await expect(
+      prisma.schoolConfigurationEvent.update({
+        where: { id: event.id },
+        data: { resourceId: "tampered" },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.schoolConfigurationEvent.delete({
+        where: { id: event.id },
+      }),
+    ).rejects.toThrow();
   });
 });

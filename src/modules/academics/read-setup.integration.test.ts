@@ -71,7 +71,12 @@ describe("school setup view data tenant isolation", () => {
     await prisma.schoolSection.createMany({
       data: [
         { id: sectionA, schoolId: schoolA, name: "Primary", stage: "PRIMARY" },
-        { id: sectionB, schoolId: schoolB, name: "Foreign Secondary", stage: "SECONDARY" },
+        {
+          id: sectionB,
+          schoolId: schoolB,
+          name: "Foreign Secondary",
+          stage: "SECONDARY",
+        },
       ],
     });
     await prisma.schoolClass.createMany({
@@ -139,12 +144,14 @@ describe("school setup view data tenant isolation", () => {
 
   it("includes only own school section and class-to-section mapping", async () => {
     const snapshot = await readSchoolSetup(adminA, schoolA);
-    expect(snapshot?.sections).toEqual([{
-      id: sectionA,
-      name: "Primary",
-      stage: "PRIMARY",
-      isActive: true,
-    }]);
+    expect(snapshot?.sections).toEqual([
+      {
+        id: sectionA,
+        name: "Primary",
+        stage: "PRIMARY",
+        isActive: true,
+      },
+    ]);
     expect(snapshot?.classes[0].sectionId).toBe(sectionA);
     expect(JSON.stringify(snapshot)).not.toContain(sectionB);
   });

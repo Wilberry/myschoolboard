@@ -2,12 +2,18 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const source = p => readFileSync(new URL(p, import.meta.url), "utf8");
+const source = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 const schema = source("../prisma/schema.prisma");
-const migration = source("../prisma/migrations/20261012290000_phase7_assessment_publication/migration.sql");
+const migration = source(
+  "../prisma/migrations/20261012290000_phase7_assessment_publication/migration.sql",
+);
 const service = source("../src/modules/assessments/publication-service.ts");
-const route = source("../app/api/schools/[schoolId]/assessment-publications/[draftId]/decision/route.ts");
-const listing = source("../app/api/schools/[schoolId]/assessment-publications/route.ts");
+const route = source(
+  "../app/api/schools/[schoolId]/assessment-publications/[draftId]/decision/route.ts",
+);
+const listing = source(
+  "../app/api/schools/[schoolId]/assessment-publications/route.ts",
+);
 
 test("a unique immutable publication event differs from academic approval", () => {
   assert.match(schema, /model AssessmentPublicationEvent \{/);
@@ -30,7 +36,10 @@ test("SQL requires separate APPROVED review and active School Super Admin", () =
   assert.match(migration, /"AssessmentDraftSeal" seal/);
   assert.match(migration, /"TeacherClassSubjectAssignment" assignment/);
   assert.match(migration, /"AssessmentPublicationEvent" prior/);
-  assert.match(migration, /Only currently published assessment may be withdrawn/);
+  assert.match(
+    migration,
+    /Only currently published assessment may be withdrawn/,
+  );
 });
 
 test("no key/score/attempt/student delivery endpoint is created", () => {
@@ -42,5 +51,8 @@ test("no key/score/attempt/student delivery endpoint is created", () => {
   assert.doesNotMatch(route, /correctIndex|answerKey/);
   assert.match(route, /"Cache-Control": "private, no-store"/);
   assert.match(listing, /"Cache-Control": "private, no-store"/);
-  assert.doesNotMatch(migration, /CREATE TABLE "AssessmentAttempt"|CREATE TABLE "AssessmentScore"/);
+  assert.doesNotMatch(
+    migration,
+    /CREATE TABLE "AssessmentAttempt"|CREATE TABLE "AssessmentScore"/,
+  );
 });

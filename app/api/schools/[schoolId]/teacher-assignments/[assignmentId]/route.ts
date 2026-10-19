@@ -1,6 +1,4 @@
-import {
-  handleTeacherAssignmentRead,
-} from "@/src/modules/teacher-assignments/read-http";
+import { handleTeacherAssignmentRead } from "@/src/modules/teacher-assignments/read-http";
 
 export async function GET(
   request: Request,
