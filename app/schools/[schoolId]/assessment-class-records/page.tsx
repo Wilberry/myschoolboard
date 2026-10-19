@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
@@ -5,18 +6,34 @@ import { auth } from "@/src/lib/auth";
 import { readLessonWritingOptions } from "@/src/modules/lesson-notes/read-options";
 import { AssessmentClassRecordWorkspace } from "@/src/components/assessment-class-record-workspace";
 
-export default async function ClassRecordsPage({
-  params,
-}: {
+interface ClassRecordsPageProps {
   params: Promise<{ schoolId: string }>;
-}) {
+}
+
+export default function ClassRecordsPage({ params }: ClassRecordsPageProps) {
+  return (
+    <main className="workspace">
+      <Suspense
+        fallback={
+          <p className="workspace-note" role="status">
+            Checking class record access…
+          </p>
+        }
+      >
+        <AuthorizedClassRecords params={params} />
+      </Suspense>
+    </main>
+  );
+}
+
+async function AuthorizedClassRecords({ params }: ClassRecordsPageProps) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/");
   const { schoolId } = await params;
   const options = await readLessonWritingOptions(session.user.id, schoolId);
   if (!options || !options.assignments.length) notFound();
   return (
-    <main className="workspace">
+    <>
       <header className="topbar">
         <Link className="brand" href="/">
           MySchoolBoard
@@ -29,6 +46,6 @@ export default async function ClassRecordsPage({
         <p className="lede">{options.school.name}</p>
         <AssessmentClassRecordWorkspace schoolId={schoolId} options={options} />
       </section>
-    </main>
+    </>
   );
 }
