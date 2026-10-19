@@ -52,8 +52,10 @@ async function signIn(email: string) {
     headers: new Headers({ origin: env.BETTER_AUTH_URL }),
     returnHeaders: true,
   });
-  const cookie = res.headers.getSetCookie()
-    .map((value) => value.split(";")[0]).join("; ");
+  const cookie = res.headers
+    .getSetCookie()
+    .map((value) => value.split(";")[0])
+    .join("; ");
   if (!cookie) throw new Error("Synthetic cookie missing");
   return cookie;
 }
@@ -121,8 +123,18 @@ describe("school-owned timetable overlap and history", () => {
     await prisma.membership.createMany({
       data: [
         { userId: users.admin, schoolId: schoolA, role: "SCHOOL_ADMIN" },
-        { id: memberA, userId: users.teacherA, schoolId: schoolA, role: "TEACHER" },
-        { id: memberB, userId: users.teacherB, schoolId: schoolA, role: "TEACHER" },
+        {
+          id: memberA,
+          userId: users.teacherA,
+          schoolId: schoolA,
+          role: "TEACHER",
+        },
+        {
+          id: memberB,
+          userId: users.teacherB,
+          schoolId: schoolA,
+          role: "TEACHER",
+        },
         { userId: users.otherAdmin, schoolId: schoolB, role: "SCHOOL_ADMIN" },
       ],
     });
@@ -138,8 +150,12 @@ describe("school-owned timetable overlap and history", () => {
     });
     await prisma.academicTerm.create({
       data: {
-        id: termA, sessionId: sessionA, schoolId: schoolA,
-        name: "First Term", position: 1, status: "ACTIVE",
+        id: termA,
+        sessionId: sessionA,
+        schoolId: schoolA,
+        name: "First Term",
+        position: 1,
+        status: "ACTIVE",
         startsOn: new Date("2026-09-01T00:00:00.000Z"),
         endsOn: new Date("2026-12-18T00:00:00.000Z"),
       },
@@ -156,8 +172,12 @@ describe("school-owned timetable overlap and history", () => {
     });
     await prisma.academicTerm.create({
       data: {
-        id: termB, sessionId: `other-session-${tag}`, schoolId: schoolB,
-        name: "First Term", position: 1, status: "ACTIVE",
+        id: termB,
+        sessionId: `other-session-${tag}`,
+        schoolId: schoolB,
+        name: "First Term",
+        position: 1,
+        status: "ACTIVE",
         startsOn: new Date("2026-09-01T00:00:00.000Z"),
         endsOn: new Date("2026-12-18T00:00:00.000Z"),
       },
@@ -173,14 +193,38 @@ describe("school-owned timetable overlap and history", () => {
     });
     await prisma.teacherClassSubjectAssignment.createMany({
       data: [
-        { id: assignments.base, schoolId: schoolA, sessionId: sessionA,
-          membershipId: memberA, classId: classA, subjectId: subjectA },
-        { id: assignments.sameTeacher, schoolId: schoolA, sessionId: sessionA,
-          membershipId: memberA, classId: classB, subjectId: subjectA },
-        { id: assignments.sameClass, schoolId: schoolA, sessionId: sessionA,
-          membershipId: memberB, classId: classA, subjectId: subjectA },
-        { id: assignments.separate, schoolId: schoolA, sessionId: sessionA,
-          membershipId: memberB, classId: classB, subjectId: subjectA },
+        {
+          id: assignments.base,
+          schoolId: schoolA,
+          sessionId: sessionA,
+          membershipId: memberA,
+          classId: classA,
+          subjectId: subjectA,
+        },
+        {
+          id: assignments.sameTeacher,
+          schoolId: schoolA,
+          sessionId: sessionA,
+          membershipId: memberA,
+          classId: classB,
+          subjectId: subjectA,
+        },
+        {
+          id: assignments.sameClass,
+          schoolId: schoolA,
+          sessionId: sessionA,
+          membershipId: memberB,
+          classId: classA,
+          subjectId: subjectA,
+        },
+        {
+          id: assignments.separate,
+          schoolId: schoolA,
+          sessionId: sessionA,
+          membershipId: memberB,
+          classId: classB,
+          subjectId: subjectA,
+        },
       ],
     });
     const foreignRoom = await prisma.timetableRoom.create({
@@ -210,11 +254,16 @@ describe("school-owned timetable overlap and history", () => {
     }
     expect((await createRoom(adminCookie, "ROOM X", schoolB)).status).toBe(404);
     expect((await schedule(adminCookie, { termId: termB })).status).toBe(404);
-    expect((await schedule(adminCookie, {
-      assignmentId: "another-school-assignment",
-    })).status).toBe(404);
-    expect(await prisma.timetableEvent.count({ where: { schoolId: schoolA } }))
-      .toBe(0);
+    expect(
+      (
+        await schedule(adminCookie, {
+          assignmentId: "another-school-assignment",
+        })
+      ).status,
+    ).toBe(404);
+    expect(
+      await prisma.timetableEvent.count({ where: { schoolId: schoolA } }),
+    ).toBe(0);
   });
 
   it("normalizes and audits room creation without duplicate rooms", async () => {
@@ -246,9 +295,18 @@ describe("school-owned timetable overlap and history", () => {
       endMinute: 600,
     });
     for (const change of [
-      { assignmentId: assignments.sameTeacher, startMinute: 550, endMinute: 600 },
+      {
+        assignmentId: assignments.sameTeacher,
+        startMinute: 550,
+        endMinute: 600,
+      },
       { assignmentId: assignments.sameClass, startMinute: 550, endMinute: 600 },
-      { assignmentId: assignments.separate, roomId, startMinute: 550, endMinute: 600 },
+      {
+        assignmentId: assignments.separate,
+        roomId,
+        startMinute: 550,
+        endMinute: 600,
+      },
     ]) {
       const response = await schedule(adminCookie, change);
       expect(response.status).toBe(409);
@@ -270,15 +328,26 @@ describe("school-owned timetable overlap and history", () => {
       endMinute: 600,
     });
     expect(otherDay.status).toBe(201);
-    expect((await schedule(adminCookie, { roomId: foreignRoomId })).status)
-      .toBe(404);
+    expect(
+      (await schedule(adminCookie, { roomId: foreignRoomId })).status,
+    ).toBe(404);
     expect((await schedule(adminCookie, { weekday: 8 })).status).toBe(400);
-    expect((await schedule(adminCookie, {
-      startMinute: 600, endMinute: 600,
-    })).status).toBe(400);
-    expect((await schedule(adminCookie, {
-      startMinute: 1400, endMinute: 1500,
-    })).status).toBe(400);
+    expect(
+      (
+        await schedule(adminCookie, {
+          startMinute: 600,
+          endMinute: 600,
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await schedule(adminCookie, {
+          startMinute: 1400,
+          endMinute: 1500,
+        })
+      ).status,
+    ).toBe(400);
   });
 
   it("cancellation preserves history and releases time for a new booking", async () => {
@@ -298,24 +367,33 @@ describe("school-owned timetable overlap and history", () => {
     const events = await prisma.timetableEvent.findMany({
       where: { schoolId: schoolA, slotId: baseSlotId },
     });
-    expect(events.map((e) => e.eventType).sort()).toEqual(["CANCELLED", "CREATED"]);
+    expect(events.map((e) => e.eventType).sort()).toEqual([
+      "CANCELLED",
+      "CREATED",
+    ]);
     expect(events.every((e) => e.reason.length > 4)).toBe(true);
-    expect(await prisma.teacherClassSubjectAssignmentEvent.count({
-      where: { schoolId: schoolA },
-    })).toBe(0);
+    expect(
+      await prisma.teacherClassSubjectAssignmentEvent.count({
+        where: { schoolId: schoolA },
+      }),
+    ).toBe(0);
   });
 
   it("protects timetable event history from update and delete", async () => {
     const event = await prisma.timetableEvent.findFirstOrThrow({
       where: { schoolId: schoolA },
     });
-    await expect(prisma.timetableEvent.update({
-      where: { id: event.id },
-      data: { reason: "tampered audit reason" },
-    })).rejects.toThrow();
-    await expect(prisma.timetableEvent.delete({
-      where: { id: event.id },
-    })).rejects.toThrow();
+    await expect(
+      prisma.timetableEvent.update({
+        where: { id: event.id },
+        data: { reason: "tampered audit reason" },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.timetableEvent.delete({
+        where: { id: event.id },
+      }),
+    ).rejects.toThrow();
   });
 
   it("does not schedule after the academic term is closed", async () => {

@@ -9,15 +9,19 @@ import {
 
 const identifier = z.string().trim().min(1).max(128);
 const reason = z.string().trim().min(5).max(500);
-const createSchema = z.object({
-  name: z.string().trim().min(2).max(120),
-  stage: z.enum(["PRIMARY", "SECONDARY"]),
-  reason,
-}).strict();
-const assignSchema = z.object({
-  sectionId: identifier,
-  reason,
-}).strict();
+const createSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120),
+    stage: z.enum(["PRIMARY", "SECONDARY"]),
+    reason,
+  })
+  .strict();
+const assignSchema = z
+  .object({
+    sectionId: identifier,
+    reason,
+  })
+  .strict();
 
 /**
  * Only existing school administrators can classify primary/secondary sections.
@@ -108,7 +112,8 @@ export async function assignClassToSection(
             select: { id: true, sectionId: true },
           }),
         ]);
-        if (!section || !schoolClass) throw new AcademicConfigError("NOT_FOUND");
+        if (!section || !schoolClass)
+          throw new AcademicConfigError("NOT_FOUND");
         if (schoolClass.sectionId) throw new AcademicConfigError("CONFLICT");
 
         const changed = await tx.schoolClass.update({

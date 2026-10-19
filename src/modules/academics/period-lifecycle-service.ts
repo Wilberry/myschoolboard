@@ -8,7 +8,11 @@ import {
   requireSchoolConfigActor,
 } from "./config-service";
 
-const id = z.string().min(1).max(128).refine((v) => v === v.trim());
+const id = z
+  .string()
+  .min(1)
+  .max(128)
+  .refine((v) => v === v.trim());
 const transitionSchema = z
   .object({
     status: z.enum(["ACTIVE", "CLOSED"]),

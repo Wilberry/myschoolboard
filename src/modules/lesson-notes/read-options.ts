@@ -111,13 +111,15 @@ export async function readLessonWritingOptions(
     school,
     assignments: assignments.flatMap((assignment) =>
       assignment.sessionId
-        ? [{
-            id: assignment.id,
-            sessionId: assignment.sessionId,
-            classId: assignment.classId,
-            subjectId: assignment.subjectId,
-            label: `${assignment.schoolClass.name} · ${assignment.subject.name}`,
-          }]
+        ? [
+            {
+              id: assignment.id,
+              sessionId: assignment.sessionId,
+              classId: assignment.classId,
+              subjectId: assignment.subjectId,
+              label: `${assignment.schoolClass.name} · ${assignment.subject.name}`,
+            },
+          ]
         : [],
     ),
     terms: terms.map((term) => ({

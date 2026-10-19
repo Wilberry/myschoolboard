@@ -1,6 +1,4 @@
-import {
-  handleUpdateFormTeacherPolicy,
-} from "@/src/modules/form-teachers/http";
+import { handleUpdateFormTeacherPolicy } from "@/src/modules/form-teachers/http";
 
 export async function PATCH(
   request: Request,

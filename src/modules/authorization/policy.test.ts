@@ -156,31 +156,30 @@ describe("server authorization policy", () => {
     type: ScopeType;
     scopeId: string;
     resource: AuthorizationResource;
-  }[])("requires a verified $type scope grant for school academic access", ({
-    type,
-    scopeId,
-    resource,
-  }) => {
-    const unverified = principal("SCHOOL_ADMIN", {
-      scopes: [{ type, scopeId, verified: false }],
-    });
-    const verified = principal("SCHOOL_ADMIN", {
-      scopes: [{ type, scopeId, verified: true }],
-    });
+  }[])(
+    "requires a verified $type scope grant for school academic access",
+    ({ type, scopeId, resource }) => {
+      const unverified = principal("SCHOOL_ADMIN", {
+        scopes: [{ type, scopeId, verified: false }],
+      });
+      const verified = principal("SCHOOL_ADMIN", {
+        scopes: [{ type, scopeId, verified: true }],
+      });
 
-    expect(
-      authorize(unverified, "academic:read", {
-        schoolId: "school-a",
-        ...resource,
-      }).allowed,
-    ).toBe(false);
-    expect(
-      authorize(verified, "academic:read", {
-        schoolId: "school-a",
-        ...resource,
-      }).allowed,
-    ).toBe(true);
-  });
+      expect(
+        authorize(unverified, "academic:read", {
+          schoolId: "school-a",
+          ...resource,
+        }).allowed,
+      ).toBe(false);
+      expect(
+        authorize(verified, "academic:read", {
+          schoolId: "school-a",
+          ...resource,
+        }).allowed,
+      ).toBe(true);
+    },
+  );
 
   it("does not treat a verified scope as a grant for a different resource", () => {
     const admin = principal("SCHOOL_ADMIN", {

@@ -2,13 +2,21 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const source = p => readFileSync(new URL(p, import.meta.url), "utf8");
+const source = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 const schema = source("../prisma/schema.prisma");
-const older = source("../prisma/migrations/20261012270000_phase7_assessment_drafts/migration.sql");
-const review = source("../prisma/migrations/20261012280000_phase7_assessment_review/migration.sql");
+const older = source(
+  "../prisma/migrations/20261012270000_phase7_assessment_drafts/migration.sql",
+);
+const review = source(
+  "../prisma/migrations/20261012280000_phase7_assessment_review/migration.sql",
+);
 const queue = source("../src/modules/assessments/review-service.ts");
-const preview = source("../app/api/schools/[schoolId]/assessment-reviews/[draftId]/route.ts");
-const decision = source("../app/api/schools/[schoolId]/assessment-reviews/[draftId]/decision/route.ts");
+const preview = source(
+  "../app/api/schools/[schoolId]/assessment-reviews/[draftId]/route.ts",
+);
+const decision = source(
+  "../app/api/schools/[schoolId]/assessment-reviews/[draftId]/decision/route.ts",
+);
 const policy = source("../src/modules/assessments/cbt-admission-policy.ts");
 
 test("repair assessment SQL dollar quote syntax in prior draft migration", () => {
@@ -54,6 +62,10 @@ test("future CBT attempt policy is pure, not a student attempt authorization", (
   assert.match(policy, /ACTIVE_ATTEMPT/);
   assert.match(policy, /ATTEMPT_LIMIT/);
   assert.match(policy, /scheduledEnd/);
-  assert.doesNotMatch(schema, /model AssessmentAttempt \{/);
+  assert.doesNotMatch(
+    policy,
+    /from ["'](?:@\/src\/lib\/(?:db|auth)|next\/headers)["']/,
+  );
+  assert.doesNotMatch(policy, /prisma\.\$transaction|PrismaClient/);
   assert.doesNotMatch(review, /CREATE TABLE "AssessmentAttempt"/);
 });

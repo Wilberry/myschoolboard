@@ -323,8 +323,8 @@ describe("school API route authorization", () => {
         expect(await response.json()).toEqual({ error: "Not found" });
       }
       expect(warn).toHaveBeenCalledTimes(2);
-      const entries = warn.mock.calls.map(([entry]) =>
-        JSON.parse(String(entry)) as Record<string, string>,
+      const entries = warn.mock.calls.map(
+        ([entry]) => JSON.parse(String(entry)) as Record<string, string>,
       );
       for (const entry of entries) {
         expect(Object.keys(entry).sort()).toEqual(["event", "requestId"]);

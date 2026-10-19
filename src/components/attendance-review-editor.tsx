@@ -29,17 +29,29 @@ export function AttendanceReviewEditor({ schoolId }: { schoolId: string }) {
   useEffect(() => {
     let live = true;
     fetch(`/api/schools/${encodeURIComponent(schoolId)}/attendance-reviews`, {
-      credentials: "same-origin", cache: "no-store",
-    }).then(async response => {
-      if (!response.ok) throw new Error("Unavailable");
-      return response.json();
-    }).then(data => {
-      if (live) {
-        setPending(data.registers as QueueItem[]);
-        setDetail(null);
-      }
-    }).catch(() => { if (live) { setMessage("Review queue unavailable or access revoked."); setPending([]); setDetail(null); } });
-    return () => { live = false; };
+      credentials: "same-origin",
+      cache: "no-store",
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Unavailable");
+        return response.json();
+      })
+      .then((data) => {
+        if (live) {
+          setPending(data.registers as QueueItem[]);
+          setDetail(null);
+        }
+      })
+      .catch(() => {
+        if (live) {
+          setMessage("Review queue unavailable or access revoked.");
+          setPending([]);
+          setDetail(null);
+        }
+      });
+    return () => {
+      live = false;
+    };
   }, [schoolId, version]);
 
   async function show(id: string) {
@@ -72,22 +84,28 @@ export function AttendanceReviewEditor({ schoolId }: { schoolId: string }) {
       const response = await fetch(
         `/api/schools/${encodeURIComponent(schoolId)}/attendance/${encodeURIComponent(detail.id)}/decision`,
         {
-          method: "POST", credentials: "same-origin",
+          method: "POST",
+          credentials: "same-origin",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action, reason }),
         },
       );
       if (!response.ok) {
-        setMessage(response.status === 409 ? "This register was already decided."
-          : "Decision denied or register no longer available.");
+        setMessage(
+          response.status === 409
+            ? "This register was already decided."
+            : "Decision denied or register no longer available.",
+        );
         setDetail(null);
-        setVersion(previous => previous + 1);
+        setVersion((previous) => previous + 1);
         return;
       }
       setDetail(null);
       setReason("");
-      setMessage(action === "APPROVE" ? "Attendance approved." : "Attendance returned.");
-      setVersion(previous => previous + 1);
+      setMessage(
+        action === "APPROVE" ? "Attendance approved." : "Attendance returned.",
+      );
+      setVersion((previous) => previous + 1);
     } catch {
       setMessage("Unable to save review decision.");
     } finally {
@@ -97,16 +115,26 @@ export function AttendanceReviewEditor({ schoolId }: { schoolId: string }) {
   return (
     <section className="school-card" aria-labelledby="review-queue-heading">
       <h2 id="review-queue-heading">Submitted attendance</h2>
-      <button type="button" disabled={working} onClick={() => setVersion(value => value + 1)}>
+      <button
+        type="button"
+        disabled={working}
+        onClick={() => setVersion((value) => value + 1)}
+      >
         Refresh pending queue
       </button>
-      {pending.length === 0 && <p>No pending registers are available for your verified sections.</p>}
+      {pending.length === 0 && (
+        <p>No pending registers are available for your verified sections.</p>
+      )}
       <ul>
-        {pending.map(item => (
+        {pending.map((item) => (
           <li key={item.id}>
-            {item.sessionName} — {item.className} ({item.sectionName}), {item.attendanceDate}
-            {" "}
-            <button type="button" disabled={working} onClick={() => show(item.id)}>
+            {item.sessionName} — {item.className} ({item.sectionName}),{" "}
+            {item.attendanceDate}{" "}
+            <button
+              type="button"
+              disabled={working}
+              onClick={() => show(item.id)}
+            >
               Review register
             </button>
           </li>
@@ -114,23 +142,50 @@ export function AttendanceReviewEditor({ schoolId }: { schoolId: string }) {
       </ul>
       {detail && (
         <section aria-label="Review attendance details">
-          <h3>{detail.className} — {detail.attendanceDate}</h3>
-          <ul>{detail.entries.map(item => (
-            <li key={item.enrollmentId}>
-              {item.admissionNumber} — {item.givenName} {item.familyName}: <strong>{item.mark}</strong>
-            </li>
-          ))}</ul>
-          <label htmlFor="attendance-review-reason">Decision reason (minimum 5 characters)</label>
-          <textarea id="attendance-review-reason" minLength={5} maxLength={500}
-            value={reason} onChange={event => setReason(event.target.value)} />
-          <p>Decisions are final; corrections must use a separate audited process.</p>
-          <button type="button" disabled={working || reason.trim().length < 5}
-            onClick={() => decide("APPROVE")}>Approve register</button>
-          <button type="button" disabled={working || reason.trim().length < 5}
-            onClick={() => decide("RETURN")}>Return register</button>
+          <h3>
+            {detail.className} — {detail.attendanceDate}
+          </h3>
+          <ul>
+            {detail.entries.map((item) => (
+              <li key={item.enrollmentId}>
+                {item.admissionNumber} — {item.givenName} {item.familyName}:{" "}
+                <strong>{item.mark}</strong>
+              </li>
+            ))}
+          </ul>
+          <label htmlFor="attendance-review-reason">
+            Decision reason (minimum 5 characters)
+          </label>
+          <textarea
+            id="attendance-review-reason"
+            minLength={5}
+            maxLength={500}
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+          />
+          <p>
+            Decisions are final; corrections must use a separate audited
+            process.
+          </p>
+          <button
+            type="button"
+            disabled={working || reason.trim().length < 5}
+            onClick={() => decide("APPROVE")}
+          >
+            Approve register
+          </button>
+          <button
+            type="button"
+            disabled={working || reason.trim().length < 5}
+            onClick={() => decide("RETURN")}
+          >
+            Return register
+          </button>
         </section>
       )}
-      <p role="status" aria-live="polite">{message}</p>
+      <p role="status" aria-live="polite">
+        {message}
+      </p>
     </section>
   );
 }

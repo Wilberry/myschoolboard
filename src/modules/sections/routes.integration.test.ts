@@ -40,8 +40,10 @@ async function login(email: string) {
     headers: new Headers({ origin: env.BETTER_AUTH_URL }),
     returnHeaders: true,
   });
-  const cookie = result.headers.getSetCookie()
-    .map((value) => value.split(";")[0]).join("; ");
+  const cookie = result.headers
+    .getSetCookie()
+    .map((value) => value.split(";")[0])
+    .join("; ");
   if (!cookie) throw new Error("Synthetic authentication cookie missing");
   return cookie;
 }
@@ -72,7 +74,11 @@ async function classify(
   schoolId = schoolA,
 ) {
   return assignClassRoute(
-    request(cookie, `http://localhost/api/schools/${schoolId}/classes/${classId}/section`, input),
+    request(
+      cookie,
+      `http://localhost/api/schools/${schoolId}/classes/${classId}/section`,
+      input,
+    ),
     { params: Promise.resolve({ schoolId, classId }) },
   );
 }
@@ -94,8 +100,12 @@ describe("school section ownership and verified SECTION grants", () => {
     await prisma.membership.createMany({
       data: [
         { userId: users.admin, schoolId: schoolA, role: "SCHOOL_ADMIN" },
-        { id: headMember, userId: users.head, schoolId: schoolA,
-          role: "HEAD_OF_SECTION" },
+        {
+          id: headMember,
+          userId: users.head,
+          schoolId: schoolA,
+          role: "HEAD_OF_SECTION",
+        },
         { userId: users.foreign, schoolId: schoolB, role: "SCHOOL_ADMIN" },
       ],
     });
@@ -127,77 +137,152 @@ describe("school section ownership and verified SECTION grants", () => {
   });
 
   it("denies anonymous and foreign school administrators", async () => {
-    for (const [cookie, status] of [["", 401], [foreignCookie, 404]] as const) {
-      expect((await createSection(cookie, {
-        name: "Primary", stage: "PRIMARY", reason: "Synthetic school setup",
-      })).status).toBe(status);
-      expect((await classify(cookie, classA, {
-        sectionId: foreignId, reason: "Synthetic class assignment",
-      })).status).toBe(status);
+    for (const [cookie, status] of [
+      ["", 401],
+      [foreignCookie, 404],
+    ] as const) {
+      expect(
+        (
+          await createSection(cookie, {
+            name: "Primary",
+            stage: "PRIMARY",
+            reason: "Synthetic school setup",
+          })
+        ).status,
+      ).toBe(status);
+      expect(
+        (
+          await classify(cookie, classA, {
+            sectionId: foreignId,
+            reason: "Synthetic class assignment",
+          })
+        ).status,
+      ).toBe(status);
     }
-    expect((await createSection(adminCookie, {
-      name: "Foreign Section", stage: "PRIMARY", reason: "Foreign write",
-    }, schoolB)).status).toBe(404);
+    expect(
+      (
+        await createSection(
+          adminCookie,
+          {
+            name: "Foreign Section",
+            stage: "PRIMARY",
+            reason: "Foreign write",
+          },
+          schoolB,
+        )
+      ).status,
+    ).toBe(404);
   });
 
   it("creates school-owned sections and classifies a class once", async () => {
     const primary = await createSection(adminCookie, {
-      name: "Primary", stage: "PRIMARY", reason: "Configure school primary section",
+      name: "Primary",
+      stage: "PRIMARY",
+      reason: "Configure school primary section",
     });
     expect(primary.status).toBe(201);
     expect(primary.headers.get("cache-control")).toBe("private, no-store");
     primaryId = (await primary.json()).section.id;
     const secondary = await createSection(adminCookie, {
-      name: "Secondary", stage: "SECONDARY", reason: "Configure school secondary section",
+      name: "Secondary",
+      stage: "SECONDARY",
+      reason: "Configure school secondary section",
     });
     expect(secondary.status).toBe(201);
     secondaryId = (await secondary.json()).section.id;
-    expect((await createSection(adminCookie, {
-      name: "Primary", stage: "PRIMARY", reason: "Duplicate section",
-    })).status).toBe(409);
-    expect((await classify(adminCookie, classA, {
-      sectionId: foreignId, reason: "Try foreign section",
-    })).status).toBe(404);
-    expect((await classify(adminCookie, classB, {
-      sectionId: primaryId, reason: "Try foreign class",
-    })).status).toBe(404);
+    expect(
+      (
+        await createSection(adminCookie, {
+          name: "Primary",
+          stage: "PRIMARY",
+          reason: "Duplicate section",
+        })
+      ).status,
+    ).toBe(409);
+    expect(
+      (
+        await classify(adminCookie, classA, {
+          sectionId: foreignId,
+          reason: "Try foreign section",
+        })
+      ).status,
+    ).toBe(404);
+    expect(
+      (
+        await classify(adminCookie, classB, {
+          sectionId: primaryId,
+          reason: "Try foreign class",
+        })
+      ).status,
+    ).toBe(404);
     const assigned = await classify(adminCookie, classA, {
-      sectionId: primaryId, reason: "Place Primary One in Primary",
+      sectionId: primaryId,
+      reason: "Place Primary One in Primary",
     });
     expect(assigned.status).toBe(200);
     expect((await assigned.json()).class.sectionId).toBe(primaryId);
-    expect((await classify(adminCookie, classA, {
-      sectionId: secondaryId, reason: "Unaudited reassignment attempt",
-    })).status).toBe(409);
-    expect((await classify(adminCookie, classA, {
-      sectionId: primaryId, reason: "Repeated placement attempt",
-    })).status).toBe(409);
-    expect((await prisma.schoolClass.findUniqueOrThrow({
-      where: { id: classB },
-      select: { sectionId: true },
-    })).sectionId).toBeNull();
+    expect(
+      (
+        await classify(adminCookie, classA, {
+          sectionId: secondaryId,
+          reason: "Unaudited reassignment attempt",
+        })
+      ).status,
+    ).toBe(409);
+    expect(
+      (
+        await classify(adminCookie, classA, {
+          sectionId: primaryId,
+          reason: "Repeated placement attempt",
+        })
+      ).status,
+    ).toBe(409);
+    expect(
+      (
+        await prisma.schoolClass.findUniqueOrThrow({
+          where: { id: classB },
+          select: { sectionId: true },
+        })
+      ).sectionId,
+    ).toBeNull();
   });
 
   it("rejects verified grants pointing to another school's section", async () => {
     await prisma.scopeGrant.createMany({
       data: [
-        { membershipId: headMember, scopeId: primaryId, type: "SECTION", verified: true },
-        { membershipId: headMember, scopeId: foreignId, type: "SECTION", verified: true },
+        {
+          membershipId: headMember,
+          scopeId: primaryId,
+          type: "SECTION",
+          verified: true,
+        },
+        {
+          membershipId: headMember,
+          scopeId: foreignId,
+          type: "SECTION",
+          verified: true,
+        },
       ],
     });
     const principal = await resolveSchoolPrincipal(users.head, schoolA);
-    expect(principal?.membership?.scopes.map((scope) => scope.scopeId))
-      .toContain(primaryId);
-    expect(principal?.membership?.scopes.map((scope) => scope.scopeId))
-      .not.toContain(foreignId);
-    expect(authorize(principal, "academic:approve", {
-      schoolId: schoolA,
-      sectionId: primaryId,
-    }).allowed).toBe(true);
-    expect(authorize(principal, "academic:approve", {
-      schoolId: schoolA,
-      sectionId: foreignId,
-    }).allowed).toBe(false);
+    expect(
+      principal?.membership?.scopes.map((scope) => scope.scopeId),
+    ).toContain(primaryId);
+    expect(
+      principal?.membership?.scopes.map((scope) => scope.scopeId),
+    ).not.toContain(foreignId);
+    expect(
+      authorize(principal, "academic:approve", {
+        schoolId: schoolA,
+        sectionId: primaryId,
+      }).allowed,
+    ).toBe(true);
+    expect(
+      authorize(principal, "academic:approve", {
+        schoolId: schoolA,
+        sectionId: foreignId,
+      }).allowed,
+    ).toBe(false);
   });
 
   it("removes inactive sections from resolved principal authority", async () => {
@@ -207,10 +292,12 @@ describe("school section ownership and verified SECTION grants", () => {
     });
     try {
       const principal = await resolveSchoolPrincipal(users.head, schoolA);
-      expect(authorize(principal, "academic:approve", {
-        schoolId: schoolA,
-        sectionId: primaryId,
-      }).allowed).toBe(false);
+      expect(
+        authorize(principal, "academic:approve", {
+          schoolId: schoolA,
+          sectionId: primaryId,
+        }).allowed,
+      ).toBe(false);
     } finally {
       await prisma.schoolSection.update({
         where: { id: primaryId },
@@ -228,15 +315,21 @@ describe("school section ownership and verified SECTION grants", () => {
       "SECTION_CREATED",
       "SECTION_CREATED",
     ]);
-    expect(events.every((event) => event.actorUserId === users.admin)).toBe(true);
+    expect(events.every((event) => event.actorUserId === users.admin)).toBe(
+      true,
+    );
     expect(events.every((event) => event.reason?.length)).toBe(true);
     const event = events[0];
-    await expect(prisma.schoolConfigurationEvent.update({
-      where: { id: event.id },
-      data: { resourceId: "tampered-class" },
-    })).rejects.toThrow();
-    await expect(prisma.schoolConfigurationEvent.delete({
-      where: { id: event.id },
-    })).rejects.toThrow();
+    await expect(
+      prisma.schoolConfigurationEvent.update({
+        where: { id: event.id },
+        data: { resourceId: "tampered-class" },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.schoolConfigurationEvent.delete({
+        where: { id: event.id },
+      }),
+    ).rejects.toThrow();
   });
 });

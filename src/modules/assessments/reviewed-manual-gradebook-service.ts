@@ -5,48 +5,80 @@ import { AssessmentError, assessmentUserId } from "./question-service";
 const valid = (v: string) => Boolean(v && v.length <= 128 && v.trim() === v);
 type ReviewAction = "APPROVED" | "RETURNED" | null;
 type Row = {
- studentId: string; admissionNumber: string; givenName: string; familyName: string;
- componentId: string | null; title: string | null; kind: "QUIZ"|"TEST"|"EXAM"|null;
- maxPoints: number | null; originalPoints: number | null;
- initialAction: ReviewAction; approvedPoints: number | null;
- approvedCorrectionRevision: number | null; latestCorrectionRevision: number | null;
- latestCorrectionAction: ReviewAction;
+  studentId: string;
+  admissionNumber: string;
+  givenName: string;
+  familyName: string;
+  componentId: string | null;
+  title: string | null;
+  kind: "QUIZ" | "TEST" | "EXAM" | null;
+  maxPoints: number | null;
+  originalPoints: number | null;
+  initialAction: ReviewAction;
+  approvedPoints: number | null;
+  approvedCorrectionRevision: number | null;
+  latestCorrectionRevision: number | null;
+  latestCorrectionAction: ReviewAction;
 };
 export type ReviewedManualComponentStatus =
- | "PENDING_TEACHER_MARK" | "PENDING_ACADEMIC_REVIEW" | "RETURNED_NOT_APPROVED"
- | "APPROVED_INITIAL" | "APPROVED_CORRECTED"
- | "APPROVED_CORRECTION_PENDING" | "APPROVED_CORRECTION_RETURNED"
- | "RETURNED_CORRECTION_PENDING";
+  | "PENDING_TEACHER_MARK"
+  | "PENDING_ACADEMIC_REVIEW"
+  | "RETURNED_NOT_APPROVED"
+  | "APPROVED_INITIAL"
+  | "APPROVED_CORRECTED"
+  | "APPROVED_CORRECTION_PENDING"
+  | "APPROVED_CORRECTION_RETURNED"
+  | "RETURNED_CORRECTION_PENDING";
 export interface ReviewedManualComponent {
- componentId: string; title: string; kind: "QUIZ"|"TEST"|"EXAM";
- maxPoints: number; originalPoints: number | null;
- effectiveApprovedPoints: number | null;
- approvedCorrectionRevision: number | null;
- latestCorrectionRevision: number | null;
- status: ReviewedManualComponentStatus;
+  componentId: string;
+  title: string;
+  kind: "QUIZ" | "TEST" | "EXAM";
+  maxPoints: number;
+  originalPoints: number | null;
+  effectiveApprovedPoints: number | null;
+  approvedCorrectionRevision: number | null;
+  latestCorrectionRevision: number | null;
+  status: ReviewedManualComponentStatus;
 }
 export interface ReviewedManualStudent {
- studentId: string; admissionNumber: string; givenName: string; familyName: string;
- components: ReviewedManualComponent[];
- approvedMarksSum: number; totalPossiblePoints: number;
- unapprovedComponents: number; pendingCorrections: number;
- completedPercentBps: number | null;
- readyForFurtherAcademicReview: boolean;
+  studentId: string;
+  admissionNumber: string;
+  givenName: string;
+  familyName: string;
+  components: ReviewedManualComponent[];
+  approvedMarksSum: number;
+  totalPossiblePoints: number;
+  unapprovedComponents: number;
+  pendingCorrections: number;
+  completedPercentBps: number | null;
+  readyForFurtherAcademicReview: boolean;
 }
 function status(row: Row): ReviewedManualComponentStatus {
- if (row.originalPoints === null) return "PENDING_TEACHER_MARK";
- if (row.initialAction === null) return "PENDING_ACADEMIC_REVIEW";
- if (row.initialAction === "RETURNED" && row.approvedCorrectionRevision === null) {
-   if (row.latestCorrectionRevision !== null &&
-       row.latestCorrectionAction === null) return "RETURNED_CORRECTION_PENDING";
-   return "RETURNED_NOT_APPROVED";
- }
- if (row.latestCorrectionRevision !== null &&
-     row.latestCorrectionAction === null) return "APPROVED_CORRECTION_PENDING";
- if (row.latestCorrectionRevision !== null &&
-     row.latestCorrectionAction === "RETURNED") return "APPROVED_CORRECTION_RETURNED";
- if (row.approvedCorrectionRevision !== null) return "APPROVED_CORRECTED";
- return "APPROVED_INITIAL";
+  if (row.originalPoints === null) return "PENDING_TEACHER_MARK";
+  if (row.initialAction === null) return "PENDING_ACADEMIC_REVIEW";
+  if (
+    row.initialAction === "RETURNED" &&
+    row.approvedCorrectionRevision === null
+  ) {
+    if (
+      row.latestCorrectionRevision !== null &&
+      row.latestCorrectionAction === null
+    )
+      return "RETURNED_CORRECTION_PENDING";
+    return "RETURNED_NOT_APPROVED";
+  }
+  if (
+    row.latestCorrectionRevision !== null &&
+    row.latestCorrectionAction === null
+  )
+    return "APPROVED_CORRECTION_PENDING";
+  if (
+    row.latestCorrectionRevision !== null &&
+    row.latestCorrectionAction === "RETURNED"
+  )
+    return "APPROVED_CORRECTION_RETURNED";
+  if (row.approvedCorrectionRevision !== null) return "APPROVED_CORRECTED";
+  return "APPROVED_INITIAL";
 }
 /** ONLY an internal teacher academic-preview gradebook. This is neither
  * final result publication nor merging unapproved written marks with CBT.
@@ -54,14 +86,24 @@ function status(row: Row): ReviewedManualComponentStatus {
  * term/section, current enrolled children and independent academic decisions.
  * No answer key or student CBT answer is used or returned. */
 export async function readInternalReviewedManualGradebook(
- schoolId:string,sessionId:string,termId:string,classId:string,subjectId:string,
-):Promise<{schoolId:string;sessionId:string;termId:string;classId:string;
- subjectId:string;status:"ACADEMIC_APPROVED_PREVIEW_ONLY";
- students:ReviewedManualStudent[]}> {
- if (![schoolId,sessionId,termId,classId,subjectId].every(valid))
-  throw new AssessmentError("INVALID_INPUT");
- const userId=await assessmentUserId();
- const accessible=await prisma.$queryRaw<Array<{id:string}>>(Prisma.sql`
+  schoolId: string,
+  sessionId: string,
+  termId: string,
+  classId: string,
+  subjectId: string,
+): Promise<{
+  schoolId: string;
+  sessionId: string;
+  termId: string;
+  classId: string;
+  subjectId: string;
+  status: "ACADEMIC_APPROVED_PREVIEW_ONLY";
+  students: ReviewedManualStudent[];
+}> {
+  if (![schoolId, sessionId, termId, classId, subjectId].every(valid))
+    throw new AssessmentError("INVALID_INPUT");
+  const userId = await assessmentUserId();
+  const accessible = await prisma.$queryRaw<Array<{ id: string }>>(Prisma.sql`
   SELECT teacher."id" FROM "School" school
   JOIN "Membership" teacher ON teacher."schoolId"=school."id"
    AND teacher."userId"=${userId}
@@ -85,8 +127,8 @@ export async function readInternalReviewedManualGradebook(
    AND subject."id"=assignment."subjectId" AND subject."isActive"=true
   WHERE school."id"=${schoolId} AND school."isActive"=true LIMIT 1
  `);
- if(!accessible.length)throw new AssessmentError("NOT_FOUND");
- const rows=await prisma.$queryRaw<Row[]>(Prisma.sql`
+  if (!accessible.length) throw new AssessmentError("NOT_FOUND");
+  const rows = await prisma.$queryRaw<Row[]>(Prisma.sql`
   SELECT pupil."id" AS "studentId",pupil."admissionNumber",
    pupil."givenName",pupil."familyName",
    component."id" AS "componentId",component."title",component."kind",
@@ -175,53 +217,89 @@ export async function readInternalReviewedManualGradebook(
   ORDER BY pupil."admissionNumber",pupil."id",component."id"
   LIMIT 15501
  `);
- if(rows.length>15500)throw new AssessmentError("CONFLICT");
- const students=new Map<string,ReviewedManualStudent>();
- const seenEmptyRows=new Set<string>();
- for(const r of rows){
-  if(r.componentId===null) {
-   if(seenEmptyRows.has(r.studentId))throw new AssessmentError("CONFLICT");
-   seenEmptyRows.add(r.studentId);
+  if (rows.length > 15500) throw new AssessmentError("CONFLICT");
+  const students = new Map<string, ReviewedManualStudent>();
+  const seenEmptyRows = new Set<string>();
+  for (const r of rows) {
+    if (r.componentId === null) {
+      if (seenEmptyRows.has(r.studentId)) throw new AssessmentError("CONFLICT");
+      seenEmptyRows.add(r.studentId);
+    }
+    let student = students.get(r.studentId);
+    if (!student) {
+      student = {
+        studentId: r.studentId,
+        admissionNumber: r.admissionNumber,
+        givenName: r.givenName,
+        familyName: r.familyName,
+        components: [],
+        approvedMarksSum: 0,
+        totalPossiblePoints: 0,
+        unapprovedComponents: 0,
+        pendingCorrections: 0,
+        completedPercentBps: null,
+        readyForFurtherAcademicReview: false,
+      };
+      students.set(r.studentId, student);
+    }
+    if (r.componentId && r.title && r.kind) {
+      if (
+        student.components.length >= 30 ||
+        student.components.some((c) => c.componentId === r.componentId)
+      )
+        throw new AssessmentError("CONFLICT");
+      const max = r.maxPoints ?? 0;
+      if (
+        max < 1 ||
+        max > 100 ||
+        (r.approvedPoints !== null &&
+          (r.approvedPoints < 0 || r.approvedPoints > max))
+      )
+        throw new AssessmentError("CONFLICT");
+      const currentStatus = status(r);
+      const component: ReviewedManualComponent = {
+        componentId: r.componentId,
+        title: r.title,
+        kind: r.kind,
+        maxPoints: max,
+        originalPoints: r.originalPoints,
+        effectiveApprovedPoints: r.approvedPoints,
+        approvedCorrectionRevision: r.approvedCorrectionRevision,
+        latestCorrectionRevision: r.latestCorrectionRevision,
+        status: currentStatus,
+      };
+      student.components.push(component);
+      student.totalPossiblePoints += max;
+      if (component.effectiveApprovedPoints === null)
+        student.unapprovedComponents++;
+      else student.approvedMarksSum += component.effectiveApprovedPoints;
+      if (
+        currentStatus === "APPROVED_CORRECTION_PENDING" ||
+        currentStatus === "RETURNED_CORRECTION_PENDING"
+      )
+        student.pendingCorrections++;
+    }
+    if (students.size > 500) throw new AssessmentError("CONFLICT");
   }
-  let student=students.get(r.studentId);
-  if(!student){
-   student={studentId:r.studentId,admissionNumber:r.admissionNumber,
-    givenName:r.givenName,familyName:r.familyName,
-    components:[],approvedMarksSum:0,totalPossiblePoints:0,
-    unapprovedComponents:0,pendingCorrections:0,
-    completedPercentBps:null,readyForFurtherAcademicReview:false};
-   students.set(r.studentId,student);
+  for (const student of students.values()) {
+    student.readyForFurtherAcademicReview =
+      student.components.length > 0 &&
+      student.unapprovedComponents === 0 &&
+      student.pendingCorrections === 0;
+    student.completedPercentBps =
+      student.readyForFurtherAcademicReview && student.totalPossiblePoints > 0
+        ? Math.round(
+            (student.approvedMarksSum * 10000) / student.totalPossiblePoints,
+          )
+        : null;
   }
-  if(r.componentId&&r.title&&r.kind){
-   if(student.components.length>=30 ||
-    student.components.some(c=>c.componentId===r.componentId))
-    throw new AssessmentError("CONFLICT");
-   const max=r.maxPoints??0;
-   if(max<1||max>100||r.approvedPoints!==null &&
-      (r.approvedPoints<0||r.approvedPoints>max))throw new AssessmentError("CONFLICT");
-   const currentStatus=status(r);
-   const component:ReviewedManualComponent={
-    componentId:r.componentId,title:r.title,kind:r.kind,maxPoints:max,
-    originalPoints:r.originalPoints,effectiveApprovedPoints:r.approvedPoints,
-    approvedCorrectionRevision:r.approvedCorrectionRevision,
-    latestCorrectionRevision:r.latestCorrectionRevision,status:currentStatus,
-   };
-   student.components.push(component);
-   student.totalPossiblePoints+=max;
-   if(component.effectiveApprovedPoints===null)student.unapprovedComponents++;
-   else student.approvedMarksSum+=component.effectiveApprovedPoints;
-   if(currentStatus==="APPROVED_CORRECTION_PENDING" ||
-      currentStatus==="RETURNED_CORRECTION_PENDING")student.pendingCorrections++;
-  }
-  if(students.size>500)throw new AssessmentError("CONFLICT");
- }
- for(const student of students.values()){
-  student.readyForFurtherAcademicReview=student.components.length>0 &&
-    student.unapprovedComponents===0&&student.pendingCorrections===0;
-  student.completedPercentBps=student.readyForFurtherAcademicReview &&
-    student.totalPossiblePoints>0
-    ? Math.round(student.approvedMarksSum*10000/student.totalPossiblePoints):null;
- }
- return {schoolId,sessionId,termId,classId,subjectId,
-  status:"ACADEMIC_APPROVED_PREVIEW_ONLY",students:Array.from(students.values())};
+  return {
+    schoolId,
+    sessionId,
+    termId,
+    classId,
+    subjectId,
+    status: "ACADEMIC_APPROVED_PREVIEW_ONLY",
+    students: Array.from(students.values()),
+  };
 }

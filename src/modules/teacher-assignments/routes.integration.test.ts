@@ -453,18 +453,22 @@ describe("teacher assignment mutation routes", () => {
       teacherUserId,
       schoolA,
     );
-    expect(authorize(teacherPrincipal, "academic:read", {
-      schoolId: schoolA,
-      classId: classA,
-      subjectId: subjectA,
-      sessionId,
-    }).allowed).toBe(true);
-    expect(authorize(teacherPrincipal, "academic:read", {
-      schoolId: schoolA,
-      classId: classA,
-      subjectId: subjectA,
-      sessionId: "another-session",
-    }).allowed).toBe(false);
+    expect(
+      authorize(teacherPrincipal, "academic:read", {
+        schoolId: schoolA,
+        classId: classA,
+        subjectId: subjectA,
+        sessionId,
+      }).allowed,
+    ).toBe(true);
+    expect(
+      authorize(teacherPrincipal, "academic:read", {
+        schoolId: schoolA,
+        classId: classA,
+        subjectId: subjectA,
+        sessionId: "another-session",
+      }).allowed,
+    ).toBe(false);
 
     const revokeLegacy = await lifecycle(
       revokeRoute.POST,
@@ -473,17 +477,21 @@ describe("teacher assignment mutation routes", () => {
     );
     expect(revokeLegacy.status).toBe(200);
     const after = await resolveSchoolPrincipal(teacherUserId, schoolA);
-    expect(authorize(after, "academic:read", {
-      schoolId: schoolA,
-      classId: classA,
-      subjectId: subjectA,
-    }).allowed).toBe(false);
-    expect(authorize(after, "academic:read", {
-      schoolId: schoolA,
-      classId: classA,
-      subjectId: subjectA,
-      sessionId,
-    }).allowed).toBe(true);
+    expect(
+      authorize(after, "academic:read", {
+        schoolId: schoolA,
+        classId: classA,
+        subjectId: subjectA,
+      }).allowed,
+    ).toBe(false);
+    expect(
+      authorize(after, "academic:read", {
+        schoolId: schoolA,
+        classId: classA,
+        subjectId: subjectA,
+        sessionId,
+      }).allowed,
+    ).toBe(true);
 
     // Even an ACTIVE assignment no longer authorizes a CLOSED session.
     await prisma.academicSession.update({
@@ -491,12 +499,14 @@ describe("teacher assignment mutation routes", () => {
       data: { status: "CLOSED" },
     });
     const closed = await resolveSchoolPrincipal(teacherUserId, schoolA);
-    expect(authorize(closed, "academic:read", {
-      schoolId: schoolA,
-      classId: classA,
-      subjectId: subjectA,
-      sessionId,
-    }).allowed).toBe(false);
+    expect(
+      authorize(closed, "academic:read", {
+        schoolId: schoolA,
+        classId: classA,
+        subjectId: subjectA,
+        sessionId,
+      }).allowed,
+    ).toBe(false);
   });
 
   it("rejects planned, closed and other-school session assignments", async () => {
@@ -510,8 +520,20 @@ describe("teacher assignment mutation routes", () => {
     await prisma.academicSession.createMany({
       data: [
         { id: plannedId, schoolId: schoolA, name: "Planned", ...dates },
-        { id: closedId, schoolId: schoolA, name: "Closed", status: "CLOSED", ...dates },
-        { id: otherId, schoolId: schoolB, name: "Other School", status: "ACTIVE", ...dates },
+        {
+          id: closedId,
+          schoolId: schoolA,
+          name: "Closed",
+          status: "CLOSED",
+          ...dates,
+        },
+        {
+          id: otherId,
+          schoolId: schoolB,
+          name: "Other School",
+          status: "ACTIVE",
+          ...dates,
+        },
       ],
     });
     for (const sessionId of [plannedId, closedId, otherId]) {
@@ -1049,11 +1071,7 @@ describe("teacher assignment mutation routes", () => {
     ]) {
       expect(Object.hasOwn(route, "DELETE")).toBe(false);
     }
-    for (const route of [
-      deactivateRoute,
-      revokeRoute,
-      reactivateRoute,
-    ]) {
+    for (const route of [deactivateRoute, revokeRoute, reactivateRoute]) {
       expect(Object.hasOwn(route, "GET")).toBe(false);
     }
   });

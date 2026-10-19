@@ -50,7 +50,8 @@ export async function handleAssignFormTeacher(
   params: Promise<{ schoolId: string }>,
 ) {
   try {
-    if (new URL(request.url).search) return response({ error: "Invalid request" }, 400);
+    if (new URL(request.url).search)
+      return response({ error: "Invalid request" }, 400);
     const { schoolId } = await params;
     const body = await request.json();
     const responsibility = await assignFormTeacher(schoolId, body);
@@ -65,7 +66,8 @@ export async function handleHandoverFormTeacher(
   params: Promise<{ schoolId: string; responsibilityId: string }>,
 ) {
   try {
-    if (new URL(request.url).search) return response({ error: "Invalid request" }, 400);
+    if (new URL(request.url).search)
+      return response({ error: "Invalid request" }, 400);
     const { schoolId, responsibilityId } = await params;
     const body = await request.json();
     const responsibility = await handoverFormTeacher(
@@ -88,7 +90,10 @@ export async function handleUpdateFormTeacherPolicy(
       return response({ error: "Invalid request" }, 400);
     }
     const { schoolId } = await params;
-    const school = await updateFormTeacherPolicy(schoolId, await request.json());
+    const school = await updateFormTeacherPolicy(
+      schoolId,
+      await request.json(),
+    );
     return response({ school }, 200);
   } catch (error) {
     return failure(error);

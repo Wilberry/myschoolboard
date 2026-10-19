@@ -27,7 +27,11 @@ describe("administrative timetable view tenant isolation", () => {
       data: [
         { id: adminA, email: `${adminA}@example.test`, name: "School A Admin" },
         { id: adminB, email: `${adminB}@example.test`, name: "School B Admin" },
-        { id: teacher, email: `${teacher}@example.test`, name: "Synthetic Teacher" },
+        {
+          id: teacher,
+          email: `${teacher}@example.test`,
+          name: "Synthetic Teacher",
+        },
       ],
     });
     await prisma.school.createMany({
@@ -40,7 +44,12 @@ describe("administrative timetable view tenant isolation", () => {
       data: [
         { userId: adminA, schoolId: schoolA, role: "SCHOOL_ADMIN" },
         { userId: adminB, schoolId: schoolB, role: "SCHOOL_ADMIN" },
-        { id: memberTeacher, userId: teacher, schoolId: schoolA, role: "TEACHER" },
+        {
+          id: memberTeacher,
+          userId: teacher,
+          schoolId: schoolA,
+          role: "TEACHER",
+        },
       ],
     });
     await prisma.academicSession.create({
@@ -73,10 +82,22 @@ describe("administrative timetable view tenant isolation", () => {
     });
     await prisma.teacherClassSubjectAssignment.createMany({
       data: [
-        { id: assignmentA, schoolId: schoolA, sessionId: sessionA,
-          membershipId: memberTeacher, classId: classA, subjectId: subjectA },
-        { id: legacy, schoolId: schoolA, sessionId: null,
-          membershipId: memberTeacher, classId: classA, subjectId: subjectA },
+        {
+          id: assignmentA,
+          schoolId: schoolA,
+          sessionId: sessionA,
+          membershipId: memberTeacher,
+          classId: classA,
+          subjectId: subjectA,
+        },
+        {
+          id: legacy,
+          schoolId: schoolA,
+          sessionId: null,
+          membershipId: memberTeacher,
+          classId: classA,
+          subjectId: subjectA,
+        },
       ],
     });
     const room = await prisma.timetableRoom.create({
@@ -88,10 +109,16 @@ describe("administrative timetable view tenant isolation", () => {
     });
     const slot = await prisma.timetableSlot.create({
       data: {
-        schoolId: schoolA, sessionId: sessionA, termId: termA,
-        assignmentId: assignmentA, membershipId: memberTeacher,
-        classId: classA, roomId: roomA,
-        weekday: 1, startMinute: 540, endMinute: 600,
+        schoolId: schoolA,
+        sessionId: sessionA,
+        termId: termA,
+        assignmentId: assignmentA,
+        membershipId: memberTeacher,
+        classId: classA,
+        roomId: roomA,
+        weekday: 1,
+        startMinute: 540,
+        endMinute: 600,
       },
     });
     slotA = slot.id;
@@ -114,17 +141,20 @@ describe("administrative timetable view tenant isolation", () => {
     expect(result?.rooms).toEqual([{ id: roomA, name: "ROOM A" }]);
     expect(result?.assignments).toHaveLength(1);
     expect(result?.assignments[0]).toMatchObject({
-      id: assignmentA, sessionId: sessionA,
+      id: assignmentA,
+      sessionId: sessionA,
     });
-    expect(result?.slots).toEqual([{
-      id: slotA,
-      termId: termA,
-      assignmentId: assignmentA,
-      roomId: roomA,
-      weekday: 1,
-      startMinute: 540,
-      endMinute: 600,
-    }]);
+    expect(result?.slots).toEqual([
+      {
+        id: slotA,
+        termId: termA,
+        assignmentId: assignmentA,
+        roomId: roomA,
+        weekday: 1,
+        startMinute: 540,
+        endMinute: 600,
+      },
+    ]);
     expect(JSON.stringify(result)).not.toContain("FOREIGN ROOM");
     expect(JSON.stringify(result)).not.toContain(legacy);
   });

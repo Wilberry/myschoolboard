@@ -140,11 +140,13 @@ export async function readTimetableSetup(
     rooms,
     assignments: assignments.flatMap((assignment) =>
       assignment.sessionId
-        ? [{
-            id: assignment.id,
-            sessionId: assignment.sessionId,
-            label: `${assignment.schoolClass.name} · ${assignment.subject.name} · ${assignment.membership.user.name}`,
-          }]
+        ? [
+            {
+              id: assignment.id,
+              sessionId: assignment.sessionId,
+              label: `${assignment.schoolClass.name} · ${assignment.subject.name} · ${assignment.membership.user.name}`,
+            },
+          ]
         : [],
     ),
     slots,

@@ -77,8 +77,10 @@ async function login(email: string) {
     headers: new Headers({ origin: env.BETTER_AUTH_URL }),
     returnHeaders: true,
   });
-  const cookie = session.headers.getSetCookie()
-    .map((value) => value.split(";")[0]).join("; ");
+  const cookie = session.headers
+    .getSetCookie()
+    .map((value) => value.split(";")[0])
+    .join("; ");
   if (!cookie) throw new Error("Missing synthetic session");
   return cookie;
 }
@@ -96,16 +98,22 @@ function request(
   });
 }
 
-async function author(person: string, operation: "create" | "revise" | "submit", noteId: string, body: unknown) {
+async function author(
+  person: string,
+  operation: "create" | "revise" | "submit",
+  noteId: string,
+  body: unknown,
+) {
   const base = `/api/schools/${schoolA}/lesson-notes`;
   if (operation === "create") {
     return authorCreate(request(person, "POST", base, body), {
       params: Promise.resolve({ schoolId: schoolA }),
     });
   }
-  const path = operation === "revise"
-    ? `${base}/${noteId}/revisions`
-    : `${base}/${noteId}/submit`;
+  const path =
+    operation === "revise"
+      ? `${base}/${noteId}/revisions`
+      : `${base}/${noteId}/submit`;
   const params = { params: Promise.resolve({ schoolId: schoolA, noteId }) };
   return operation === "revise"
     ? authorRevise(request(person, "POST", path, body), params)
@@ -128,16 +136,32 @@ async function queue(person: string, schoolId = schoolA) {
 
 async function detail(person: string, noteId: string) {
   return detailRoute(
-    request(person, "GET", `/api/schools/${schoolA}/lesson-note-reviews/${noteId}`),
+    request(
+      person,
+      "GET",
+      `/api/schools/${schoolA}/lesson-note-reviews/${noteId}`,
+    ),
     { params: Promise.resolve({ schoolId: schoolA, noteId }) },
   );
 }
 
-async function decide(person: string, noteId: string, action: "APPROVE" | "RETURN", expectedRevision = 1) {
+async function decide(
+  person: string,
+  noteId: string,
+  action: "APPROVE" | "RETURN",
+  expectedRevision = 1,
+) {
   return decisionRoute(
-    request(person, "POST", `/api/schools/${schoolA}/lesson-note-reviews/${noteId}/decision`, {
-      action, expectedRevision, reason: "Synthetic exact-section review decision",
-    }),
+    request(
+      person,
+      "POST",
+      `/api/schools/${schoolA}/lesson-note-reviews/${noteId}/decision`,
+      {
+        action,
+        expectedRevision,
+        reason: "Synthetic exact-section review decision",
+      },
+    ),
     { params: Promise.resolve({ schoolId: schoolA, noteId }) },
   );
 }
@@ -158,28 +182,88 @@ describe("section-scoped lesson note review and return", () => {
     });
     await prisma.membership.createMany({
       data: [
-        { id: teacherMember, userId: users.teacher, schoolId: schoolA, role: "TEACHER" },
-        { id: primaryStudentMember, userId: users.pupilPrimary, schoolId: schoolA, role: "STUDENT" },
-        { id: secondaryStudentMember, userId: users.pupilSecondary, schoolId: schoolA, role: "STUDENT" },
-        { id: unlinkedStudentMember, userId: users.pupilUnlinked, schoolId: schoolA, role: "STUDENT" },
-        { id: headMember, userId: users.head, schoolId: schoolA, role: "HEAD_OF_SECTION" },
-        { id: principalMember, userId: users.principal, schoolId: schoolA, role: "PRINCIPAL" },
+        {
+          id: teacherMember,
+          userId: users.teacher,
+          schoolId: schoolA,
+          role: "TEACHER",
+        },
+        {
+          id: primaryStudentMember,
+          userId: users.pupilPrimary,
+          schoolId: schoolA,
+          role: "STUDENT",
+        },
+        {
+          id: secondaryStudentMember,
+          userId: users.pupilSecondary,
+          schoolId: schoolA,
+          role: "STUDENT",
+        },
+        {
+          id: unlinkedStudentMember,
+          userId: users.pupilUnlinked,
+          schoolId: schoolA,
+          role: "STUDENT",
+        },
+        {
+          id: headMember,
+          userId: users.head,
+          schoolId: schoolA,
+          role: "HEAD_OF_SECTION",
+        },
+        {
+          id: principalMember,
+          userId: users.principal,
+          schoolId: schoolA,
+          role: "PRINCIPAL",
+        },
         { userId: users.noGrant, schoolId: schoolA, role: "HEAD_OF_SECTION" },
         { userId: users.admin, schoolId: schoolA, role: "SCHOOL_ADMIN" },
-        { id: foreignMember, userId: users.foreign, schoolId: schoolB, role: "HEAD_OF_SECTION" },
+        {
+          id: foreignMember,
+          userId: users.foreign,
+          schoolId: schoolB,
+          role: "HEAD_OF_SECTION",
+        },
       ],
     });
     await prisma.schoolSection.createMany({
       data: [
-        { id: sectionPrimary, schoolId: schoolA, name: "Primary", stage: "PRIMARY" },
-        { id: sectionSecondary, schoolId: schoolA, name: "Secondary", stage: "SECONDARY" },
-        { id: sectionForeign, schoolId: schoolB, name: "Foreign Primary", stage: "PRIMARY" },
+        {
+          id: sectionPrimary,
+          schoolId: schoolA,
+          name: "Primary",
+          stage: "PRIMARY",
+        },
+        {
+          id: sectionSecondary,
+          schoolId: schoolA,
+          name: "Secondary",
+          stage: "SECONDARY",
+        },
+        {
+          id: sectionForeign,
+          schoolId: schoolB,
+          name: "Foreign Primary",
+          stage: "PRIMARY",
+        },
       ],
     });
     await prisma.schoolClass.createMany({
       data: [
-        { id: classPrimary, schoolId: schoolA, name: "Primary One", sectionId: sectionPrimary },
-        { id: classSecondary, schoolId: schoolA, name: "Secondary One", sectionId: sectionSecondary },
+        {
+          id: classPrimary,
+          schoolId: schoolA,
+          name: "Primary One",
+          sectionId: sectionPrimary,
+        },
+        {
+          id: classSecondary,
+          schoolId: schoolA,
+          name: "Secondary One",
+          sectionId: sectionSecondary,
+        },
         { id: classUnknown, schoolId: schoolA, name: "Unclassified Class" },
       ],
     });
@@ -189,58 +273,143 @@ describe("section-scoped lesson note review and return", () => {
     const startsOn = new Date("2026-09-01T00:00:00.000Z");
     const endsOn = new Date("2027-07-31T00:00:00.000Z");
     await prisma.academicSession.create({
-      data: { id: sessionId, schoolId: schoolA, name: "2026/2027", status: "ACTIVE", startsOn, endsOn },
+      data: {
+        id: sessionId,
+        schoolId: schoolA,
+        name: "2026/2027",
+        status: "ACTIVE",
+        startsOn,
+        endsOn,
+      },
     });
     await prisma.academicTerm.create({
       data: {
-        id: termId, schoolId: schoolA, sessionId,
-        name: "First Term", position: 1, status: "ACTIVE",
-        startsOn, endsOn: new Date("2026-12-18T00:00:00.000Z"),
+        id: termId,
+        schoolId: schoolA,
+        sessionId,
+        name: "First Term",
+        position: 1,
+        status: "ACTIVE",
+        startsOn,
+        endsOn: new Date("2026-12-18T00:00:00.000Z"),
       },
     });
     await prisma.teacherClassSubjectAssignment.createMany({
       data: [
-        { id: primaryAssignment, schoolId: schoolA, sessionId,
-          membershipId: teacherMember, classId: classPrimary, subjectId: subject },
-        { id: secondaryAssignment, schoolId: schoolA, sessionId,
-          membershipId: teacherMember, classId: classSecondary, subjectId: subject },
-        { id: unknownAssignment, schoolId: schoolA, sessionId,
-          membershipId: teacherMember, classId: classUnknown, subjectId: subject },
+        {
+          id: primaryAssignment,
+          schoolId: schoolA,
+          sessionId,
+          membershipId: teacherMember,
+          classId: classPrimary,
+          subjectId: subject,
+        },
+        {
+          id: secondaryAssignment,
+          schoolId: schoolA,
+          sessionId,
+          membershipId: teacherMember,
+          classId: classSecondary,
+          subjectId: subject,
+        },
+        {
+          id: unknownAssignment,
+          schoolId: schoolA,
+          sessionId,
+          membershipId: teacherMember,
+          classId: classUnknown,
+          subjectId: subject,
+        },
       ],
     });
-    await prisma.studentRecord.createMany({ data: [
-      { id: pupilPrimary, schoolId: schoolA, admissionNumber: "TEST-PRIMARY-001",
-        givenName: "Synthetic", familyName: "Primary", status: "ENROLLED" },
-      { id: pupilSecondary, schoolId: schoolA, admissionNumber: "TEST-SECONDARY-001",
-        givenName: "Synthetic", familyName: "Secondary", status: "ENROLLED" },
-      { id: pupilUnlinked, schoolId: schoolA, admissionNumber: "TEST-UNLINKED-001",
-        givenName: "Synthetic", familyName: "Unlinked", status: "ENROLLED" },
-    ] });
-    await prisma.studentEnrollment.createMany({ data: [
-      { id: enrollmentPrimary, schoolId: schoolA, studentId: pupilPrimary,
-        sessionId, classId: classPrimary },
-      { id: enrollmentSecondary, schoolId: schoolA, studentId: pupilSecondary,
-        sessionId, classId: classSecondary },
-      { id: enrollmentUnlinked, schoolId: schoolA, studentId: pupilUnlinked,
-        sessionId, classId: classPrimary },
-    ] });
+    await prisma.studentRecord.createMany({
+      data: [
+        {
+          id: pupilPrimary,
+          schoolId: schoolA,
+          admissionNumber: "TEST-PRIMARY-001",
+          givenName: "Synthetic",
+          familyName: "Primary",
+          status: "ENROLLED",
+        },
+        {
+          id: pupilSecondary,
+          schoolId: schoolA,
+          admissionNumber: "TEST-SECONDARY-001",
+          givenName: "Synthetic",
+          familyName: "Secondary",
+          status: "ENROLLED",
+        },
+        {
+          id: pupilUnlinked,
+          schoolId: schoolA,
+          admissionNumber: "TEST-UNLINKED-001",
+          givenName: "Synthetic",
+          familyName: "Unlinked",
+          status: "ENROLLED",
+        },
+      ],
+    });
+    await prisma.studentEnrollment.createMany({
+      data: [
+        {
+          id: enrollmentPrimary,
+          schoolId: schoolA,
+          studentId: pupilPrimary,
+          sessionId,
+          classId: classPrimary,
+        },
+        {
+          id: enrollmentSecondary,
+          schoolId: schoolA,
+          studentId: pupilSecondary,
+          sessionId,
+          classId: classSecondary,
+        },
+        {
+          id: enrollmentUnlinked,
+          schoolId: schoolA,
+          studentId: pupilUnlinked,
+          sessionId,
+          classId: classPrimary,
+        },
+      ],
+    });
     const grant = await prisma.scopeGrant.create({
       data: {
-        membershipId: headMember, type: "SECTION",
-        scopeId: sectionPrimary, verified: true,
+        membershipId: headMember,
+        type: "SECTION",
+        scopeId: sectionPrimary,
+        verified: true,
       },
     });
     headScopeId = grant.id;
     await prisma.scopeGrant.createMany({
       data: [
-        { membershipId: principalMember, type: "SECTION",
-          scopeId: sectionSecondary, verified: true },
-        { membershipId: foreignMember, type: "SECTION",
-          scopeId: sectionForeign, verified: true },
-        { membershipId: headMember, type: "SECTION",
-          scopeId: sectionForeign, verified: true },
-        { membershipId: principalMember, type: "SECTION",
-          scopeId: sectionPrimary, verified: false },
+        {
+          membershipId: principalMember,
+          type: "SECTION",
+          scopeId: sectionSecondary,
+          verified: true,
+        },
+        {
+          membershipId: foreignMember,
+          type: "SECTION",
+          scopeId: sectionForeign,
+          verified: true,
+        },
+        {
+          membershipId: headMember,
+          type: "SECTION",
+          scopeId: sectionForeign,
+          verified: true,
+        },
+        {
+          membershipId: principalMember,
+          type: "SECTION",
+          scopeId: sectionPrimary,
+          verified: false,
+        },
       ],
     });
     for (const [key, email] of Object.entries(emails)) {
@@ -249,7 +418,9 @@ describe("section-scoped lesson note review and return", () => {
   });
 
   afterAll(async () => {
-    await prisma.school.deleteMany({ where: { id: { in: [schoolA, schoolB] } } });
+    await prisma.school.deleteMany({
+      where: { id: { in: [schoolA, schoolB] } },
+    });
     await prisma.session.deleteMany({
       where: { userId: { in: Object.values(users) } },
     });
@@ -261,7 +432,10 @@ describe("section-scoped lesson note review and return", () => {
 
   it("conceals queues from anonymous, teacher, admin and unscope reviewers", async () => {
     for (const [person, status] of [
-      ["", 401], ["teacher", 404], ["admin", 404], ["noGrant", 404],
+      ["", 401],
+      ["teacher", 404],
+      ["admin", 404],
+      ["noGrant", 404],
       ["foreign", 404],
     ] as const) {
       const response = await queue(person);
@@ -275,31 +449,43 @@ describe("section-scoped lesson note review and return", () => {
   it("lists submitted notes only for matching primary/secondary class sections", async () => {
     async function submitted(assignmentId: string, topic: string) {
       const created = await author("teacher", "create", "", {
-        termId, assignmentId, topic,
+        termId,
+        assignmentId,
+        topic,
         objectives: "Describe this lesson and its educational objectives",
         content: "Synthetic class-specific lesson text for school review.",
       });
       expect(created.status).toBe(201);
       const id = (await created.json()).note.id;
-      expect((await author("teacher", "submit", id, { expectedRevision: 1 })).status)
-        .toBe(200);
+      expect(
+        (await author("teacher", "submit", id, { expectedRevision: 1 })).status,
+      ).toBe(200);
       return id as string;
     }
     primaryNoteId = await submitted(primaryAssignment, "Primary Fractions");
-    secondaryNoteId = await submitted(secondaryAssignment, "Secondary Fractions");
-    unknownNoteId = await submitted(unknownAssignment, "Unclassified Fractions");
+    secondaryNoteId = await submitted(
+      secondaryAssignment,
+      "Secondary Fractions",
+    );
+    unknownNoteId = await submitted(
+      unknownAssignment,
+      "Unclassified Fractions",
+    );
 
     const head = await queue("head");
     expect(head.status).toBe(200);
     const headRows = (await head.json()).notes;
-    expect(headRows.map((row: { id: string }) => row.id)).toEqual([primaryNoteId]);
+    expect(headRows.map((row: { id: string }) => row.id)).toEqual([
+      primaryNoteId,
+    ]);
     expect(headRows[0].sectionId).toBe(sectionPrimary);
     expect(headRows[0].revisions).toEqual([]);
 
     const principal = await queue("principal");
     expect(principal.status).toBe(200);
-    expect((await principal.json()).notes.map((x: { id: string }) => x.id))
-      .toEqual([secondaryNoteId]);
+    expect(
+      (await principal.json()).notes.map((x: { id: string }) => x.id),
+    ).toEqual([secondaryNoteId]);
 
     const ownDetail = await detail("head", primaryNoteId);
     expect(ownDetail.status).toBe(200);
@@ -307,8 +493,10 @@ describe("section-scoped lesson note review and return", () => {
     expect(record.revisions).toHaveLength(1);
     expect(record.revisions[0].content).toContain("Synthetic class-specific");
     for (const [person, id] of [
-      ["head", secondaryNoteId], ["principal", primaryNoteId],
-      ["head", unknownNoteId], ["principal", unknownNoteId],
+      ["head", secondaryNoteId],
+      ["principal", primaryNoteId],
+      ["head", unknownNoteId],
+      ["principal", unknownNoteId],
     ] as const) {
       expect((await detail(person, id)).status).toBe(404);
       expect((await decide(person, id, "APPROVE")).status).toBe(404);
@@ -324,17 +512,23 @@ describe("section-scoped lesson note review and return", () => {
     const returnedOwn = await detailOwn(primaryNoteId);
     expect(returnedOwn.status).toBe(200);
     const authorNote = (await returnedOwn.json()).note;
-    expect(authorNote.events.find((event: { eventType: string }) =>
-      event.eventType === "RETURNED",
-    )).toMatchObject({
+    expect(
+      authorNote.events.find(
+        (event: { eventType: string }) => event.eventType === "RETURNED",
+      ),
+    ).toMatchObject({
       eventType: "RETURNED",
       revisionNumber: 1,
       reason: "Synthetic exact-section review decision",
     });
     // A returned note cannot simply be resubmitted unchanged.
-    expect((await author("teacher", "submit", primaryNoteId, {
-      expectedRevision: 1,
-    })).status).toBe(409);
+    expect(
+      (
+        await author("teacher", "submit", primaryNoteId, {
+          expectedRevision: 1,
+        })
+      ).status,
+    ).toBe(409);
     const revised = await author("teacher", "revise", primaryNoteId, {
       expectedRevision: 1,
       topic: "Improved Primary Fractions",
@@ -343,30 +537,44 @@ describe("section-scoped lesson note review and return", () => {
     });
     expect(revised.status).toBe(200);
     expect((await revised.json()).note).toMatchObject({
-      status: "DRAFT", currentRevision: 2, submittedAt: null,
+      status: "DRAFT",
+      currentRevision: 2,
+      submittedAt: null,
     });
-    expect((await author("teacher", "submit", primaryNoteId, {
-      expectedRevision: 2,
-    })).status).toBe(200);
+    expect(
+      (
+        await author("teacher", "submit", primaryNoteId, {
+          expectedRevision: 2,
+        })
+      ).status,
+    ).toBe(200);
     const approved = await decide("head", primaryNoteId, "APPROVE", 2);
     expect(approved.status).toBe(200);
     expect((await approved.json()).note).toMatchObject({
-      status: "APPROVED", currentRevision: 2,
+      status: "APPROVED",
+      currentRevision: 2,
     });
     const events = await prisma.lessonNoteEvent.findMany({
       where: { schoolId: schoolA, noteId: primaryNoteId },
     });
     expect(events.map((event) => event.eventType).sort()).toEqual([
-      "APPROVED", "CREATED", "RETURNED", "REVISED", "SUBMITTED", "SUBMITTED",
+      "APPROVED",
+      "CREATED",
+      "RETURNED",
+      "REVISED",
+      "SUBMITTED",
+      "SUBMITTED",
     ]);
-    expect(events.find((event) => event.eventType === "APPROVED"))
-      .toMatchObject({
-        actorMembershipId: headMember,
-        revisionNumber: 2,
-        reason: "Synthetic exact-section review decision",
-      });
-    expect((await decide("head", primaryNoteId, "APPROVE", 2)).status)
-      .toBe(409);
+    expect(
+      events.find((event) => event.eventType === "APPROVED"),
+    ).toMatchObject({
+      actorMembershipId: headMember,
+      revisionNumber: 2,
+      reason: "Synthetic exact-section review decision",
+    });
+    expect((await decide("head", primaryNoteId, "APPROVE", 2)).status).toBe(
+      409,
+    );
   });
 
   it("allows the Principal to approve only the secondary section", async () => {
@@ -375,186 +583,315 @@ describe("section-scoped lesson note review and return", () => {
     expect((await result.json()).note.status).toBe("APPROVED");
     expect((await queue("principal")).status).toBe(200);
     expect((await (await queue("principal")).json()).notes).toEqual([]);
-    expect((await decide("principal", primaryNoteId, "APPROVE", 2)).status)
-      .toBe(404);
+    expect(
+      (await decide("principal", primaryNoteId, "APPROVE", 2)).status,
+    ).toBe(404);
     expect((await detailOwn(secondaryNoteId)).status).toBe(200);
   });
 
   it("requires approved revision and exact HM/Principal section for separate release", async () => {
-    async function release(actor: string, noteId: string, action: "RELEASE" | "WITHDRAW",
-      expectedRevision: number) {
-      return releaseRoute(request(actor, "POST",
-        `/api/schools/${schoolA}/lesson-releases/${noteId}/decision`, {
-          action, expectedRevision, reason: "Synthetic separate approved-content release",
-        }), { params: Promise.resolve({ schoolId: schoolA, noteId }) });
+    async function release(
+      actor: string,
+      noteId: string,
+      action: "RELEASE" | "WITHDRAW",
+      expectedRevision: number,
+    ) {
+      return releaseRoute(
+        request(
+          actor,
+          "POST",
+          `/api/schools/${schoolA}/lesson-releases/${noteId}/decision`,
+          {
+            action,
+            expectedRevision,
+            reason: "Synthetic separate approved-content release",
+          },
+        ),
+        { params: Promise.resolve({ schoolId: schoolA, noteId }) },
+      );
     }
     async function releaseQueue(actor: string) {
-      return releaseQueueRoute(request(actor, "GET",
-        `/api/schools/${schoolA}/lesson-releases`),
-        { params: Promise.resolve({ schoolId: schoolA }) });
+      return releaseQueueRoute(
+        request(actor, "GET", `/api/schools/${schoolA}/lesson-releases`),
+        { params: Promise.resolve({ schoolId: schoolA }) },
+      );
     }
-    expect((await release("teacher", primaryNoteId, "RELEASE", 2)).status).toBe(404);
-    expect((await release("principal", primaryNoteId, "RELEASE", 2)).status).toBe(404);
-    expect((await release("head", unknownNoteId, "RELEASE", 1)).status).toBe(404);
-    expect((await release("head", primaryNoteId, "RELEASE", 1)).status).toBe(409);
+    expect((await release("teacher", primaryNoteId, "RELEASE", 2)).status).toBe(
+      404,
+    );
+    expect(
+      (await release("principal", primaryNoteId, "RELEASE", 2)).status,
+    ).toBe(404);
+    expect((await release("head", unknownNoteId, "RELEASE", 1)).status).toBe(
+      404,
+    );
+    expect((await release("head", primaryNoteId, "RELEASE", 1)).status).toBe(
+      409,
+    );
     expect((await releaseQueue("teacher")).status).toBe(404);
     const queue = await releaseQueue("head");
     expect(queue.status).toBe(200);
     const rows = (await queue.json()).notes;
-    expect(rows.some((note: { id: string }) => note.id === primaryNoteId)).toBe(true);
+    expect(rows.some((note: { id: string }) => note.id === primaryNoteId)).toBe(
+      true,
+    );
     expect(JSON.stringify(rows)).not.toContain("learner objectives");
     const result = await release("head", primaryNoteId, "RELEASE", 2);
     expect(result.status).toBe(201);
     expect((await result.json()).event.eventType).toBe("RELEASED");
-    expect((await release("head", primaryNoteId, "RELEASE", 2)).status).toBe(409);
-    expect((await release("head", primaryNoteId, "WITHDRAW", 2)).status).toBe(201);
-    expect((await release("head", primaryNoteId, "WITHDRAW", 2)).status).toBe(409);
-    const original = await prisma.lessonNote.findUniqueOrThrow({ where: { id: primaryNoteId } });
+    expect((await release("head", primaryNoteId, "RELEASE", 2)).status).toBe(
+      409,
+    );
+    expect((await release("head", primaryNoteId, "WITHDRAW", 2)).status).toBe(
+      201,
+    );
+    expect((await release("head", primaryNoteId, "WITHDRAW", 2)).status).toBe(
+      409,
+    );
+    const original = await prisma.lessonNote.findUniqueOrThrow({
+      where: { id: primaryNoteId },
+    });
     expect(original.status).toBe("APPROVED");
     const events = await prisma.lessonReleaseEvent.findMany({
       where: { schoolId: schoolA, noteId: primaryNoteId },
       orderBy: { createdAt: "asc" },
     });
-    expect(events.map(e => e.eventType).sort()).toEqual(["RELEASED", "WITHDRAWN"]);
-    await expect(prisma.lessonReleaseEvent.update({
-      where: { id: events[0].id }, data: { reason: "Unauthorized overwrite" },
-    })).rejects.toThrow();
-    await expect(prisma.lessonReleaseEvent.delete({
-      where: { id: events[0].id },
-    })).rejects.toThrow();
+    expect(events.map((e) => e.eventType).sort()).toEqual([
+      "RELEASED",
+      "WITHDRAWN",
+    ]);
+    await expect(
+      prisma.lessonReleaseEvent.update({
+        where: { id: events[0].id },
+        data: { reason: "Unauthorized overwrite" },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.lessonReleaseEvent.delete({
+        where: { id: events[0].id },
+      }),
+    ).rejects.toThrow();
   });
 
   it("uses explicit admin-attested pupil binding for released class/term lessons", async () => {
     async function pupilList(actor: string) {
-      return pupilLessonsRoute(request(actor, "GET",
-        `/api/schools/${schoolA}/student-lessons`),
-        { params: Promise.resolve({ schoolId: schoolA }) });
+      return pupilLessonsRoute(
+        request(actor, "GET", `/api/schools/${schoolA}/student-lessons`),
+        { params: Promise.resolve({ schoolId: schoolA }) },
+      );
     }
     async function pupilDetail(actor: string, noteId: string) {
-      return pupilLessonDetailRoute(request(actor, "GET",
-        `/api/schools/${schoolA}/student-lessons/${noteId}`),
-        { params: Promise.resolve({ schoolId: schoolA, noteId }) });
+      return pupilLessonDetailRoute(
+        request(
+          actor,
+          "GET",
+          `/api/schools/${schoolA}/student-lessons/${noteId}`,
+        ),
+        { params: Promise.resolve({ schoolId: schoolA, noteId }) },
+      );
     }
     async function attest(studentId: string, membershipId: string) {
-      return studentLinkRoute(request("admin", "POST",
-        `/api/schools/${schoolA}/student-links`, {
-          studentId, studentMembershipId: membershipId,
+      return studentLinkRoute(
+        request("admin", "POST", `/api/schools/${schoolA}/student-links`, {
+          studentId,
+          studentMembershipId: membershipId,
           identityVerified: true,
-          reason: "Verified against synthetic enrollment and student account records",
-        }), { params: Promise.resolve({ schoolId: schoolA }) });
+          reason:
+            "Verified against synthetic enrollment and student account records",
+        }),
+        { params: Promise.resolve({ schoolId: schoolA }) },
+      );
     }
     expect((await pupilList("pupilSecondary")).status).toBe(404);
     expect((await pupilList("pupilUnlinked")).status).toBe(404);
     expect((await pupilList("teacher")).status).toBe(404);
-    expect((await pupilDetail("pupilSecondary", secondaryNoteId)).status).toBe(404);
-    const invalid = await studentLinkRoute(request("admin", "POST",
-      `/api/schools/${schoolA}/student-links`, {
-        studentId: pupilSecondary, studentMembershipId: secondaryStudentMember,
+    expect((await pupilDetail("pupilSecondary", secondaryNoteId)).status).toBe(
+      404,
+    );
+    const invalid = await studentLinkRoute(
+      request("admin", "POST", `/api/schools/${schoolA}/student-links`, {
+        studentId: pupilSecondary,
+        studentMembershipId: secondaryStudentMember,
         reason: "Missing independent identity verification checkbox",
-      }), { params: Promise.resolve({ schoolId: schoolA }) });
+      }),
+      { params: Promise.resolve({ schoolId: schoolA }) },
+    );
     expect(invalid.status).toBe(400);
     const a = await attest(pupilPrimary, primaryStudentMember);
     expect(a.status).toBe(201);
     const b = await attest(pupilSecondary, secondaryStudentMember);
     expect(b.status).toBe(201);
     const linkId = (await b.json()).link.id;
-    expect((await attest(pupilPrimary, secondaryStudentMember)).status).toBe(409);
+    expect((await attest(pupilPrimary, secondaryStudentMember)).status).toBe(
+      409,
+    );
     expect((await pupilList("pupilSecondary")).status).toBe(200);
-    expect((await (await pupilList("pupilSecondary")).json()).lessons).toEqual([]);
+    expect((await (await pupilList("pupilSecondary")).json()).lessons).toEqual(
+      [],
+    );
     // Primary previously withdrawn; link alone gives no access to that content.
     expect((await pupilDetail("pupilPrimary", primaryNoteId)).status).toBe(404);
-    const released = await releaseRoute(request("principal", "POST",
-      `/api/schools/${schoolA}/lesson-releases/${secondaryNoteId}/decision`, {
-        action: "RELEASE", expectedRevision: 1,
-        reason: "Synthetic approved secondary class document release",
-      }), { params: Promise.resolve({ schoolId: schoolA, noteId: secondaryNoteId }) });
+    const released = await releaseRoute(
+      request(
+        "principal",
+        "POST",
+        `/api/schools/${schoolA}/lesson-releases/${secondaryNoteId}/decision`,
+        {
+          action: "RELEASE",
+          expectedRevision: 1,
+          reason: "Synthetic approved secondary class document release",
+        },
+      ),
+      {
+        params: Promise.resolve({ schoolId: schoolA, noteId: secondaryNoteId }),
+      },
+    );
     expect(released.status).toBe(201);
     const list = await pupilList("pupilSecondary");
     expect(list.status).toBe(200);
     expect(list.headers.get("cache-control")).toBe("private, no-store");
     const items = (await list.json()).lessons;
     expect(items.map((x: { id: string }) => x.id)).toEqual([secondaryNoteId]);
-    expect(JSON.stringify(items)).not.toContain("Synthetic class-specific lesson text");
+    expect(JSON.stringify(items)).not.toContain(
+      "Synthetic class-specific lesson text",
+    );
     const detail = await pupilDetail("pupilSecondary", secondaryNoteId);
     expect(detail.status).toBe(200);
-    expect((await detail.json()).lesson.content).toContain("Synthetic class-specific");
-    expect((await pupilDetail("pupilPrimary", secondaryNoteId)).status).toBe(404);
-    const revoke = await studentRevokeRoute(request("admin", "POST",
-      `/api/schools/${schoolA}/student-links/${linkId}/revoke`, {
-        reason: "Synthetic identity revocation requiring fresh administrator investigation",
-      }), { params: Promise.resolve({ schoolId: schoolA, linkId }) });
+    expect((await detail.json()).lesson.content).toContain(
+      "Synthetic class-specific",
+    );
+    expect((await pupilDetail("pupilPrimary", secondaryNoteId)).status).toBe(
+      404,
+    );
+    const revoke = await studentRevokeRoute(
+      request(
+        "admin",
+        "POST",
+        `/api/schools/${schoolA}/student-links/${linkId}/revoke`,
+        {
+          reason:
+            "Synthetic identity revocation requiring fresh administrator investigation",
+        },
+      ),
+      { params: Promise.resolve({ schoolId: schoolA, linkId }) },
+    );
     expect(revoke.status).toBe(201);
     expect((await pupilList("pupilSecondary")).status).toBe(404);
-    expect((await pupilDetail("pupilSecondary", secondaryNoteId)).status).toBe(404);
-    await expect(prisma.studentAccountLink.delete({ where: { id: linkId } }))
-      .rejects.toThrow();
+    expect((await pupilDetail("pupilSecondary", secondaryNoteId)).status).toBe(
+      404,
+    );
+    await expect(
+      prisma.studentAccountLink.delete({ where: { id: linkId } }),
+    ).rejects.toThrow();
   });
 
   it("versions and separately approves and releases typed schemes of work", async () => {
     const input = {
-      termId, assignmentId: primaryAssignment,
-      kind: "SCHEME_OF_WORK", weekStart: 2, weekEnd: 5,
+      termId,
+      assignmentId: primaryAssignment,
+      kind: "SCHEME_OF_WORK",
+      weekStart: 2,
+      weekEnd: 5,
       topic: "Fractions term coverage",
       objectives: "Weekly progression and measurable class outcomes",
-      content: "Weeks two to five cover equivalent fractions, ordering and practical exercises.",
+      content:
+        "Weeks two to five cover equivalent fractions, ordering and practical exercises.",
     };
-    expect((await author("teacher", "create", "", {
-      ...input, weekStart: 7, weekEnd: 2,
-    })).status).toBe(400);
+    expect(
+      (
+        await author("teacher", "create", "", {
+          ...input,
+          weekStart: 7,
+          weekEnd: 2,
+        })
+      ).status,
+    ).toBe(400);
     const created = await author("teacher", "create", "", input);
     expect(created.status).toBe(201);
     const scheme = (await created.json()).note;
     expect(scheme).toMatchObject({
-      kind: "SCHEME_OF_WORK", weekStart: 2, weekEnd: 5,
-      status: "DRAFT", currentRevision: 1,
+      kind: "SCHEME_OF_WORK",
+      weekStart: 2,
+      weekEnd: 5,
+      status: "DRAFT",
+      currentRevision: 1,
     });
-    expect((await author("teacher", "submit", scheme.id,
-      { expectedRevision: 1 })).status).toBe(200);
+    expect(
+      (await author("teacher", "submit", scheme.id, { expectedRevision: 1 }))
+        .status,
+    ).toBe(200);
     expect((await decide("head", scheme.id, "APPROVE", 1)).status).toBe(200);
-    const release = await releaseRoute(request("head", "POST",
-      `/api/schools/${schoolA}/lesson-releases/${scheme.id}/decision`, {
-        action: "RELEASE", expectedRevision: 1,
-        reason: "Synthetic independent release of approved scheme of work",
-      }), { params: Promise.resolve({ schoolId: schoolA, noteId: scheme.id }) });
+    const release = await releaseRoute(
+      request(
+        "head",
+        "POST",
+        `/api/schools/${schoolA}/lesson-releases/${scheme.id}/decision`,
+        {
+          action: "RELEASE",
+          expectedRevision: 1,
+          reason: "Synthetic independent release of approved scheme of work",
+        },
+      ),
+      { params: Promise.resolve({ schoolId: schoolA, noteId: scheme.id }) },
+    );
     expect(release.status).toBe(201);
     const rows = await prisma.lessonNote.findFirstOrThrow({
       where: { id: scheme.id },
     });
     expect(rows).toMatchObject({
-      kind: "SCHEME_OF_WORK", weekStart: 2, weekEnd: 5,
+      kind: "SCHEME_OF_WORK",
+      weekStart: 2,
+      weekEnd: 5,
       status: "APPROVED",
     });
-    await expect(prisma.lessonNote.update({
-      where: { id: scheme.id },
-      data: { weekEnd: 6 },
-    })).rejects.toThrow();
-    const pupil = await pupilLessonDetailRoute(request("pupilPrimary", "GET",
-      `/api/schools/${schoolA}/student-lessons/${scheme.id}`),
-      { params: Promise.resolve({ schoolId: schoolA, noteId: scheme.id }) });
+    await expect(
+      prisma.lessonNote.update({
+        where: { id: scheme.id },
+        data: { weekEnd: 6 },
+      }),
+    ).rejects.toThrow();
+    const pupil = await pupilLessonDetailRoute(
+      request(
+        "pupilPrimary",
+        "GET",
+        `/api/schools/${schoolA}/student-lessons/${scheme.id}`,
+      ),
+      { params: Promise.resolve({ schoolId: schoolA, noteId: scheme.id }) },
+    );
     expect(pupil.status).toBe(200);
     expect((await pupil.json()).lesson).toMatchObject({
-      kind: "SCHEME_OF_WORK", weekStart: 2, weekEnd: 5,
+      kind: "SCHEME_OF_WORK",
+      weekStart: 2,
+      weekEnd: 5,
     });
   });
 
   it("enforces immediate student membership revocation and denies forged identity binding", async () => {
-    await expect(prisma.studentAccountLink.create({
-      data: {
-        schoolId: schoolA, studentId: pupilUnlinked,
-        studentMembershipId: unlinkedStudentMember,
-        attestedByMembershipId: teacherMember,
-        attestedByUserId: users.teacher,
-        attestationReason: "Attempted forged account to enrolled pupil",
-      },
-    })).rejects.toThrow();
+    await expect(
+      prisma.studentAccountLink.create({
+        data: {
+          schoolId: schoolA,
+          studentId: pupilUnlinked,
+          studentMembershipId: unlinkedStudentMember,
+          attestedByMembershipId: teacherMember,
+          attestedByUserId: users.teacher,
+          attestationReason: "Attempted forged account to enrolled pupil",
+        },
+      }),
+    ).rejects.toThrow();
     await prisma.membership.update({
       where: { id: primaryStudentMember },
       data: { isActive: false },
     });
     try {
-      const response = await pupilLessonsRoute(request("pupilPrimary", "GET",
-        `/api/schools/${schoolA}/student-lessons`),
-        { params: Promise.resolve({ schoolId: schoolA }) });
+      const response = await pupilLessonsRoute(
+        request(
+          "pupilPrimary",
+          "GET",
+          `/api/schools/${schoolA}/student-lessons`,
+        ),
+        { params: Promise.resolve({ schoolId: schoolA }) },
+      );
       expect(response.status).toBe(404);
     } finally {
       await prisma.membership.update({
@@ -571,8 +908,9 @@ describe("section-scoped lesson note review and return", () => {
     });
     try {
       expect((await queue("head")).status).toBe(404);
-      expect((await decide("head", primaryNoteId, "APPROVE", 2)).status)
-        .toBe(404);
+      expect((await decide("head", primaryNoteId, "APPROVE", 2)).status).toBe(
+        404,
+      );
     } finally {
       await prisma.scopeGrant.update({
         where: { id: headScopeId },
@@ -596,28 +934,35 @@ describe("section-scoped lesson note review and return", () => {
   it("rejects direct tampering and forged review events at database level", async () => {
     const approval = await prisma.lessonNoteEvent.findFirstOrThrow({
       where: {
-        schoolId: schoolA, noteId: primaryNoteId,
+        schoolId: schoolA,
+        noteId: primaryNoteId,
         eventType: "APPROVED",
       },
     });
-    await expect(prisma.lessonNoteEvent.update({
-      where: { id: approval.id },
-      data: { reason: "Forcibly altered review justification" },
-    })).rejects.toThrow();
-    await expect(prisma.lessonNoteEvent.delete({
-      where: { id: approval.id },
-    })).rejects.toThrow();
-    await expect(prisma.lessonNoteEvent.create({
-      data: {
-        schoolId: schoolA,
-        noteId: primaryNoteId,
-        actorUserId: users.principal,
-        actorMembershipId: principalMember,
-        eventType: "APPROVED",
-        revisionNumber: 2,
-        reason: "Attempted reviewer grant forgery",
-      },
-    })).rejects.toThrow();
+    await expect(
+      prisma.lessonNoteEvent.update({
+        where: { id: approval.id },
+        data: { reason: "Forcibly altered review justification" },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.lessonNoteEvent.delete({
+        where: { id: approval.id },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.lessonNoteEvent.create({
+        data: {
+          schoolId: schoolA,
+          noteId: primaryNoteId,
+          actorUserId: users.principal,
+          actorMembershipId: principalMember,
+          eventType: "APPROVED",
+          revisionNumber: 2,
+          reason: "Attempted reviewer grant forgery",
+        },
+      }),
+    ).rejects.toThrow();
   });
 
   it("removes notes from review after term closure without deleting history", async () => {
@@ -627,12 +972,14 @@ describe("section-scoped lesson note review and return", () => {
     });
     expect((await (await queue("head")).json()).notes).toEqual([]);
     expect((await (await queue("principal")).json()).notes).toEqual([]);
-    const deniedAfterClosingTerm = await pupilLessonsRoute(request("pupilPrimary", "GET",
-      `/api/schools/${schoolA}/student-lessons`),
-      { params: Promise.resolve({ schoolId: schoolA }) });
+    const deniedAfterClosingTerm = await pupilLessonsRoute(
+      request("pupilPrimary", "GET", `/api/schools/${schoolA}/student-lessons`),
+      { params: Promise.resolve({ schoolId: schoolA }) },
+    );
     expect(deniedAfterClosingTerm.status).toBe(200);
     expect((await deniedAfterClosingTerm.json()).lessons).toEqual([]);
-    expect(await prisma.lessonNote.count({ where: { schoolId: schoolA } }))
-      .toBe(4);
+    expect(
+      await prisma.lessonNote.count({ where: { schoolId: schoolA } }),
+    ).toBe(4);
   });
 });
