@@ -1,5 +1,28 @@
 # Milestone Checklist
 
+## Cumulative Phase 1–7 verification checkpoint — 2026-10-19
+
+- [x] Local developer-run Prettier, ESLint, TypeScript, Prisma Client
+  generation and Next.js production build on experimental commit
+  `2b361ed`; the reported build generated 31 static pages.
+- [x] Local source guards `6/6` on `2b361ed`.
+- [x] Targeted teacher-assignment/concurrency Vitest `58/58` on earlier
+  experimental commit `7c30263` using the verified local disposable
+  PostgreSQL 17 tmpfs service. This is NOT proof of complete full-stack
+  integration on the later commit.
+- [ ] Execute the full `npm test` including attendance correction,
+  question-bank and lesson-review authentication fixtures against the
+  previously verified disposable database. The narrowly scoped fixture
+  `beforeAll` 45-second change is **authored only**, not verified.
+- [ ] Resolve or formally disposition the five previously reported
+  high-severity dev-tooling package audit entries from `braces`
+  without disabling `npm audit --audit-level=high`. Upstream patched
+  release not available as of 2026-10-19.
+- [ ] Complete role/tenant isolation browser checks, migration checksum
+  safety review, and all cumulative release/security exit criteria.
+  **Phase 1–7 acceptance BLOCKED; no merge to `main` or deployment.**
+
+
 ## Phase 7 returned-original-mark correction remediation — AUTHORED, UNVERIFIED
 
 `feature/phase7-returned-manual-mark-remediation` resolves the returned-proposal dead end in the original manual grade review workflow. A **terminally RETURNED initial manual mark** may now be amended only through a new immutable reasoned `AssessmentManualCorrectionRequest` by its current exact assigned teacher, followed by the same independently verified PRIMARY HEAD_OF_SECTION or SECONDARY PRINCIPAL academic decision. SQL requires the original initial review to exist (APPROVED or RETURNED), the same active original teacher/enrollment/school and mark limits, a changed bounded value, and no already pending correction. It does **not** change or overwrite the original mark or returned decision.
