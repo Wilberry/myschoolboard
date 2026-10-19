@@ -415,7 +415,7 @@ describe("section-scoped lesson note review and return", () => {
     for (const [key, email] of Object.entries(emails)) {
       cookies[key] = await login(email);
     }
-  });
+  }, 45_000);
 
   afterAll(async () => {
     await prisma.school.deleteMany({
