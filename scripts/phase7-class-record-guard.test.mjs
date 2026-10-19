@@ -52,7 +52,9 @@ test("marking queue is scoped to teacher, no answers or keys; score POST accepts
   assert.match(scoringRoute, /"Cache-Control": "private, no-store"/);
 });
 
-test("private class-record page defers request-scoped authentication and params behind Suspense", () => {
+test(
+  "private class-record page defers request-scoped authentication and params behind Suspense",
+  () => {
   const page = read(
     "../app/schools/[schoolId]/assessment-class-records/page.tsx",
   );
@@ -87,4 +89,5 @@ test("private class-record page defers request-scoped authentication and params 
     publicShell,
     /AssessmentClassRecordWorkspace|options\.school\.name/,
   );
-});
+  },
+);
