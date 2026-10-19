@@ -116,11 +116,9 @@ describe("attendance exact-relationship deny-by-default kernel", () => {
     );
   });
   it("requires active exact-section authority for register-only review", () => {
-    const {
-      enrollment: _enrollment,
-      studentId: _studentId,
-      ...register
-    } = context;
+    const { enrollment, studentId, ...register } = context;
+    expect(enrollment).toBeDefined();
+    expect(studentId).toBeDefined();
     expect(canApproveRegister(hm, register)).toBe(true);
     expect(
       canApproveRegister({ ...hm, verifiedSectionIds: ["other"] }, register),
