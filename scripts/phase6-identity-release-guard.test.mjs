@@ -122,3 +122,19 @@ test("lesson review queue reader does not use reserved grant alias", () => {
   assert.match(reader, /reviewer\."role"\s*=\s*'HEAD_OF_SECTION'/);
   assert.match(reader, /reviewer\."role"\s*=\s*'PRINCIPAL'/);
 });
+
+test("lesson release queue SQL preserves exact reviewer section checks", () => {
+  const sql = read("../src/modules/lesson-notes/release-read.ts");
+  assert.doesNotMatch(sql, /JOIN\s+"ScopeGrant"\s+grant\b/i);
+  assert.equal(
+    (sql.match(/JOIN\s+"ScopeGrant"\s+scope_grant\b/g) ?? []).length,
+    2,
+  );
+  assert.match(sql, /scope_grant\."membershipId"\s*=\s*reviewer\."id"/);
+  assert.match(sql, /scope_grant\."scopeId"\s*=\s*section\."id"/);
+  assert.match(sql, /scope_grant\."verified"\s*=\s*true/);
+  assert.match(sql, /reviewer\."role"\s*=\s*'HEAD_OF_SECTION'/);
+  assert.match(sql, /reviewer\."role"\s*=\s*'PRINCIPAL'/);
+  assert.match(sql, /section\."stage"\s*=\s*'PRIMARY'/);
+  assert.match(sql, /section\."stage"\s*=\s*'SECONDARY'/);
+});
