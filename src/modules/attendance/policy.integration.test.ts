@@ -73,7 +73,7 @@ describe("school-versioned attendance calendar policy", () => {
       });
       members[key] = member.id;
     }
-  });
+  }, 45_000);
   afterAll(async () => {
     await prisma.school.deleteMany({ where: { id: { in: [a, b] } } });
     await prisma.session.deleteMany({

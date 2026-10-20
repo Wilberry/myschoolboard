@@ -1,5 +1,32 @@
 # Milestone Checklist
 
+## Phase 1–7 cumulative matrix 2026-10-20 — active blocker
+
+- [x] On exact `fa4eb78`, local format, lint, TypeScript,
+  synthetic-target preflight and the six repaired integration
+  fixture suites **42/42** passed.
+- [x] The complete `npm test` command passed **59/59** source
+  guards; Vitest **284 passed, 18 skipped** (37 files:
+  **34 passed, three failed**). The 18 skipped cases are NOT
+  verified: the remaining three suites stopped in their default
+  10-second `beforeAll` fixtures.
+- [ ] Verify `fix/phase1-7-remaining-auth-setup-hooks`: six
+  synthetic authentication/tenant fixture `beforeAll` hooks
+  now have **45-second per-hook** budgets; test assertions,
+  global config, app authorization and DB schema are unchanged.
+- [ ] Re-run the complete `npm test`, production build,
+  `npm audit --audit-level=high`, and
+  `npm audit --omit=dev --audit-level=high` on the same
+  exact commit, retaining nonzero audit results.
+- [ ] Resolve or formally disposition the unpatched
+  `braces` security advisory before any merge/release,
+  review historical migrations, and complete authenticated
+  browser school-role/revocation, student/guardian, privacy,
+  printing and accessibility checks.
+- [ ] **Do not merge Phase 1–7 to `main` before the complete
+  security and release verification exit gates pass.**
+
+
 ## Phase 1–7 full-matrix follow-up — 2026-10-20
 
 - [x] Earlier exact commit `1404636`: 24/24 targeted assessment

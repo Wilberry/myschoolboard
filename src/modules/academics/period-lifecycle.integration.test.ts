@@ -144,7 +144,7 @@ describe("academic session and term lifecycle", () => {
     });
     adminCookie = await signIn(adminEmail);
     otherCookie = await signIn(foreignEmail);
-  });
+  }, 45_000);
 
   afterAll(async () => {
     await prisma.school.deleteMany({

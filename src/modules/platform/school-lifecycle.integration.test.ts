@@ -91,7 +91,7 @@ describe("platform school onboarding and lifecycle", () => {
     });
     adminCookie = await signIn(adminEmail);
     schoolCookie = await signIn(schoolAdminEmail);
-  });
+  }, 45_000);
 
   afterAll(async () => {
     if (createdSchoolId) {

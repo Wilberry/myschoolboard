@@ -131,7 +131,7 @@ describe("tenant-owned academic configuration routes", () => {
     adminCookie = await signIn(adminEmail);
     principalCookie = await signIn(principalEmail);
     otherCookie = await signIn(otherEmail);
-  });
+  }, 45_000);
 
   afterAll(async () => {
     await prisma.school.deleteMany({

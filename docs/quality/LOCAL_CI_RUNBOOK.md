@@ -152,3 +152,44 @@ separate investigation into shared authentication mocks and state leakage.
 The local `npm run verify:local:preflight` verifies environment
 markers but cannot establish that the database server is reachable.
 
+## Full-suite authentication fixtures: remaining hooks (2026-10-20)
+
+The local full-matrix verification at exact commit `fa4eb78` confirmed
+that the **six suites** updated in PR #92 now all execute and pass
+(**42/42**). `npm run format:check`, `npm run lint`, `npm run
+typecheck` and the disposable-test preflight all passed. The full
+`npm test` run again passed all **59/59** source guards and reported
+**284 passed / 18 skipped** Vitest tests across 37 files: **34
+passing files, three failing files**. All 18 skipped cases came from
+10-second synthetic-account `beforeAll` timeouts in:
+
+- `src/modules/academics/config.integration.test.ts` (five cases)
+- `src/modules/attendance/policy.integration.test.ts` (seven cases)
+- `src/modules/lesson-notes/routes.integration.test.ts` (six cases)
+
+A repository-wide scan of all **25 integration test files** also
+identified three previously passing suites with *unbounded*
+authentication/tenant fixture hooks:
+`academics/period-lifecycle.integration.test.ts`,
+`platform/school-lifecycle.integration.test.ts` and
+`tenancy/school-route.integration.test.ts`. The three
+teacher-assignment suites already have explicit 30-second setup hooks;
+other multi-account suites previously received explicit 45-second
+setup hooks. The six remaining unbounded authentication `beforeAll`
+hooks therefore receive the same **45-second** budget in the next
+stacked verification branch. Each test-file diff is exactly **one
+hook-timeout argument**, with all existing test bodies, assertions,
+audits, authorization checks, global configuration and source behavior
+untouched.
+
+This is **authored, not locally executed** on the new branch. The
+18 skipped tests from `fa4eb78` have **no verdict**. First verify
+the complete set of six bounded fixtures, then run `npm test` and
+preserve the full pass/fail/skip summary. If the same setup fails at
+45 seconds, investigate Better Auth fixture throughput and database
+latency; do not silently skip, raise global timeouts or disable
+Vitest isolation to mask it. Separately run the production build and
+both strict/production-only dependency audits. The full strict
+dependency audit remains a release blocker until a verified fix
+or separately authorized security disposition.
+
