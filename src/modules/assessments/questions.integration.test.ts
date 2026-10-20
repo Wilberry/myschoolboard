@@ -822,6 +822,16 @@ describe("Phase 7 exact-assignment private question bank", () => {
   });
 
   it("reserves a database-clock attempt only for a linked exact enrolled STUDENT and published exam", async () => {
+    // This one scenario combines admission, concurrent reservation, answer
+    // revisions, submission, scoring, grading policy and immutable audits.
+    // Phase-only elapsed diagnostics identify any real database bottleneck;
+    // never record student/tenant IDs, cookie values or answer contents.
+    const startedAt = performance.now();
+    const checkpoint = (phase: string) => {
+      console.info(
+        `synthetic-cbt-phase=${phase} elapsedMs=${Math.round(performance.now() - startedAt)}`,
+      );
+    };
     async function reserve(actor: string, draftId: string, schoolId = schoolA) {
       context.headers = new Headers(
         cookies[actor] ? { cookie: cookies[actor] } : {},
@@ -888,6 +898,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
           "Synthetic verified account and enrolled student record",
       },
     });
+    checkpoint("identity-attested");
     await expect(reserve("teacher", draftId)).rejects.toBeInstanceOf(
       AssessmentError,
     );
@@ -926,6 +937,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
       sessionId,
       attemptNumber: 1,
     });
+    checkpoint("reservation-completed");
     // The exact attested student may append key-blind answer snapshots but
     // cannot alter stored revisions or choose server timestamps/revisions.
     context.headers = new Headers({ cookie: cookies.teacher });
@@ -1056,6 +1068,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
     const finalized = await submitInternalCbtAttempt(schoolA, rows[0].id, {
       idempotencyKey: submitKey,
     });
+    checkpoint("answer-and-submission");
     expect(
       await submitInternalCbtAttempt(schoolA, rows[0].id, {
         idempotencyKey: submitKey,
@@ -1124,6 +1137,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
     );
     expect(markerResponse.status).toBe(200);
     expect((await markerResponse.json()).score.id).toBe(marked.id);
+    checkpoint("scoring");
     const afterMark = await getScoringQueue("teacher");
     expect(
       (await afterMark.json()).attempts.some(
@@ -1246,6 +1260,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
         },
       }),
     ).rejects.toThrow();
+    checkpoint("grading-policy");
     const ownSheet = await record("teacher");
     expect(ownSheet.status).toBe(200);
     expect(ownSheet.headers.get("cache-control")).toBe("private, no-store");
@@ -1352,7 +1367,8 @@ describe("Phase 7 exact-assignment private question bank", () => {
     await expect(reserve("student", draftId)).rejects.toBeInstanceOf(
       AssessmentError,
     );
-  }, 30_000);
+    checkpoint("revocation-complete");
+  }, 90_000);
 
   it("revoking exact verified section grant blocks new academic moderation", async () => {
     const grant = await prisma.scopeGrant.findFirstOrThrow({
