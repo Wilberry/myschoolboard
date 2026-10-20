@@ -2055,11 +2055,34 @@ describe("Phase 7 exact-assignment private question bank", () => {
       data: { status: "REVOKED" },
     });
     try {
-      expect((await list("teacher")).status).toBe(404);
+      // The teacher retains a SECOND independent exact assignment. The
+      // collection remains authorized but may reveal no revoked tuple.
+      const remaining = await list("teacher");
+      expect(remaining.status).toBe(200);
+      const questions = (await remaining.json()).questions as Array<{
+        assignmentId: string;
+      }>;
+      expect(questions.some((q) => q.assignmentId === assignmentId)).toBe(
+        false,
+      );
+      expect(
+        questions.some((q) => q.assignmentId === secondaryAssignmentId),
+      ).toBe(true);
       expect((await create("teacher", payload())).status).toBe(404);
+
+      await prisma.teacherClassSubjectAssignment.update({
+        where: { id: secondaryAssignmentId },
+        data: { status: "REVOKED" },
+      });
+      // Removing the final exact assignment revokes the collection too.
+      expect((await list("teacher")).status).toBe(404);
     } finally {
       await prisma.teacherClassSubjectAssignment.update({
         where: { id: assignmentId },
+        data: { status: "ACTIVE" },
+      });
+      await prisma.teacherClassSubjectAssignment.update({
+        where: { id: secondaryAssignmentId },
         data: { status: "ACTIVE" },
       });
     }
