@@ -1,5 +1,40 @@
 # Current Status
 
+## Phase 1–7 full regression checkpoint — 2026-10-20 (PARTIAL; NOT ACCEPTED)
+
+The project owner's clean local checkout at `fa4eb78` passed
+Prettier, ESLint, TypeScript, disposable PostgreSQL 17 tmpfs
+preflight and the six previously failing setup suites (**42/42**).
+The cumulative `npm test` then passed **59/59** Node security
+source guards and reported **284 passed / 18 skipped** Vitest tests
+across 37 files (**34 passed, three failed**). The only failed files
+were academic configuration (five skipped), attendance calendar
+policy (seven skipped) and lesson-note draft routes (six skipped):
+all their synthetic `beforeAll` fixtures hit the 10-second default
+before any test-body assertions ran. No app-level HTTP/privacy or
+authorization failures were reported for those skipped cases.
+
+The `fix/phase1-7-remaining-auth-setup-hooks` follow-up adds
+explicit **45-second hooks only** to those three and another three
+previously unbounded multi-account integration fixture suites
+(academic period lifecycle, platform school lifecycle, school tenancy
+route). GitHub source comparisons prove each modified test file
+differs from its parent by **only one timeout argument**. This
+six-file follow-up is **not yet locally tested**. Teacher-assignment
+suites already had bounded 30-second setup hooks; no global timeouts,
+application behavior or schema were changed.
+
+Pending: a green full `npm test` at a single exact commit, matching
+production build and both strict and production-only audit results,
+authenticated-browser student/guardian/staff tenant/revocation and
+privacy checks, release/print/accessibility evidence, and historical
+migration/checksum assessment. The current `braces@3.0.3` audit
+advisory `GHSA-vfj7-8cjw-p6xm` still has **no patched upstream npm
+release** as of 2026-10-20; the previous full audit reported five
+high-severity package findings. **No acceptance, security waiver,
+merge to `main`, or deployment** has occurred.
+
+
 ## Phase 1–7 full-matrix checkpoint — 2026-10-20 (PARTIAL; NOT ACCEPTED)
 
 Owner-run local verification on clean commit `1404636` completed
