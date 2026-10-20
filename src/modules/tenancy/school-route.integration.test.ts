@@ -112,7 +112,7 @@ describe("school API route authorization", () => {
         { userId: userAId!, schoolId: schoolC, role: "PARENT" },
       ],
     });
-  });
+  }, 45_000);
 
   beforeEach(async () => {
     await prisma.membership.updateMany({
