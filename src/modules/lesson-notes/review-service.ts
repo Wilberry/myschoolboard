@@ -179,11 +179,11 @@ export async function readSubmittedLessonNotes(
        AND reviewer."userId" = ${actorUserId}
        AND reviewer."isActive" = true
        AND reviewer."role" IN ('HEAD_OF_SECTION', 'PRINCIPAL')
-      JOIN "ScopeGrant" grant
-        ON grant."membershipId" = reviewer."id"
-       AND grant."type" = 'SECTION'
-       AND grant."scopeId" = section."id"
-       AND grant."verified" = true
+      JOIN "ScopeGrant" scope_grant
+        ON scope_grant."membershipId" = reviewer."id"
+       AND scope_grant."type" = 'SECTION'
+       AND scope_grant."scopeId" = section."id"
+       AND scope_grant."verified" = true
       WHERE n."schoolId" = ${schoolId}
         AND n."status" = 'SUBMITTED'
         AND (
