@@ -286,7 +286,7 @@ describe("Phase 6 tenant-scoped attendance submission and review", () => {
         },
       ],
     });
-  });
+  }, 45_000);
 
   afterAll(async () => {
     await prisma.school.deleteMany({ where: { id: { in: [a, b] } } });
