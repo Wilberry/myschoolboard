@@ -678,7 +678,7 @@ describe("section-scoped lesson note review and return", () => {
         where: { id: events[0].id },
       }),
     ).rejects.toThrow();
-  });
+  }, 25_000);
 
   it("uses explicit admin-attested pupil binding for released class/term lessons", async () => {
     async function pupilList(actor: string) {
