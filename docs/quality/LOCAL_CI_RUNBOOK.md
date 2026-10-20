@@ -121,3 +121,34 @@ the full suite results. A hook timeout after 45 seconds is a real failing gate;
 do not skip or silently retry until green. No migration/reset is required
 when the expected schema already exists.
 
+## Full-suite authentication-fixture hook budget checkpoint (2026-10-20)
+
+The first owner-run cumulative `npm test` on commit `1404636` completed all
+59 Node source guards and reported **260 Vitest passes**, **42 skipped**
+tests and **six failed suites** out of 37. All six failures were
+`beforeAll` hooks that exhausted Vitest's 10-second default while
+creating and signing in synthetic users and preparing disposable database
+fixtures. No test assertions from the 42 skipped cases were executed.
+
+The follow-up branch `fix/phase1-7-full-suite-fixture-hooks` supplies an
+explicit **45-second limit only for the `beforeAll` hook** in each of
+these six suites: `attendance/reads.integration.test.ts`,
+`attendance/routes.integration.test.ts`,
+`form-teachers/route.integration.test.ts`,
+`sections/routes.integration.test.ts`,
+`students/routes.integration.test.ts`, and
+`timetable/routes.integration.test.ts`. These match the already
+established bounded setup-hook allowance for attendance corrections,
+assessment questions and lesson reviews.
+
+The global Vitest configuration, per-test timeout and every security,
+tenant, membership, audit and rollback assertion remain unchanged.
+This is **authored remediation, not yet locally verified**. Check each
+fixture setup against the previously inspected tmpfs-backed PostgreSQL
+`postgres-test` service, first in a focused run, then the full `npm test`.
+A setup exceeding 45 seconds or any HTTP/assertion failure still fails.
+Do not disable isolation globally to improve startup time without a
+separate investigation into shared authentication mocks and state leakage.
+The local `npm run verify:local:preflight` verifies environment
+markers but cannot establish that the database server is reachable.
+
