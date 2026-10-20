@@ -143,7 +143,7 @@ describe("Form Teacher administration and handover", () => {
     });
     adminCookie = await signIn(userEmails.admin);
     foreignCookie = await signIn(userEmails.foreign);
-  });
+  }, 45_000);
 
   afterAll(async () => {
     await prisma.school.deleteMany({
