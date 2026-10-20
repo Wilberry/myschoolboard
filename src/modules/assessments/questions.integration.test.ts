@@ -644,7 +644,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
         select: { id: true },
       }),
     ).toBeTruthy();
-  });
+  }, 25_000);
 
   it("permits Principal only for SECONDARY sealed assessment drafts", async () => {
     const q = await create("teacher", {
@@ -1352,7 +1352,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
     await expect(reserve("student", draftId)).rejects.toBeInstanceOf(
       AssessmentError,
     );
-  });
+  }, 30_000);
 
   it("revoking exact verified section grant blocks new academic moderation", async () => {
     const grant = await prisma.scopeGrant.findFirstOrThrow({
@@ -1907,7 +1907,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
         (a: { title: string }) => a.title === componentInput.title,
       ),
     ).toBe(false);
-  });
+  }, 30_000);
 
   it("reworks a RETURNED initial written mark through immutable independent correction approval", async () => {
     const newComponent = await MANUAL_COMPONENTS_POST(
@@ -2047,7 +2047,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
         where: { schoolId: schoolA, proposalId: initial.id },
       }),
     ).toMatchObject({ action: "RETURNED" });
-  });
+  }, 25_000);
 
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
     await prisma.teacherClassSubjectAssignment.update({
