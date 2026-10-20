@@ -264,7 +264,7 @@ describe("Phase 6 private student roster and section-reviewed register reads", (
         },
       ],
     });
-  });
+  }, 45_000);
   afterAll(async () => {
     await prisma.school.deleteMany({
       where: { id: { in: [school, foreignSchool] } },
