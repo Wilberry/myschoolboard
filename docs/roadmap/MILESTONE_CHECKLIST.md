@@ -1,5 +1,29 @@
 # Milestone Checklist
 
+## Phase 1–7 full-matrix follow-up — 2026-10-20
+
+- [x] Earlier exact commit `1404636`: 24/24 targeted assessment
+  questions and lesson-review integration tests passed, with validated
+  local tmpfs PostgreSQL 17, 36 migrated schema revisions.
+- [x] Cumulative `npm test` run at `1404636` completed **59/59**
+  source guards; Vitest **260 passed, 42 skipped; 6 of 37 suites failed**
+  in their 10-second synthetic `beforeAll` fixtures. The 42 skipped
+  cases are **not passed evidence**.
+- [ ] Locally validate the six isolated, per-hook **45-second** fixture
+  budget amendments on `fix/phase1-7-full-suite-fixture-hooks`;
+  no test assertion, business rule, or global timeout changed.
+- [ ] Rerun the complete `npm test` matrix on the exact new commit
+  against the verified disposable PostgreSQL target; capture actual
+  pass/fail/skip totals.
+- [ ] Rerun `npm run build`, unchanged strict
+  `npm audit --audit-level=high`, and
+  `npm audit --omit=dev --audit-level=high` with correct exit codes.
+- [ ] Complete browser authentication, cross-tenant/revoked student and
+  staff privacy, print/a11y, historical migration checksum, and
+  release-readiness gates. Audit and release acceptance **BLOCKED**;
+  no merge to `main` or deployment.
+
+
 ## Cumulative Phase 1–7 verification checkpoint — 2026-10-19
 
 - [x] Local developer-run Prettier, ESLint, TypeScript, Prisma Client

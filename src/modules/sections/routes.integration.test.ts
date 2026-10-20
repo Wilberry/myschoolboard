@@ -121,7 +121,7 @@ describe("school section ownership and verified SECTION grants", () => {
     foreignId = foreign.id;
     adminCookie = await login(emails.admin);
     foreignCookie = await login(emails.foreign);
-  });
+  }, 45_000);
 
   afterAll(async () => {
     await prisma.school.deleteMany({

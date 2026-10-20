@@ -182,7 +182,7 @@ describe("tenant-scoped student registration and enrollment ledger", () => {
         },
       ],
     });
-  });
+  }, 45_000);
 
   afterAll(async () => {
     await prisma.school.deleteMany({

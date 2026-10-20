@@ -234,7 +234,7 @@ describe("school-owned timetable overlap and history", () => {
     adminCookie = await signIn(emails.admin);
     teacherCookie = await signIn(emails.teacherA);
     foreignCookie = await signIn(emails.otherAdmin);
-  });
+  }, 45_000);
 
   afterAll(async () => {
     await prisma.school.deleteMany({

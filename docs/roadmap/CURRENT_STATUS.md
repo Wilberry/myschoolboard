@@ -1,5 +1,31 @@
 # Current Status
 
+## Phase 1–7 full-matrix checkpoint — 2026-10-20 (PARTIAL; NOT ACCEPTED)
+
+Owner-run local verification on clean commit `1404636` completed
+**59/59 Node source guards** and a full `npm test` Vitest matrix of
+**260 passed / 42 skipped** tests (37 files: **31 passed, 6 failed**).
+Each failed suite stopped in a synthetic authentication/fixture
+`beforeAll` hook at Vitest's 10-second default; no assertion verdict
+exists for its skipped tests. The local PostgreSQL 17 `postgres-test`
+target was independently inspected at `127.0.0.1:5434` (loopback,
+tmpfs, already 36 migrations), and preflight passed. All **24/24**
+targeted assessment questions and lesson review tests had passed
+separately on exactly `1404636`.
+
+A six-file, *fixture-hook-only* 45-second timeout follow-up
+(`fix/phase1-7-full-suite-fixture-hooks`) is **authored but not yet
+locally run**. It does not change test assertions, runtime authorization,
+global test timeouts or database schema. The next step is targeted
+re-execution of the six skipped suites, then complete `npm test`,
+production build and unchanged `npm audit --audit-level=high` with a
+separate production-only audit. Existing five high dev-tooling audit
+findings remain an open gate, not an accepted exception. Authenticated
+browser school/student/guardian privacy, role/revocation, printing and
+accessibility checks and historical migration checksum/release review
+also remain open. **No merge/deploy; Phase 1–7 not accepted.**
+
+
 ## Phase 1–7 cumulative verification — 2026-10-19 checkpoint (PARTIAL; NOT ACCEPTED)
 
 On exact experimental commit `2b361ed` (draft PR #85, not `main`),
