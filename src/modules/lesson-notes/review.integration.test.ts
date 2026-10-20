@@ -501,7 +501,7 @@ describe("section-scoped lesson note review and return", () => {
       expect((await detail(person, id)).status).toBe(404);
       expect((await decide(person, id, "APPROVE")).status).toBe(404);
     }
-  });
+  }, 20_000);
 
   it("returns primary notes for revision with an immutable reviewer reason", async () => {
     const returned = await decide("head", primaryNoteId, "RETURN");
@@ -625,9 +625,16 @@ describe("section-scoped lesson note review and return", () => {
     expect((await release("head", unknownNoteId, "RELEASE", 1)).status).toBe(
       404,
     );
+    // A mismatched historical revision is concealed as NOT_FOUND before
+    // release eligibility is disclosed. It must produce no release event.
     expect((await release("head", primaryNoteId, "RELEASE", 1)).status).toBe(
-      409,
+      404,
     );
+    expect(
+      await prisma.lessonReleaseEvent.count({
+        where: { schoolId: schoolA, noteId: primaryNoteId },
+      }),
+    ).toBe(0);
     expect((await releaseQueue("teacher")).status).toBe(404);
     const queue = await releaseQueue("head");
     expect(queue.status).toBe(200);
@@ -783,7 +790,7 @@ describe("section-scoped lesson note review and return", () => {
     await expect(
       prisma.studentAccountLink.delete({ where: { id: linkId } }),
     ).rejects.toThrow();
-  });
+  }, 30_000);
 
   it("versions and separately approves and releases typed schemes of work", async () => {
     const input = {

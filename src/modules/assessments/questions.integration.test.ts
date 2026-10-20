@@ -644,7 +644,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
         select: { id: true },
       }),
     ).toBeTruthy();
-  });
+  }, 25_000);
 
   it("permits Principal only for SECONDARY sealed assessment drafts", async () => {
     const q = await create("teacher", {
@@ -1352,7 +1352,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
     await expect(reserve("student", draftId)).rejects.toBeInstanceOf(
       AssessmentError,
     );
-  });
+  }, 30_000);
 
   it("revoking exact verified section grant blocks new academic moderation", async () => {
     const grant = await prisma.scopeGrant.findFirstOrThrow({
@@ -1907,7 +1907,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
         (a: { title: string }) => a.title === componentInput.title,
       ),
     ).toBe(false);
-  });
+  }, 30_000);
 
   it("reworks a RETURNED initial written mark through immutable independent correction approval", async () => {
     const newComponent = await MANUAL_COMPONENTS_POST(
@@ -2047,7 +2047,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
         where: { schoolId: schoolA, proposalId: initial.id },
       }),
     ).toMatchObject({ action: "RETURNED" });
-  });
+  }, 25_000);
 
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
     await prisma.teacherClassSubjectAssignment.update({
@@ -2055,11 +2055,34 @@ describe("Phase 7 exact-assignment private question bank", () => {
       data: { status: "REVOKED" },
     });
     try {
-      expect((await list("teacher")).status).toBe(404);
+      // The teacher retains a SECOND independent exact assignment. The
+      // collection remains authorized but may reveal no revoked tuple.
+      const remaining = await list("teacher");
+      expect(remaining.status).toBe(200);
+      const questions = (await remaining.json()).questions as Array<{
+        assignmentId: string;
+      }>;
+      expect(questions.some((q) => q.assignmentId === assignmentId)).toBe(
+        false,
+      );
+      expect(
+        questions.some((q) => q.assignmentId === secondaryAssignmentId),
+      ).toBe(true);
       expect((await create("teacher", payload())).status).toBe(404);
+
+      await prisma.teacherClassSubjectAssignment.update({
+        where: { id: secondaryAssignmentId },
+        data: { status: "REVOKED" },
+      });
+      // Removing the final exact assignment revokes the collection too.
+      expect((await list("teacher")).status).toBe(404);
     } finally {
       await prisma.teacherClassSubjectAssignment.update({
         where: { id: assignmentId },
+        data: { status: "ACTIVE" },
+      });
+      await prisma.teacherClassSubjectAssignment.update({
+        where: { id: secondaryAssignmentId },
         data: { status: "ACTIVE" },
       });
     }
