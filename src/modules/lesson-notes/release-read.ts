@@ -68,9 +68,9 @@ export async function readLessonReleaseQueue(schoolId: string) {
     JOIN "Membership" reviewer ON reviewer."schoolId" = n."schoolId"
       AND reviewer."userId" = ${actorUserId} AND reviewer."isActive" = true
       AND reviewer."role" IN ('HEAD_OF_SECTION', 'PRINCIPAL')
-    JOIN "ScopeGrant" grant ON grant."membershipId" = reviewer."id"
-      AND grant."type" = 'SECTION' AND grant."scopeId" = section."id"
-      AND grant."verified" = true
+    JOIN "ScopeGrant" scope_grant ON scope_grant."membershipId" = reviewer."id"
+      AND scope_grant."type" = 'SECTION' AND scope_grant."scopeId" = section."id"
+      AND scope_grant."verified" = true
     WHERE n."schoolId" = ${schoolId} AND n."status" = 'APPROVED'
       AND EXISTS (SELECT 1 FROM "LessonNoteEvent" approval
         WHERE approval."schoolId" = n."schoolId"
@@ -90,10 +90,10 @@ export async function readLessonReleaseQueue(schoolId: string) {
       JOIN "Membership" reviewer ON reviewer."schoolId" = school."id"
         AND reviewer."userId" = ${actorUserId} AND reviewer."isActive" = true
         AND reviewer."role" IN ('HEAD_OF_SECTION','PRINCIPAL')
-      JOIN "ScopeGrant" grant ON grant."membershipId" = reviewer."id"
-        AND grant."type" = 'SECTION' AND grant."verified" = true
+      JOIN "ScopeGrant" scope_grant ON scope_grant."membershipId" = reviewer."id"
+        AND scope_grant."type" = 'SECTION' AND scope_grant."verified" = true
       JOIN "SchoolSection" section ON section."schoolId" = school."id"
-        AND section."id" = grant."scopeId" AND section."isActive" = true
+        AND section."id" = scope_grant."scopeId" AND section."isActive" = true
       WHERE school."id" = ${schoolId} AND school."isActive" = true
         AND ((reviewer."role" = 'HEAD_OF_SECTION' AND section."stage" = 'PRIMARY')
           OR (reviewer."role" = 'PRINCIPAL' AND section."stage" = 'SECONDARY'))
