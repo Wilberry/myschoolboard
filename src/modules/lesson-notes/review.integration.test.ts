@@ -625,9 +625,16 @@ describe("section-scoped lesson note review and return", () => {
     expect((await release("head", unknownNoteId, "RELEASE", 1)).status).toBe(
       404,
     );
+    // A mismatched historical revision is concealed as NOT_FOUND before
+    // release eligibility is disclosed. It must produce no release event.
     expect((await release("head", primaryNoteId, "RELEASE", 1)).status).toBe(
-      409,
+      404,
     );
+    expect(
+      await prisma.lessonReleaseEvent.count({
+        where: { schoolId: schoolA, noteId: primaryNoteId },
+      }),
+    ).toBe(0);
     expect((await releaseQueue("teacher")).status).toBe(404);
     const queue = await releaseQueue("head");
     expect(queue.status).toBe(200);
