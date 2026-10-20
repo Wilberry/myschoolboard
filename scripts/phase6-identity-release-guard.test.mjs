@@ -111,3 +111,14 @@ test("attendance runtime reviewer SQL uses nonreserved exact section-grant alias
     assert.match(source, /scope_grant\."scopeId"/, path);
   }
 });
+
+test("lesson review queue reader does not use reserved grant alias", () => {
+  const reader = read("../src/modules/lesson-notes/review-service.ts");
+  assert.doesNotMatch(reader, /JOIN\s+"ScopeGrant"\s+grant\b/i);
+  assert.match(reader, /JOIN\s+"ScopeGrant"\s+scope_grant\b/i);
+  assert.match(reader, /scope_grant\."membershipId"\s*=\s*reviewer\."id"/);
+  assert.match(reader, /scope_grant\."scopeId"\s*=\s*section\."id"/);
+  assert.match(reader, /scope_grant\."verified"\s*=\s*true/);
+  assert.match(reader, /reviewer\."role"\s*=\s*'HEAD_OF_SECTION'/);
+  assert.match(reader, /reviewer\."role"\s*=\s*'PRINCIPAL'/);
+});
