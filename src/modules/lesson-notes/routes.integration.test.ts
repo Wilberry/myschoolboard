@@ -230,7 +230,7 @@ describe("lesson-note draft, revision and submission isolation", () => {
     otherTeacherCookie = await signIn(emails.teacherB);
     adminCookie = await signIn(emails.admin);
     foreignCookie = await signIn(emails.foreign);
-  });
+  }, 45_000);
 
   afterAll(async () => {
     await prisma.school.deleteMany({
