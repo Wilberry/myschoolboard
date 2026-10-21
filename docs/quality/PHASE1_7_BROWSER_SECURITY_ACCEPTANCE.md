@@ -1,7 +1,10 @@
 # Phase 1–7 authenticated-browser security acceptance (synthetic only)
 
-**Status: NOT EXECUTED.** This is an evidence-gathering protocol, not proof
-that the current app is browser- or production-ready. The cumulative local
+**Status: PARTIALLY EXECUTED; NOT ACCEPTED.** Initial synthetic browser
+checks are recorded in
+[PHASE1_7_BROWSER_EVIDENCE_2026_10_21.md](PHASE1_7_BROWSER_EVIDENCE_2026_10_21.md).
+This is an evidence-gathering protocol, not proof that the current app is
+browser- or production-ready. The cumulative local
 Vitest and source-guard checkpoint is documented separately. Perform every
 test against **one exact reviewed commit**, running on a **local-only**
 instance with a verified disposable PostgreSQL database. Follow
@@ -65,6 +68,58 @@ All paths with `/schools/A` and `/schools/B` are **templates**:
 substitute actual verified synthetic school identifiers in the local
 application, not literal letters. API prefixes are
 `/api/schools/<schoolId>/...`.
+
+### Next.js streamed-denial and dev-error diagnostics
+
+The school route subtree has a server-side `Suspense` boundary with a
+school-neutral fallback. Next.js documents that **streamed**
+`notFound()` UI may legitimately retain HTTP **200** because the
+response headers have already been sent; non-streamed not-found
+pages normally return **404**. Next.js inserts a
+`<meta name="robots" content="noindex">` marker in streamed
+not-found HTML. **Do not require an HTTP 404 on every streamed
+HTML document or remove the Suspense boundary to manufacture one.**
+See the [Next.js not-found docs](https://nextjs.org/docs/app/api-reference/file-conventions/not-found)
+and [streaming status docs](https://nextjs.org/docs/app/api-reference/file-conventions/loading#status-codes).
+
+For a cross-school browser denial, record the following
+**independently**:
+
+1. The document's actual HTTP status and whether the user
+   sees a not-found UI rather than unauthorized school content.
+   If it is a streamed 200, inspect the complete final HTML and
+   document head for `<meta name="robots" content="noindex">`.
+2. The complete response body and network RSC/flight payload
+   **after streaming completes**. Verify that neither the foreign
+   school's name, classes, student IDs nor private payload values
+   appear. Do not interpret an initial neutral loading fallback
+   as a completed access-denial verdict.
+3. The equivalent private JSON API call must return the
+   independently tested denial HTTP status (normally 401 or 404)
+   and `Cache-Control: private, no-store`. A JSON API returning
+   200 with private data is **not** excused by streamed HTML.
+4. Verify that sign-out, a revoked membership or grant, and
+   a different browser profile do not restore foreign-school data
+   through navigation, RSC cache, browser history, printing or
+   the Back/Forward cache.
+5. Reproduce any Next.js `uncached data` or prerender diagnostic
+   using the **same commit** on a local-only, production-compiled
+   Next server against the *verified disposable database*, not
+   only `next dev`. Capture the first useful exact error/digest,
+   stack file and affected URL after redacting tokens, personal
+   data and connection strings. A warning present in development
+   mode alone does not prove the production build or browser is
+   broken; a reproducible production error remains a release
+   blocker.
+
+All of the above must be observed in the **actual browser**.
+Tests using Node `fetch` or mocked route handlers can provide
+supporting HTTP evidence but cannot substitute for RSC/browser
+history and rendered-content assertions. A streamed 200 with
+correct not-found UI and no leakage can be classified
+`FRAMEWORK-EXPECTED / VERIFY NOINDEX` until all required
+evidence is collected; it must never be counted as a
+fully passing acceptance case prematurely.
 
 ### Response and mutation checks
 
