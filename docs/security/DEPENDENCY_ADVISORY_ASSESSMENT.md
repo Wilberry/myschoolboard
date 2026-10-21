@@ -1,5 +1,70 @@
 # Dependency Advisory Assessment
 
+## Current Phase 1–7 release-audit checkpoint (2026-10-21)
+
+The owner's separate, clean local verification of the Phase 1–7
+experimental head `5fc40e2` reported **59/59** Node source guards
+and **302/302** Vitest tests passing, with **zero skipped tests**.
+Format, lint, typecheck, Prisma 7.10.1 generation and the Next.js
+production build passed at that exact commit. The test service was
+confirmed as local PostgreSQL 17 with a loopback-only 5434 binding and
+tmpfs data; **36/36** reviewed migrations were applied successfully.
+Neither `main` nor any shared/production database was changed.
+
+The strict `npm audit --audit-level=high` continues to report
+**five high affected-package entries**, all resulting from the single
+reviewed advisory **GHSA-vfj7-8cjw-p6xm /
+CVE-2026-93687**. `npm audit --omit=dev --audit-level=high`
+passed with **zero vulnerabilities** on the same commit. The
+recorded five-entry chain is `eslint-config-next@16.4.0` ->
+`@next/eslint-plugin-next@16.4.0` -> `fast-glob@3.3.1` ->
+`micromatch@4.0.8` -> `braces@3.0.3`. These are all marked
+development-only in the checked-in lockfile. The existing lint
+configuration imports Next's recommended core web vitals and
+TypeScript rules and defines **no externally supplied**
+`settings.next.rootDir`. This is a reachability assessment of
+the *current source and lockfile*, not a guarantee against all
+future build inputs or developer-tool usage.
+
+On 2026-10-21, the reviewed GitHub advisory still declares
+**affected `braces <=3.0.3`, patched versions: none**.
+The upstream author disputes aspects of the advisory and has closed
+the relevant maintainer issue; the advisory is nevertheless
+published and npm's unchanged strict audit still fails.
+There is therefore no honest patched-version update to apply
+today. Pinning or overriding to the already affected version
+is not a fix, and replacing Next's lint tooling or disabling
+`npm audit` solely to manufacture a green result would
+remove existing protection. Do **not** do either.
+
+**Review options, neither pre-approved as a release exception:**
+
+1. Retain the existing hard block while waiting for a
+   *genuinely verified* compatible patched upstream release
+   or safe replacement, then refresh the lockfile and rerun
+   format/lint/typecheck, all tests, build, both audits,
+   and authenticated-browser access checks.
+2. Request an **explicit, separately documented and
+   time-limited security-risk disposition** from the project
+   owner/security authority that includes exact package,
+   version, advisory, dev-only exposure, no-untrusted-glob
+   controls, review/expiration date and criteria for withdrawal.
+   This must not be inferred from D-023, the expired D-022
+   publication exception or the clean production-only audit.
+   Unless governance deliberately authorizes a separate
+   narrowly-scoped exception gate, the unchanged strict
+   `npm audit --audit-level=high` command remains **red**.
+
+At present, **neither a patched release nor a new risk
+disposition has been recorded**. The original full-audit
+gate is still failing and Phase 1–7 cannot be called
+security-approved or merged to `main`.
+
+Sources: [GitHub GHSA](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm),
+[upstream maintainer discussion](https://github.com/micromatch/braces/issues/84),
+[Prisma migration checksum storage](https://github.com/prisma/prisma-engines/blob/main/schema-engine/ARCHITECTURE.md).
+
+
 ## Prisma 7 experimental lockfile checkpoint (2026-10-19)
 
 This is **additional current experimental evidence**, not a retroactive
