@@ -1,5 +1,41 @@
 # Current Status
 
+## Phase 1–7 full local regression PASS — 2026-10-21 (RELEASE BLOCKED)
+
+On exact clean draft PR #93 commit `5fc40e2`, the project owner's
+separate verification worktree and independently inspected local
+PostgreSQL 17 tmpfs service at loopback-only `127.0.0.1:5434`
+completed **36/36** Prisma migrations and reported
+**59/59 Node source guards plus 302/302 Vitest tests passing**
+(37/37 test files; zero skipped). Prettier, ESLint, TypeScript,
+and the production build passed on the same commit.
+`npm audit --omit=dev --audit-level=high` passed with
+**zero vulnerabilities**.
+
+The **unchanged strict** `npm audit --audit-level=high`
+still **FAILED** with five high-severity *dev-tooling
+dependency-chain* findings, all tracing to the unpatched
+`braces@3.0.3` advisory. The official reviewed GHSA still
+lists **no patched release** on 2026-10-21. A passing
+production-only audit does **not** waive this gate.
+No new risk disposition was approved, and D-023 permits
+routine branch development only, not security waivers
+or merging to `main`.
+
+A follow-up isolated draft branch
+`verify/phase1-7-migration-checksum-gate` introduces
+a **read-only exact migration-file SHA-256 check**
+against the disposable database, plus six pure
+unit tests. This new checker is **authored but
+has not yet been run against the database**;
+previous migration status alone is not a file-hash
+comparison. The authenticated browser checks for
+cross-school/section isolation, staff role changes,
+student/guardian link revocation, caching/history/
+print and accessibility also remain open.
+**Phase 1–7 is NOT merge/release accepted.**
+
+
 ## Phase 1–7 full regression checkpoint — 2026-10-20 (PARTIAL; NOT ACCEPTED)
 
 The project owner's clean local checkout at `fa4eb78` passed
