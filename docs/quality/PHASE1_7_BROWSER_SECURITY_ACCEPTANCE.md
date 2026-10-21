@@ -121,6 +121,72 @@ correct not-found UI and no leakage can be classified
 evidence is collected; it must never be counted as a
 fully passing acceptance case prematurely.
 
+### Production browser evidence status and next-wave priority
+
+The independent production-built run at exact PR #96 checkpoint
+`7e1c609` confirms the **observed** streamed HTTP 200 /
+not-found UI / `noindex` combination, RSC 404 fallback marker
+without school names, and protected private JSON API denials.
+See [browser evidence](PHASE1_7_BROWSER_EVIDENCE_2026_10_21.md).
+These **specific negative-access observations** are complete;
+BR-01 and BR-03 remain **PARTIAL** pending browser history,
+identity revocation and broader private-payload evidence.
+No change to `notFound()`, `Suspense` or cache-component
+authorization is justified by the HTTP status alone.
+
+For the next local-only **production-compiled** browser session,
+prioritize fixtures and tests in this sequence:
+
+1. **Role-safe setup:** inspect the existing disposable
+   `postgres-test` container and verify Prisma migrations and
+   checksums; inventory existing synthetic schools, users
+   and memberships. Provision only missing synthetic
+   identities through existing guarded authentication and
+   school-configuration paths. Require exact active
+   school, PRIMARY/SECONDARY section and verified grants;
+   do not alter a real account or use an unreviewed SQL
+   bypass to fabricate an approved release.
+2. **School and teacher:** complete BR-02, BR-04 and BR-05
+   with an exact active teacher subject/class/session
+   assignment, then revoke **only that synthetic
+   assignment**. Observe direct page, JSON and RSC
+   before/after and confirm unrelated active assignments
+   retain their own access.
+3. **Academic reviewer:** complete BR-06 through BR-08
+   with a verified PRIMARY Head of Section and
+   SECONDARY Principal, then revoke a synthetic verified
+   SECTION grant. Verify actual class-section binding,
+   not role-label display or a hidden navigation link.
+4. **Pupil identity and content:** complete BR-10
+   through BR-12 using a verified enrolled synthetic
+   student; require independent academic approval
+   and explicit release before student-visible content.
+   Compare an exact bound student with an unlinked
+   student and a revoked link. Verify no withdrawn
+   content or CBT keys leak to the client.
+5. **Browser client/privacy:** complete BR-09,
+   BR-13 through BR-15 across fresh profiles, Back/
+   Forward/Reload, RSC cache, print preview and
+   keyboard/200%-zoom checks. Record full status
+   code + `noindex`/no-store distinction for
+   streamed pages versus private APIs.
+6. **Guardian boundary:** perform BR-16 negative
+   access only if a guarded synthetic guardian can
+   be represented; classify any missing positive
+   portal feature `NOT IMPLEMENTED`, not `PASS`.
+   Do not invent child or guardian relationships.
+
+For each step, capture the test fixture label, synthetic
+actor role/school (not credentials), redacted route,
+document/RSC/API status, exact privacy assertion
+and result. If the necessary synthetic setup
+cannot be created safely, report `BLOCKED:
+MISSING VERIFIED SYNTHETIC FIXTURE` for that
+case and implement a narrowly scoped test-only
+fixture helper in a separate reviewed development
+branch; never skip silently or promote direct
+Prisma modifications into product permission flows.
+
 ### Response and mutation checks
 
 - For every protected GET, inspect document + RSC response as well as
