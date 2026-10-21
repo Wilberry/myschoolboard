@@ -1,5 +1,58 @@
 # Current Status
 
+## Phase 1–7 browser production denial checkpoint — 2026-10-21 (PARTIAL; MERGE BLOCKED)
+
+The owner locally verified exact draft PR #96 commit
+`7e1c609922531f64dc32aec8c327272fb9d399ea`
+with a clean isolated worktree, independent
+loopback-only `postgres-test`, **36 exact applied
+migration checksums**, Prettier, lint, TypeScript
+and a Next.js **production build** all passing.
+The original Phase 1 worktree remained untouched.
+
+In a **real production-compiled local browser**
+using a synthetic school-B-only administrator,
+direct school A HTML streamed HTTP 200 but
+rendered the expected 404 UI, contained
+`<meta name="robots" content="noindex">` and
+showed neither synthetic school name. The
+RSC/Flight HTTP 200 `text/x-component` payload
+contained Next's `NEXT_HTTP_ERROR_FALLBACK;404`
+marker, not either school name. The protected
+foreign lesson-notes API returned **404**
+with `private, no-store`; signed-out student
+lessons API returned **401** with the same
+policy. The prior development-only
+uncached-data/prerender warning did **not**
+recur in this production run. These observations
+support a **framework-expected streamed soft-404**,
+not an authorization bypass; broader RSC-ID
+leakage, cache/history and role/student checks
+remain unverified.
+
+The full **BR-01..BR-16 browser matrix is PARTIAL**:
+student verified-link revocation, exact
+teacher assignment, PRIMARY Head and SECONDARY
+Principal scope boundaries, sign-out history,
+printing, accessibility and any guardian portal
+boundary remain open. `npm test` and both
+audits were **not rerun at PR #96**;
+the most recent full green regression was
+PR #94 (65/65 Node guards and 302/302 Vitest
+cases). The strict `npm audit --audit-level=high`
+previously failed with **five high
+dev-only `braces` chain package findings**.
+No patched upstream version or separate owner-
+approved security exception has been verified.
+
+The cumulative feature stack differs
+substantially from `main`. Final integration
+requires an explicit base/head, migration,
+security and branch-scope review, and
+distinct owner merge approval. **No merge
+into `main` or deployment** has occurred.
+
+
 ## Phase 1–7 full local regression PASS — 2026-10-21 (RELEASE BLOCKED)
 
 On exact clean draft PR #93 commit `5fc40e2`, the project owner's
