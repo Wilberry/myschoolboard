@@ -35,7 +35,9 @@ production-only audit alone does not clear it.
 
 The detailed [Phase 1–7 authenticated-browser security
 acceptance matrix](PHASE1_7_BROWSER_SECURITY_ACCEPTANCE.md)
-is **authored but NOT EXECUTED**. Its required evidence
+is **PARTIALLY EXECUTED, NOT ACCEPTED**. The
+[local browser evidence](PHASE1_7_BROWSER_EVIDENCE_2026_10_21.md)
+covers only signed-out and school-B-only negative-access smoke checks. Its required evidence
 includes active versus revoked sessions and school membership,
 cross-school/verified-section isolation, exact teacher assignment,
 student identity binding, no private RSC/browser-history caching
