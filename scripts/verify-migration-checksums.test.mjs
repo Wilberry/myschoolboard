@@ -22,10 +22,8 @@ const recorded = (item) => ({
 });
 
 test("matches all successful applied migrations by exact SHA-256", () => {
-  assert.equal(
-    verifyMigrationChecksums([one, two], [recorded(two), recorded(one)]),
-    2,
-  );
+  const applied = [recorded(two), recorded(one)];
+  assert.equal(verifyMigrationChecksums([one, two], applied), 2);
   assert.equal(
     sha256Migration("abc"),
     "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
@@ -33,65 +31,46 @@ test("matches all successful applied migrations by exact SHA-256", () => {
 });
 
 test("rejects any altered migration SQL checksum", () => {
-  assert.throws(
-    () =>
-      verifyMigrationChecksums([one], [
-        { ...recorded(one), checksum: two.checksum },
-      ]),
-    /checksum mismatch/,
-  );
+  const altered = { ...recorded(one), checksum: two.checksum };
+  const check = () => verifyMigrationChecksums([one], [altered]);
+  assert.throws(check, /checksum mismatch/);
 });
 
 test("rejects missing or unexpected migration records", () => {
-  assert.throws(
-    () => verifyMigrationChecksums([one, two], [recorded(one)]),
-    /not applied/,
-  );
-  assert.throws(
-    () => verifyMigrationChecksums([one], [recorded(one), recorded(two)]),
-    /Unexpected database migration/,
-  );
+  const applied = recorded(one);
+  const unexpected = recorded(two);
+  const missing = () => verifyMigrationChecksums([one, two], [applied]);
+  const extra = () => verifyMigrationChecksums([one], [applied, unexpected]);
+  assert.throws(missing, /not applied/);
+  assert.throws(extra, /Unexpected database migration/);
 });
 
 test("rejects duplicate migration records and local inventory entries", () => {
-  assert.throws(
-    () => verifyMigrationChecksums([one], [recorded(one), recorded(one)]),
-    /Duplicate migration record/,
-  );
-  assert.throws(
-    () => verifyMigrationChecksums([one, one], [recorded(one)]),
-    /Duplicate local migration/,
-  );
+  const applied = recorded(one);
+  const duplicate = [applied, applied];
+  const recordedTwice = () => verifyMigrationChecksums([one], duplicate);
+  const localTwice = () => verifyMigrationChecksums([one, one], [applied]);
+  assert.throws(recordedTwice, /Duplicate migration record/);
+  assert.throws(localTwice, /Duplicate local migration/);
 });
 
 test("rejects unfinished and rolled-back migrations", () => {
-  assert.throws(
-    () =>
-      verifyMigrationChecksums([one], [
-        { ...recorded(one), finished_at: null },
-      ]),
-    /not successfully applied/,
-  );
-  assert.throws(
-    () =>
-      verifyMigrationChecksums([one], [
-        { ...recorded(one), rolled_back_at: new Date() },
-      ]),
-    /not successfully applied/,
-  );
+  const unfinished = { ...recorded(one), finished_at: null };
+  const rolledBack = { ...recorded(one), rolled_back_at: new Date() };
+  const checkUnfinished = () => verifyMigrationChecksums([one], [unfinished]);
+  const checkRollback = () => verifyMigrationChecksums([one], [rolledBack]);
+  assert.throws(checkUnfinished, /not successfully applied/);
+  assert.throws(checkRollback, /not successfully applied/);
 });
 
 test("rejects invalid and empty inventories", () => {
-  assert.throws(() => verifyMigrationChecksums([], []), /No local migrations/);
-  assert.throws(
-    () =>
-      verifyMigrationChecksums([one], [
-        { ...recorded(one), migration_name: "../outside" },
-      ]),
-    MigrationChecksumError,
-  );
-  assert.throws(
-    () => verifyMigrationChecksums([{ ...one, checksum: "nonsense" }], []),
-    /Invalid local/,
-  );
+  const noMigrations = () => verifyMigrationChecksums([], []);
+  const unsafe = { ...recorded(one), migration_name: "../outside" };
+  const unsafeName = () => verifyMigrationChecksums([one], [unsafe]);
+  const invalidLocal = [{ ...one, checksum: "nonsense" }];
+  const invalidChecksum = () => verifyMigrationChecksums(invalidLocal, []);
+
+  assert.throws(noMigrations, /No local migrations/);
+  assert.throws(unsafeName, MigrationChecksumError);
+  assert.throws(invalidChecksum, /Invalid local/);
 });
