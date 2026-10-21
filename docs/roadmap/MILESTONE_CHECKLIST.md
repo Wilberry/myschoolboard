@@ -1,5 +1,34 @@
 # Milestone Checklist
 
+## Phase 1–7 local regression success — 2026-10-21
+
+- [x] Exact `5fc40e2`: clean, isolated worktree and
+  verified local disposable PostgreSQL 17, 36 migrations.
+- [x] `npm test`: **59/59 source guards** and **302/302
+  Vitest tests** passed (37/37 files; zero skipped).
+- [x] Format, ESLint, TypeScript, production build
+  and production-only audit (zero findings) passed.
+- [ ] Run the newly authored **read-only migration
+  checksum verifier**, including six pure Node unit
+  cases and actual comparison against the disposable
+  database; no deployment/migration changes.
+- [ ] Resolve, safely replace, or obtain an **explicit
+  owner-approved scoped and expiring security
+  disposition** for the five high development-tooling
+  package findings derived from unpatched
+  `GHSA-vfj7-8cjw-p6xm`. The unchanged strict
+  audit continues failing; neither an exception nor
+  a repaired dependency is currently verified.
+- [ ] Run authenticated browser/print/privacy/a11y
+  checks for exact school, class, section, teacher,
+  student/guardian, revocation and history isolation.
+- [ ] Complete the final merge review, including
+  stacked PR base/head reconciliation and actual
+  current-`main` change boundaries. **Do not merge
+  into `main` or deploy before release gates
+  and distinct owner approval.**
+
+
 ## Phase 1–7 cumulative matrix 2026-10-20 — active blocker
 
 - [x] On exact `fa4eb78`, local format, lint, TypeScript,
