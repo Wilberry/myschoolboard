@@ -66,7 +66,9 @@ export function verifyMigrationChecksums(localMigrations, recordedMigrations) {
       );
     }
     if (!local.has(name)) {
-      throw new MigrationChecksumError(`Unexpected database migration: ${name}`);
+      throw new MigrationChecksumError(
+        `Unexpected database migration: ${name}`,
+      );
     }
     if (record.checksum !== local.get(name)) {
       throw new MigrationChecksumError(`Migration checksum mismatch: ${name}`);
