@@ -193,3 +193,46 @@ both strict/production-only dependency audits. The full strict
 dependency audit remains a release blocker until a verified fix
 or separately authorized security disposition.
 
+## Read-only migration checksum verification (2026-10-21)
+
+Prisma `migrate status` reports whether migrations are applied;
+it does not by itself provide independent
+byte-for-byte evidence that every tracked historical
+`migration.sql` still matches the checksum recorded
+in the target database. The new optional
+`npm run verify:migration-checksums` step compares the
+SHA-256 of every tracked `prisma/migrations/*/migration.sql`
+with the immutable `_prisma_migrations.checksum` metadata.
+It **fails closed** on missing, unexpected, duplicate,
+rolled-back, unfinished, or edited migration records.
+It performs only a `BEGIN READ ONLY` transaction plus
+a single `SELECT` against
+`public."_prisma_migrations"`. No migration,
+reset, seed, audit modification or database
+repair is performed.
+
+Run this **only after** confirming the actual local
+Docker context, exact disposable PostgreSQL service,
+its tmpfs mount, real loopback-only port 5434, and
+the synthetic environment used by
+`npm run verify:local:preflight`. Then run:
+
+```sh
+npm run verify:local:preflight
+npx prisma migrate status
+npm run verify:migration-checksums
+```
+
+Expected checkpoint: **36 exact applied migration file hashes**.
+An altered existing migration is a blocking
+historical integrity incident: do not silently
+edit the old SQL, delete the record or reset
+a shared database to force a match.
+The new pure Node tests for this verifier
+run in `npm test` and
+`npm run verify:local:guards`.
+The new command is **not yet locally executed**
+at its draft PR head. A passing checksum check
+does not validate all migration business semantics
+or replace real browser privacy/security tests.
+
