@@ -139,11 +139,13 @@ or production deployment occurred.
    Recheck Docker service identity and the disposable DB guard.
    Never reset/seed another service or expose the test origin
    beyond loopback.
-2. Rerun the school-B cross-school scenario in a **local,
-   production-compiled** Next server at an exact recorded SHA.
-   Preserve actual document status, `noindex`, complete
-   HTML/RSC response observations, JSON API status/no-store,
-   sanitized terminal errors and browser version.
+2. **Production follow-up completed at `7e1c609`**:
+   streamed document HTTP 200 with final 404 UI, `noindex`,
+   RSC 404 fallback marker, and JSON API 404/no-store were
+   observed. Repeat these checks only when the app or
+   authorization behavior changes, or in the final
+   current-head regression. The broader browser
+   history/cache and private-record assertions remain open.
 3. Prepare minimum required synthetic roles and the
    exact class/section/term/student link fixtures using
    reviewed test-only creation paths, then perform the
