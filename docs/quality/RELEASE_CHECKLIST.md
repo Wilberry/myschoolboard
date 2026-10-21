@@ -45,6 +45,24 @@ and print/keyboard accessibility. Positive guardian access
 is not proven as an implemented Phase 1–7 flow; report
 such gaps truthfully rather than calling them passed.
 
+At exact PR #96 checkpoint `7e1c609`,
+the owner revalidated **Prettier, ESLint, TypeScript,
+production build, 36 migration file checksums**,
+and used a production-compiled browser to verify
+that cross-school streamed not-found HTML
+contains `noindex`, RSC exposes the 404 fallback
+marker rather than either school name, and the
+private lesson-notes API independently denies
+foreign-school access with HTTP 404 and
+`private, no-store`. The prior dev-mode prerender
+error did not recur in production. These checks
+resolve the *narrow streamed 200/404 question*,
+**not** the full BR-01..BR-16 browser acceptance.
+The current-head cumulative tests and both audits
+were not re-run on this commit; prior evidence
+remains explicitly commit-scoped. Details:
+[local browser evidence](PHASE1_7_BROWSER_EVIDENCE_2026_10_21.md).
+
 **Do not merge** stacked Phase 1–7 draft branches
 into `main` or deploy until current-head formatting/tests/build,
 browser release evidence, strict audit remediation or separately
