@@ -7,12 +7,8 @@ import {
   assertBrowserFixtureEnvironment,
   assertLocalDockerFixtureTarget,
 } from "./browser-fixture-safety.mjs";
-import {
-  runMigrationChecksumVerification,
-} from "./verify-migration-checksums.mjs";
-import {
-  assertBrowserPupilWorkflowPolicy,
-} from "./browser-pupil-workflow-policy.mjs";
+import { runMigrationChecksumVerification } from "./verify-migration-checksums.mjs";
+import { assertBrowserPupilWorkflowPolicy } from "./browser-pupil-workflow-policy.mjs";
 
 /**
  * Test-only, authenticated HTTP workflow for the existing browser fixtures.
@@ -357,13 +353,18 @@ async function assertStudentPrivacy(
   const lesson = requireRecord(detail.lesson);
   assert(lesson.id === noteId, "Exact student lesson detail mismatch");
   assert(
-    typeof lesson.content === "string" &&
-      lesson.content.includes(ctx.runId),
+    typeof lesson.content === "string" && lesson.content.includes(ctx.runId),
     "Student detail missing released synthetic content",
   );
   for (const actor of ["unlinkedA", "parentA", "adminB"] as const) {
     await api(ctx.logins[actor], base, 404);
+    await api(ctx.logins[actor], `${base}/${noteId}`, 404);
   }
+  await api(
+    ctx.logins.studentA,
+    `/api/schools/${ctx.schoolB}/student-lessons`,
+    404,
+  );
 }
 
 async function prepare(ctx: Awaited<ReturnType<typeof environment>>) {
@@ -475,6 +476,26 @@ async function prepare(ctx: Awaited<ReturnType<typeof environment>>) {
     !containsId(list(headQueue, "notes"), noteId),
     "Primary Head must not see secondary note",
   );
+  await api(ctx.logins.headA, `${path}/lesson-note-reviews/${noteId}`, 404);
+  await api(
+    ctx.logins.headA,
+    `${path}/lesson-note-reviews/${noteId}/decision`,
+    404,
+    "POST",
+    {
+      action: "APPROVE",
+      expectedRevision: 1,
+      reason: "Synthetic wrong-section reviewer must be denied",
+    },
+  );
+  const afterDeniedReview = await prisma.lessonNote.findUnique({
+    where: { id: noteId },
+    select: { status: true },
+  });
+  assert(
+    afterDeniedReview?.status === "SUBMITTED",
+    "Denied reviewer must not approve a secondary lesson",
+  );
 
   await api(
     ctx.logins.principalA,
@@ -496,6 +517,7 @@ async function prepare(ctx: Awaited<ReturnType<typeof environment>>) {
     list(afterApproval, "lessons").length === 0,
     "Approved but unreleased note must remain private",
   );
+  await api(ctx.logins.studentA, `${path}/student-lessons/${noteId}`, 404);
 
   const releaseQueue = await api(
     ctx.logins.principalA,
@@ -514,6 +536,24 @@ async function prepare(ctx: Awaited<ReturnType<typeof environment>>) {
   assert(
     !containsId(list(headReleaseQueue, "notes"), noteId),
     "Primary Head cannot release secondary note",
+  );
+  await api(
+    ctx.logins.headA,
+    `${path}/lesson-releases/${noteId}/decision`,
+    404,
+    "POST",
+    {
+      action: "RELEASE",
+      expectedRevision: 1,
+      reason: "Synthetic wrong-section release must be denied",
+    },
+  );
+  const beforeReleaseEvents = await prisma.lessonReleaseEvent.count({
+    where: { schoolId: ctx.schoolA, noteId },
+  });
+  assert(
+    beforeReleaseEvents === 0,
+    "Denied section release must not create an audit event",
   );
   await api(
     ctx.logins.principalA,
@@ -543,8 +583,7 @@ async function prepare(ctx: Awaited<ReturnType<typeof environment>>) {
 async function verify(ctx: Awaited<ReturnType<typeof environment>>) {
   const data = await stored(ctx);
   assert(
-    data.student?.status === "ENROLLED" &&
-      data.note?.status === "APPROVED",
+    data.student?.status === "ENROLLED" && data.note?.status === "APPROVED",
     "Synthetic pupil/approved lesson not prepared",
   );
   const noteId = data.note.id;
