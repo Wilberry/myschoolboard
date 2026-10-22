@@ -138,6 +138,20 @@ async function signIn(key: ActorKey, runId: string): Promise<Login> {
     select: { id: true },
   });
   assert(user, "Expected existing synthetic browser actor");
+  const sessionResponse = await fetch(origin + "/api/auth/get-session", {
+    headers: { cookie },
+    redirect: "manual",
+    signal: AbortSignal.timeout(10_000),
+  });
+  assert(
+    sessionResponse.status === 200,
+    "Synthetic cookie could not authenticate through the Next HTTP server",
+  );
+  const session = requireRecord(await sessionResponse.json());
+  assert(
+    requireRecord(session.user).id === user.id,
+    "Session user does not match the exact synthetic fixture account",
+  );
   return { cookie, userId: user.id };
 }
 
