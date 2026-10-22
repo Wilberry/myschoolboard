@@ -9,6 +9,10 @@ Vitest and source-guard checkpoint is documented separately. Perform every
 test against **one exact reviewed commit**, running on a **local-only**
 instance with a verified disposable PostgreSQL database. Follow
 [LOCAL_CI_RUNBOOK.md](LOCAL_CI_RUNBOOK.md) for DB/container checks.
+The opt-in [synthetic browser fixture runbook](PHASE1_7_BROWSER_FIXTURE_RUNBOOK.md)
+provides separate teacher, Head, Principal and pupil accounts for this
+matrix, but **does not itself execute a browser test or approve a school
+workflow**.
 Do not use actual pupils, guardians, contact records or payment data.
 
 ## Setup and reproducibility
