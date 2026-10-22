@@ -57,16 +57,16 @@ export function assertLocalDockerFixtureTarget(
     throw new Error("Test DB must bind only to loopback port 5434");
   }
 
+  const path = "/var/lib/postgresql/data";
   const tmpfs = container.HostConfig?.Tmpfs;
+  const mountedData = container.Mounts?.find(
+    (mount) => mount.Destination === path,
+  );
   if (
     !tmpfs ||
-    !Object.hasOwn(tmpfs, "/var/lib/postgresql/data") ||
+    !Object.hasOwn(tmpfs, path) ||
     (container.HostConfig?.Binds ?? []).length > 0 ||
-    !container.Mounts?.some(
-      (mount) =>
-        mount.Type === "tmpfs" &&
-        mount.Destination === "/var/lib/postgresql/data",
-    )
+    (mountedData && mountedData.Type !== "tmpfs")
   ) {
     throw new Error("Test DB data must be tmpfs, without host binds");
   }
