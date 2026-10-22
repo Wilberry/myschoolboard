@@ -111,11 +111,20 @@ test("rejects public or mismatched port bindings", () => {
 
 test("rejects non-tmpfs data and host bind mounts", () => {
   const noTmpfs = structuredClone(container);
-  noTmpfs.Mounts = [];
+  noTmpfs.HostConfig.Tmpfs = {};
   assert.throws(() => inspect(noTmpfs), /tmpfs/);
   const bindMounted = structuredClone(container);
   bindMounted.HostConfig.Binds = ["/home/me:/var/lib/postgresql/data"];
   assert.throws(() => inspect(bindMounted), /tmpfs/);
+  const volumeMounted = structuredClone(container);
+  volumeMounted.Mounts[0].Type = "volume";
+  assert.throws(() => inspect(volumeMounted), /tmpfs/);
+});
+
+test("permits Compose tmpfs represented only in HostConfig", () => {
+  const inspected = structuredClone(container);
+  inspected.Mounts = [];
+  assert.doesNotThrow(() => inspect(inspected));
 });
 
 test("rejects stopped or unhealthy containers", () => {
