@@ -12,7 +12,13 @@ instance with a verified disposable PostgreSQL database. Follow
 The opt-in [synthetic browser fixture runbook](PHASE1_7_BROWSER_FIXTURE_RUNBOOK.md)
 provides separate teacher, Head, Principal and pupil accounts for this
 matrix, but **does not itself execute a browser test or approve a school
-workflow**.
+workflow**. The staged
+[positive pupil and lesson-release HTTP runbook](PHASE1_7_BROWSER_PUPIL_WORKFLOW_RUNBOOK.md)
+describes how to prepare the missing *authorized business records* without
+directly fabricating their audit events, and how to revoke a synthetic
+student link **only after** actual browser-visible positive access is
+captured. These commands still require local execution and do not
+substitute for Chromium/RSC/history/printing checks.
 Do not use actual pupils, guardians, contact records or payment data.
 
 ## Setup and reproducibility
