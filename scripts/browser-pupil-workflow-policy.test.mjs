@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { assertBrowserPupilWorkflowPolicy } from "./browser-pupil-workflow-policy.mjs";
+import {
+  assertBrowserPupilWorkflowPolicy,
+} from "./browser-pupil-workflow-policy.mjs";
 
 const base = {
   BETTER_AUTH_URL: "http://127.0.0.1:3000",
