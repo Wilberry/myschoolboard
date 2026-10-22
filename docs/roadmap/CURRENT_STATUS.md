@@ -1,5 +1,53 @@
 # Current Status
 
+## Phase 1–7 merge-readiness fixture foundation — 2026-10-22 (NOT ACCEPTED)
+
+The owner previously reported **65/65 Node source guards** and
+**302/302 Vitest tests** passing at exact PR #94 commit
+`9eb5e6e`, along with **36/36** read-only SQL migration
+checksum matches and a successful production build.
+On later exact PR #96 commit `7e1c609`, formatting,
+lint, TypeScript, production build and migration integrity
+again passed; the production-compiled local browser
+verified the streamed 200 / 404 UI / noindex / RSC denial
+combination and private JSON API denials for a
+synthetic cross-school administrator. These are
+**different exact commit scopes**, and full `npm test`
+and audits were not rerun at PR #96.
+
+A new isolated draft branch
+`test/phase1-7-browser-role-fixtures` has **authored but
+not locally executed** a tightly gated synthetic-browser
+fixture generator with accompanying pure Node safety tests.
+It requires a verified local Unix-socket Docker context,
+the exact healthy, tmpfs-backed PostgreSQL `postgres-test`
+container at loopback 5434, complete matching migration
+checksums, explicit test-only environment markers, a
+distinct browser-fixture password and a unique run ID.
+It creates fresh school A/B roles, PRIMARY Head and
+SECONDARY Principal verified section grants, a teacher
+with two independently revocable class/subject/session
+assignments, two student members, an unlinked parent
+and an account without membership. It does not
+register/enroll pupils, attest student-account links,
+create/approve/release lessons or claim the school
+audit workflows; these require actual authorized
+browser/API tests before acceptance.
+
+The full **BR-01..BR-16 browser matrix** remains
+**PARTIAL**, including revocation, academic
+role and student privacy, print and accessibility.
+`npm audit --audit-level=high` remains **FAIL**
+with five high affected **development** packages
+caused by the same unpatched `braces@3.0.3`
+GHSA-vfj7-8cjw-p6xm. The official GitHub advisory
+still lists *no patched version* on 2026-10-22;
+the earlier production-only audit reported
+**zero vulnerabilities**, not a full gate pass.
+No waiver, merge into `main`, deployment, or
+GitHub Actions invocation is authorized.
+
+
 ## Phase 1–7 browser production denial checkpoint — 2026-10-21 (PARTIAL; MERGE BLOCKED)
 
 The owner locally verified exact draft PR #96 commit
