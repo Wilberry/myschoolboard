@@ -77,3 +77,28 @@
   authorized workflows, full regression/audit evidence and integrated review
   against main. No commit, push, merge, deployment or Actions run performed.
 - Exit-gate result: fixture preparation PASS; Phase 1–7 merge/release BLOCKED.
+
+## Pupil privacy patch checkpoint — 2026-10-22
+
+- Phase/milestone: Phase 1–7 pupil security test strengthening; base `2812484`.
+- Requirements: LES-REQ-001, TEN-REQ-001, SEC-REQ-001; no acceptance completion claimed.
+- Reviewed local Downloads generator and exact unified diff; all four anchors
+  matched and `git apply --check` passed before application.
+- Changed three pupil-workflow scripts: exact-detail denials for unlinked,
+  parent and foreign actors; foreign-school student-list denial; wrong-section
+  reviewer detail/approval denial with SUBMITTED state preserved; approval-only
+  detail denial; wrong-section release denial with zero release events.
+  Policy helper/test changes are formatting only.
+- Tests added: assertions in the guarded staged HTTP workflow; not executed
+  against the application yet. Existing seven policy tests passed.
+- Executed format, lint, type-check and policy commands: all exit 0.
+  `git diff --check` passed. Build/full regression not rerun for this patch.
+- Unmodified `2812484` checks: format failed in these three scripts; lint,
+  types, seven policy tests and 36 checksums passed. Formatting now corrected.
+- No schema/migrations, authorization policy changes or database operations.
+- Security: existing denial/no-store assertions retained; no credentials added.
+- Documentation updated: this checkpoint. No milestone completion change.
+- Limitations/remaining: execute positive staged pupil workflow, revoked-session
+  browser/RSC/history/print/accessibility checks, final regression and audits.
+- Deviations: none; generated patch applied cleanly, then formatted.
+- Exit gate: patch validation PASS; application/browser acceptance BLOCKED.
