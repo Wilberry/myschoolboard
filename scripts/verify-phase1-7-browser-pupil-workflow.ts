@@ -8,7 +8,9 @@ import {
   assertLocalDockerFixtureTarget,
 } from "./browser-fixture-safety.mjs";
 import { runMigrationChecksumVerification } from "./verify-migration-checksums.mjs";
-import { assertBrowserPupilWorkflowPolicy } from "./browser-pupil-workflow-policy.mjs";
+import {
+  assertBrowserPupilWorkflowPolicy,
+} from "./browser-pupil-workflow-policy.mjs";
 
 /**
  * Test-only, authenticated HTTP workflow for the existing browser fixtures.
@@ -149,7 +151,7 @@ async function api(
   });
   assert(
     response.status === status,
-    `Unexpected ${method} school API status: expected ${status}, received ${response.status}`,
+    `Unexpected ${method} school API status ${response.status} (expected ${status})`,
   );
   assert(
     response.headers.get("cache-control") === "private, no-store",
