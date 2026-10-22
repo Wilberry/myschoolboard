@@ -97,8 +97,15 @@ function containsId(rows: Record<string, unknown>[], id: string) {
   return rows.some((row) => row.id === id);
 }
 
+class BrowserWorkflowAssertion extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "BrowserWorkflowAssertion";
+  }
+}
+
 function assert(condition: unknown, description: string): asserts condition {
-  if (!condition) throw new Error(description);
+  if (!condition) throw new BrowserWorkflowAssertion(description);
 }
 
 type ActorKey =
@@ -605,6 +612,10 @@ main()
         event: "synthetic_pupil_workflow_failed",
         phase,
         errorType: error instanceof Error ? error.name : "unknown",
+        reason:
+          error instanceof BrowserWorkflowAssertion
+            ? error.message
+            : "Check sanitized local server logs; do not expose credentials",
         note: "Inspect this run's synthetic records before retrying",
       }),
     );
