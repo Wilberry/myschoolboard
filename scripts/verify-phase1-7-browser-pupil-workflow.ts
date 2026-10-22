@@ -7,7 +7,9 @@ import {
   assertBrowserFixtureEnvironment,
   assertLocalDockerFixtureTarget,
 } from "./browser-fixture-safety.mjs";
-import { runMigrationChecksumVerification } from "./verify-migration-checksums.mjs";
+import {
+  runMigrationChecksumVerification,
+} from "./verify-migration-checksums.mjs";
 import {
   assertBrowserPupilWorkflowPolicy,
 } from "./browser-pupil-workflow-policy.mjs";
@@ -19,7 +21,9 @@ import {
  */
 const root = fileURLToPath(new URL("../", import.meta.url));
 const origin = "http://127.0.0.1:3000";
-const phase = process.argv.find((part) => part.startsWith("--phase="))?.slice(8);
+const phase = process.argv
+  .find((part) => part.startsWith("--phase="))
+  ?.slice(8);
 
 assertBrowserPupilWorkflowPolicy(phase);
 
@@ -151,7 +155,7 @@ async function api(
   });
   assert(
     response.status === status,
-    `Unexpected ${method} school API status ${response.status} (expected ${status})`,
+    `Unexpected school API ${method} status ${response.status}`,
   );
   assert(
     response.headers.get("cache-control") === "private, no-store",
@@ -186,11 +190,24 @@ async function environment() {
     ["a", "b"].map((side) =>
       prisma.school.findUnique({
         where: { slug: `browser-${runId}-${side}` },
-        select: { id: true, name: true },
+        select: { id: true, name: true, isActive: true },
       }),
     ),
   );
-  assert(schoolA && schoolB, "Missing unique browser fixture schools");
+  assert(
+    schoolA?.isActive && schoolB?.isActive,
+    "Both synthetic test schools must be active",
+  );
+  const expectedRoles: Record<ActorKey, string> = {
+    adminA: "SCHOOL_ADMIN",
+    teacherA: "TEACHER",
+    headA: "HEAD_OF_SECTION",
+    principalA: "PRINCIPAL",
+    studentA: "STUDENT",
+    unlinkedA: "STUDENT",
+    parentA: "PARENT",
+    adminB: "SCHOOL_ADMIN",
+  };
   const keys: ActorKey[] = [
     "adminA",
     "teacherA",
@@ -218,6 +235,7 @@ async function environment() {
         user &&
           user.memberships.length === 1 &&
           member?.isActive &&
+          member.role === expectedRoles[key] &&
           member.schoolId === (key === "adminB" ? schoolB.id : schoolA.id),
         "Synthetic account/school relationship mismatch",
       );
@@ -225,12 +243,24 @@ async function environment() {
     }),
   );
   const member = Object.fromEntries(members.map((m) => [m.key, m.memberId]));
+  const secondaryClass = await prisma.schoolClass.findFirst({
+    where: {
+      schoolId: schoolA.id,
+      isActive: true,
+      section: { is: { stage: "SECONDARY", isActive: true } },
+    },
+    select: { id: true, sectionId: true },
+  });
+  assert(
+    secondaryClass && secondaryClass.sectionId,
+    "Active secondary class with section is required",
+  );
   const assignment = await prisma.teacherClassSubjectAssignment.findFirst({
     where: {
       schoolId: schoolA.id,
       membershipId: member.teacherA,
+      classId: secondaryClass.id,
       status: "ACTIVE",
-      schoolClass: { section: { stage: "SECONDARY", isActive: true } },
     },
     select: { id: true, classId: true, sessionId: true },
   });
@@ -252,16 +282,7 @@ async function environment() {
       membershipId: member.principalA,
       type: "SECTION",
       verified: true,
-      scopeId: {
-        in: (
-          await prisma.schoolClass.findMany({
-            where: { schoolId: schoolA.id, id: assignment.classId },
-            select: { sectionId: true },
-          })
-        )
-          .map((row) => row.sectionId)
-          .filter((id): id is string => id !== null),
-      },
+      scopeId: secondaryClass.sectionId,
     },
   });
   assert(principalGrant === 1, "Verified Principal SECTION grant required");
