@@ -8,9 +8,7 @@ import {
   assertBrowserFixtureEnvironment,
   assertLocalDockerFixtureTarget,
 } from "./browser-fixture-safety.mjs";
-import {
-  runMigrationChecksumVerification,
-} from "./verify-migration-checksums.mjs";
+import { runMigrationChecksumVerification } from "./verify-migration-checksums.mjs";
 
 /**
  * Explicitly opted-in synthetic identity/academic setup for manual browser

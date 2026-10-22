@@ -1,12 +1,30 @@
 # Phase 1–7 synthetic browser fixture setup
 
-**Status: authored, not executed on an operator workstation.**
+**Status: locally executed on 2026-10-22; browser acceptance remains incomplete.**
 This procedure creates *test-only* actor identities and the minimum
 academic structure required to exercise the Phase 1–7
 [authenticated browser matrix](PHASE1_7_BROWSER_SECURITY_ACCEPTANCE.md).
 It does **not** validate real product school onboarding, guardian
 association, admission, lesson approval, audit workflow or release.
 Do not treat fixture creation as evidence that those workflows pass.
+
+Local verification of PR #97 base commit `2dc0fa3`, with formatting-only
+changes in the two fixture scripts, passed the nine fixture safety tests,
+ESLint, TypeScript, formatting (after correction), environment preflight
+and production build. The inspected existing `myschoolboard-format`
+test container was stopped. Starting it restored an empty tmpfs database;
+the initial checksum check failed because `_prisma_migrations` was absent.
+`npm run db:deploy` then successfully applied all 36 tracked migrations,
+and checksum verification passed with 36 exact matches before fixture
+creation. No reset, historical migration edit or checksum repair occurred.
+
+The generator completed successfully with a unique synthetic label.
+Independent SQL reads confirmed ten synthetic users, the expected eight
+School A memberships and one School B administrator, two ACTIVE teacher
+assignments, two verified SECTION grants, and zero pupil/lesson records.
+The unaffiliated account has no membership. Password and full manifest
+are retained outside Git under a private local temporary directory.
+These observations verify fixture preparation, not the full security matrix.
 
 ## Scope and protections
 

@@ -1,5 +1,21 @@
 # Current Status
 
+## PR #97 local fixture execution — 2026-10-22
+
+At `2dc0fa3` plus two uncommitted formatting-only corrections, fixture
+preparation passed locally: nine safety tests, format, lint, TypeScript,
+production build, disposable preflight and 36 exact migration hashes.
+The stopped tmpfs service restarted empty; all 36 migrations were applied
+before successful checksum verification and fresh synthetic fixture creation.
+Production-browser cross-school concealment and teacher assignment option
+revocation were observed. Full browser acceptance, dependency security
+disposition and integrated merge review remain incomplete; no requirement
+or Phase 1–7 merge gate is declared complete. See the
+[local checkpoint](../quality/PHASE1_7_PR97_LOCAL_CHECKPOINT.md).
+
+The following authored-only fixture status is the earlier checkpoint;
+the local evidence above supersedes that status for fixture execution only.
+
 ## Phase 1–7 merge-readiness fixture foundation — 2026-10-22 (NOT ACCEPTED)
 
 The owner previously reported **65/65 Node source guards** and

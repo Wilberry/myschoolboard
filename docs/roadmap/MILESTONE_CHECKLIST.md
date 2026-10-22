@@ -1,5 +1,19 @@
 # Milestone Checklist
 
+## PR #97 fixture verification — 2026-10-22
+
+- [x] Execute nine fixture safety tests and synthetic fixture generator.
+- [x] Verify 36 exact migration hashes after restoring the empty local tmpfs schema.
+- [x] Pass formatting after two local corrections, lint, TypeScript and build.
+- [x] Observe production-browser cross-school denial and synthetic teacher
+  assignment option removal after authorized revocation.
+- [ ] Complete BR-01..BR-16 including populated academic/student workflows,
+  section boundaries/revocation, history, print and accessibility.
+- [ ] Resolve audit gate and complete integrated review against main.
+
+Scope, limitations and actual command results:
+[PR #97 local checkpoint](../quality/PHASE1_7_PR97_LOCAL_CHECKPOINT.md).
+
 ## Phase 1–7 local regression success — 2026-10-21
 
 - [x] Exact `5fc40e2`: clean, isolated worktree and

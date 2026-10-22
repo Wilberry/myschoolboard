@@ -1,5 +1,17 @@
 # Requirements Traceability Matrix
 
+## PR #97 local verification evidence — 2026-10-22
+
+OPS-REQ-001 synthetic browser fixtures passed local execution at `2dc0fa3`
+with two formatting-only working-tree corrections: nine safety tests,
+36 exact migration hashes, fixture creation, format/lint/type-check/build.
+TEN-REQ-001, USR-REQ-001, SEC-REQ-001 and TCH-REQ-001 gained narrow actual
+browser cross-school concealment and teacher assignment revocation-option
+evidence. No complete acceptance or requirement status change is implied.
+LES-REQ-001/ATT-REQ-001 populated workflow, section-grant revocation and
+student/privacy checks remain outstanding. See
+[checkpoint and limitations](../quality/PHASE1_7_PR97_LOCAL_CHECKPOINT.md).
+
 ## Phase 7 returned-original-mark correction remediation — AUTHORED, UNVERIFIED
 
 `feature/phase7-returned-manual-mark-remediation` resolves the returned-proposal dead end in the original manual grade review workflow. A **terminally RETURNED initial manual mark** may now be amended only through a new immutable reasoned `AssessmentManualCorrectionRequest` by its current exact assigned teacher, followed by the same independently verified PRIMARY HEAD_OF_SECTION or SECONDARY PRINCIPAL academic decision. SQL requires the original initial review to exist (APPROVED or RETURNED), the same active original teacher/enrollment/school and mark limits, a changed bounded value, and no already pending correction. It does **not** change or overwrite the original mark or returned decision.

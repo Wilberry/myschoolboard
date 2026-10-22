@@ -17,9 +17,7 @@ export function assertBrowserFixtureEnvironment(environment = process.env) {
   ) {
     throw new Error("Synthetic browser password must be at least 16 chars");
   }
-  if (
-    environment.BROWSER_FIXTURE_PASSWORD === environment.DEV_ADMIN_PASSWORD
-  ) {
+  if (environment.BROWSER_FIXTURE_PASSWORD === environment.DEV_ADMIN_PASSWORD) {
     throw new Error("Browser fixture password must differ from demo password");
   }
 }
