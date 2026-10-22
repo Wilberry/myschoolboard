@@ -14,10 +14,7 @@ export function assertBrowserPupilWorkflowPolicy(
   if (!localOrigins.has(environment.BETTER_AUTH_URL)) {
     throw new Error("Browser workflow requires loopback Better Auth origin");
   }
-  if (
-    phase !== "verify" &&
-    environment.BROWSER_PUPIL_WORKFLOW_WRITE !== "1"
-  ) {
+  if (phase !== "verify" && environment.BROWSER_PUPIL_WORKFLOW_WRITE !== "1") {
     throw new Error("Explicit synthetic pupil workflow opt-in is required");
   }
   if (phase === "revoke" && environment.BROWSER_PUPIL_REVOKE !== "1") {
