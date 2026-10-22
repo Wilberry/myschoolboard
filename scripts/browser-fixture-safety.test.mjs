@@ -5,14 +5,17 @@ import {
   assertLocalDockerFixtureTarget,
 } from "./browser-fixture-safety.mjs";
 
+const databaseURL = [
+  "postgresql://myschoolboard:local_test_password@localhost:5434/",
+  "myschoolboard_test?schema=public",
+].join("");
+
 const environment = {
   NODE_ENV: "test",
   TEST_DATABASE_DISPOSABLE: "1",
   ALLOW_DEMO_SEED: "1",
-  DATABASE_URL:
-    "postgresql://myschoolboard:local_test_password@localhost:5434/myschoolboard_test?schema=public",
-  TEST_DATABASE_URL:
-    "postgresql://myschoolboard:local_test_password@localhost:5434/myschoolboard_test?schema=public",
+  DATABASE_URL: databaseURL,
+  TEST_DATABASE_URL: databaseURL,
   BETTER_AUTH_SECRET: "local-browser-test-secret-at-least-32-chars",
   BETTER_AUTH_URL: "http://localhost:3000",
   DEV_ADMIN_EMAIL: "admin@myschoolboard.test",
@@ -65,11 +68,14 @@ test("rejects absent opt-in, reused passwords and invalid run labels", () => {
 });
 
 test("rejects development, remote and incorrect database targets", () => {
+  const sharedURL = "postgresql://db.example.test:5434/myschoolboard_test";
+  const developmentURL =
+    "postgresql://myschoolboard:pw@localhost:5433/myschoolboard";
   for (const changes of [
     { NODE_ENV: "development" },
     { TEST_DATABASE_DISPOSABLE: "0" },
-    { TEST_DATABASE_URL: "postgresql://db.example.test:5434/myschoolboard_test" },
-    { DATABASE_URL: "postgresql://myschoolboard:pw@localhost:5433/myschoolboard" },
+    { TEST_DATABASE_URL: sharedURL },
+    { DATABASE_URL: developmentURL },
   ]) {
     assert.throws(() =>
       assertBrowserFixtureEnvironment({ ...environment, ...changes }),
