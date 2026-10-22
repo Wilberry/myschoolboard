@@ -8,6 +8,7 @@ import {
   assertLocalDockerFixtureTarget,
 } from "./browser-fixture-safety.mjs";
 import { runMigrationChecksumVerification } from "./verify-migration-checksums.mjs";
+import { assertBrowserPupilWorkflowPolicy } from "./browser-pupil-workflow-policy.mjs";
 
 /**
  * Test-only, authenticated HTTP workflow for the existing browser fixtures.
@@ -18,9 +19,7 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const origin = "http://127.0.0.1:3000";
 const phase = process.argv.find((part) => part.startsWith("--phase="))?.slice(8);
 
-if (!["prepare", "verify", "revoke"].includes(phase ?? "")) {
-  throw new Error("Use --phase=prepare, --phase=verify or --phase=revoke");
-}
+assertBrowserPupilWorkflowPolicy(phase);
 
 function docker(args: string[]) {
   const result = spawnSync("docker", args, {
@@ -148,36 +147,29 @@ async function api(
     redirect: "manual",
     signal: AbortSignal.timeout(20_000),
   });
-  assert(response.status === status, `Unexpected ${method} status on school API (expected ${status}, received ${response.status})`);
+  assert(
+    response.status === status,
+    `Unexpected ${method} school API status: expected ${status}, received ${response.status}`,
+  );
   assert(
     response.headers.get("cache-control") === "private, no-store",
     "Missing private/no-store response cache policy",
   );
   // Do not log response text: it may contain synthetic student details.
   const body: unknown = await response.json();
-  return requireRecord(body);
+  const data = requireRecord(body);
+  if (status === 404) {
+    assert(
+      Object.keys(data).length === 1 && data.error === "Not found",
+      "Denied school API must return only a generic not-found error",
+    );
+  }
+  return data;
 }
 
 async function environment() {
   assertBrowserFixtureEnvironment();
-  assert(
-    ["http://localhost:3000", origin].includes(
-      process.env.BETTER_AUTH_URL ?? "",
-    ),
-    "Better Auth must use the local loopback test application",
-  );
-  if (phase !== "verify") {
-    assert(
-      process.env.BROWSER_PUPIL_WORKFLOW_WRITE === "1",
-      "Set BROWSER_PUPIL_WORKFLOW_WRITE=1 for writes",
-    );
-  }
-  if (phase === "revoke") {
-    assert(
-      process.env.BROWSER_PUPIL_REVOKE === "1",
-      "Revoke only after separately verifying student browser access",
-    );
-  }
+  assertBrowserPupilWorkflowPolicy(phase);
   verifyDocker();
   await runMigrationChecksumVerification();
   const home = await fetch(origin + "/", {
@@ -335,6 +327,20 @@ async function prepare(ctx: Awaited<ReturnType<typeof environment>>) {
   assert(
     !initial.student && !initial.note,
     "Synthetic pupil workflow already started; do not replay writes",
+  );
+  const [studentCount, noteCount, foreignStudents, foreignNotes] =
+    await Promise.all([
+      prisma.studentRecord.count({ where: { schoolId: ctx.schoolA } }),
+      prisma.lessonNote.count({ where: { schoolId: ctx.schoolA } }),
+      prisma.studentRecord.count({ where: { schoolId: ctx.schoolB } }),
+      prisma.lessonNote.count({ where: { schoolId: ctx.schoolB } }),
+    ]);
+  assert(
+    studentCount === 0 &&
+      noteCount === 0 &&
+      foreignStudents === 0 &&
+      foreignNotes === 0,
+    "Browser fixture schools must have no prior pupil/lesson records",
   );
   const path = `/api/schools/${ctx.schoolA}`;
   await api(ctx.logins.studentA, `${path}/student-lessons`, 404);
