@@ -1,5 +1,26 @@
 # Milestone Checklist
 
+## Phase 1–7 follow-up verification — 2026-10-30 (PARTIAL; NOT ACCEPTED)
+
+- [x] Record owner-reported linked-pupil Chromium access, lesson list/detail,
+  Back/Forward, duplicate tabs, authorized print preview and basic keyboard
+  focus/navigation at `d8e80e0`.
+- [x] Distinguish the streamed School B not-found UI (document HTTP 200) from
+  the private student-lessons API denial (HTTP 404, `private, no-store`).
+- [x] Verify an isolated dependency candidate removes the reported Next.js,
+  Zod and fast-uri advisories; strict and full npm audits return zero findings.
+- [ ] Execute automated browser assertions for private HTML/RSC, browser
+  history, duplicate tabs, print and authorized post-revocation denial.
+- [ ] Complete positive/revoked guardian relationship acceptance. Guardian
+  relationship and portal implementation are currently NOT IMPLEMENTED.
+- [ ] Execute final disposable-database integration and exact-commit
+  Phase 1–7 exit gates; integrate/review the dependency candidate before
+  considering the base branch's dependency blocker resolved.
+
+Evidence and constraints:
+[Phase 1–7 local checkpoint](../quality/PHASE1_7_PR97_LOCAL_CHECKPOINT.md);
+[dependency assessment](../security/DEPENDENCY_ADVISORY_ASSESSMENT.md).
+
 ## PR #97 fixture verification — 2026-10-22
 
 - [x] Execute nine fixture safety tests and synthetic fixture generator.

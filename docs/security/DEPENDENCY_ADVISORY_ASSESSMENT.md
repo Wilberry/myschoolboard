@@ -1,5 +1,46 @@
 # Dependency Advisory Assessment
 
+## Isolated Phase 1–7 dependency remediation — 2026-10-30
+
+At base `d8e80e0`, a fresh `npm audit --json` reported three affected
+packages: `next@16.4.0` (critical, three Next.js advisories), `zod@4.6.5`
+(high), and transitive `fast-uri@3.1.8` (moderate). The audit identifies
+Next.js 16.4.3, Zod 4.6.6 or later, and fast-uri 3.1.9 as patched
+versions. The base worktree and its active browser environment were not
+modified.
+
+The Next.js findings are GHSA-2464-fhr4-w9xw (SVG image-optimization RCE),
+GHSA-p3m5-59mp-jv5r (App Router Server Actions denial of service), and
+GHSA-673q-mjm6-r5xr (typed-array `use cache` RCE). Zod is GHSA-mrhx-c7xc-m3w5.
+The four fast-uri findings are GHSA-w74x-v6f9-j3xg, GHSA-xhq7-xmqj-769h,
+GHSA-wjr9-j795-jxcr, and GHSA-333x-w4r6-6crp.
+
+The isolated branch `verify/dependency-security-20261030`, created from
+`d8e80e0`, committed the narrow dependency update as
+`b20c40dfc0b752b4bbc85e9128051fae0f2503ed`: Next.js and
+`eslint-config-next` 16.4.3, Zod `^4.6.7` (resolved to 4.6.7), and
+transitive fast-uri 3.1.9. No override, telemetry upgrade command,
+schema/migration, or application source change was used. This is a
+verification candidate only; it has not been merged or copied into the
+active Phase 1–7 worktree.
+
+On that candidate, `npm audit --audit-level=high` and full `npm audit`
+both exited 0 with zero findings. `npm run verify:local:guards` passed
+106/106; formatting, ESLint, TypeScript, and a production build passed.
+Prisma Client generation used a dummy URL on loopback port 1, and the
+build used a dummy auth secret and loopback URL with telemetry disabled;
+no database connection or write was made. The full database-backed
+`npm test` was attempted and exited 1 because the current process has no
+disposable-database configuration; all 37 Vitest files stopped at their
+required environment guard before any test case ran. The migration
+checksum command also exited 1 before comparing against a database.
+Browser acceptance and production startup were not run on the dependency
+candidate.
+
+The dependency advisory blocker is therefore resolved **on the isolated
+candidate only**. The base branch still has its audited vulnerable lockfile
+until the candidate is integrated and revalidated.
+
 ## Current Phase 1–7 release-audit checkpoint (2026-10-21)
 
 The owner's separate, clean local verification of the Phase 1–7

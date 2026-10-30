@@ -1,5 +1,37 @@
 # Current Status
 
+## Phase 1–7 verification checkpoint — 2026-10-30 (PARTIAL; NOT ACCEPTED)
+
+Base verification branch: `verify/pr97-integrated-pupil-workflow`, HEAD
+`d8e80e0`. The owner reports successful local checks of 106/106 security
+guards, 36/36 migration checksums, a production build/start, synthetic fixture
+and authenticated pupil-workflow preparation/verification, and positive
+Chromium access to the released lesson list/detail/content. Reported browser
+checks also covered Back/Forward, duplicated tabs, authorized print preview,
+and basic keyboard focus/navigation. No screenshots, raw HAR, credentials or
+session material are committed.
+
+The reported School B page showed not-found UI while the streamed document's
+actual HTTP status was **200**; the corresponding private API returned
+**404** with `private, no-store`. The document status is not recorded as 404.
+No application correction is inferred from this observation alone.
+
+The current execution independently found `next@16.4.0` critical, `zod@4.6.5`
+high, and `fast-uri@3.1.8` moderate findings at the base commit. An isolated
+dependency-verification worktree upgraded to Next.js 16.4.3, eslint-config-next
+16.4.3, Zod 4.6.7 and fast-uri 3.1.9; both high-severity and full npm audits
+then reported zero vulnerabilities. See the dependency assessment for exact
+scope and validation.
+
+This session did not run browser or revocation operations: the current process
+had no designated disposable-database/browser-fixture environment, no local
+environment file or fixture run identifier, and no Playwright module. No
+database writes were made. Positive guardian access remains NOT IMPLEMENTED;
+the application has no guardian-to-child relationship model or portal route.
+Automated browser history/RSC/print checks, post-revocation behavior, guardian
+acceptance, and the complete Phase 1–7 gate remain outstanding. No requirement
+or milestone is declared complete.
+
 ## PR #97 local fixture execution — 2026-10-22
 
 At `2dc0fa3` plus two uncommitted formatting-only corrections, fixture

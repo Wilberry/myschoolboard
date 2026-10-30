@@ -1,5 +1,34 @@
 # Requirements Traceability Matrix
 
+## Phase 1–7 browser and dependency checkpoint — 2026-10-30
+
+At `d8e80e0`, the owner reports synthetic authenticated pupil preparation
+and verification, linked-student Chromium access to released lesson
+list/detail/content, Back/Forward, duplicate tabs, authorized print
+preview, and basic keyboard focus/navigation. School B student-lessons
+API denial was HTTP 404 with `private, no-store`; the rendered School B
+page presented not-found UI while the streamed HTML document status was
+HTTP 200. This is not recorded as an HTTP 404. These owner-reported
+observations provide narrow evidence for LES-REQ-001, TEN-REQ-001,
+SEC-REQ-001 and OPS-REQ-001, not completion of any requirement. The
+captured report does not provide RSC payload evidence or post-revocation
+browser results.
+
+The current execution found critical Next.js 16.4.0, high Zod 4.6.5,
+and moderate fast-uri 3.1.8 advisories at the base. An isolated
+dependency candidate at commit `b20c40d` updated Next.js and its ESLint
+config to 16.4.3, Zod to 4.6.7 and fast-uri to 3.1.9; both high-severity
+and full npm audits reported zero findings there. The candidate is not
+integrated into `d8e80e0`.
+
+No guardian-to-child relationship model or parent portal/API route is
+implemented. The existing PARENT role and `child:read` policy do not
+establish an actual verified relationship workflow. BR-16 positive
+guardian access therefore remains NOT IMPLEMENTED; no relationship or
+guardian capability is inferred. Browser revocation and RSC checks,
+complete BR-01..BR-16 acceptance, and the final integrated gate remain
+open. See the [current checkpoint](../quality/PHASE1_7_PR97_LOCAL_CHECKPOINT.md).
+
 ## PR #97 local verification evidence — 2026-10-22
 
 OPS-REQ-001 synthetic browser fixtures passed local execution at `2dc0fa3`

@@ -21,6 +21,23 @@ captured. These commands still require local execution and do not
 substitute for Chromium/RSC/history/printing checks.
 Do not use actual pupils, guardians, contact records or payment data.
 
+## Owner-reported browser evidence — 2026-10-30
+
+At base commit `d8e80e0`, the owner reports that synthetic pupil workflow
+preparation and verification passed, and Chromium displayed the released
+lesson list, detail and content for the linked student. Reported browser
+checks also covered Back/Forward, duplicated tabs, authorized print preview,
+and basic keyboard navigation/focus. The School B student-lessons API denied
+access with HTTP 404 and `Cache-Control: private, no-store`.
+
+The School B rendered page showed a not-found UI, but its streamed HTML
+document returned **HTTP 200**. Record this as a streamed 200 with a 404
+presentation, not an HTTP 404. This is consistent with the documented
+Next.js streaming behavior; do not change the route solely to force a
+non-streamed status. The report does not include captured RSC payloads or
+post-revocation history/print results, and it is not a reproducible automated
+browser report. The BR-01..BR-16 gate remains partial and not accepted.
+
 ## Setup and reproducibility
 
 1. Record exact Git SHA, local Node/npm versions, browser name/version,

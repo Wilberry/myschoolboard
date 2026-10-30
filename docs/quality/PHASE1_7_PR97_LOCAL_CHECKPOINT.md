@@ -152,3 +152,71 @@
 - Remaining: resolve/test student navigation, rerun positive browser evidence,
   then separate authorized revocation and final regression/security gates.
 - Exit gate: browser verification FAIL; merge/release BLOCKED.
+
+## Phase 1–7 browser and dependency follow-up — 2026-10-30
+
+- Phase/milestone: Phase 1–7 browser security acceptance and dependency
+  remediation; base `verify/pr97-integrated-pupil-workflow` at `d8e80e0`.
+- Requirements: OPS-REQ-001, TEN-REQ-001, USR-REQ-001, SEC-REQ-001,
+  TCH-REQ-001 and LES-REQ-001. No requirement or milestone is complete.
+- Evidence source: owner reports the earlier exact-HEAD local run passed
+  106/106 local security guards, 36/36 Prisma migration checksums, production
+  build/start, synthetic fixture preparation, authenticated pupil workflow
+  prepare/verify, positive Chromium sign-in and released lesson navigation,
+  list/detail/content, Back/Forward, duplicate tabs, authorized print preview,
+  and basic keyboard focus/navigation. No screenshots, raw HAR, credentials
+  or tokens were committed, and those reported operations were not repeated
+  in this session.
+- HTTP distinction: the School B rendered page showed not-found UI but its
+  streamed HTML response returned **HTTP 200**. The corresponding
+  student-lessons API returned **HTTP 404** and `private, no-store`. The
+  document is not classified as an HTTP 404. No code change was made to
+  `notFound()` or streaming behavior.
+- Files changed in the active worktree: status, milestone, traceability,
+  browser-acceptance, pupil-workflow runbook, dependency-assessment and this
+  checkpoint documentation. No application source or package manifests in
+  the active worktree changed.
+- Isolated dependency change: branch `verify/dependency-security-20261030`,
+  commit `b20c40dfc0b752b4bbc85e9128051fae0f2503ed`, updates only
+  `package.json` and `package-lock.json`. Versions: Next.js /
+  eslint-config-next 16.4.3, Zod 4.6.7 and fast-uri 3.1.9. No migrations.
+- Authorization implications: none. No permissions or tenant checks changed.
+  No database writes, synthetic record modifications, revocation, deployment,
+  GitHub Actions, push or merge occurred.
+- Tests on the isolated dependency candidate: strict `npm audit
+  --audit-level=high` PASS (zero findings); full `npm audit` PASS (zero);
+  `npm run verify:local:guards` PASS (106/106, no skips); `npm run
+  format:check` PASS; `npm run lint` PASS; `npm run typecheck` PASS after
+  Prisma Client generation; production `npm run build` PASS with dummy
+  loopback-only configuration and `NEXT_TELEMETRY_DISABLED=1`.
+- Blocked validations: full `npm test` exited 1 because all 37 Vitest
+  suites require `TEST_DATABASE_DISPOSABLE=1` and database URLs, which were
+  absent; no Vitest case ran. The migration checksum command could not
+  connect/compare without disposable database configuration. No Playwright
+  module or browser-fixture environment was available, so automated browser,
+  RSC, history-after-revocation and print-after-revocation checks were not run.
+- Guardian scope: no guardian-child relationship model or guardian portal
+  routes exist. Positive guardian access remains NOT IMPLEMENTED; only the
+  narrow unlinked-parent denial is reported in existing workflow evidence.
+- Known limitations: base `d8e80e0` still contains the vulnerable dependencies;
+  the fixed candidate is not integrated. User-reported Chromium evidence has
+  no committed raw capture or browser version. Streamed HTTP 200 is a
+  confirmed observation, not a confirmed privacy defect. Post-revocation
+  browser behavior, private RSC payload inspection, positive guardian flow,
+  complete BR-01..BR-16, database-backed regression and integrated review
+  remain outstanding.
+- Documentation updated: `CURRENT_STATUS.md`, `MILESTONE_CHECKLIST.md`,
+  `REQUIREMENTS_TRACEABILITY_MATRIX.md`,
+  `PHASE1_7_BROWSER_SECURITY_ACCEPTANCE.md`,
+  `PHASE1_7_BROWSER_PUPIL_WORKFLOW_RUNBOOK.md`, this checkpoint, and
+  `DEPENDENCY_ADVISORY_ASSESSMENT.md`.
+- Deviations: none. Requirements and browser acceptance criteria were not
+  weakened.
+- Remaining tasks: integrate and revalidate the dependency candidate on a
+  clean verification checkout; execute full database-backed CI-equivalent
+  and migration-integrity checks in the verified disposable environment;
+  run reproducible authenticated Chromium automation for private HTML/RSC,
+  history, print, and post-revocation behavior; implement guardian features
+  only within the documented relationship and privacy requirements; then
+  complete integrated review.
+- Exit-gate result: **BLOCKED**; no Phase 1–7 acceptance, merge or release.

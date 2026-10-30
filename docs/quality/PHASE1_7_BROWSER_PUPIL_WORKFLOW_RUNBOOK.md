@@ -1,12 +1,15 @@
 # Phase 1–7 browser pupil and lesson release verification
 
-**Status: authored, NOT locally executed on this branch.**
+**Status: owner-reported prepare/verify completion at `d8e80e0`; not
+independently reproduced in the 2026-10-30 session.**
 This is a test-only, staged **real HTTP application workflow**.
 It prepares a synthetic enrolled pupil, an administrator-attested
 account link, a teacher-submitted lesson, an exact-section
 Principal approval and a separate release event. Browser UI,
 RSC/history/printing and keyboard acceptance must still be tested
-in an actual browser. A successful HTTP command alone cannot
+in an actual browser. The owner reports Chromium positive access,
+lesson listing/detail/content, history, duplicate-tab, authorized
+print-preview and basic keyboard/focus checks. A successful HTTP command alone cannot
 mark BR-11 or BR-12 fully passed.
 
 ## Non-negotiable safety requirements
@@ -218,8 +221,11 @@ any stale browser snapshot as a separate issue.
 
 Capture exact branch SHA, sanitized synthetic
 fixture label, statuses, test counts, and redacted
-browser screenshot/console findings. The commands
-are **authored, not executed** in this PR. Any
+browser screenshot/console findings. The owner reports
+that prepare and verify completed at `d8e80e0`; the run
+transcript and fixture manifest are not present in this
+worktree, so this session did not independently repeat
+them. No revoke phase is reported as completed. Any
 unexpected response or audit record leaves this
 checkpoint **FAILED or BLOCKED**, not accepted.
 Do not edit/repair historical school audit rows.
@@ -229,7 +235,8 @@ transport behavior if actually run; it does not
 establish complete BR-01..BR-16 acceptance,
 positive guardian flows, billing/payment security,
 accessibility, backup/recovery, production identity,
-or release readiness. The unchanged strict
-`npm audit --audit-level=high` blocker remains.
+or release readiness. The base worktree's strict
+`npm audit --audit-level=high` blocker remains until
+the separately verified dependency candidate is integrated.
 No GitHub Actions, deployment or merge to
 `main` is part of this procedure.
