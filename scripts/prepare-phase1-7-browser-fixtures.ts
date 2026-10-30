@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import type { MembershipRole } from "@prisma/client";
 import { auth } from "../src/lib/auth";
 import { prisma } from "../src/lib/db";
+import { browserFixtureEmail } from "./browser-fixture-email.mjs";
 import {
   assertBrowserFixtureEnvironment,
   assertLocalDockerFixtureTarget,
@@ -86,7 +87,7 @@ async function main() {
   const password = process.env.BROWSER_FIXTURE_PASSWORD!;
   const slugA = `browser-${runId}-a`;
   const slugB = `browser-${runId}-b`;
-  const emailOf = (key: string) => `${runId}-${key}@myschoolboard.test`;
+  const emailOf = (key: string) => browserFixtureEmail(runId, key);
 
   const [existingSchools, existingUsers] = await Promise.all([
     prisma.school.count({ where: { slug: { in: [slugA, slugB] } } }),

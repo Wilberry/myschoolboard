@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { auth } from "../src/lib/auth";
 import { prisma } from "../src/lib/db";
+import { browserFixtureEmail } from "./browser-fixture-email.mjs";
 import {
   assertBrowserFixtureEnvironment,
   assertLocalDockerFixtureTarget,
@@ -116,7 +117,7 @@ type ActorKey =
 type Login = { cookie: string; userId: string };
 
 async function signIn(key: ActorKey, runId: string): Promise<Login> {
-  const email = `${runId}-${key}@myschoolboard.test`;
+  const email = browserFixtureEmail(runId, key);
   const signedIn = await auth.api.signInEmail({
     body: { email, password: process.env.BROWSER_FIXTURE_PASSWORD! },
     headers: new Headers({
@@ -237,7 +238,7 @@ async function environment() {
   ];
   const members = await Promise.all(
     keys.map(async (key) => {
-      const email = `${runId}-${key}@myschoolboard.test`;
+      const email = browserFixtureEmail(runId, key);
       const user = await prisma.user.findUnique({
         where: { email },
         select: {

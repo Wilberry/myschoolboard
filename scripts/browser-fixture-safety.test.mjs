@@ -29,6 +29,7 @@ const worktree = "/home/test/myschoolboard-format";
 const container = {
   Config: {
     Image: "postgres:17-alpine",
+    Env: ["POSTGRES_DB=myschoolboard_test", "POSTGRES_USER=myschoolboard"],
     Labels: {
       "com.docker.compose.service": "postgres-test",
       "com.docker.compose.project.working_dir": worktree,
@@ -102,6 +103,12 @@ test("rejects wrong service, image and worktree", () => {
     }
     assert.throws(() => inspect(value), /not this worktree/);
   }
+});
+
+test("rejects a test service configured for another database", () => {
+  const value = structuredClone(container);
+  value.Config.Env[0] = "POSTGRES_DB=myschoolboard";
+  assert.throws(() => inspect(value), /disposable test database/);
 });
 
 test("rejects public or mismatched port bindings", () => {

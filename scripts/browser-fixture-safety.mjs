@@ -44,6 +44,15 @@ export function assertLocalDockerFixtureTarget(
   ) {
     throw new Error("Docker container is not this worktree's test service");
   }
+  const containerEnvironment = new Set(container.Config?.Env ?? []);
+  if (
+    !containerEnvironment.has("POSTGRES_DB=myschoolboard_test") ||
+    !containerEnvironment.has("POSTGRES_USER=myschoolboard")
+  ) {
+    throw new Error(
+      "Docker service is not configured for the disposable test database",
+    );
+  }
 
   const bindings = container.HostConfig?.PortBindings?.["5432/tcp"];
   if (
