@@ -45,6 +45,46 @@ mark BR-11 or BR-12 fully passed.
   revocation. No broad database delete/seed/reset
   commands are part of this workflow.
 
+## Single-session verification launcher
+
+The `npm run verify:browser:session` launcher automates
+the safe local setup after the operator has configured
+the test-only environment above and the required
+synthetic fixture variables below. It requires a clean
+verification worktree and an already-running, healthy
+`postgres-test` service; it never stashes, switches
+branches, cleans, or otherwise changes Git worktree
+contents. If the worktree is dirty, stop and use the
+intended clean verification worktree without discarding
+the existing changes.
+
+The launcher independently verifies the local Docker
+context, exact Compose service, configured test database,
+loopback-only port 5434, and tmpfs storage. It inspects
+the database read-only: an empty database receives only
+the reviewed migrations; a non-empty database must have
+Prisma migration history and pass exact checksums for all
+36 migrations or the launcher stops without changing it.
+It then builds the production app, confirms port 3000 is
+available, starts the app on loopback, and runs the
+existing synthetic fixture preparation with the supplied
+unique run ID. The app remains running for browser
+verification; stop it with Ctrl-C when finished.
+
+```sh
+export BROWSER_FIXTURE_WRITE=1
+export BROWSER_FIXTURE_RUN_ID='browser-sec-unique-2026'
+export BROWSER_FIXTURE_PASSWORD='a-private-synthetic-only-password'
+npm run verify:browser:session
+```
+
+The run ID must be new for this database; fixture
+preparation refuses an ID whose school or account records
+already exist. Treat a failed/partial fixture run ID as
+consumed and investigate before retrying with a new ID.
+This launcher does not run pupil-link, lesson, or
+revocation phases and never revokes student links.
+
 ## Staged execution
 
 With the production-compiled localhost app running

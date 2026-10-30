@@ -12,6 +12,14 @@ LES-REQ-001/ATT-REQ-001 populated workflow, section-grant revocation and
 student/privacy checks remain outstanding. See
 [checkpoint and limitations](../quality/PHASE1_7_PR97_LOCAL_CHECKPOINT.md).
 
+The Phase 1–7 local session launcher is authored under
+OPS-REQ-001: it guards the disposable Docker/database target, detects an empty
+test schema, checks all 36 migration hashes, builds and starts the app only
+after confirming port 3000 is free, and invokes uniquely labeled synthetic
+fixture preparation. Focused safety tests are authored and run separately;
+the database-writing launcher itself has not been executed. OPS-REQ-001 status
+and Phase 1–7 acceptance are unchanged.
+
 ## Phase 7 returned-original-mark correction remediation — AUTHORED, UNVERIFIED
 
 `feature/phase7-returned-manual-mark-remediation` resolves the returned-proposal dead end in the original manual grade review workflow. A **terminally RETURNED initial manual mark** may now be amended only through a new immutable reasoned `AssessmentManualCorrectionRequest` by its current exact assigned teacher, followed by the same independently verified PRIMARY HEAD_OF_SECTION or SECONDARY PRINCIPAL academic decision. SQL requires the original initial review to exist (APPROVED or RETURNED), the same active original teacher/enrollment/school and mark limits, a changed bounded value, and no already pending correction. It does **not** change or overwrite the original mark or returned decision.

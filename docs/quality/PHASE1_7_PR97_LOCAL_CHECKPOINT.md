@@ -102,3 +102,53 @@
   browser/RSC/history/print/accessibility checks, final regression and audits.
 - Deviations: none; generated patch applied cleanly, then formatted.
 - Exit gate: patch validation PASS; application/browser acceptance BLOCKED.
+
+## Fixture email normalization and authenticated prepare — 2026-10-22
+
+- Phase/milestone: Phase 1–7 pupil HTTP verification; base `76fdd2c` plus
+  reviewed email-normalization patch (working tree, not yet committed).
+- Requirements: OPS-REQ-001, LES-REQ-001, TEN-REQ-001, SEC-REQ-001.
+- Applied downloaded generator only after exact patch review and successful
+  `git apply --check`. Shared helper normalizes synthetic actor email suffixes;
+  logical role, membership and school checks remain unchanged.
+- Changed fixture/pupil scripts, new email helper and four tests, package test
+  commands and this checkpoint. No schema, migration or authorization change.
+- Tests: four email regressions and seven pupil-policy tests passed (11/11).
+  Full formatting, lint, TypeScript and diff checks passed, each exit 0.
+- Existing inspected disposable PostgreSQL service retained; no reset or fixture
+  regeneration. Checksum verification again passed all 36 historical migrations.
+- Authenticated `prepare` retry exited 0 with the existing production-compiled
+  loopback server. Strengthened reviewer-denial, unreleased-detail, linked pupil
+  access and unlinked/parent/foreign list/detail assertions executed successfully.
+- Database writes: authorized synthetic registration, enrollment, attestation,
+  teacher submission, Principal approval and separate release only.
+- Security: private/no-store and generic denial assertions retained. Local
+  credentials and execution logs remain outside Git.
+- Build: earlier `76fdd2c` production build retained; patch affects test tooling.
+- Limitations/deviations: positive browser/RSC/history/print/accessibility evidence
+  and read-only verify phase remain pending. Revocation was not executed.
+- Documentation updated: this checkpoint. Remaining: browser positive evidence,
+  verify, separate opted-in revoke and final integrated regression/security gates.
+- Exit gate: email fix and positive HTTP prepare PASS; full browser/merge BLOCKED.
+
+## Positive Chromium runner — 2026-10-22
+
+- Phase/milestone: Phase 1–7 positive pupil browser verification.
+- Requirements: LES-REQ-001, TEN-REQ-001, SEC-REQ-001.
+- Downloaded bundle reviewed outside Git; six helper tests passed. Python
+  Playwright installed in isolated Downloads virtual environment; existing
+  Chromium executable used. No application dependency changes.
+- Preflight and 36 migration checksums passed. Actual browser execution exited
+  1 with TimeoutError. Diagnostic repeat localized the timeout to the expected
+  school-home link `My released lessons and schemes of work`, after sign-in.
+- Source evidence: school home requires school-wide `academic:read` through
+  requireSchoolAccess before rendering its STUDENT navigation. This entry
+  path needs investigation; no role or tenant checks were broadened.
+- No positive browser PASS report produced. Exact private API, RSC, print,
+  accessibility and history assertions are not accepted by implication.
+- Files changed: this checkpoint only. No new application tests, migrations,
+  school-record writes or link revocation. Sign-in sessions were created.
+- Existing code format/lint/types/build evidence unchanged; not rerun for docs.
+- Remaining: resolve/test student navigation, rerun positive browser evidence,
+  then separate authorized revocation and final regression/security gates.
+- Exit gate: browser verification FAIL; merge/release BLOCKED.
