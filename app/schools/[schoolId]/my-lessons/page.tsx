@@ -38,7 +38,7 @@ export default async function MyLessonsPage({
         <Link className="brand" href="/">
           MySchoolBoard
         </Link>
-        <Link href={`/schools/${schoolId}`}>School home</Link>
+        <Link href="/">My workspace</Link>
       </header>
       <section className="workspace-content">
         <p className="eyebrow">STUDENT</p>

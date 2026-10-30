@@ -5,7 +5,10 @@ import { SignInForm } from "@/src/components/sign-in-form";
 import { SignOutButton } from "@/src/components/sign-out-button";
 import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
-import { canShowSchoolDetailLink } from "@/src/modules/tenancy/school-navigation";
+import {
+  canShowSchoolDetailLink,
+  canShowStudentLessonsLink,
+} from "@/src/modules/tenancy/school-navigation";
 
 export default async function Home() {
   return (
@@ -52,6 +55,28 @@ async function HomeContent() {
     select: {
       role: true,
       school: { select: { id: true, name: true, slug: true } },
+      studentAccountLink: {
+        select: {
+          schoolId: true,
+          revocation: { select: { id: true } },
+          student: {
+            select: {
+              status: true,
+              enrollments: {
+                where: {
+                  status: "ACTIVE",
+                  session: { status: "ACTIVE" },
+                  schoolClass: {
+                    isActive: true,
+                    section: { isActive: true },
+                  },
+                },
+                select: { schoolId: true },
+              },
+            },
+          },
+        },
+      },
     },
     orderBy: { school: { name: "asc" } },
   });
@@ -90,7 +115,7 @@ async function HomeContent() {
         </div>
         {memberships.length ? (
           <ul className="school-list">
-            {memberships.map(({ school, role }) => (
+            {memberships.map(({ school, role, studentAccountLink }) => (
               <li key={school.id}>
                 <div className="school-monogram" aria-hidden="true">
                   {school.name.slice(0, 1)}
@@ -107,6 +132,18 @@ async function HomeContent() {
                       className="school-link"
                     >
                       My lesson notes
+                    </Link>
+                  )}
+                  {canShowStudentLessonsLink(
+                    school.id,
+                    role,
+                    studentAccountLink,
+                  ) && (
+                    <Link
+                      href={`/schools/${school.id}/my-lessons`}
+                      className="school-link"
+                    >
+                      My released lessons and schemes of work
                     </Link>
                   )}
                   {canShowSchoolDetailLink(session.user.id, school.id, role) ? (
