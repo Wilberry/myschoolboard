@@ -265,6 +265,34 @@ describe("Phase 3 platform subscription catalog and school periods", () => {
     )).toBe(true);
   });
 
+  it("rejects direct multi-row overlap even when bypassing the HTTP service", async () => {
+    await expect(
+      prisma.schoolSubscriptionPeriod.createMany({
+        data: [
+          {
+            schoolId,
+            planRevisionId: firstPlanId,
+            startsAt: new Date("2027-04-01T00:00:00Z"),
+            endsAt: new Date("2027-05-01T00:00:00Z"),
+            actorUserId: adminId,
+            reason: "First synthetic batch subscription period",
+          },
+          {
+            schoolId,
+            planRevisionId: secondPlanId,
+            startsAt: new Date("2027-04-15T00:00:00Z"),
+            endsAt: new Date("2027-05-15T00:00:00Z"),
+            actorUserId: adminId,
+            reason: "Overlapping synthetic batch subscription period",
+          },
+        ],
+      }),
+    ).rejects.toThrow();
+    expect(await prisma.schoolSubscriptionPeriod.count({
+      where: { schoolId },
+    })).toBe(3);
+  });
+
   it("denies a closed or unknown school and rejects invalid temporal bounds", async () => {
     secure(await periodGet(platformCookie, "nonexistent-school"), 404);
     secure(await periodPost(platformCookie, periodPayload(
