@@ -13,6 +13,7 @@ const schema = file("prisma/schema.prisma");
 const service = file("src/modules/platform/subscription-service.ts");
 const http = file("src/modules/platform/subscription-http.ts");
 const launcher = file("scripts/launch-phase1-7-verification.mjs");
+const launcherTests = file("scripts/launch-phase1-7-verification.test.mjs");
 const platformPage = file("app/platform/page.tsx");
 const operatorEditor = file("src/components/platform-subscription-editor.tsx");
 const homePage = file("app/page.tsx");
@@ -130,5 +131,7 @@ test("rechecks real platform roles and never changes school lifecycle", () => {
 
 test("updates fixed browser fixture migration inventory without weakening checksum gate", () => {
   assert.match(launcher, /expectedMigrationCount = 37/);
+  assert.match(launcherTests, /requires the expected complete 37-migration inventory/);
+  assert.doesNotMatch(launcherTests, /exactly 36/);
   assert.match(launcher, /runMigrationChecksumVerification\(environment\)/);
 });
