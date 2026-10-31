@@ -89,7 +89,8 @@ BEGIN
       USING ERRCODE = '23503';
   END IF;
   IF (
-    SELECT count(DISTINCT feature) FROM unnest(NEW."features") AS feature
+    SELECT count(DISTINCT feature_value)
+    FROM unnest(NEW."features") AS features(feature_value)
   ) <> cardinality(NEW."features") THEN
     RAISE EXCEPTION 'Plan features must not repeat'
       USING ERRCODE = '23514';
