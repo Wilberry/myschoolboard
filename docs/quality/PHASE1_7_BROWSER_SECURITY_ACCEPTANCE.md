@@ -21,6 +21,19 @@ captured. These commands still require local execution and do not
 substitute for Chromium/RSC/history/printing checks.
 Do not use actual pupils, guardians, contact records or payment data.
 
+## Proposed original-tab and route-aware Flight regression (not executed)
+
+The draft [retained-tab browser runner](PHASE1_7_RETAINED_TAB_BROWSER_RUNBOOK.md)
+keeps the already-open student tab alive across separately guarded synthetic
+link revocation. Its source-only tests classify Flight responses by protected
+route, status, cache headers, and private-content markers, without saving raw
+bodies or cookies. The runner also records pre-refresh DOM and print-mode
+markers separately from fresh HTTP/API/Flight requests. The runner has **not
+been executed** against a disposable database/browser at its new commit;
+no BR-12/BR-14 acceptance status changes are justified by this addition.
+Original-tab historical snapshots and earlier unattributed positive Flight
+headers remain unresolved until new authenticated local evidence is reviewed.
+
 ## Owner-reported browser evidence — 2026-10-30
 
 At base commit `d8e80e0`, the owner reports that synthetic pupil workflow
