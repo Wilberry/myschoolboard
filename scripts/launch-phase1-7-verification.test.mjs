@@ -25,7 +25,7 @@ test("requires the expected complete 37-migration inventory", () => {
   assert.throws(() => assertExpectedMigrationCount([]), /exactly 37/);
   assert.throws(
     () => assertExpectedMigrationCount(Array.from({ length: 36 })),
-    /exactly 36/,
+    /exactly 37/,
   );
 });
 
