@@ -41,7 +41,10 @@ async function privateJson(url: string, init?: RequestInit) {
 export function PlatformSubscriptionEditor({ schools }: { schools: School[] }) {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [periods, setPeriods] = useState<Period[]>([]);
-  const [schoolId, setSchoolId] = useState(schools[0]?.id ?? "");
+  const [schoolId, setSchoolId] = useState(
+    schools.find((school) => school.lifecycleStatus !== null &&
+      school.lifecycleStatus !== "CLOSED")?.id ?? "",
+  );
   const [planRevisionId, setPlanRevisionId] = useState("");
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
