@@ -26,6 +26,26 @@ Platform-managed lifecycle is explicit: a newly onboarded tenant begins Pending/
 
 These remain explicit approval items before implementation.
 
+## Platform console and verification boundary
+
+The nonproduction `/platform` console provides an operator-only way to
+record plan revisions and assign time-limited subscription records. Only
+authenticated current Platform Super Admins can read the school-name/status
+selector or write through the independently protected private/no-store APIs.
+The server page is explicitly dynamic and authorizes inside a single
+serialized, actor-row-locked school projection. The home page shows its link
+only to a current platform operator. All results are bounded; the console
+does not yet provide cursor pagination for large deployments.
+
+All plan features and numeric limits remain **catalog metadata**; the forms
+do not activate a school or enforce product entitlement. No auto-renewal or
+real-money integration is added. The migration-specific read-only preflight
+requires 36 exact applied checksums and only the reviewed 37th migration
+pending on the verified disposable test container. See the
+[Phase 3 acceptance runbook](../quality/PHASE3_SUBSCRIPTIONS_ACCEPTANCE.md)
+for the exact pending tests and deployment restrictions. No PostgreSQL or
+production-browser pass is claimed for this new code.
+
 ## Phase 3 immutable plan catalog and subscription periods (2026-10-31)
 
 **Status: SOURCE AUTHORED, NOT LOCALLY EXECUTED. SUB-REQ-001 remains PARTIAL.**
