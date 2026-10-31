@@ -46,6 +46,18 @@ pending on the verified disposable test container. See the
 for the exact pending tests and deployment restrictions. No PostgreSQL or
 production-browser pass is claimed for this new code.
 
+## Platform-only subscription observation — source authored, unverified
+
+A current Platform Super Admin may inspect the private, no-store
+`GET /api/platform/schools/{schoolId}/subscription-status`. The reader
+projects school lifecycle separately from CURRENT/UPCOMING/ENDED/NONE
+subscription status, with aggregate actively enrolled pupil/active staff
+counts. Current-plan quotas are advisory only; null means unspecified,
+not paid. No individual pupil or staff data is returned. The console labels
+billing NOT_TRACKED and entitlement enforcement NOT_ENABLED; a CURRENT
+subscription never reactivates a suspended school. DB/browser acceptance
+remains open.
+
 ## Phase 3 immutable plan catalog and subscription periods (2026-10-31)
 
 **Status: SOURCE AUTHORED, NOT LOCALLY EXECUTED. SUB-REQ-001 remains PARTIAL.**
