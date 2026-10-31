@@ -16,6 +16,10 @@ const launcher = file("scripts/launch-phase1-7-verification.mjs");
 const platformPage = file("app/platform/page.tsx");
 const operatorEditor = file("src/components/platform-subscription-editor.tsx");
 const homePage = file("app/page.tsx");
+const subscriptionStatusRoute = file(
+  "app/api/platform/schools/[schoolId]/subscription-status/route.ts",
+);
+const subscriptionPolicy = file("src/modules/platform/subscription-policy.ts");
 
 test("migration is complete and not duplicated or truncated", () => {
   assert.equal((migration.match(/^CREATE TABLE /gm) ?? []).length, 2);
@@ -54,6 +58,23 @@ test("operator page and forms revalidate role before reading any school data", (
   assert.match(operatorEditor, /type="datetime-local"/);
   assert.match(homePage, /platformActor\?\.platformRole === "SUPER_ADMIN"/);
   assert.match(homePage, /href="\/platform"/);
+});
+
+test("new subscription status is private and observational only", () => {
+  assert.match(subscriptionStatusRoute, /handleSchoolSubscriptionStatusGet/);
+  assert.match(service, /export async function readSchoolSubscriptionStatus/);
+  assert.match(service, /await assertPlatformAdmin\(tx, actorId\)/);
+  assert.match(service, /tx\.studentRecord\.count/);
+  assert.match(service, /tx\.membership\.count/);
+  assert.match(service, /schoolId: school\.id/);
+  assert.match(service, /billingStatus: "NOT_TRACKED"/);
+  assert.match(service, /entitlementEnforcement: "NOT_ENABLED"/);
+  assert.match(subscriptionPolicy, /export function quotaObservation/);
+  assert.match(operatorEditor, /subscription-status/);
+  assert.match(operatorEditor, /Product entitlement enforcement: off/);
+  assert.doesNotMatch(service, /tx\.school\.update\(/);
+  assert.doesNotMatch(service, /tx\.studentRecord\.findMany\(/);
+  assert.doesNotMatch(service, /tx\.membership\.findMany\(/);
 });
 
 test("keeps subscription migration additive and platform-only", () => {
