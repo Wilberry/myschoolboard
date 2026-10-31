@@ -27,6 +27,9 @@ test("keeps subscription migration additive and platform-only", () => {
     'SchoolSubscriptionPeriod_immutable',
     'PlatformPlanRevision_immutable',
     'SchoolSubscriptionPeriod_no_truncate',
+    'SchoolSubscriptionPeriod_no_overlap',
+    'EXCLUDE USING gist',
+    'tsrange("startsAt", "endsAt", \'[)\') WITH &&',
     'PlatformPlanRevision_no_truncate',
   ]) {
     if (token === 'school."isActive"') {
