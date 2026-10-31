@@ -32,6 +32,17 @@ entitlement policy. A CURRENT subscription **never** changes
 checks remain authoritative. This checkpoint does not add a Phase 8 or 9
 feature.
 
+## Read-only operator subscription status — source-only
+
+The Platform Super Admin-only GET route at
+`/api/platform/schools/{schoolId}/subscription-status`
+reports one school's CURRENT/UPCOMING/ENDED/NONE subscription and lifecycle
+independently, plus aggregate active student enrollment and staff counts
+compared against current plan advisory limits. It exposes no student/staff
+names or individual records; billing is NOT_TRACKED and product entitlement
+enforcement NOT_ENABLED. Integration tests exercise suspended-school
+non-reactivation and school-role denial, but remain unexecuted locally.
+
 ## Preserve historical evidence
 
 Do not invalidate or blindly rerun earlier successful checks: at the
