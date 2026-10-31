@@ -45,7 +45,7 @@ CREATE TABLE "SchoolSubscriptionPeriod" (
   CONSTRAINT "SchoolSubscriptionPeriod_pkey" PRIMARY KEY ("id"),
   CONSTRAINT "SchoolSubscriptionPeriod_window" CHECK (
     "startsAt" < "endsAt"
-    AND "endsAt" <= "startsAt" + INTERVAL '5 years'
+    AND "endsAt" <= "startsAt" + INTERVAL '1825 days'
     AND char_length(btrim("reason")) BETWEEN 5 AND 500
   )
 );
