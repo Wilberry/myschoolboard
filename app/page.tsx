@@ -46,6 +46,11 @@ async function HomeContent() {
     );
   }
 
+  const platformActor = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { platformRole: true },
+  });
+
   const memberships = await prisma.membership.findMany({
     where: {
       userId: session.user.id,
@@ -109,6 +114,13 @@ async function HomeContent() {
             LOCAL ENVIRONMENT
           </span>
         </div>
+        {platformActor?.platformRole === "SUPER_ADMIN" && (
+          <p className="setup-navigation">
+            <Link className="secondary-link" href="/platform">
+              Platform administration — subscription catalog and school periods
+            </Link>
+          </p>
+        )}
         <div className="section-heading">
           <h2>Schools</h2>
           <span>{memberships.length.toString().padStart(2, "0")}</span>
