@@ -1,5 +1,24 @@
 # Milestone Checklist
 
+## Phase 3 subscription foundation — 2026-10-31 (UNVERIFIED)
+
+- [x] Author additive platform plan and non-overlapping school subscription
+  period models, SQL constraints/triggers, platform-only no-store routes,
+  independent actor and tenant checks, and tests.
+- [x] Update the browser session's migration inventory constant to 37
+  while retaining the exact applied checksum audit.
+- [ ] In the verified disposable PostgreSQL worktree, apply only the new
+  additive migration after exact Docker/URL checks; verify all 37 checksums.
+- [ ] Run Prisma generation, new policy/SQL/route integration tests including
+  concurrent overlap; all cumulative Node/Vitest, lint, format, typecheck,
+  build, strict and full audit. Verify append-only and role guards at the
+  precise candidate commit SHA.
+- [ ] Complete subscription lifecycle policy, historical renewal visibility,
+  platform UI, entitlement/quota enforcement and operational audit views
+  without automatic billing or school activation.
+- [ ] Continue other mandatory Phase 1–7 acceptance items; no merge or
+  production deployment on this authored-only evidence.
+
 ## Phase 1–7 authenticated pupil browser checkpoint — 2026-10-31 (SCOPED; NOT ACCEPTED)
 
 - [x] Confirm exact branch and application commit
