@@ -13,8 +13,12 @@
   concurrent overlap; all cumulative Node/Vitest, lint, format, typecheck,
   build, strict and full audit. Verify append-only and role guards at the
   precise candidate commit SHA.
+- [ ] Verify the newly authored `/platform` console in a production-compiled
+  synthetic browser: Platform Super Admin positive access, ordinary school
+  role/anonymous denial, private HTML/RSC, form validation, keyboard, print,
+  and 200% zoom.
 - [ ] Complete subscription lifecycle policy, historical renewal visibility,
-  platform UI, entitlement/quota enforcement and operational audit views
+  large-campus pagination, entitlement/quota enforcement and operational audit views
   without automatic billing or school activation.
 - [ ] Continue other mandatory Phase 1–7 acceptance items; no merge or
   production deployment on this authored-only evidence.
