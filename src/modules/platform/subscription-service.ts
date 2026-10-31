@@ -88,7 +88,7 @@ export async function listPlatformPlans() {
       async (tx) => {
         await assertPlatformAdmin(tx, actorId);
         return tx.platformPlanRevision.findMany({
-          orderBy: [{ code: "asc" }, { version: "desc" }],
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
           take: 100,
           select: {
             id: true,
