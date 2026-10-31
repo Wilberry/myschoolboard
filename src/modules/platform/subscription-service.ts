@@ -55,13 +55,25 @@ async function assertPlatformAdmin(
 
 function translate(error: unknown): never {
   if (error instanceof PlatformSubscriptionError) throw error;
-  if (
-    error &&
-    typeof error === "object" &&
-    "code" in error &&
-    (error.code === "P2002" || error.code === "P2034")
-  ) {
-    throw new PlatformSubscriptionError("CONFLICT");
+  // PrismaPg may wrap a SQLSTATE inside meta.driverAdapterError or cause.
+  // Recognize ONLY uniqueness and transient serialization/deadlock failures.
+  const queue: unknown[] = [error];
+  const visited = new Set<object>();
+  const conflicts = new Set(["P2002", "P2034", "23505", "40001", "40P01"]);
+  for (let index = 0; index < queue.length && index < 24; index += 1) {
+    const node = queue[index];
+    if (!node || typeof node !== "object" || visited.has(node)) continue;
+    visited.add(node);
+    const record = node as Record<string, unknown>;
+    for (const field of ["code", "sqlState", "originalCode"] as const) {
+      if (typeof record[field] === "string" && conflicts.has(record[field])) {
+        throw new PlatformSubscriptionError("CONFLICT");
+      }
+    }
+    for (const field of ["cause", "meta", "driverAdapterError"] as const) {
+      const child = record[field];
+      if (child && typeof child === "object") queue.push(child);
+    }
   }
   // An error may contain SQL/connection details. Never forward it to HTTP.
   throw new PlatformSubscriptionError("INTERNAL");
