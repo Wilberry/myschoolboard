@@ -1,5 +1,31 @@
 # Current Status
 
+## Phase 3 platform subscription foundation — 2026-10-31 (AUTHORED, NOT EXECUTED)
+
+On the existing Phase 1–7 consolidation branch, an additive platform
+subscription foundation now defines immutable versioned plan features/limits,
+platform-only GET/POST catalog routes, school-specific non-overlapping UTC
+subscription periods and an append-only SQL audit record. PostgreSQL
+allocates authoritative plan versions, locks each school for overlap checks,
+revalidates current platform administrators, and denies direct history edits.
+A subscription record **never** activates or suspends a school or grants
+academic access. Subscription payments, real billing, automatic expiry,
+quotas/entitlement enforcement, portal UI and full platform metrics remain
+unimplemented. The fixed local browser-verifier inventory now expects
+37 migrations; the exact SHA-256 verifier remains unchanged.
+
+Added pure policy, read-only source guard, and real-session PostgreSQL
+integration tests (role/tenant denial, successive revisions, overlapping and
+concurrent periods, lifecycle separation and append-only mutation rejection).
+**These tests, Prisma generation, the new migration, audit and browser build
+have NOT been executed at this commit.** Historical 36/36 migrations,
+311/311 Vitest and 95/95 Node guards at `686891d`, plus later focused
+browser evidence, remain valid at their respective source SHAs; none is
+retroactively evidence for migration #37. Phase 3 and overall Phase 1–7
+acceptance remain BLOCKED. See
+[subscription module](../modules/TENANTS_AND_SUBSCRIPTIONS.md)
+and the [cumulative acceptance ledger](../quality/PHASE1_7_CUMULATIVE_ACCEPTANCE_LEDGER.md).
+
 ## Phase 1–7 authenticated pupil browser checkpoint — 2026-10-31 (SCOPED; NOT ACCEPTED)
 
 Exact tested application commit: `686891dac5887601df401d35acc4b222159bd403`,
