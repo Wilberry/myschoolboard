@@ -1,5 +1,20 @@
 # Requirements Traceability Matrix
 
+## Phase 3 SUB-REQ-001 / PLAT-REQ-001 subscription foundation — 2026-10-31
+
+**AUTHORED, NOT EXECUTED — PARTIAL.** The cumulative branch adds an immutable
+`PlatformPlanRevision` catalog (explicit version, feature list, nullable
+advisory limits, current platform operator, reason/time), school-owned
+`SchoolSubscriptionPeriod` with half-open UTC windows and SQL-serialized
+non-overlap, and private/no-store Platform Super Admin-only HTTP GET/POST.
+Additive migration `20261101000000_phase3_platform_subscriptions` is **#37**;
+earlier 36-migration evidence remains historical and not a pass for this
+new schema. New policy and authenticated DB/route/concurrency/audit tests
+are authored. Historical SQL/role/tenant protections remain unchanged.
+No payments, automatic expiry, school activation, real entitlement
+enforcement, platform UI or production identity rollout are introduced.
+The full SUB-REQ-001 and PLAT-REQ-001 completion criteria are **NOT MET**.
+
 ## Authenticated pupil browser evidence — 2026-10-31 (scoped; NOT ACCEPTED)
 
 At exact application commit
