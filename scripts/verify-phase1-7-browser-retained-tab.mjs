@@ -197,6 +197,23 @@ async function run() {
     });
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     const page = await context.newPage();
+    const observedFlightCaptures = [];
+    page.on("response", (response) => {
+      if (
+        observedFlightCaptures.length >= 40 ||
+        !response.url().startsWith(origin + "/") ||
+        response.request().headers().rsc !== "1"
+      ) return;
+      observedFlightCaptures.push((async () => {
+        const body = await response.text();
+        return classifyFlightResponse({
+          url: response.url(), origin, schoolId: f.schoolId,
+          status: response.status(),
+          contentType: response.headers()["content-type"],
+          cacheControl: cache(response), body, markers: f.markers,
+        });
+      })().catch(() => ({ route: "unavailable", kind: "capture-failed" })));
+    });
     const directory = join(resolve(process.env.HOME ?? "/invalid",
       ".config/myschoolboard/phase17-retained-tab"), f.runId);
     await mkdir(directory, { recursive: true, mode: 0o700 });
@@ -214,14 +231,21 @@ async function run() {
     await page.emulateMedia({ media: "screen" });
     ensure(printDom && printBytes > 0, "Authorized print evidence missing");
 
+    // All observed Flight responses retain route classification and cache
+    // policy, never their raw URL, cookies, student identifiers, or body.
+    const positiveFlightInventory = await Promise.all(observedFlightCaptures);
     // Durable, private proof of a successful ORIGINAL tab before revocation.
     // wx prevents overwriting earlier evidence or reusing a consumed fixture.
     await writeFile(join(directory, "positive.json"), JSON.stringify({
       commit, chromeVersion: browser.version(), positive, positiveFlight,
+      positiveFlightInventory,
       originalTabVisible: true, printDomHadMarkers: printDom,
       printPdfBytes: printBytes,
     }, null, 2), { flag: "wx", mode: 0o600 });
 
+    // Respect the configured production HTTP sign-in rate limit without
+    // disabling or changing it.
+    await new Promise((done) => setTimeout(done, 11000));
     await revoke();
 
     // Capture DOM and printing without navigating or refreshing this old tab.
@@ -248,7 +272,10 @@ async function run() {
     const normalizedMarkers = f.markers.map((marker) => marker.toLowerCase());
     const reloadedText = (await page.locator("body").innerText()).toLowerCase();
     const notFound = /this page could not be found|page not found/.test(reloadedText);
-    ensure(notFound && !marked(reloadedText, normalizedMarkers),
+    const robots = await page.locator('head meta[name="robots"]')
+      .first().getAttribute("content").catch(() => null);
+    const noindex = typeof robots === "string" && robots.includes("noindex");
+    ensure(notFound && noindex && !marked(reloadedText, normalizedMarkers),
       "Reload after revocation displayed lesson");
     await page.goBack({ waitUntil: "networkidle" });
     const backLeak = marked((await page.locator("body").innerText()).toLowerCase(),
@@ -266,6 +293,7 @@ async function run() {
 
     await writeFile(join(directory, "post-revocation.json"), JSON.stringify({
       commit, chromeVersion: browser.version(),
+      observedFlightInventory: await Promise.all(observedFlightCaptures),
       oldTab: {
         retainedDomMarkers: oldTabMarkers, retainedPrintDomMarkers: oldPrintMarkers,
         generatedPdfBytes: oldPdfBytes,
@@ -273,7 +301,7 @@ async function run() {
       },
       newServerRequests: {
         revokedList, revokedDetail, flight: afterFlight,
-        reloadStatus: reload?.status() ?? null, notFound,
+        reloadStatus: reload?.status() ?? null, notFound, noindex,
         backLeak, forwardLeak, newTabStatus: freshResponse?.status() ?? null,
         freshLeak,
       },
