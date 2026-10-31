@@ -1,5 +1,58 @@
 # Requirements Traceability Matrix
 
+## Authenticated pupil browser evidence — 2026-10-31 (scoped; NOT ACCEPTED)
+
+At exact application commit
+`686891dac5887601df401d35acc4b222159bd403`, synthetic production-browser
+tests exercised a linked student's released-lesson list/detail, School B
+administrator denial, unlinked student and unlinked parent concealment, and
+guarded student-link revocation. Read-only disposable-target preflight and
+36/36 exact migration checksums passed. Positive evidence was retained
+privately before the separately guarded revocation. See the
+[browser acceptance record](../quality/PHASE1_7_BROWSER_SECURITY_ACCEPTANCE.md)
+for exact HTTP statuses, headers and the full BR-01..BR-16 residual matrix.
+
+- **LES-REQ-001:** the tested linked student's list/detail and post-revocation
+  denial support only the narrow released-pupil-content transport subcase.
+  Draft/withdrawal, other-pupil isolation, complete academic-scope coverage
+  and the full lesson workflow are not accepted by this evidence.
+- **TEN-REQ-001 / SEC-REQ-001:** the tested wrong-school and unlinked API
+  denials returned generic HTTP 404 with `private, no-store`; streamed page
+  responses returned HTTP 200 with not-found UI and `noindex`. Other role,
+  membership, session and school boundaries remain untested here.
+- **OPS-REQ-001:** protected local preflight and 36/36 migration checksum
+  verification passed. Browser and revocation evidence is synthetic and
+  local only; it does not complete the operational or release gates.
+- **Guardian boundary:** the unlinked PARENT's page and lesson APIs were
+  denied. This is negative-only evidence; no verified guardian-child
+  relationship or positive guardian portal is implemented. BR-16 is not
+  complete.
+- **Residuals:** original-tab stale snapshot/print after revocation remains
+  unverified. One positive Flight response had no cache header and another
+  had `s-maxage=31536000`; both lacked the tested lesson topic, but their
+  routes were not retained, so cache-policy attribution is unresolved.
+
+No requirement status changes to complete and Phase 1–7 acceptance remains
+blocked. The earlier configuration-missing attempt below is retained as
+historical evidence, not the current browser execution result.
+
+## Authenticated-browser execution attempt — 2026-10-31
+
+For LES-REQ-001, TEN-REQ-001, SEC-REQ-001 and OPS-REQ-001, the exact active
+verification checkout was clean at
+`verify/pr97-integrated-pupil-workflow` / `686891dac5887601df401d35acc4b222159bd403`.
+The worktree-specific PostgreSQL 17 `postgres-test` Docker target passed its
+identity/safety assertion (loopback 5434, healthy, tmpfs, no host bind).
+The guarded test preflight failed before database access because the required
+test-only environment and fixture settings were absent. No application was
+running on port 3000; no HTTP/browser requests, database changes or revocation
+occurred. Therefore BR-01..BR-15 remain untested/blocked on this checkout.
+BR-16 negative parent access is also untested here; positive guardian portal
+access remains **NOT IMPLEMENTED**, not PASS. No requirement completion is
+inferred. The operator-reported test and 36/36 migration baseline was not
+repeated during this attempt. Exact statuses and safe next steps are in the
+[browser acceptance record](../quality/PHASE1_7_BROWSER_SECURITY_ACCEPTANCE.md).
+
 ## Phase 1–7 dependency security checkpoint — 2026-10-31
 
 The active base `de14ead0bb35ec625c8ba488fe18f63d135804a7` has one full-audit

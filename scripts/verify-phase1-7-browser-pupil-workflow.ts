@@ -1,9 +1,9 @@
 import "dotenv/config";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { auth } from "../src/lib/auth";
 import { prisma } from "../src/lib/db";
 import { browserFixtureEmail } from "./browser-fixture-email.mjs";
+import { getSessionCookieHeader } from "./browser-pupil-workflow-auth.mjs";
 import {
   assertBrowserFixtureEnvironment,
   assertLocalDockerFixtureTarget,
@@ -118,18 +118,24 @@ type Login = { cookie: string; userId: string };
 
 async function signIn(key: ActorKey, runId: string): Promise<Login> {
   const email = browserFixtureEmail(runId, key);
-  const signedIn = await auth.api.signInEmail({
-    body: { email, password: process.env.BROWSER_FIXTURE_PASSWORD! },
-    headers: new Headers({
+  const signInResponse = await fetch(`${origin}/api/auth/sign-in/email`, {
+    method: "POST",
+    headers: {
       origin: process.env.BETTER_AUTH_URL!,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      password: process.env.BROWSER_FIXTURE_PASSWORD!,
     }),
-    returnHeaders: true,
+    redirect: "manual",
+    signal: AbortSignal.timeout(10_000),
   });
-  const cookie = signedIn.headers
-    .getSetCookie()
-    .map((item) => item.split(";")[0])
-    .join("; ");
-  assert(cookie.includes("session_token="), "Synthetic login cookie missing");
+  assert(
+    signInResponse.status === 200,
+    `Synthetic HTTP sign-in returned ${signInResponse.status}`,
+  );
+  const cookie = getSessionCookieHeader(signInResponse.headers);
   const user = await prisma.user.findUnique({
     where: { email },
     select: { id: true },
@@ -305,11 +311,13 @@ async function environment() {
   });
   assert(principalGrant === 1, "Verified Principal SECTION grant required");
 
-  const logins = Object.fromEntries(
-    await Promise.all(
-      keys.map(async (key) => [key, await signIn(key, runId)] as const),
-    ),
-  ) as Record<ActorKey, Login>;
+  const logins = {} as Record<ActorKey, Login>;
+  for (const [index, key] of keys.entries()) {
+    if (index > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 10_500));
+    }
+    logins[key] = await signIn(key, runId);
+  }
   return {
     runId,
     schoolA: schoolA.id,

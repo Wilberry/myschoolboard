@@ -1,16 +1,27 @@
 # Phase 1–7 browser pupil and lesson release verification
 
-**Status: owner-reported prepare/verify completion at `d8e80e0`; not
-independently reproduced in the 2026-10-30 session.**
+**Status: synthetic prepare, positive browser evidence and guarded
+revocation independently executed at
+`686891dac5887601df401d35acc4b222159bd403`; scoped results and open
+acceptance cases are recorded in the
+[browser acceptance matrix](PHASE1_7_BROWSER_SECURITY_ACCEPTANCE.md).**
 This is a test-only, staged **real HTTP application workflow**.
 It prepares a synthetic enrolled pupil, an administrator-attested
 account link, a teacher-submitted lesson, an exact-section
-Principal approval and a separate release event. Browser UI,
-RSC/history/printing and keyboard acceptance must still be tested
-in an actual browser. The owner reports Chromium positive access,
-lesson listing/detail/content, history, duplicate-tab, authorized
-print-preview and basic keyboard/focus checks. A successful HTTP command alone cannot
-mark BR-11 or BR-12 fully passed.
+Principal approval and a separate release event. A successful HTTP command
+alone cannot mark BR-11 or BR-12 fully passed.
+
+## Production HTTP authentication and rate-limit pacing
+
+The workflow signs synthetic actors in through the local production server's
+`/api/auth/sign-in/email` endpoint, extracts exactly one session-token cookie
+without logging it, then validates that cookie through
+`/api/auth/get-session`. It does not use Better Auth's in-process test-mode
+sign-in helper, whose cookie configuration is not interchangeable with the
+production-compiled server. Actor sign-ins are serialized with a 10.5-second
+gap to respect the configured sign-in rate limit; do not remove or bypass
+that pacing. Focused cookie-extraction and workflow-policy regressions are
+covered by `scripts/browser-pupil-workflow-policy.test.mjs`.
 
 ## Non-negotiable safety requirements
 
@@ -217,26 +228,34 @@ No private pupil content should become newly
 accessible after link revocation; document
 any stale browser snapshot as a separate issue.
 
+At commit `686891dac5887601df401d35acc4b222159bd403`, the guarded workflow
+verified same-session list/detail API denial. Separate fresh-browser
+post-revocation probes also verified document, API, Back/Forward, duplicate
+tab, print after fresh navigation and student-authenticated Flight denial;
+the exact statuses and headers are in the acceptance matrix. The original
+pre-revocation tab's stale snapshot and print-before-refresh were not
+reliably captured and remain outstanding. Fresh navigation results do not
+demonstrate erasure of already-rendered browser history.
+
 ## Exit criteria
 
-Capture exact branch SHA, sanitized synthetic
-fixture label, statuses, test counts, and redacted
-browser screenshot/console findings. The owner reports
-that prepare and verify completed at `d8e80e0`; the run
-transcript and fixture manifest are not present in this
-worktree, so this session did not independently repeat
-them. No revoke phase is reported as completed. Any
-unexpected response or audit record leaves this
-checkpoint **FAILED or BLOCKED**, not accepted.
-Do not edit/repair historical school audit rows.
+Capture exact branch SHA, sanitized synthetic fixture label, statuses, test
+counts, and redacted browser screenshot/console findings. At
+`686891dac5887601df401d35acc4b222159bd403`, fixture preparation, positive
+browser checks, explicit guarded revocation and fresh-browser post-revocation
+checks were executed. The full BR-01..BR-16 gate remains blocked; the
+unattributed positive RSC cache headers and unverified old-tab stale content
+are recorded limitations. Any unexpected response or audit record leaves
+this checkpoint **FAILED or BLOCKED**, not accepted. Do not edit/repair
+historical school audit rows.
 
 This proves only narrow pupil + reviewed-lesson
 transport behavior if actually run; it does not
 establish complete BR-01..BR-16 acceptance,
 positive guardian flows, billing/payment security,
 accessibility, backup/recovery, production identity,
-or release readiness. The base worktree's strict
-`npm audit --audit-level=high` blocker remains until
-the separately verified dependency candidate is integrated.
+or release readiness. Full and strict dependency audits were reported at
+zero findings for this base commit; this browser execution did not rerun
+audits.
 No GitHub Actions, deployment or merge to
 `main` is part of this procedure.

@@ -1,5 +1,62 @@
 # Milestone Checklist
 
+## Phase 1–7 authenticated pupil browser checkpoint — 2026-10-31 (SCOPED; NOT ACCEPTED)
+
+- [x] Confirm exact branch and application commit
+  `verify/pr97-integrated-pupil-workflow` /
+  `686891dac5887601df401d35acc4b222159bd403`; preserve the existing
+  uncommitted documentation and workflow edits.
+- [x] Confirm the private configuration exists without displaying it;
+  pass protected disposable-target preflight and 36/36 read-only migration
+  checksums.
+- [x] Execute the synthetic positive pupil workflow and production-browser
+  list/detail, wrong-school, unlinked-student and unlinked-parent probes.
+- [x] Persist positive student evidence before separately guarded
+  `BROWSER_PUPIL_REVOKE=1` revocation.
+- [x] Verify same-session API denial and clean fresh-browser post-revocation
+  page/API/Flight, Back/Forward, duplicate-tab and print-after-navigation
+  results.
+- [x] Pass final focused workflow tests (9/9), local guards (108/108),
+  configured formatting, ESLint, TypeScript and `git diff --check`.
+- [x] Pass protected disposable-target preflight and all 36 exact migration
+  checksum comparisons.
+- [ ] Resolve the unattributed positive Flight responses with no cache header
+  and `s-maxage=31536000`; the captured route is unavailable, so do not
+  infer that either response was private lesson data or conclude its cache
+  policy is safe.
+- [ ] Capture stale snapshot and print behavior in the original already-open
+  browser tab after revocation; fresh navigation does not establish erasure
+  of prior browser content.
+- [ ] Complete remaining BR-01..BR-10 and BR-13 subcases, broader BR-11 and
+  BR-12, full BR-14/15 and positive guardian relationship acceptance.
+- [ ] Complete all Phase 1–7 exit gates. BR-16 positive guardian access
+  remains NOT IMPLEMENTED; do not claim full acceptance.
+
+No migration, production/shared database, reset, deletion, push, deployment,
+or GitHub Actions operation occurred. See the
+[browser acceptance evidence](../quality/PHASE1_7_BROWSER_SECURITY_ACCEPTANCE.md)
+and [local checkpoint](../quality/PHASE1_7_PR97_LOCAL_CHECKPOINT.md).
+
+## Phase 1–7 authenticated-browser attempt — 2026-10-31 (BLOCKED)
+
+- [x] Confirm clean exact checkout `686891dac5887601df401d35acc4b222159bd403`.
+- [x] Verify this worktree's PostgreSQL 17 `postgres-test` Docker target:
+  healthy, tmpfs-backed, no host bind, loopback-only port 5434.
+- [x] Run guarded local preflight; it failed closed before database access
+  because required test configuration is absent.
+- [ ] Restore private synthetic-only test configuration locally; do not share
+  credentials or borrow another worktree's environment.
+- [ ] Run migration checksum verification and the production-compiled
+  authenticated browser scenarios; capture positive pupil access before
+  considering explicit guarded revocation.
+- [ ] Complete BR-01..BR-16. BR-16 positive guardian portal remains
+  NOT IMPLEMENTED; negative parent access was not tested in this attempt.
+
+No database access, application request, fixture mutation, revocation, browser
+status capture or code change occurred. See the
+[browser acceptance record](../quality/PHASE1_7_BROWSER_SECURITY_ACCEPTANCE.md)
+and [local checkpoint](../quality/PHASE1_7_PR97_LOCAL_CHECKPOINT.md).
+
 ## Phase 1–7 minimatch remediation — 2026-10-31 (ISOLATED CANDIDATE)
 
 - [x] Identify the 16 moderate audit entries as one minimatch globparts DoS

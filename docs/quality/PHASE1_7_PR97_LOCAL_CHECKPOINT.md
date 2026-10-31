@@ -1,4 +1,127 @@
-# Phase 1–7 PR #97 local checkpoint — 2026-10-22
+# Phase 1–7 PR #97 local verification checkpoints
+
+- Phase and milestone: Phase 1–7 authenticated pupil browser verification;
+  scoped evidence completed, full acceptance NOT ACCEPTED.
+- Exact tested checkout: `verify/pr97-integrated-pupil-workflow`,
+  application commit `686891dac5887601df401d35acc4b222159bd403`;
+  worktree changes are uncommitted and include pre-existing documentation
+  edits that were preserved. Node 22.23.2; Chrome 148.0.7778.96.
+- Requirement IDs addressed: LES-REQ-001, TEN-REQ-001, SEC-REQ-001 and
+  OPS-REQ-001, narrow subcases only. BR-11/12/14/15 have scoped passing
+  probes; BR-16 has unlinked-parent negative evidence only. No requirement
+  or BR row is marked fully complete.
+- Files/modules changed: browser acceptance record, pupil workflow runbook,
+  traceability matrix, roadmap status/checklist, this checkpoint,
+  `scripts/verify-phase1-7-browser-pupil-workflow.ts`,
+  `scripts/browser-pupil-workflow-policy.test.mjs` and new
+  `scripts/browser-pupil-workflow-auth.mjs`. No application route, product
+  authorization or database schema changed.
+- Database migrations: none. Verified the exact worktree disposable
+  PostgreSQL 17 target (healthy, `myschoolboard_test`, loopback
+  `127.0.0.1:5434`, tmpfs, no host bind). Protected preflight passed and
+  migration checksum verification passed 36/36 exact applied migrations.
+  Synthetic workflow recorded one link revocation; read-only state after
+  revocation was one enrolled student, one approved lesson, one release
+  event, zero active links and one revocation. No reset or deletion.
+- Authorization implications: none to product policy. Synthetic preparation
+  and revocation used existing authenticated application APIs and explicit
+  `BROWSER_PUPIL_WORKFLOW_WRITE=1` / `BROWSER_PUPIL_REVOKE=1` guards. The
+  workflow now signs in through the production HTTP endpoint, validates the
+  cookie against the production server and paces serial actors by 10.5
+  seconds; it does not log cookie values or weaken rate limiting.
+- Tests added: session-cookie extraction tests for secure/non-secure cookie
+  names, missing/ambiguous cookies; two new tests were added. The existing
+  workflow-policy tests remain in the same suite.
+- Tests executed: focused workflow suite **9/9 PASS**; `npm run
+  verify:local:guards` **108/108 PASS**, zero skipped. Protected
+  `npm run verify:local:preflight` PASS and migration checksum verification
+  **36/36 PASS**. Production browser on Chrome 148.0.7778.96: positive linked
+  student list/detail APIs returned 200/private/no-store; wrong-school and
+  unlinked student/parent APIs returned 404/private/no-store. Guarded
+  revocation was followed by same-session API 404s; clean fresh-browser
+  post-revocation page, API, Flight, Back/Forward, duplicate-tab and print
+  assertions passed with exact statuses in the acceptance record. Positive
+  evidence was saved privately before revocation.
+- Build, lint, type-check and format: configured `npm run format:check`,
+  `npm run lint`, `npm run typecheck` and `git diff --check` PASS after the
+  edits. Production build had passed for this exact application commit before
+  the script/documentation-only changes and was not rerun. Direct Prettier
+  checks on the six Markdown files warn, but all six also warn when checked
+  at HEAD; their existing manually wrapped documentation style was preserved.
+  Full and strict dependency audits were previously reported zero on this
+  exact commit; no dependency files changed and audits were not rerun.
+- Security and tenant isolation: streamed not-found pages returned HTTP 200
+  with not-found UI and `noindex`; their status is not described as HTTP 404.
+  Private API denials returned 404/private/no-store. Post-revocation Flight
+  returned 200 `text/x-component`, private/no-cache/no-store and no tested
+  lesson markers. Positive Flight evidence includes unattributed responses
+  with no cache header and `s-maxage=31536000`; route attribution remains
+  unresolved. No credential, cookie, token or lesson content is committed.
+- Known limitations: original pre-revocation browser tab stale snapshot and
+  print-after-revocation remain unverified. BR-01..BR-10 and BR-13 have no
+  complete evidence; BR-11/12/14/15 are scoped; BR-16 positive guardian
+  workflow is NOT IMPLEMENTED. Positive guardian relationships, full browser
+  acceptance and Phase 1–7 release gates remain outstanding.
+- Deviations: none to product requirements or authorization. The workflow
+  uses real HTTP sign-in rather than an in-process test-mode helper because
+  the latter's test cookie was not accepted by the production server.
+- Documentation files updated: browser acceptance matrix, pupil workflow
+  runbook, traceability matrix, roadmap current status/checklist and this
+  checkpoint. No architecture decision or requirement semantics changed.
+- Remaining tasks: attribute the positive RSC cache responses if
+  reproducible; verify old-tab stale content behavior; complete all
+  remaining BR cases including positive guardian functionality; finish the
+  integrated Phase 1–7 gate.
+- Exit-gate result: **BLOCKED** for full Phase 1–7 acceptance; scoped pupil
+  and revocation browser evidence passed.
+
+- Phase and milestone: Phase 1–7 authenticated-browser acceptance attempt;
+  BLOCKED before application or database access.
+- Exact checkout: branch `verify/pr97-integrated-pupil-workflow`,
+  HEAD `686891dac5887601df401d35acc4b222159bd403`; clean before documentation
+  updates. Node 22.23.2; Chrome 148.0.7778.96.
+- Requirement IDs: LES-REQ-001, TEN-REQ-001, SEC-REQ-001 and OPS-REQ-001.
+  No requirement status or acceptance claim changed.
+- Files/modules changed: browser acceptance evidence, traceability, roadmap
+  current status/checklist and this checkpoint only. No application source.
+- Database migrations: none. Exact worktree `postgres-test` target passed
+  the repository safety assertion (local Docker socket, PostgreSQL 17 Alpine,
+  this worktree's Compose service, healthy/running, `myschoolboard_test`,
+  `127.0.0.1:5434`, tmpfs and no host bind). Guarded environment preflight
+  failed before any database connection because the required test-only
+  variables and local env file were absent. Migration hashes were not checked
+  in this attempt; the operator-reported baseline says 36/36.
+- Authorization implications: none; no authentication request, fixture write,
+  student-link mutation or revocation occurred. The separate
+  `BROWSER_PUPIL_REVOKE=1` guard was not enabled.
+- Tests added: none.
+- Tests executed: safe Docker-target assertion PASS; clean worktree confirmed.
+  `npm run verify:local:preflight --if-present` BLOCKED/exit 1:
+  `Local CI requires NODE_ENV=test`. Operator-reported 95/95 guards,
+  311/311 Vitest, 106/106 local guards, audits, build, format, lint, typecheck,
+  and migration-checksum results were not repeated.
+- Build/lint/type-check: not run; there was no configured test environment
+  or local application server. Chrome was installed; no local server was
+  listening on port 3000 and the Playwright package was absent.
+- Security and tenant isolation: no database was accessed. No credentials,
+  session tokens, cookies or secret values were printed or copied from another
+  worktree. No browser payload or HTTP status was captured.
+- Known limitations: BR-01..BR-10 and BR-13..BR-15 BLOCKED; BR-11 positive
+  access and BR-12 post-revocation browser checks BLOCKED; BR-16 negative
+  parent access was not exercised; positive guardian portal remains
+  NOT IMPLEMENTED. No positive access evidence was captured in this attempt,
+  so revocation prerequisites remain unmet. No soft-404 status was observed.
+- Deviations: none. Failed preflight prevented fixture/application operations;
+  no safeguard was bypassed.
+- Documentation updated: `PHASE1_7_BROWSER_SECURITY_ACCEPTANCE.md`,
+  `REQUIREMENTS_TRACEABILITY_MATRIX.md`, `CURRENT_STATUS.md`,
+  `MILESTONE_CHECKLIST.md`, and this checkpoint.
+- Remaining tasks: restore only the private synthetic test configuration in
+  this worktree; pass guarded preflight and migration verification; run the
+  production-compiled authenticated browser cases; save positive student
+  evidence before considering separately guarded revocation; then verify
+  fresh server denials and separately report any stale browser snapshot.
+- Exit-gate result: **BLOCKED**; no browser acceptance or Phase 1–7 approval.
 
 - Phase and milestone: Phase 1–7 merge readiness; synthetic browser fixture
   preparation verified locally. Full browser/release gate remains BLOCKED.

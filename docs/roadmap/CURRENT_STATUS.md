@@ -1,5 +1,68 @@
 # Current Status
 
+## Phase 1–7 authenticated pupil browser checkpoint — 2026-10-31 (SCOPED; NOT ACCEPTED)
+
+Exact tested application commit: `686891dac5887601df401d35acc4b222159bd403`,
+branch `verify/pr97-integrated-pupil-workflow`. The private test environment
+was confirmed without exposing its contents. Protected local preflight passed;
+the verified worktree-specific disposable PostgreSQL 17 target remained
+loopback-only and tmpfs-backed. Read-only migration checksum verification
+passed 36/36.
+
+The guarded production-HTTP pupil workflow prepared the synthetic linked
+student and released lesson. Positive browser evidence was retained before
+explicitly guarded revocation. The same authenticated student session then
+lost lesson-list/detail API access (404, `private, no-store`). Chrome
+148.0.7778.96 fresh-browser checks after revocation confirmed document 200
+with not-found UI/noindex, API 404, Back/Forward 200 without lesson markers,
+duplicate-tab 200 without lesson markers, print after fresh navigation
+without lesson markers, and Flight 200 `text/x-component` with
+`private, no-cache, no-store, max-age=0, must-revalidate`. Wrong-school
+student, unlinked student, unlinked parent and School B administrator API
+denials are recorded with actual statuses in the
+[acceptance matrix](../quality/PHASE1_7_BROWSER_SECURITY_ACCEPTANCE.md).
+
+This is scoped evidence, not complete acceptance. The old pre-revocation
+tab's stale snapshot/print behavior remains unverified. Positive RSC evidence
+also includes one response without a cache header and one with
+`s-maxage=31536000`; neither contained the tested lesson topic, but neither
+route was recorded, so attribution remains open. BR-01..BR-10 and BR-13
+remain blocked; BR-11/12/14/15 have only the listed subcases; BR-16 has
+negative unlinked-parent evidence only, while positive guardian access is
+NOT IMPLEMENTED. Phase 1–7 acceptance remains BLOCKED / NOT ACCEPTED.
+
+The local changes are uncommitted. No application route or schema changed;
+the workflow harness now signs in through the production HTTP endpoint,
+validates its session cookie and serializes actor sign-ins to respect rate
+limits. Final validation passed: focused workflow tests 9/9, local security
+guards 108/108, configured format check, ESLint, TypeScript, and
+`git diff --check`. Protected disposable preflight and 36/36 migration
+checksums also passed. The production build and zero-vulnerability dependency
+audits were previously reported for this exact application commit and were
+not rerun because no application or dependency files changed.
+See the [local checkpoint](../quality/PHASE1_7_PR97_LOCAL_CHECKPOINT.md).
+
+## Phase 1–7 authenticated-browser attempt — 2026-10-31 (BLOCKED)
+
+At exact active checkout `verify/pr97-integrated-pupil-workflow`,
+`686891dac5887601df401d35acc4b222159bd403`, the worktree-specific
+`postgres-test` container passed the repository Docker identity/safety check:
+PostgreSQL 17 Alpine, healthy, tmpfs, no host bind and loopback port 5434.
+The guarded local preflight then stopped before database access because this
+worktree has no private synthetic test environment configured. No application
+was listening on port 3000. No browser/API request, fixture write, student
+link revocation or migration verification was performed; no HTTP status or new
+browser evidence exists. Operator-reported tests and 36/36 migration hashes
+were not rerun. BR-01..BR-15 remain blocked for this execution; BR-16 negative
+parent access was not exercised and positive guardian access remains
+NOT IMPLEMENTED. See the [acceptance attempt](../quality/PHASE1_7_BROWSER_SECURITY_ACCEPTANCE.md).
+
+Next milestone: restore the verified synthetic-only environment locally in
+this worktree without sharing credentials, rerun guarded preflight and
+migration checks, execute production-compiled positive student browser
+acceptance, and capture that evidence before considering revocation. Full
+Phase 1–7 acceptance remains blocked.
+
 ## Phase 1–7 minimatch remediation checkpoint — 2026-10-31
 
 At base `de14ead0bb35ec625c8ba488fe18f63d135804a7`, `npm audit` reported 16

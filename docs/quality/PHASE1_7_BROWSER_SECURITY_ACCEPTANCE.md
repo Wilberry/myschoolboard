@@ -38,6 +38,138 @@ non-streamed status. The report does not include captured RSC payloads or
 post-revocation history/print results, and it is not a reproducible automated
 browser report. The BR-01..BR-16 gate remains partial and not accepted.
 
+## 2026-10-31 authenticated-browser execution attempt — BLOCKED
+
+Exact verification checkout: `verify/pr97-integrated-pupil-workflow`,
+`686891dac5887601df401d35acc4b222159bd403`. The worktree was clean.
+The exact worktree Compose target passed `assertLocalDockerFixtureTarget`:
+local Unix-socket Docker context, this worktree's `postgres-test`, PostgreSQL
+17 Alpine, running/healthy, database `myschoolboard_test`, loopback-only
+`127.0.0.1:5434`, tmpfs database storage and no host bind were verified.
+
+The guarded test-environment preflight did **not** pass. This worktree has no
+`.env`, `.env.local`, `.env.test` or `.env.test.local`; required test-only
+database, auth, fixture-write, unique fixture-run, and pupil workflow settings
+were absent. `npm run verify:local:preflight --if-present` exited 1 with
+`Local CI requires NODE_ENV=test`. No credentials or fixture password were
+printed or copied from another worktree. The prior private fixture directory
+was absent. Although Chrome 148.0.7778.96 is installed, no application was
+listening on `127.0.0.1:3000`, and the repository does not have the Playwright
+package installed.
+
+No database connection, fixture preparation, migration verification,
+application start, browser request, or student-link revocation was performed.
+No HTTP status was observed in this attempt. In particular, there is no new
+evidence for the streamed-document 200 / not-found UI distinction, private
+HTML/RSC, browser history, duplicate tabs, printing, or accessibility.
+`BROWSER_PUPIL_REVOKE=1` was not set, and no revocation occurred. The reported
+baseline of 36/36 migration checksums and the non-browser test suites is
+provided by the operator; it was not rerun here.
+
+| Case | Result on this exact checkout |
+| --- | --- |
+| BR-01 through BR-10 | BLOCKED — guarded environment/app unavailable; no browser status or payload evidence |
+| BR-11 | BLOCKED — no authenticated positive student browser session; preserve positive link and lesson state |
+| BR-12 | BLOCKED — no positive-browser evidence captured; revocation prerequisites unmet; no revocation performed |
+| BR-13 through BR-15 | BLOCKED — browser app unavailable; history/cache/print/accessibility not inspected |
+| BR-16 negative parent boundary | BLOCKED — not exercised in this attempt |
+| BR-16 positive guardian portal | NOT IMPLEMENTED — no verified guardian-to-child portal capability is established by this matrix |
+
+This is an environment blocker, not an application pass or failure. Restore
+the private synthetic-only configuration locally in this verification
+worktree, then rerun the documented guarded preflight and migration check.
+Capture positive authenticated browser access first; only then may the
+separately guarded synthetic revocation phase be considered. Do not copy or
+paste credentials into chat or use another worktree's environment.
+
+## 2026-10-31 authenticated-browser execution — scoped evidence, NOT ACCEPTED
+
+The earlier blocked attempt above is historical and is superseded by this
+later execution. Exact tested application commit:
+`686891dac5887601df401d35acc4b222159bd403`, branch
+`verify/pr97-integrated-pupil-workflow`. The private test configuration
+existed with mode 0600 and was sourced only in protected subshells. The
+repository disposable-target preflight passed. Read-only migration integrity
+passed **36/36 exact applied migrations**. Docker identity was rechecked:
+this worktree's healthy PostgreSQL 17 Alpine `postgres-test`, database
+`myschoolboard_test`, loopback `127.0.0.1:5434`, tmpfs, no host bind.
+Production-compiled app and Chrome 148.0.7778.96 were used locally.
+
+The synthetic pupil/lesson prepare phase used the guarded product HTTP
+workflow. Positive browser evidence was saved privately before revocation.
+Only after that evidence existed, the separate `BROWSER_PUPIL_WORKFLOW_WRITE=1`
+and `BROWSER_PUPIL_REVOKE=1` guards were enabled. The workflow recorded one
+synthetic student-link revocation and confirmed that the same authenticated
+student session lost list and detail API access. Read-only post-revocation
+state was one enrolled student, one approved lesson, one release event, zero
+active student links and one revocation. No records were reset or deleted.
+The reports stay outside the repository; no credentials, cookies, tokens,
+fixture identifiers or lesson text are included here.
+
+| Probe | Actual result |
+| --- | --- |
+| Linked student's lesson-list API before revocation | HTTP 200; `Cache-Control: private, no-store`; only the intended lesson row; no objectives or content in the list |
+| Linked student's lesson-detail API before revocation | HTTP 200; `private, no-store`; the intended released content and objectives were present |
+| School B administrator requesting School A lesson list | HTTP 404; `private, no-store`; generic not-found body and no lesson markers |
+| Linked student using the wrong-school lesson page | Document HTTP 200; not-found UI and `noindex`; no tested lesson markers |
+| Unlinked student page and unlinked parent page | Each document HTTP 200; not-found UI and `noindex`; no tested lesson markers |
+| Unlinked student and parent lesson-list/detail APIs | HTTP 404; `private, no-store`; generic not-found bodies and no lesson markers |
+| Positive browser navigation and duplicate tab | Back/Forward restored the authorized lesson flow; duplicated tab returned HTTP 200 and showed the authorized lesson |
+| Positive print | Browser PDF was generated (78,212 bytes) and contained the authorized lesson |
+| Focused accessibility probe | Visible keyboard focus was observed; at 640×480 with simulated 200% zoom, no horizontal overflow was observed |
+| Same authenticated student session after guarded revocation | Lesson-list and detail APIs each returned HTTP 404, `private, no-store`, generic not-found bodies and no lesson markers |
+| Post-revocation document, history and duplicate tab | Direct page HTTP 200 with not-found UI and `noindex`; Back and Forward each returned HTTP 200 without lesson markers; duplicate tab HTTP 200 without lesson markers |
+| Post-revocation print after fresh navigation | No lesson marker in print rendering; PDF 10,419 bytes |
+| Post-revocation student-authenticated Flight/RSC | HTTP 200, `text/x-component`; `private, no-cache, no-store, max-age=0, must-revalidate`; no tested lesson markers |
+
+The streamed page status is recorded independently from its UI and private
+API status: these page responses were **HTTP 200**, not HTTP 404. The
+not-found UI plus `noindex` is consistent with the documented streamed
+Next.js behavior; no route correction is justified by that status alone.
+
+Positive RSC inspection found six HTTP 200 Flight responses with no tested
+lesson-topic marker. Four carried
+`private, no-cache, no-store, max-age=0, must-revalidate`; one had no
+`Cache-Control` header; one carried `s-maxage=31536000`. The temporary
+evidence did not retain the route for those responses, so the latter two
+responses cannot be attributed to a route or classified as private lesson
+data. Neither contained the tested lesson topic. This cache-policy
+attribution remains an open investigation; it is not evidence of a confirmed
+disclosure and is not considered resolved.
+
+The post-revocation browser checks were rerun cleanly and exited zero. An
+earlier temporary browser process exited nonzero during asynchronous request
+listener cleanup after writing its report; its results are not used in place
+of the clean rerun. The original pre-revocation browser tab's stale
+back-forward snapshot and print-before-refresh after revocation were not
+reliably captured. Do not claim that revocation erases historical browser
+content. Fresh post-revocation page, API, history, duplicate-tab, print and
+Flight results do not prove erasure from an already-rendered old tab.
+
+| ID | Overall status | Executed evidence and remaining scope |
+| --- | --- | --- |
+| BR-01 | BLOCKED | No logged-out direct protected-route and RSC suite |
+| BR-02 | BLOCKED | No School A administrator role/page-boundary suite |
+| BR-03 | BLOCKED | School B administrator-to-School A lesson-list API denial passed; the broader student/lesson page and payload matrix remains untested |
+| BR-04 | BLOCKED | Teacher assessment-question, draft and class-record privacy not tested |
+| BR-05 | BLOCKED | Teacher assignment revocation and retained independent-assignment checks not tested in this execution |
+| BR-06 | BLOCKED | Positive Primary Head section-scoped review queues not tested |
+| BR-07 | BLOCKED | Positive/revoked Secondary Principal section-grant queues and RSC not tested |
+| BR-08 | BLOCKED | Full unauthorized reviewer/teacher release and correction-route matrix not tested |
+| BR-09 | BLOCKED | Grading-policy and assessment-publication role boundaries not tested |
+| BR-10 | BLOCKED | Student-link management UI and denied-role matrix not tested |
+| BR-11 | BLOCKED — scoped pupil subcases passed | Linked released lesson list/detail, wrong-school and unlinked denials passed; other-pupil, draft/withdrawal and full exact academic-scope cases remain untested |
+| BR-12 | BLOCKED — revocation subcases passed | Same-session API denial and fresh-browser page/API/Flight/history/duplicate/print checks passed; old-tab stale snapshot and print behavior remain unverified |
+| BR-13 | BLOCKED | Sign-out and post-sign-out cache/history behavior not tested |
+| BR-14 | BLOCKED — lesson-print subcases passed | Authorized and post-revocation fresh-navigation print probes passed; teacher class-record/attendance printing and the unattributed RSC cache policy remain open |
+| BR-15 | BLOCKED — focused student-page probes passed | Visible focus and narrow simulated-zoom overflow probe passed; full keyboard-only school, assessment and attendance workflows were not tested |
+| BR-16 | NOT IMPLEMENTED — positive guardian portal; negative subcase passed | Unlinked parent page/API concealment passed. No verified guardian-child relationship, linked guardian flow or relationship-revocation capability is implemented or claimed |
+
+No broader requirement is marked complete from these scoped scenarios.
+Phase 1–7 authenticated-browser acceptance remains **BLOCKED / NOT ACCEPTED**
+pending the untested BR cases, old-tab revocation behavior, RSC cache-policy
+attribution, positive guardian capability and remaining phase exit gates.
+
 ## Setup and reproducibility
 
 1. Record exact Git SHA, local Node/npm versions, browser name/version,

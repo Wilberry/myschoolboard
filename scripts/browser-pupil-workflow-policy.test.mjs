@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { getSessionCookieHeader } from "./browser-pupil-workflow-auth.mjs";
 import { assertBrowserPupilWorkflowPolicy } from "./browser-pupil-workflow-policy.mjs";
 
 const base = {
@@ -84,4 +85,35 @@ test("rejects every unsupported workflow phase", () => {
       /Phase must/,
     );
   }
+});
+
+test("HTTP sign-in accepts exactly one secure or non-secure session cookie", () => {
+  const headers = {
+    getSetCookie: () => [
+      "myschoolboard.session_data=cache; Path=/; HttpOnly",
+      "__Secure-myschoolboard.session_token=opaque; Path=/; Secure; HttpOnly",
+    ],
+  };
+
+  assert.equal(
+    getSessionCookieHeader(headers),
+    "__Secure-myschoolboard.session_token=opaque",
+  );
+});
+
+test("HTTP sign-in rejects missing or ambiguous session cookies", () => {
+  assert.throws(
+    () => getSessionCookieHeader({ getSetCookie: () => [] }),
+    /exactly one synthetic session cookie/,
+  );
+  assert.throws(
+    () =>
+      getSessionCookieHeader({
+        getSetCookie: () => [
+          "myschoolboard.session_token=one",
+          "__Secure-myschoolboard.session_token=two",
+        ],
+      }),
+    /exactly one synthetic session cookie/,
+  );
 });
