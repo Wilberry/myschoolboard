@@ -46,6 +46,15 @@ enum SchoolLifecycleEventType {
   REACTIVATED
 }
 
+// Platform plan features are catalog metadata until entitlement enforcement
+// receives its own authorization, fallback and rollout acceptance.
+enum PlatformPlanFeature {
+  ATTENDANCE
+  LESSONS
+  ASSESSMENTS
+  CBT
+}
+
 enum AcademicPeriodStatus {
   PLANNED
   ACTIVE
@@ -233,6 +242,7 @@ model School {
   teacherClassSubjectAssignments      TeacherClassSubjectAssignment[]
   teacherClassSubjectAssignmentEvents TeacherClassSubjectAssignmentEvent[]
   lifecycleEvents                     SchoolLifecycleEvent[]
+  subscriptionPeriods                 SchoolSubscriptionPeriod[]
   academicSessions                    AcademicSession[]
   academicTerms                       AcademicTerm[]
   configurationEvents                 SchoolConfigurationEvent[]
@@ -1425,4 +1435,49 @@ model AssessmentManualCorrectionDecision {
 
   @@unique([schoolId, requestId])
   @@index([schoolId, decidedAt])
+}
+
+
+/**
+ * Immutable catalog revisions. A revision is never an automatic entitlement:
+ * only an explicit, non-overlapping SchoolSubscriptionPeriod attaches it to
+ * a tenant, and existing academic permissions are never expanded.
+ */
+model PlatformPlanRevision {
+  id                  String                  @id @default(cuid())
+  code                String
+  version             Int
+  name                String
+  features            PlatformPlanFeature[]
+  maxStudents         Int?
+  maxStaff            Int?
+  reason              String
+  actorUserId         String
+  createdAt           DateTime                @default(now())
+  subscriptionPeriods SchoolSubscriptionPeriod[]
+
+  @@unique([code, version])
+  @@index([code, createdAt])
+}
+
+/**
+ * Append-only, non-overlapping periods per school (half-open UTC windows).
+ * Period existence does not activate or suspend a School. Enforcement of
+ * feature quotas and payment/renewal policies is a later reviewed milestone.
+ */
+model SchoolSubscriptionPeriod {
+  id             String               @id @default(cuid())
+  schoolId       String
+  planRevisionId String
+  startsAt       DateTime
+  endsAt         DateTime
+  reason         String
+  actorUserId    String
+  createdAt      DateTime             @default(now())
+  school         School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  planRevision   PlatformPlanRevision @relation(fields: [planRevisionId], references: [id], onDelete: Restrict)
+
+  @@unique([schoolId, id])
+  @@index([schoolId, startsAt, endsAt])
+  @@index([planRevisionId])
 }
