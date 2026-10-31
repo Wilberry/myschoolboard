@@ -237,6 +237,34 @@ describe("Phase 3 platform subscription catalog and school periods", () => {
     })).toEqual({ isActive: false, lifecycleStatus: "PENDING" });
   });
 
+  it("serializes concurrent same-school overlapping assignments", async () => {
+    const [one, two] = await Promise.all([
+      periodPost(
+        platformCookie,
+        periodPayload(
+          secondPlanId,
+          "2027-01-01T00:00:00Z",
+          "2027-02-01T00:00:00Z",
+        ),
+      ),
+      periodPost(
+        platformCookie,
+        periodPayload(
+          firstPlanId,
+          "2027-01-15T00:00:00Z",
+          "2027-02-15T00:00:00Z",
+        ),
+      ),
+    ]);
+    expect([one.status, two.status].sort()).toEqual([201, 409]);
+    expect(await prisma.schoolSubscriptionPeriod.count({
+      where: { schoolId },
+    })).toBe(3);
+    expect([one, two].every(
+      (response) => response.headers.get("cache-control") === "private, no-store",
+    )).toBe(true);
+  });
+
   it("denies a closed or unknown school and rejects invalid temporal bounds", async () => {
     secure(await periodGet(platformCookie, "nonexistent-school"), 404);
     secure(await periodPost(platformCookie, periodPayload(
@@ -270,8 +298,8 @@ describe("Phase 3 platform subscription catalog and school periods", () => {
     await expect(prisma.schoolSubscriptionPeriod.create({
       data: {
         schoolId, planRevisionId: firstPlanId,
-        startsAt: new Date("2027-01-01T00:00:00Z"),
-        endsAt: new Date("2027-02-01T00:00:00Z"),
+        startsAt: new Date("2027-03-01T00:00:00Z"),
+        endsAt: new Date("2027-04-01T00:00:00Z"),
         actorUserId: schoolUserId,
         reason: "Attempt forged plan assignment",
       },
@@ -289,6 +317,6 @@ describe("Phase 3 platform subscription catalog and school periods", () => {
     await expect(prisma.schoolSubscriptionPeriod.delete({
       where: { id: periodId },
     })).rejects.toThrow();
-    expect(await prisma.schoolSubscriptionPeriod.count({ where: { schoolId } })).toBe(2);
+    expect(await prisma.schoolSubscriptionPeriod.count({ where: { schoolId } })).toBe(3);
   });
 });
