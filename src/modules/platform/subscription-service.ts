@@ -6,6 +6,8 @@ import { authorize } from "@/src/modules/authorization/policy";
 import {
   assignSchoolSubscriptionInput,
   createPlanRevisionInput,
+  observedSubscriptionStatus,
+  quotaObservation,
   subscriptionPeriodView,
 } from "./subscription-policy";
 
@@ -202,6 +204,147 @@ export async function listSchoolSubscriptions(schoolId: string) {
             now,
           ),
         }));
+      },
+      { isolationLevel: "Serializable" },
+    );
+  } catch (error) {
+    translate(error);
+  }
+}
+
+/**
+ * Private platform-operator subscription snapshot.
+ *
+ * This is an OBSERVATION ONLY, not a School authorization, paid-status,
+ * student entitlement, quota enforcement, or suspended-school recovery API.
+ * All counts are school-constrained aggregate counts without pupil details.
+ */
+export async function readSchoolSubscriptionStatus(schoolId: string) {
+  checkedSchoolId(schoolId);
+  const actorId = await platformActor();
+  try {
+    return await prisma.$transaction(
+      async (tx) => {
+        await assertPlatformAdmin(tx, actorId);
+        const school = await tx.school.findUnique({
+          where: { id: schoolId },
+          select: {
+            id: true,
+            name: true,
+            lifecycleStatus: true,
+            isActive: true,
+          },
+        });
+        if (!school) throw new PlatformSubscriptionError("NOT_FOUND");
+        const asOf = new Date();
+        const selectPeriod = {
+          id: true,
+          startsAt: true,
+          endsAt: true,
+          planRevision: {
+            select: {
+              id: true,
+              code: true,
+              version: true,
+              name: true,
+              features: true,
+              maxStudents: true,
+              maxStaff: true,
+            },
+          },
+        } as const;
+        let period = await tx.schoolSubscriptionPeriod.findFirst({
+          where: {
+            schoolId: school.id,
+            startsAt: { lte: asOf },
+            endsAt: { gt: asOf },
+          },
+          orderBy: [{ startsAt: "desc" }, { id: "asc" }],
+          select: selectPeriod,
+        });
+        if (!period) {
+          period = await tx.schoolSubscriptionPeriod.findFirst({
+            where: { schoolId: school.id, startsAt: { gt: asOf } },
+            orderBy: [{ startsAt: "asc" }, { id: "asc" }],
+            select: selectPeriod,
+          });
+        }
+        if (!period) {
+          period = await tx.schoolSubscriptionPeriod.findFirst({
+            where: { schoolId: school.id, endsAt: { lte: asOf } },
+            orderBy: [{ endsAt: "desc" }, { id: "asc" }],
+            select: selectPeriod,
+          });
+        }
+        const [students, staff] = await Promise.all([
+          tx.studentRecord.count({
+            where: {
+              schoolId: school.id,
+              status: "ENROLLED",
+              enrollments: {
+                some: {
+                  schoolId: school.id,
+                  status: "ACTIVE",
+                  session: { status: "ACTIVE" },
+                },
+              },
+            },
+          }),
+          tx.membership.count({
+            where: {
+              schoolId: school.id,
+              isActive: true,
+              role: {
+                in: [
+                  "SCHOOL_SUPER_ADMIN",
+                  "SCHOOL_ADMIN",
+                  "HEAD_OF_SECTION",
+                  "PRINCIPAL",
+                  "TEACHER",
+                  "FORM_TEACHER",
+                ],
+              },
+            },
+          }),
+        ]);
+        const status = observedSubscriptionStatus(
+          period?.startsAt ?? null,
+          period?.endsAt ?? null,
+          asOf,
+        );
+        const currentPlan = status === "CURRENT"
+          ? period?.planRevision ?? null
+          : null;
+        return {
+          asOf: asOf.toISOString(),
+          school: {
+            id: school.id,
+            name: school.name,
+            lifecycleStatus: school.lifecycleStatus,
+            isActive: school.isActive,
+          },
+          subscriptionStatus: status,
+          observedPeriod: period
+            ? {
+                id: period.id,
+                startsAt: period.startsAt,
+                endsAt: period.endsAt,
+                planRevision: period.planRevision,
+              }
+            : null,
+          usage: {
+            enrolledStudents: quotaObservation(
+              students,
+              currentPlan?.maxStudents ?? null,
+            ),
+            activeStaff: quotaObservation(
+              staff,
+              currentPlan?.maxStaff ?? null,
+            ),
+          },
+          billingStatus: "NOT_TRACKED" as const,
+          entitlementEnforcement: "NOT_ENABLED" as const,
+        };
       },
       { isolationLevel: "Serializable" },
     );
