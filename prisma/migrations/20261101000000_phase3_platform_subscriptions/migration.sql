@@ -56,6 +56,16 @@ CREATE INDEX "SchoolSubscriptionPeriod_schoolId_startsAt_endsAt_idx"
 CREATE INDEX "SchoolSubscriptionPeriod_planRevisionId_idx"
   ON "SchoolSubscriptionPeriod"("planRevisionId");
 
+-- Phase 5 timetable migration already installs btree_gist. This exclusion
+-- constraint is the final SQL integrity boundary, including multi-row
+-- direct INSERT and concurrent transactions (not just service-level checks).
+ALTER TABLE "SchoolSubscriptionPeriod"
+  ADD CONSTRAINT "SchoolSubscriptionPeriod_no_overlap"
+  EXCLUDE USING gist (
+    "schoolId" WITH =,
+    tsrange("startsAt", "endsAt", '[)') WITH &&
+  );
+
 ALTER TABLE "SchoolSubscriptionPeriod"
   ADD CONSTRAINT "SchoolSubscriptionPeriod_schoolId_fkey"
     FOREIGN KEY ("schoolId") REFERENCES "School"("id")
