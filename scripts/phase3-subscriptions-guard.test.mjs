@@ -46,6 +46,7 @@ test("preserves tenant-specific non-overlapping immutable periods", () => {
   assert.match(migration, /period\."startsAt"\s*<\s*NEW\."endsAt"/);
   assert.match(migration, /period\."endsAt"\s*>\s*NEW\."startsAt"/);
   assert.match(migration, /pg_trigger_depth\(\)/);
+  assert.match(migration, /INTERVAL '1825 days'/);
   assert.match(schema, /model PlatformPlanRevision\s*\{/);
   assert.match(schema, /model SchoolSubscriptionPeriod\s*\{/);
   assert.match(schema, /@@unique\(\[code, version\]\)/);
