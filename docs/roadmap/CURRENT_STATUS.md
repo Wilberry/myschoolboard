@@ -1,5 +1,14 @@
 # Current Status
 
+## Phase 3 operator-only subscription status — 2026-10-31 (AUTHORED, UNVERIFIED)
+
+A private Platform Super Admin-only status endpoint and console now observe
+school lifecycle independently from CURRENT/UPCOMING/ENDED/NONE subscription
+periods and advisory aggregate pupil/staff usage. Billing NOT_TRACKED;
+entitlements NOT_ENABLED; no implicit school activation. New unit and
+authenticated integration cases are authored; seven isolated source guards
+passed, but live Prisma/PostgreSQL/Chrome gates remain pending.
+
 ## Phase 3 platform subscription foundation — 2026-10-31 (AUTHORED, NOT EXECUTED)
 
 On the existing Phase 1–7 consolidation branch, an additive platform
