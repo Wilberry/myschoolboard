@@ -59,7 +59,7 @@ function translate(error: unknown): never {
   // Recognize ONLY uniqueness and transient serialization/deadlock failures.
   const queue: unknown[] = [error];
   const visited = new Set<object>();
-  const conflicts = new Set(["P2002", "P2034", "23505", "40001", "40P01"]);
+  const conflicts = new Set(["P2002", "P2034", "23505", "23P01", "40001", "40P01"]);
   for (let index = 0; index < queue.length && index < 24; index += 1) {
     const node = queue[index];
     if (!node || typeof node !== "object" || visited.has(node)) continue;
