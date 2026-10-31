@@ -67,10 +67,13 @@ containers and Phase 8/9 worktrees.
 
 ~~~sh
 cd ~/Desktop/project/myschoolboard-format || exit 1
-git status --short --branch
+set -e
+test -z "$(git status --porcelain --untracked-files=all)"
 git fetch origin
 git switch verify/pr97-integrated-pupil-workflow
 git pull --ff-only origin verify/pr97-integrated-pupil-workflow
+test "$(git branch --show-current)" = "verify/pr97-integrated-pupil-workflow"
+test -z "$(git status --porcelain --untracked-files=all)"
 git status --short --branch
 git rev-parse HEAD
 
