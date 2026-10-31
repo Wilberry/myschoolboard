@@ -1,5 +1,47 @@
 # Dependency Advisory Assessment
 
+## Minimatch advisory remediation — 2026-10-31
+
+At base `de14ead0bb35ec625c8ba488fe18f63d135804a7`, full `npm audit`
+reported 16 moderate affected-package entries, all attributable to
+**GHSA-g3hv-75wg-m249** (`minimatch` potential denial of service through
+globparts amplification). The audit had zero high/critical findings. The
+single advisory affected two installed versions: root `minimatch@3.1.5`
+through ESLint and related lint plugins, and nested `minimatch@10.2.6`
+through `@typescript-eslint/typescript-estree@8.71.1`. The seven declaring
+parents are all development-only in the lockfile: `eslint`,
+`@eslint/config-array`, `@eslint/eslintrc`, `@typescript-eslint/typescript-estree`,
+`eslint-plugin-import`, `eslint-plugin-jsx-a11y`, and `eslint-plugin-react`.
+Their published ranges accept 3.x or 10.x; npm identifies **11.0.1+** as
+patched and offers no semver-compatible upgrade for the existing ranges.
+
+The safe-replacement candidate is isolated on branch
+`verify/minimatch-ghsa-20261031`, based on `de14ead`. Its dependency-only
+commit is `5ca6f63643fc646db1bd3084138751ef632ffbbe`. It adds the npm override
+`minimatch: 11.0.3`, resolving all seven dev-tool consumers to the patched
+version. No direct package major upgrade or application dependency change was
+made. This is a deliberate semver override because upstream dependents have
+not yet widened their declared ranges; the patched library documents the
+same CommonJS/ESM function and `Minimatch` APIs these consumers call, but v11
+changes the matching engine. The compatibility risk is recorded rather than
+treated as eliminated by version resolution alone.
+
+Compatibility checks compared nine representative glob cases and the
+`Minimatch` class against the prior 3.1.5 implementation with no result
+differences. `npm ls minimatch --all` resolved all seven consumers to 11.0.3
+without invalid dependencies. A clean `npm ci`, `npm run lint`, all 106
+security guards, format check, TypeScript, and a production build passed.
+Both `npm audit --audit-level=high` and full `npm audit` report zero
+vulnerabilities. Build/Prisma generation used only dummy loopback configuration;
+no database was contacted or changed. Full database-backed Vitest, migration
+integrity, and browser acceptance were not run.
+
+**Status:** the moderate advisory is resolved on this isolated candidate,
+not on `de14ead` or any other branch until the candidate is integrated and
+revalidated. Residual risk is limited to semver-override glob behavior in
+development tooling; the lint command and representative patterns pass, but
+the full database-backed and browser acceptance gates remain open.
+
 ## Isolated Phase 1–7 dependency remediation — 2026-10-30
 
 At base `d8e80e0`, a fresh `npm audit --json` reported three affected

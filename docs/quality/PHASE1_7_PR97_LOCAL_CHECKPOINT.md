@@ -220,3 +220,65 @@
   only within the documented relationship and privacy requirements; then
   complete integrated review.
 - Exit-gate result: **BLOCKED**; no Phase 1–7 acceptance, merge or release.
+
+## Minimatch advisory remediation follow-up — 2026-10-31
+
+- Phase/milestone: Phase 1–7 dependency security verification; active base
+  `verify/pr97-integrated-pupil-workflow` at `de14ead0bb35ec625c8ba488fe18f63d135804a7`.
+- Requirements: SEC-REQ-001 and OPS-REQ-001, dependency-audit/tooling subset
+  only. No acceptance requirement or milestone completed.
+- Finding: exact `npm audit --json` reported 16 moderate affected-package
+  entries from GHSA-g3hv-75wg-m249. Installed `minimatch@3.1.5` was resolved
+  for ESLint/config-array/eslintrc/import/jsx-a11y/React tooling;
+  `minimatch@10.2.6` was nested under TypeScript-ESLint. All seven package
+  parents are dev-only. Current package ranges do not include patched 11.0.1+.
+- Files changed in candidate: only `package.json` and `package-lock.json` in
+  dependency commit `5ca6f63643fc646db1bd3084138751ef632ffbbe` on isolated
+  branch `verify/minimatch-ghsa-20261031`; the follow-up documentation is
+  a separate commit. No application source or migration changed.
+- Dependency choice: one npm `overrides.minimatch = 11.0.3` resolves all
+  seven consumers. This overrides their existing 3.x/10.x declared ranges,
+  so it is a deliberate compatibility decision, not a semver-compatible
+  package update. v11 exports the CommonJS/ESM minimatch functions and
+  `Minimatch` class used by consumers and replaces the old regex-based
+  matcher with its documented nonrecursive implementation.
+- Tests added: none; application behavior and authorization were unchanged.
+  Nine representative glob patterns were compared between 3.1.5 and 11.0.3
+  with identical outcomes.
+- Tests executed on clean-install candidate: `npm ci` PASS;
+  `npm audit --audit-level=high` PASS, zero findings; full `npm audit` PASS,
+  zero findings; `npm ls minimatch --all` PASS, all consumers 11.0.3;
+  `npm run verify:local:guards` PASS (106/106, 0 failures/skips);
+  `npm run format:check` PASS; `npm run lint` PASS;
+  `npm run typecheck` PASS; `npm run build` PASS (31 static pages) with
+  dummy loopback DB URL, dummy auth secret, and telemetry disabled.
+- Database/migrations: none accessed or modified. Prisma Client generation
+  used a dummy URL on loopback port 1. No migration checksum comparison or
+  database-backed Vitest suite was run.
+- Security and tenant isolation: no authorization, access-control or
+  tenant-scoping code changed. The advisory affects developer lint glob
+  matching only; untrusted patterns and dependency behavior still warrant
+  review when upgrading these packages. The full audit is clean on this
+  isolated dependency candidate only.
+- Current follow-on blocker: authenticated browser acceptance was not
+  executed. This session has no browser fixture identifiers/password,
+  disposable DB environment, or Playwright module. The only running Docker
+  target is not the verified worktree-specific `postgres-test`; it was not
+  touched. Database-writing fixture prepare/revoke steps remain prohibited
+  until the guarded disposable target and private synthetic configuration
+  are available. Guardian-to-child relationship/portal functionality remains
+  NOT IMPLEMENTED.
+- Documentation updated: this checkpoint, `CURRENT_STATUS.md`,
+  `MILESTONE_CHECKLIST.md`, `REQUIREMENTS_TRACEABILITY_MATRIX.md`, and
+  `DEPENDENCY_ADVISORY_ASSESSMENT.md`.
+- Deviations: no tests weakened; no `npm audit fix --force`, framework
+  upgrade or database operation used. The semver override is explicit and
+  verified against the requested local quality gates, but not against the
+  unavailable database/browser gates.
+- Remaining tasks: integrate the isolated dependency commit onto an approved
+  verification branch and rerun full audit/CI; configure the documented
+  disposable database and synthetic fixture environment before running
+  browser/private RSC/history/print/revocation acceptance; implement guardian
+  features only under the documented relationship/privacy specification.
+- Exit-gate result: **BLOCKED** for complete Phase 1–7 acceptance; dependency
+  audit passes on isolated candidate.

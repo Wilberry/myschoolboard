@@ -1,5 +1,28 @@
 # Current Status
 
+## Phase 1–7 minimatch remediation checkpoint — 2026-10-31
+
+At base `de14ead0bb35ec625c8ba488fe18f63d135804a7`, `npm audit` reported 16
+moderate affected-package entries from GHSA-g3hv-75wg-m249 in the development
+lint toolchain. Isolated branch `verify/minimatch-ghsa-20261031` resolves all
+consumers to patched `minimatch@11.0.3`; its dependency-only commit is
+`5ca6f63643fc646db1bd3084138751ef632ffbbe`. On this candidate, `npm ci`,
+strict and full audit, all 106 guards, format, lint, TypeScript and configured
+production build passed. Full Vitest/database and browser acceptance were not
+run; no database was accessed. The active branch remains unchanged and still
+needs the candidate integrated and revalidated.
+
+The next safe Phase 1–7 slice remains reproducible authenticated-browser
+security verification (RSC/private response, history, printing and revocation).
+It is currently blocked: no synthetic fixture run ID/password, disposable test
+database environment or Playwright module is configured in this session. The
+only running Docker container is not the documented worktree-local
+`postgres-test` target; it was not inspected further or touched. Do not run
+fixture preparation, revocation or database-writing tests until the approved
+disposable target and private synthetic-only configuration are restored.
+Positive guardian access remains NOT IMPLEMENTED. Phase 1–7 acceptance remains
+partial and blocked.
+
 ## Phase 1–7 verification checkpoint — 2026-10-30 (PARTIAL; NOT ACCEPTED)
 
 Base verification branch: `verify/pr97-integrated-pupil-workflow`, HEAD

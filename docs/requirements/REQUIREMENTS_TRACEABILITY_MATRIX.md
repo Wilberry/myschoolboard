@@ -1,5 +1,17 @@
 # Requirements Traceability Matrix
 
+## Phase 1–7 dependency security checkpoint — 2026-10-31
+
+The active base `de14ead0bb35ec625c8ba488fe18f63d135804a7` has one full-audit
+moderate advisory affecting 16 package entries in development-only
+dependencies: GHSA-g3hv-75wg-m249 (`minimatch` globparts amplification).
+An isolated dependency candidate at `5ca6f63643fc646db1bd3084138751ef632ffbbe`
+uses patched minimatch 11.0.3 for all seven affected lint-tool consumers.
+Both audits report zero findings and all requested non-database validation
+passes on the candidate. This is dependency evidence for SEC-REQ-001 and
+OPS-REQ-001 only; the candidate is not yet integrated or database/browser
+validated. No requirement or Phase 1–7 milestone is complete by this check.
+
 ## Phase 1–7 browser and dependency checkpoint — 2026-10-30
 
 At `d8e80e0`, the owner reports synthetic authenticated pupil preparation

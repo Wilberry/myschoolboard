@@ -1,5 +1,25 @@
 # Milestone Checklist
 
+## Phase 1–7 minimatch remediation — 2026-10-31 (ISOLATED CANDIDATE)
+
+- [x] Identify the 16 moderate audit entries as one minimatch globparts DoS
+  advisory in seven development-only ESLint/TypeScript-ESLint consumers.
+- [x] Resolve consumers to patched `minimatch@11.0.3` in isolated branch
+  `verify/minimatch-ghsa-20261031`; reviewed dependency-only commit:
+  `5ca6f63643fc646db1bd3084138751ef632ffbbe`.
+- [x] Pass clean `npm ci`, both audits (zero findings), 106/106 local guards,
+  formatting, ESLint, TypeScript, and configured production build.
+- [ ] Integrate and revalidate the override on the active Phase 1–7 branch.
+- [ ] Run disposable-DB regression/migration checks and automated browser
+  security acceptance (private HTML/RSC, history, print, revocation).
+- [ ] Complete guardian relationship workflows and full BR-01..BR-16 matrix.
+
+The candidate uses a deliberate semver override because current dependents
+declare minimatch 3.x/10.x, while patched 11.0.1+ is outside those ranges.
+Compatibility was checked against the lint toolchain and representative glob
+patterns; full database-backed regression was unavailable. See the
+[dependency advisory assessment](../security/DEPENDENCY_ADVISORY_ASSESSMENT.md).
+
 ## Phase 1–7 follow-up verification — 2026-10-30 (PARTIAL; NOT ACCEPTED)
 
 - [x] Record owner-reported linked-pupil Chromium access, lesson list/detail,
