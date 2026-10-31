@@ -66,7 +66,8 @@ function translate(error: unknown): never {
     visited.add(node);
     const record = node as Record<string, unknown>;
     for (const field of ["code", "sqlState", "originalCode"] as const) {
-      if (typeof record[field] === "string" && conflicts.has(record[field])) {
+      const value = record[field];
+      if (typeof value === "string" && conflicts.has(value)) {
         throw new PlatformSubscriptionError("CONFLICT");
       }
     }
