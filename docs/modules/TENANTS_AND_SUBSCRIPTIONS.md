@@ -43,6 +43,9 @@ This additive candidate extends the existing school lifecycle with separate
   to one school for a half-open UTC interval `[startsAt, endsAt)`. PostgreSQL
   serializes school writes, rejects overlapping periods even for different
   plan revisions, and checks actor, tenant lifecycle and plan existence.
+  An additional PostgreSQL GiST exclusion constraint (using the existing
+  `btree_gist` extension) enforces non-overlap even if someone attempts
+  direct multi-row SQL inserts or a concurrent transaction bypasses HTTP.
   Adjacent periods are allowed. Each record preserves actor, reason and
   timestamp and cannot be directly edited or deleted.
 - School subscriptions are not inferred for historical schools and not
