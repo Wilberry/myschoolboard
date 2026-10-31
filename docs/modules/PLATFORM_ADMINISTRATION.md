@@ -37,6 +37,14 @@ never overwritten. No production rollout or full platform administration
 acceptance has occurred; see
 [Phase 3 acceptance](../quality/PHASE3_SUBSCRIPTIONS_ACCEPTANCE.md).
 
+## Read-only subscription status — source authored, unverified
+
+The operator page includes a private exact-school subscription snapshot:
+CURRENT/UPCOMING/ENDED/NONE status, active school lifecycle and school-scoped
+aggregate pupil/staff counts compared with advisory current-plan ceilings.
+No student/staff identities, paid-status inference, quota enforcement or
+school access change. Authenticated route tests remain to be executed.
+
 ## Hard boundaries
 
 - Platform operators do not automatically gain school academic access.
