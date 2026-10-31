@@ -1,5 +1,13 @@
 # Milestone Checklist
 
+## Phase 3 subscription status visibility — source only, 2026-10-31
+
+- [x] Author platform-only, no-store subscription status and operator
+  aggregate pupil/staff usage visibility with no personal records.
+- [x] Preserve NOT_TRACKED billing and NOT_ENABLED entitlements.
+- [ ] Execute current-SHA DB and browser role/tenant/suspended-school tests.
+- [ ] Complete entitlement policy and full Phase 3 acceptance.
+
 ## Phase 3 subscription foundation — 2026-10-31 (UNVERIFIED)
 
 - [x] Author additive platform plan and non-overlapping school subscription
