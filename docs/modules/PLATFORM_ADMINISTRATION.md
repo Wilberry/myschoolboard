@@ -22,6 +22,21 @@ Existing schools are **not** assigned a guessed lifecycle history: `lifecycleSta
 
 The service and HTTP handlers have been authored and corresponding unit/database tests added, but the migration and tests have **not** been executed against the complete local CI-equivalent pipeline. This is Phase 3 partial implementation, not full onboarding/subscription/retention completion.
 
+## Platform operator subscription console — authored, unverified
+
+The `/platform` route has a dynamic server-side Platform Super Admin
+check and a single actor-row-locked school read capped at 100 records.
+The `PlatformSubscriptionEditor` records immutable plan revisions and
+explicit school subscription periods via separately authorized private
+GET/POST endpoints. Closed/unclassified schools cannot be selected for
+a new period. All forms include explicit labels, reasons and a distinct
+message confirming that no payment, school activation or quota permission
+changed. A second actor/role check inside each API transaction remains
+required irrespective of UI navigation. Historical periods are viewed,
+never overwritten. No production rollout or full platform administration
+acceptance has occurred; see
+[Phase 3 acceptance](../quality/PHASE3_SUBSCRIPTIONS_ACCEPTANCE.md).
+
 ## Hard boundaries
 
 - Platform operators do not automatically gain school academic access.
