@@ -66,3 +66,40 @@ export function subscriptionPeriodView(
   if (now >= endsAt) return "ENDED";
   return "CURRENT";
 }
+
+
+/**
+ * Advisory observation only: this is NOT an access-control decision.
+ * A null limit means the catalog has not specified a quota, not unlimited
+ * paid entitlement. Historic/legacy tenants must not be cut off by this data.
+ */
+export function quotaObservation(used: number, limit: number | null) {
+  if (
+    !Number.isSafeInteger(used) ||
+    used < 0 ||
+    (limit !== null && (!Number.isSafeInteger(limit) || limit < 1))
+  ) {
+    throw new Error("Invalid subscription usage or advisory limit");
+  }
+  return {
+    used,
+    limit,
+    exceedsLimit: limit === null ? null : used > limit,
+  };
+}
+
+export type ObservedSubscriptionStatus =
+  | "NONE"
+  | "CURRENT"
+  | "UPCOMING"
+  | "ENDED";
+
+/** Server-clock classification; no implicit renewal or school suspension. */
+export function observedSubscriptionStatus(
+  startsAt: Date | null,
+  endsAt: Date | null,
+  now: Date,
+): ObservedSubscriptionStatus {
+  if (startsAt === null || endsAt === null) return "NONE";
+  return subscriptionPeriodView(startsAt, endsAt, now);
+}
