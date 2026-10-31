@@ -231,7 +231,9 @@ export function PlatformSubscriptionEditor({ schools }: { schools: School[] }) {
             onChange={(e) => setSchoolId(e.target.value)}>
             <option value="">Choose a school</option>
             {schools.map((school) => (
-              <option key={school.id} value={school.id}>
+              <option key={school.id} value={school.id}
+                disabled={!school.lifecycleStatus ||
+                  school.lifecycleStatus === "CLOSED"}>
                 {school.name} ({school.lifecycleStatus ?? "UNCLASSIFIED"})
               </option>
             ))}
