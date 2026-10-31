@@ -9,6 +9,7 @@ vi.mock("next/headers", () => ({
 
 import * as planRoute from "@/app/api/platform/plans/route";
 import * as periodsRoute from "@/app/api/platform/schools/[schoolId]/subscriptions/route";
+import * as statusRoute from "@/app/api/platform/schools/[schoolId]/subscription-status/route";
 import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
 import { env } from "@/src/lib/env";
@@ -20,6 +21,7 @@ const userEmail = `school-subs-${uid}@example.test`;
 const code = `test-plan-${uid.slice(0, 16)}`;
 const schoolId = `subscription-school-${uid}`;
 const foreignSchoolId = `subscription-foreign-${uid}`;
+const observedSchoolId = `subscription-observed-${uid}`;
 let adminId = "";
 let schoolUserId = "";
 let platformCookie = "";
@@ -96,6 +98,14 @@ async function periodGet(cookie: string, targetSchool = schoolId) {
   );
 }
 
+async function statusGet(cookie: string, targetSchool = schoolId) {
+  asActor(cookie);
+  return statusRoute.GET(
+    new Request(`http://localhost/api/platform/schools/${targetSchool}/subscription-status`),
+    { params: Promise.resolve({ schoolId: targetSchool }) },
+  );
+}
+
 function periodPayload(planRevisionId: string, from: string, to: string) {
   return {
     planRevisionId,
@@ -132,10 +142,15 @@ describe("Phase 3 platform subscription catalog and school periods", () => {
           slug: schoolId, lifecycleStatus: "PENDING", isActive: false },
         { id: foreignSchoolId, name: "Synthetic Subscription B",
           slug: foreignSchoolId, lifecycleStatus: "PENDING", isActive: false },
+        { id: observedSchoolId, name: "Synthetic Suspended Subscription C",
+          slug: observedSchoolId, lifecycleStatus: "SUSPENDED", isActive: false },
       ],
     });
-    await prisma.membership.create({
-      data: { schoolId, userId: schoolUserId, role: "SCHOOL_ADMIN" },
+    await prisma.membership.createMany({
+      data: [
+        { schoolId, userId: schoolUserId, role: "SCHOOL_ADMIN" },
+        { schoolId: observedSchoolId, userId: schoolUserId, role: "TEACHER" },
+      ],
     });
     platformCookie = await signIn(adminEmail);
     schoolCookie = await signIn(userEmail);
@@ -143,7 +158,7 @@ describe("Phase 3 platform subscription catalog and school periods", () => {
 
   afterAll(async () => {
     await prisma.school.deleteMany({
-      where: { id: { in: [schoolId, foreignSchoolId] } },
+      where: { id: { in: [schoolId, foreignSchoolId, observedSchoolId] } },
     });
     const ids = [adminId, schoolUserId].filter(Boolean);
     await prisma.session.deleteMany({ where: { userId: { in: ids } } });
@@ -159,6 +174,7 @@ describe("Phase 3 platform subscription catalog and school periods", () => {
       secure(await planGet(cookie), expected);
       secure(await planPost(cookie, planPayload()), expected);
       secure(await periodGet(cookie), expected);
+      secure(await statusGet(cookie), expected);
       secure(
         await periodPost(cookie,
           periodPayload("unavailable", "2026-11-01T00:00:00Z", "2026-12-01T00:00:00Z")),
@@ -202,6 +218,64 @@ describe("Phase 3 platform subscription catalog and school periods", () => {
       (item: { code: string }) => item.code === code,
     );
     expect(versions.map((item: { version: number }) => item.version)).toEqual([2, 1]);
+  });
+
+  it("shows missing plan status without claiming a paid or enabled entitlement", async () => {
+    const response = await statusGet(platformCookie);
+    secure(response, 200);
+    const snapshot = (await response.json()).status;
+    expect(snapshot).toMatchObject({
+      subscriptionStatus: "NONE",
+      billingStatus: "NOT_TRACKED",
+      entitlementEnforcement: "NOT_ENABLED",
+      school: { id: schoolId, lifecycleStatus: "PENDING", isActive: false },
+      usage: {
+        enrolledStudents: { used: 0, limit: null, exceedsLimit: null },
+        activeStaff: { used: 1, limit: null, exceedsLimit: null },
+      },
+    });
+    expect(snapshot.observedPeriod).toBeNull();
+    secure(await statusGet(platformCookie, "not-a-school"), 404);
+  });
+
+  it("observes current plan without reactivating a suspended school", async () => {
+    const now = Date.now();
+    const startsAt = new Date(now - 86_400_000).toISOString();
+    const endsAt = new Date(now + 86_400_000).toISOString();
+    secure(await periodPost(
+      platformCookie,
+      periodPayload(firstPlanId, startsAt, endsAt),
+      observedSchoolId,
+    ), 201);
+    const response = await statusGet(platformCookie, observedSchoolId);
+    secure(response, 200);
+    const snapshot = (await response.json()).status;
+    expect(snapshot).toMatchObject({
+      subscriptionStatus: "CURRENT",
+      billingStatus: "NOT_TRACKED",
+      entitlementEnforcement: "NOT_ENABLED",
+      school: {
+        id: observedSchoolId,
+        lifecycleStatus: "SUSPENDED",
+        isActive: false,
+      },
+      observedPeriod: {
+        planRevision: {
+          id: firstPlanId,
+          code,
+          version: 1,
+          maxStudents: 500,
+          maxStaff: 80,
+        },
+      },
+      usage: {
+        enrolledStudents: { used: 0, limit: 500, exceedsLimit: false },
+        activeStaff: { used: 1, limit: 80, exceedsLimit: false },
+      },
+    });
+    expect(snapshot.asOf).toEqual(expect.any(String));
+    expect(JSON.stringify(snapshot)).not.toContain(schoolUserId);
+    secure(await statusGet(schoolCookie, observedSchoolId), 404);
   });
 
   it("stores non-overlapping school-specific periods without activating a tenant", async () => {
