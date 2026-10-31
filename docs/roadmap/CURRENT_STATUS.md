@@ -10,7 +10,7 @@ allocates authoritative plan versions, locks each school for overlap checks,
 revalidates current platform administrators, and denies direct history edits.
 A subscription record **never** activates or suspends a school or grants
 academic access. Subscription payments, real billing, automatic expiry,
-quotas/entitlement enforcement, portal UI and full platform metrics remain
+quotas/entitlement enforcement and full platform metrics remain
 unimplemented. The fixed local browser-verifier inventory now expects
 37 migrations; the exact SHA-256 verifier remains unchanged.
 
