@@ -1,5 +1,15 @@
 # Phase 1–7 cumulative acceptance ledger
 
+## Subscription status and advisory usage — source-only checkpoint
+
+PR #98 now includes an operator-only, no-store subscription status
+endpoint and console panel: school lifecycle and subscription timing
+separately, current plan metadata, and aggregate enrolled pupil/staff counts.
+Billing remains NOT_TRACKED and entitlements NOT_ENABLED. Suspended schools
+are not reactivated. New role/tenant tests are authored, and seven isolated
+JS source assertions passed, but no current-SHA PostgreSQL/Prisma/browser
+pass has occurred. SUB-REQ-001 and PLAT-REQ-001 remain PARTIAL.
+
 ## Phase 3 console and migration-preflight extension — source-only checkpoint
 
 The current PR #98 development branch adds a server-role-locked `/platform`
