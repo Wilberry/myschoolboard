@@ -5,6 +5,7 @@ import {
   createPlatformPlanRevision,
   listPlatformPlans,
   listSchoolSubscriptions,
+  readSchoolSubscriptionStatus,
 } from "./subscription-service";
 
 function response(body: unknown, status: number) {
@@ -92,6 +93,21 @@ export async function handleSchoolSubscriptionsPost(
   } catch (error) {
     if (error instanceof SyntaxError)
       return response({ error: "Invalid request" }, 400);
+    return failure(error);
+  }
+}
+
+/** Operator-only, no-cache view of effective plan and school-specific totals. */
+export async function handleSchoolSubscriptionStatusGet(
+  params: Promise<{ schoolId: string }>,
+) {
+  try {
+    const { schoolId } = await params;
+    return response(
+      { status: await readSchoolSubscriptionStatus(schoolId) },
+      200,
+    );
+  } catch (error) {
     return failure(error);
   }
 }
