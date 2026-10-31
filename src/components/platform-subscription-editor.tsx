@@ -204,7 +204,7 @@ export function PlatformSubscriptionEditor({ schools }: { schools: School[] }) {
             Record plan revision
           </button>
         </form>
-        <h3>Plan catalog (first 100 code-sorted revisions)</h3>
+        <h3>Plan catalog (100 most recent revisions)</h3>
         {plans.length ? (
           <ul>
             {plans.map((plan) => (
