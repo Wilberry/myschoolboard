@@ -45,6 +45,18 @@ function command(executable, args) {
   return result.stdout.trim();
 }
 
+function verifyCleanGitHead() {
+  const status = command("git", ["status", "--porcelain", "--untracked-files=all"]);
+  if (status) {
+    throw new Error("Verification requires a clean reviewed worktree");
+  }
+  const head = command("git", ["rev-parse", "HEAD"]);
+  if (!/^[a-f0-9]{40}$/i.test(head)) {
+    throw new Error("Verification requires an exact commit SHA");
+  }
+  return head;
+}
+
 function verifyExactDisposableDocker() {
   const context = command("docker", ["context", "show"]);
   if (!/^[A-Za-z0-9._][A-Za-z0-9._-]*$/.test(context)) {
@@ -70,6 +82,7 @@ export async function verifyPhase3SubscriptionMigrationPreflight(
   environment = process.env,
 ) {
   assertLocalVerificationTarget(environment);
+  const commit = verifyCleanGitHead();
   verifyExactDisposableDocker();
   const migrations = await readLocalMigrationChecksums();
   const { Client } = await import("pg");
@@ -95,7 +108,8 @@ export async function verifyPhase3SubscriptionMigrationPreflight(
     console.info(
       "Phase 3 read-only migration preflight passed: " +
         summary.applied + " exact applied; only " + summary.pending +
-        " remains pending. No migration was executed.",
+        " remains pending. No migration was executed. Tested commit " +
+        commit.slice(0, 12) + ".",
     );
     return summary;
   } finally {
