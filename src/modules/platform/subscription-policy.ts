@@ -45,7 +45,7 @@ export const assignSchoolSubscriptionInput = z
       !Number.isFinite(startsAt) ||
       !Number.isFinite(endsAt) ||
       endsAt <= startsAt ||
-      endsAt > startsAt + 5 * 366 * 86_400_000
+      endsAt > startsAt + 5 * 365 * 86_400_000
     ) {
       ctx.addIssue({
         code: "custom",
