@@ -1,5 +1,21 @@
 # Phase 1–7 cumulative acceptance ledger
 
+## Current Phase 3 implementation checkpoint — authored, not verified
+
+The existing PR #98 branch now includes a Phase 3 immutable plan catalog and
+school subscription period foundation: additive migration #37,
+platform-only no-store GET/POST, SQL actor/tenant and overlapping-period
+guards, policy tests, authenticated real-session integration tests, and
+a read-only source guard. This code **has not been run on the disposable
+database or a compiled browser**. Its catalog features and quotas are
+recorded configuration, **not yet enforced entitlements**. School lifecycle
+and academic privileges remain independent of subscription assignment.
+The historical 36/36, 311/311, 95/95 and 108/108 results below retain
+their original provenance and do not validate this new commit. Next run
+the additive migration and focused tests on the exact verified disposable
+target, then continue remaining Phase 3 UI/entitlement and Phase 4/7
+functional requirements before final cumulative acceptance. No new PR.
+
 **As of:** 2026-10-31  
 **Status:** IN PROGRESS — Phase 1–7 is **NOT ACCEPTED**; no merge or deployment authorized by this ledger.  
 **Consolidation PR:** [#98](https://github.com/Wilberry/myschoolboard/pull/98); prerequisite [#97](https://github.com/Wilberry/myschoolboard/pull/97).  
