@@ -26,6 +26,26 @@ type Period = {
   periodStatus: "UPCOMING" | "CURRENT" | "ENDED";
   planRevision: Plan;
 };
+
+type Quota = {
+  used: number;
+  limit: number | null;
+  exceedsLimit: boolean | null;
+};
+type SubscriptionSnapshot = {
+  asOf: string;
+  school: School;
+  subscriptionStatus: "NONE" | "CURRENT" | "UPCOMING" | "ENDED";
+  observedPeriod: {
+    id: string;
+    startsAt: string;
+    endsAt: string;
+    planRevision: Plan;
+  } | null;
+  usage: { enrolledStudents: Quota; activeStaff: Quota };
+  billingStatus: "NOT_TRACKED";
+  entitlementEnforcement: "NOT_ENABLED";
+};
 const features: Feature[] = ["ATTENDANCE", "LESSONS", "ASSESSMENTS", "CBT"];
 
 async function privateJson(url: string, init?: RequestInit) {
@@ -41,6 +61,7 @@ async function privateJson(url: string, init?: RequestInit) {
 export function PlatformSubscriptionEditor({ schools }: { schools: School[] }) {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [periods, setPeriods] = useState<Period[]>([]);
+  const [snapshot, setSnapshot] = useState<SubscriptionSnapshot | null>(null);
   const [schoolId, setSchoolId] = useState(
     schools.find((school) => school.lifecycleStatus !== null &&
       school.lifecycleStatus !== "CLOSED")?.id ?? "",
@@ -75,10 +96,12 @@ export function PlatformSubscriptionEditor({ schools }: { schools: School[] }) {
   useEffect(() => {
     if (!schoolId) {
       setPeriods([]);
+      setSnapshot(null);
       return;
     }
     let active = true;
     setPeriods([]);
+    setSnapshot(null);
     privateJson(
       "/api/platform/schools/" + encodeURIComponent(schoolId) + "/subscriptions",
     )
@@ -87,6 +110,16 @@ export function PlatformSubscriptionEditor({ schools }: { schools: School[] }) {
       })
       .catch(() => {
         if (active) setError("Subscription history could not be loaded.");
+      });
+    privateJson(
+      "/api/platform/schools/" + encodeURIComponent(schoolId) +
+        "/subscription-status",
+    )
+      .then((data: { status: SubscriptionSnapshot }) => {
+        if (active) setSnapshot(data.status);
+      })
+      .catch(() => {
+        if (active) setError("The private subscription status could not be loaded.");
       });
     return () => { active = false; };
   }, [schoolId, refresh]);
@@ -261,6 +294,42 @@ export function PlatformSubscriptionEditor({ schools }: { schools: School[] }) {
             Record subscription period
           </button>
         </form>
+        <h3>Current subscription observation (not entitlement enforcement)</h3>
+        {snapshot ? (
+          <div aria-label="School subscription observation">
+            <p>
+              As of {new Date(snapshot.asOf).toISOString()}:
+              {" "}school lifecycle {snapshot.school.lifecycleStatus ?? "UNCLASSIFIED"};
+              {" "}school active flag {snapshot.school.isActive ? "yes" : "no"};
+              {" "}subscription {snapshot.subscriptionStatus}.
+            </p>
+            <p>
+              Observed plan: {snapshot.observedPeriod
+                ? snapshot.observedPeriod.planRevision.code + " v" +
+                  snapshot.observedPeriod.planRevision.version
+                : "none"}.
+              {" "}Payment status: not tracked. Product entitlement enforcement: off.
+            </p>
+            <p>
+              Actively enrolled pupils: {snapshot.usage.enrolledStudents.used};
+              {" "}current plan advisory limit:
+              {" "}{snapshot.usage.enrolledStudents.limit ?? "not configured"};
+              {" "}over limit:
+              {" "}{snapshot.usage.enrolledStudents.exceedsLimit === null
+                ? "not evaluated"
+                : snapshot.usage.enrolledStudents.exceedsLimit ? "yes" : "no"}.
+            </p>
+            <p>
+              Active staff memberships: {snapshot.usage.activeStaff.used};
+              {" "}current plan advisory limit:
+              {" "}{snapshot.usage.activeStaff.limit ?? "not configured"};
+              {" "}over limit:
+              {" "}{snapshot.usage.activeStaff.exceedsLimit === null
+                ? "not evaluated"
+                : snapshot.usage.activeStaff.exceedsLimit ? "yes" : "no"}.
+            </p>
+          </div>
+        ) : <p>No current subscription observation loaded.</p>}
         <h3>Recorded periods for the selected school</h3>
         {periods.length ? (
           <ul>
