@@ -1,5 +1,23 @@
 # Phase 1–7 cumulative acceptance ledger
 
+## Phase 3 console and migration-preflight extension — source-only checkpoint
+
+The current PR #98 development branch adds a server-role-locked `/platform`
+console, a current-operator-only navigation link, accessible plan and school
+subscription forms, and a **read-only** migration preflight. The new
+`verify:phase3:migration-preflight` command requires a clean exact SHA, the
+correct disposable Docker service and URL, 36 exact historical applied
+checksums and **only** migration #37 pending before any separate deployment
+may be considered. Its new pure unit cases and six source guards have been
+exercised in isolated JavaScript checks, **not** in the Node/Prisma runner.
+The migration file was repaired after discovering duplicated malformed SQL
+in an intermediate development commit; the current reviewed file contains
+exactly two CREATE TABLE, four CREATE FUNCTION and six CREATE TRIGGER
+statements and a valid PostgreSQL GiST exclusion constraint. The corrected
+migration has **NOT** been applied; see
+[Phase 3 acceptance runbook](PHASE3_SUBSCRIPTIONS_ACCEPTANCE.md).
+This remains source-authored, not locally or release-verified.
+
 ## Current Phase 3 implementation checkpoint — authored, not verified
 
 The existing PR #98 branch now includes a Phase 3 immutable plan catalog and
