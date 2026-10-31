@@ -421,4 +421,19 @@ describe("Phase 3 platform subscription catalog and school periods", () => {
     })).rejects.toThrow();
     expect(await prisma.schoolSubscriptionPeriod.count({ where: { schoolId } })).toBe(3);
   });
+
+  it("revokes platform authority immediately for a still-signed-in operator", async () => {
+    await prisma.user.update({
+      where: { id: adminId },
+      data: { platformRole: "NONE" },
+    });
+    secure(await planGet(platformCookie), 404);
+    secure(await periodGet(platformCookie, schoolId), 404);
+    secure(await statusGet(platformCookie, observedSchoolId), 404);
+    const currentPeriod = await prisma.schoolSubscriptionPeriod.findFirst({
+      where: { schoolId: observedSchoolId },
+      select: { planRevisionId: true },
+    });
+    expect(currentPeriod?.planRevisionId).toBe(firstPlanId);
+  });
 });
