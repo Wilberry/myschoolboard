@@ -13,6 +13,48 @@ const schema = file("prisma/schema.prisma");
 const service = file("src/modules/platform/subscription-service.ts");
 const http = file("src/modules/platform/subscription-http.ts");
 const launcher = file("scripts/launch-phase1-7-verification.mjs");
+const platformPage = file("app/platform/page.tsx");
+const operatorEditor = file("src/components/platform-subscription-editor.tsx");
+const homePage = file("app/page.tsx");
+
+test("migration is complete and not duplicated or truncated", () => {
+  assert.equal((migration.match(/^CREATE TABLE /gm) ?? []).length, 2);
+  assert.equal((migration.match(/^CREATE FUNCTION /gm) ?? []).length, 4);
+  assert.equal((migration.match(/^CREATE TRIGGER /gm) ?? []).length, 6);
+  assert.equal(
+    (migration.match(/CREATE TABLE "SchoolSubscriptionPeriod"/g) ?? []).length,
+    1,
+  );
+  assert.ok(
+    migration.includes(
+      `"code" ~ '^[a-z][a-z0-9]*(-[a-z0-9]+)*$'`,
+    ),
+  );
+  assert.match(migration, /INTERVAL '1825 days'/);
+  assert.match(migration, /count\(DISTINCT feature_value\)/);
+  assert.ok(
+    migration.trimEnd().endsWith(
+      'FOR EACH STATEMENT EXECUTE FUNCTION "prevent_platform_subscription_truncate"();',
+    ),
+  );
+});
+
+test("operator page and forms revalidate role before reading any school data", () => {
+  assert.match(platformPage, /dynamic = "force-dynamic"/);
+  assert.match(platformPage, /fetchCache = "force-no-store"/);
+  assert.match(platformPage, /"platform:manage"/);
+  assert.match(platformPage, /FOR UPDATE/);
+  assert.match(platformPage, /if \(!schools\) notFound\(\)/);
+  assert.ok(
+    platformPage.indexOf('"platform:manage"') <
+      platformPage.indexOf("tx.school.findMany("),
+  );
+  assert.match(operatorEditor, /credentials: "same-origin"/);
+  assert.match(operatorEditor, /cache: "no-store"/);
+  assert.match(operatorEditor, /type="datetime-local"/);
+  assert.match(homePage, /platformActor\?\.platformRole === "SUPER_ADMIN"/);
+  assert.match(homePage, /href="\/platform"/);
+});
 
 test("keeps subscription migration additive and platform-only", () => {
   for (const token of [
