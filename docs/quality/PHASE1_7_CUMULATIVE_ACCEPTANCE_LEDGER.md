@@ -1,5 +1,25 @@
 # Phase 1–7 cumulative acceptance ledger
 
+## Phase 3 tmpfs recovery guard — 2026-11-01 (SOURCE AUTHORED)
+
+The Phase 3 test Compose service was absent at the 6bbfbb5 checkpoint.
+Because this PostgreSQL container stores data on tmpfs, stopping it can
+erase the 36 previously applied migrations. The existing 36-applied/one-pending
+migration preflight is **not** relaxed. Instead, a separate read-only
+`verify:phase3:empty-bootstrap-preflight` command was authored for an
+**actually empty** verified disposable PostgreSQL 17 container. It requires
+the exact clean verification branch, worktree-specific Docker ownership,
+local test-only URL/environment, exact public schema and database identity,
+zero preexisting relations, exactly 37 valid local migration files and the
+reviewed Phase 3 SQL structure. A database with any existing Prisma history,
+school data or unknown schema is rejected by the empty path and must never
+be reset to force it. Six Node test cases were authored; isolated pure
+classification checks were exercised, but **Docker/PostgreSQL runtime was
+not available here**. This new source has not yet passed the local Node,
+format, lint or TypeScript gates. Migration #37 remains unapplied by this
+checkpoint, and Phase 3/Phase 1–7 acceptance remain BLOCKED.
+See [Phase 3 acceptance](PHASE3_SUBSCRIPTIONS_ACCEPTANCE.md).
+
 ## Phase 3 migration preflight attempt — 2026-11-01 (BLOCKED)
 
 At exact commit
