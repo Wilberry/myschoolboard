@@ -1,5 +1,28 @@
 # Phase 1–7 cumulative acceptance ledger
 
+## Phase 3 migration preflight attempt — 2026-11-01 (BLOCKED)
+
+At exact commit
+`cbc83fd511fb2c9eba536882215a2431efa31b8f` on
+`verify/pr97-integrated-pupil-workflow`, the reviewed 11-file Phase 3 change
+was committed and pushed normally. The local verification-target preflight
+passed using the private synthetic test configuration. The read-only Phase 3
+migration preflight then failed closed because this worktree's
+`postgres-test` Compose service was not running or present; the local Docker
+daemon socket was available, but `docker compose --profile test ps -q postgres-test`
+returned no container. No PostgreSQL connection was made by
+the migration preflight, migration #37 was not deployed, and no applied
+migration checksums were verified for this commit. Do not infer the 36/36
+historical checksum result at `686891d` applies to this SHA.
+
+At the exact source SHA above, the two Phase 3 Node guard/preflight test files
+passed **14/14**, Prettier check passed, ESLint passed, TypeScript passed and
+`git diff --check` passed. No DB-backed Phase 3 integration tests, complete
+Node/Vitest suite, production build or npm audits were run because the guarded
+database precondition failed. Phase 3 database acceptance remains BLOCKED;
+resume only after the exact healthy, loopback-only, tmpfs-backed PostgreSQL
+17 test container is available and the protected preflight passes.
+
 ## Subscription status and advisory usage — source-only checkpoint
 
 PR #98 now includes an operator-only, no-store subscription status
@@ -89,8 +112,8 @@ Status terminology:
 | 1 | **OPS-REQ-001** | Guarded disposable-target preflight, 36 exact migrations, Node and Vitest checks, build, formatting, lint, typecheck and audits previously passed | Verify the final cumulative integration SHA, current CI gate, and documented operational/release prerequisites. **PARTIAL — TESTED SUBSET** |
 | 1–2 | **SEC-REQ-001 / TEN-REQ-001** | Authorization/tenancy integration tests, school API denial guards, scoped real-browser student denial/revocation | Complete logged-out, cross-school, staff/role, HTML/RSC, sign-out, cache and history matrix BR-01..BR-15; review platform audit scope and exact final-query authorization. **PARTIAL — TESTED SUBSET** |
 | 2 | **USR-REQ-001** | Better Auth session/role tests; active membership, section and assignment scope tests; verified synthetic user sessions | BR-01/05/07/10/13 full authenticated and signed-out browser evidence, privileged identity rollout deferred under P-007. **PARTIAL — TESTED SUBSET** |
-| 3 | **PLAT-REQ-001** | Platform-only school onboarding/lifecycle, explicit pending/active/suspended/expired/closed state and append-only lifecycle events; lifecycle integration tests exist in the 37-file suite | Dedicated platform view/metrics and full management, staff onboarding and platform audit access are not shown as complete. Subscription and entitlement functionality is missing. **PARTIAL / FUNCTIONAL GAP** |
-| 3 | **SUB-REQ-001** | Tenant lifecycle is modeled but *no* `Plan` or `Subscription` model appears in the current Prisma schema; no subscription/entitlement route is present in the application tree | Implement school-owned subscription period and platform plan/entitlement management with server-side status/tenant protections, audit events, tests, and configurable policies. Do not infer or charge real payments. **FUNCTIONAL GAP** |
+| 3 | **PLAT-REQ-001** | Platform-only school onboarding/lifecycle and append-only lifecycle events have existing tests. The Phase 3 candidate also adds an operator console and observational subscription status; source guards pass at `cbc83fd511fb2c9eba536882215a2431efa31b8f`, but guarded database acceptance is blocked. | Dedicated platform view/metrics and full management, staff onboarding and platform audit access remain incomplete. Subscription foundation has not passed DB/browser acceptance; **PARTIAL / FUNCTIONAL GAP** |
+| 3 | **SUB-REQ-001** | The Phase 3 candidate adds a `PlatformPlanRevision` catalog, immutable school subscription periods, private/no-store platform routes and migration #37. At `cbc83fd511fb2c9eba536882215a2431efa31b8f`, 14/14 Node source-guard/preflight tests pass; no database connection or migration deployment occurred because the required disposable service was unavailable. | PostgreSQL migration/37-checksum and DB-backed authorization, cross-school, overlap, immutability and revoked-session tests remain unverified. Entitlement enforcement, payment processing and automatic expiry remain unimplemented. **PARTIAL — DB ACCEPTANCE BLOCKED** |
 | 4 | **SCH-REQ-001** | Sections, academic periods, class/subject setup, lifecycle and configuration have DB-backed coverage; 36 migrations applied | Verify browser role/section setup, historical policy behavior, and remaining applicable tenant constraints. **PARTIAL — TESTED SUBSET** |
 | 4 | **ADM-REQ-001** | `StudentRecord`, exact enrollment, school-admin registration/enroll/withdraw routes and immutable lifecycle history have DB integration tests; pupil login link is a separate attested record | Canonical inquiry→acceptance workflow and history-preserving promotion/transfer/graduation are not complete in the documented implementation. Distinguish these **functional gaps** from already-tested enrollment safety. |
 | 5 | **TCH-REQ-001** | Teacher assignments, verified grants, Form Teacher responsibility, timetable exclusion constraints, audit events, and related API tests are in the existing suite | Confirm full live browser usability, revocation/race, timetable constraint UX and unresolved large-campus pagination policy as applicable. **PARTIAL — TESTED SUBSET** |
