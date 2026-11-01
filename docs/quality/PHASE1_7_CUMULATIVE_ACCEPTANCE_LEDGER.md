@@ -1,6 +1,56 @@
 # Phase 1–7 cumulative acceptance ledger
 
-## Phase 3 tmpfs recovery guard — 2026-11-01 (SOURCE AUTHORED)
+## Phase 3 disposable-database acceptance — 2026-11-01 (DB/CI GATES PASSED; PARTIAL)
+
+**Final code/test SHA:** `e249955e64fafe5887a536074f8547ff25d3584f`
+on `verify/pr97-integrated-pupil-workflow`.
+
+The worktree-owned PostgreSQL 17 Alpine `postgres-test` container was
+confirmed healthy, tmpfs-backed, without host data binds, and published only
+on `127.0.0.1:5434`. A separate stopped Prisma 7 worktree container also
+claimed that host port; it was not started, removed or modified. After
+starting only this worktree's existing container with
+`--no-deps --no-recreate`, the protected local target preflight passed.
+Read-only inspection confirmed `myschoolboard_test`, role `myschoolboard`,
+PostgreSQL 17.11 and zero migration records. The hardened empty-bootstrap
+preflight passed at code SHA
+`bfc22dbb078a58ce62c8ffbfdcbc0fb79a8167b3`, requiring the empty public
+schema and exactly 37 reviewed migration files. After deployment, the
+empty-schema guard was hardened further to enumerate additional
+namespace-scoped PostgreSQL objects (operator classes/families, collations,
+conversions, text-search objects and statistics objects) and unit tests were
+expanded. The latest guard's six Node unit tests passed at the final SHA; the
+empty-bootstrap preflight was not rerun against the now-migrated database.
+No reset, seed, truncate or data deletion was used.
+
+At that preflighted SHA, `npm run db:deploy` applied all 37 migrations,
+including `20261101000000_phase3_platform_subscriptions` (#37). Exact
+checksum verification passed **37/37** then and again at the final code/test
+SHA above. At the final SHA, focused subscription policy, subscription
+database integration and school-lifecycle integration tests passed **19/19**.
+The complete `npm test` passed **117/117 Node tests** and **327/327 Vitest
+tests across 39 files**, with no skips or failures. Prettier, ESLint,
+TypeScript, production build, `npm audit --audit-level=high`, full `npm audit`
+and `git diff --check` all passed; both audits reported **0 vulnerabilities**.
+
+The initial production build exposed an incompatible `force-dynamic` /
+`force-no-store` route export under Next.js Cache Components. The platform
+page now isolates request-specific authentication and the serialized,
+actor-row-locked school projection inside a React Suspense boundary with a
+generic access-check fallback; no school data is in the prerendered shell.
+The production build succeeds and reports `/platform` as partially
+prerendered. No production deployment or browser-level route/cache
+acceptance was performed.
+
+**Status:** Phase 3 database/schema and automated test gates pass at the
+stated evidence boundaries. PLAT-REQ-001 and SUB-REQ-001 remain **PARTIAL**;
+entitlement enforcement, payment processing, automatic expiry, complete
+platform management and browser/accessibility verification remain open.
+Phase 1–7 overall acceptance remains **NOT ACCEPTED** because other
+requirements and browser evidence gaps remain. See the [Phase 3 acceptance
+runbook](PHASE3_SUBSCRIPTIONS_ACCEPTANCE.md).
+
+## Phase 3 tmpfs recovery guard — 2026-11-01 (historical source checkpoint)
 
 The Phase 3 test Compose service was absent at the 6bbfbb5 checkpoint.
 Because this PostgreSQL container stores data on tmpfs, stopping it can
@@ -10,14 +60,14 @@ migration preflight is **not** relaxed. Instead, a separate read-only
 **actually empty** verified disposable PostgreSQL 17 container. It requires
 the exact clean verification branch, worktree-specific Docker ownership,
 local test-only URL/environment, exact public schema and database identity,
-zero preexisting relations, exactly 37 valid local migration files and the
-reviewed Phase 3 SQL structure. A database with any existing Prisma history,
-school data or unknown schema is rejected by the empty path and must never
-be reset to force it. Six Node test cases were authored; isolated pure
-classification checks were exercised, but **Docker/PostgreSQL runtime was
-not available here**. This new source has not yet passed the local Node,
-format, lint or TypeScript gates. Migration #37 remains unapplied by this
-checkpoint, and Phase 3/Phase 1–7 acceptance remain BLOCKED.
+zero preexisting database objects in the public schema, exactly 37 valid
+local migration files and the reviewed Phase 3 SQL structure. A database
+with any existing Prisma history, school data, user-defined routines/types/
+operators/extensions or unknown schema is rejected by the empty path and
+must never be reset to force it. The initial source checkpoint had no
+Docker/PostgreSQL runtime evidence; the later executed results are recorded
+above. Migration #37 has since been applied only to the certified disposable
+test database.
 See [Phase 3 acceptance](PHASE3_SUBSCRIPTIONS_ACCEPTANCE.md).
 
 ## Phase 3 migration preflight attempt — 2026-11-01 (BLOCKED)
@@ -43,17 +93,18 @@ database precondition failed. Phase 3 database acceptance remains BLOCKED;
 resume only after the exact healthy, loopback-only, tmpfs-backed PostgreSQL
 17 test container is available and the protected preflight passes.
 
-## Subscription status and advisory usage — source-only checkpoint
+## Subscription status and advisory usage — historical source checkpoint
 
 PR #98 now includes an operator-only, no-store subscription status
 endpoint and console panel: school lifecycle and subscription timing
 separately, current plan metadata, and aggregate enrolled pupil/staff counts.
 Billing remains NOT_TRACKED and entitlements NOT_ENABLED. Suspended schools
-are not reactivated. New role/tenant tests are authored, and seven isolated
-JS source assertions passed, but no current-SHA PostgreSQL/Prisma/browser
-pass has occurred. SUB-REQ-001 and PLAT-REQ-001 remain PARTIAL.
+are not reactivated. At the time this checkpoint was written, role/tenant
+tests were authored but current-SHA PostgreSQL/browser evidence was not yet
+available. Subsequent database and automated test results are recorded at
+the top of this ledger. SUB-REQ-001 and PLAT-REQ-001 remain PARTIAL.
 
-## Phase 3 console and migration-preflight extension — source-only checkpoint
+## Phase 3 console and migration-preflight extension — historical source checkpoint
 
 The current PR #98 development branch adds a server-role-locked `/platform`
 console, a current-operator-only navigation link, accessible plan and school
@@ -61,31 +112,30 @@ subscription forms, and a **read-only** migration preflight. The new
 `verify:phase3:migration-preflight` command requires a clean exact SHA, the
 correct disposable Docker service and URL, 36 exact historical applied
 checksums and **only** migration #37 pending before any separate deployment
-may be considered. Its new pure unit cases and six source guards have been
-exercised in isolated JavaScript checks, **not** in the Node/Prisma runner.
-The migration file was repaired after discovering duplicated malformed SQL
+may be considered. The original source checkpoint predated local Node/Prisma
+execution. The migration file was repaired after discovering duplicated malformed SQL
 in an intermediate development commit; the current reviewed file contains
 exactly two CREATE TABLE, four CREATE FUNCTION and six CREATE TRIGGER
 statements and a valid PostgreSQL GiST exclusion constraint. The corrected
-migration has **NOT** been applied; see
+migration has since been applied on the certified disposable target; see
 [Phase 3 acceptance runbook](PHASE3_SUBSCRIPTIONS_ACCEPTANCE.md).
-This remains source-authored, not locally or release-verified.
+This is not a production release verification.
 
-## Current Phase 3 implementation checkpoint — authored, not verified
+## Current Phase 3 implementation checkpoint — historical authored state
 
 The existing PR #98 branch now includes a Phase 3 immutable plan catalog and
 school subscription period foundation: additive migration #37,
 platform-only no-store GET/POST, SQL actor/tenant and overlapping-period
 guards, policy tests, authenticated real-session integration tests, and
-a read-only source guard. This code **has not been run on the disposable
-database or a compiled browser**. Its catalog features and quotas are
-recorded configuration, **not yet enforced entitlements**. School lifecycle
-and academic privileges remain independent of subscription assignment.
-The historical 36/36, 311/311, 95/95 and 108/108 results below retain
-their original provenance and do not validate this new commit. Next run
-the additive migration and focused tests on the exact verified disposable
-target, then continue remaining Phase 3 UI/entitlement and Phase 4/7
-functional requirements before final cumulative acceptance. No new PR.
+a read-only source guard. At that time, the code had not been run on the
+disposable database or a compiled browser. Later database, test, build and
+audit results are recorded at the top of this ledger. Catalog features and
+quotas remain recorded configuration, **not enforced entitlements**. School
+lifecycle and academic privileges remain independent of subscription
+assignment. The historical 36/36, 311/311, 95/95 and 108/108 results below
+retain their original provenance and do not validate this new commit.
+Continue remaining Phase 3 UI/entitlement and Phase 4/7 functional
+requirements before final cumulative acceptance. No new PR.
 
 **As of:** 2026-10-31  
 **Status:** IN PROGRESS — Phase 1–7 is **NOT ACCEPTED**; no merge or deployment authorized by this ledger.  

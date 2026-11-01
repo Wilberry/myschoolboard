@@ -1,8 +1,10 @@
 # Phase 3 platform subscriptions — acceptance and safe migration checkpoint
 
-**Status:** authored on the existing Phase 1–7 PR #98 integration branch.
-**Not yet executed** on the owner's disposable PostgreSQL/Next environment.
-Not a Phase 3 acceptance, financial gateway approval or production release.
+**Status:** migration #37, focused database tests and current-source automated
+gates have passed on the disposable PostgreSQL 17 test target. This remains a
+partial Phase 3 acceptance, not financial gateway approval or production
+release. Exact commit-level results and open gaps are recorded in the
+[cumulative acceptance ledger](PHASE1_7_CUMULATIVE_ACCEPTANCE_LEDGER.md).
 
 ## What this checkpoint adds
 
@@ -16,10 +18,13 @@ Not a Phase 3 acceptance, financial gateway approval or production release.
 - Platform Super Admin-only, private/no-store GET/POST routes:
   \`/api/platform/plans\` and
   \`/api/platform/schools/{schoolId}/subscriptions\`.
-- \`/platform\` console: a dynamic, role-locked server page with a bounded
+- \`/platform\` console: a request-authorized server page with a bounded
   school-name/status list and client forms for plan revisions and subscription
-  periods. Ordinary school users do not get the page or the home navigation
-  link. The APIs independently check current operator authority.
+  periods. Request-specific session and school data are isolated behind a
+  React Suspense boundary; its prerendered shell contains only a generic
+  access-check fallback. Ordinary school users do not get the protected page
+  content or the home navigation link. The APIs independently check current
+  operator authority.
 - New migration \`20261101000000_phase3_platform_subscriptions\` (#37) and
   synthetic database/HTTP, pure-policy, source-guard and read-only
   migration-preflight tests.
@@ -32,7 +37,7 @@ entitlement policy. A CURRENT subscription **never** changes
 checks remain authoritative. This checkpoint does not add a Phase 8 or 9
 feature.
 
-## Read-only operator subscription status — source-only
+## Read-only operator subscription status
 
 The Platform Super Admin-only GET route at
 `/api/platform/schools/{schoolId}/subscription-status`
@@ -41,7 +46,9 @@ independently, plus aggregate active student enrollment and staff counts
 compared against current plan advisory limits. It exposes no student/staff
 names or individual records; billing is NOT_TRACKED and product entitlement
 enforcement NOT_ENABLED. Integration tests exercise suspended-school
-non-reactivation and school-role denial, but remain unexecuted locally.
+non-reactivation and school-role denial. Database and automated test evidence
+is recorded in the cumulative acceptance ledger; production-browser
+acceptance remains open.
 
 ## Preserve historical evidence
 
@@ -95,9 +102,10 @@ read-only preflight based on database state:
   `npm run verify:phase3:empty-bootstrap-preflight`. This distinct guard
   checks the same exact Git SHA, Docker ownership, URL/role and pending
   SQL, plus 37 valid local migration files and a read-only catalog
-  inspection showing **zero** nonsystem relations and no unknown schemas.
-  It rejects any Prisma migration table, school/pupil data, unknown schema
-  or wrong database user.
+  inspection showing **zero** nonsystem relations, routines, types, operators,
+  extensions and other supported schema objects, and no unknown schemas. It
+  rejects any Prisma migration table, school/pupil data, unknown schema or
+  wrong database user.
 
 Do **not** use the fresh-empty route to bypass a failed historical
 checksum or unknown database contents. Never run `db:deploy` until one of
@@ -124,20 +132,23 @@ containers and Phase 8/9 worktrees.
    echoing secrets. The prior PostgreSQL 17 \`postgres-test\` container must
    be running, healthy, tmpfs-backed and loopback-bound at
    \`127.0.0.1:5434/myschoolboard_test\`.
-3. Run the **read-only** Phase 3 preflight. Before opening any database
-   connection, it also verifies that the pending migration #37 file has
+3. Determine database state using read-only inspection, then run exactly one
+   matching preflight: the 36-applied preflight or the truly-empty bootstrap
+   preflight. Before opening any database connection, each verifies that
+   migration #37 has
    exactly two tables, four functions, six triggers, a complete validated
    plan-code expression, the bounded window, the exclusion constraint, and
    the immutable-history protection. Regression tests reject duplicate,
-   truncated, unsafe-ALTER and missing-constraint SQL. This structural
-   check does **not** replace real PostgreSQL syntax validation.
-   It requires exact SHA-256
-   matches for all 36 previously applied migrations, **exactly one**
-   remaining named migration (#37), a clean exact Git SHA, the correct
-   Docker context/container/worktree and matching DB URL variables.
-   It does not migrate, seed or reset anything.
-4. Only if all checks pass, deploy the one additive migration, verify
-   37/37 exact migration checksums, and run focused tests.
+   truncated, unsafe-ALTER and missing-constraint SQL. The 36-applied route
+   requires exact SHA-256 matches for those migrations and exactly #37
+   pending; the fresh route requires the correct empty database identity,
+   no existing user-schema objects and exactly 37 local migration files.
+   Both require a clean exact Git SHA, correct Docker context/container/
+   worktree and matching DB URL variables. Neither migrates, seeds or resets.
+   This structural check does **not** replace PostgreSQL syntax validation.
+4. Only if the selected preflight passes, deploy migrations to that exact
+   disposable database, verify 37/37 exact migration checksums, and run
+   focused tests.
 5. Run the final static/build/dependency and cumulative regression gates
    at the **same exact source SHA**, preserving stdout exit codes and failing
    cases. Do not change fixture credentials or reuse a consumed browser
@@ -163,13 +174,15 @@ git rev-parse HEAD
   source "$HOME/.config/myschoolboard/phase17-test.env"
   set +a
 
-  npm ci
-  npm run db:generate
   npm run verify:local:preflight
-  npm run verify:phase3:migration-preflight
 
-  # This is the only planned database mutation, permitted ONLY after the
-  # preceding preflight confirms 36 exact applied and one pending migration.
+  # First inspect the DB read-only, then uncomment exactly one:
+  # npm run verify:phase3:migration-preflight
+  # npm run verify:phase3:empty-bootstrap-preflight
+
+  # The only planned database mutation is permitted only after the selected
+  # preflight confirms either 36 exact migrations + only #37 pending, or an
+  # entirely empty database + the exact local 37-migration inventory.
   npm run db:deploy
   npm run verify:migration-checksums
 
@@ -220,7 +233,9 @@ The 6 Phase 3 source-only checks executed in an isolated JavaScript
 inspection environment are **not** a substitute for the Node runner, Prisma
 validation, PostgreSQL tests or live production-compiled Chrome checks.
 
-**Exit state:** Phase 3 subscription catalog and operator console are
-unverified candidates; entitlement enforcement and other canonical Phase 3
+**Exit state:** The Phase 3 subscription catalog and operator console passed
+the disposable-database migration, focused integration, full automated test,
+static, build and dependency-audit gates recorded in the ledger. Entitlement
+enforcement, browser/accessibility verification and other canonical Phase 3
 requirements remain open. Phase 1–7 acceptance is still blocked. Do not
-merge to \`main\` or deploy this work from source-only evidence.
+merge to \`main\` or deploy this work from development-only evidence.

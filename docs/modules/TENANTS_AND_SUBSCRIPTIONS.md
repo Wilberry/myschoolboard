@@ -32,21 +32,28 @@ The nonproduction `/platform` console provides an operator-only way to
 record plan revisions and assign time-limited subscription records. Only
 authenticated current Platform Super Admins can read the school-name/status
 selector or write through the independently protected private/no-store APIs.
-The server page is explicitly dynamic and authorizes inside a single
-serialized, actor-row-locked school projection. The home page shows its link
-only to a current platform operator. All results are bounded; the console
-does not yet provide cursor pagination for large deployments.
+The page isolates request-specific authentication and its single serialized,
+actor-row-locked school projection behind a React Suspense boundary. Its
+prerendered shell contains only a generic access-check fallback, never school
+data. The home page shows its link only to a current platform operator. All
+results are bounded; the console does not yet provide cursor pagination for
+large deployments.
 
 All plan features and numeric limits remain **catalog metadata**; the forms
 do not activate a school or enforce product entitlement. No auto-renewal or
 real-money integration is added. The migration-specific read-only preflight
 requires 36 exact applied checksums and only the reviewed 37th migration
-pending on the verified disposable test container. See the
+pending on the verified disposable test container, or the separate strict
+empty-bootstrap preflight for a genuinely empty tmpfs database. Migration
+#37 has been applied and checksum-verified on the disposable PostgreSQL 17
+target; complete automated gates and remaining browser/policy gaps are
+recorded in the [acceptance ledger](../quality/PHASE1_7_CUMULATIVE_ACCEPTANCE_LEDGER.md).
+See the
 [Phase 3 acceptance runbook](../quality/PHASE3_SUBSCRIPTIONS_ACCEPTANCE.md)
-for the exact pending tests and deployment restrictions. No PostgreSQL or
-production-browser pass is claimed for this new code.
+for the exact tests and deployment restrictions. No production-browser pass
+is claimed for this code.
 
-## Platform-only subscription observation — source authored, unverified
+## Platform-only subscription observation — automated gates passed
 
 A current Platform Super Admin may inspect the private, no-store
 `GET /api/platform/schools/{schoolId}/subscription-status`. The reader
@@ -55,13 +62,17 @@ subscription status, with aggregate actively enrolled pupil/active staff
 counts. Current-plan quotas are advisory only; null means unspecified,
 not paid. No individual pupil or staff data is returned. The console labels
 billing NOT_TRACKED and entitlement enforcement NOT_ENABLED; a CURRENT
-subscription never reactivates a suspended school. DB/browser acceptance
-remains open.
+subscription never reactivates a suspended school. Migration and automated
+database tests passed on the disposable PostgreSQL target; production-browser
+and full UI/accessibility acceptance remain open. See the acceptance ledger.
 
 ## Phase 3 immutable plan catalog and subscription periods (2026-10-31)
 
-**Status: SOURCE AUTHORED, NOT LOCALLY EXECUTED. SUB-REQ-001 remains PARTIAL.**
-This additive candidate extends the existing school lifecycle with separate
+**Status: DATABASE AND AUTOMATED TEST GATES PASSED; SUB-REQ-001 remains PARTIAL.**
+At the tested code SHA recorded in the acceptance ledger, migration #37,
+37/37 exact migration checksums, focused DB tests, full Node/Vitest, static
+checks, production build and both npm audits passed. This additive
+implementation extends the existing school lifecycle with separate
 **platform-only configuration**, not automatic feature access or billing.
 
 - `PlatformPlanRevision` is a global, append-only record keyed by plan
@@ -100,13 +111,9 @@ This additive candidate extends the existing school lifecycle with separate
   invoicing, plan price/currency, external gateway, refunds, fee ledger,
   email or support impersonation is enabled.
 
-**Verification to perform:** additive migration #37 in *only* the verified
-disposable PostgreSQL test target, exact checksums, plan/period route
-integration tests (including concurrent overlap and direct SQL immutability),
-full source guards and Node/Vitest suite, Prisma client generation, format,
-lint, typecheck, production build and both npm security audits. Existing
-36/36 migration evidence on older SHAs remains valid historical evidence,
-but does not validate this new schema. Do not apply the migration to a
-shared, live or production database. An independent entitlement-enforcement,
-renewal/expiry, school visibility and payment/finance policy decision remains
-necessary before claiming a fully functioning subscription service.
+**Remaining acceptance:** production-browser, route/cache and accessibility
+checks; entitlement-enforcement, renewal/expiry, school visibility and
+payment/finance policy decisions. These gates do not authorize deployment to
+a shared, live or production database. Do not claim a fully functioning
+subscription service until the remaining implementation and acceptance gaps
+are resolved.
