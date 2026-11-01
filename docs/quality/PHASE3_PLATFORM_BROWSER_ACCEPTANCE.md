@@ -196,6 +196,110 @@ outcomes for the exact SHA above are recorded in the table above.
 | P3-BR-13 | Capture **route-attributed** `text/x-component` requests for operator links and denial | Log precise route, role, status, content type and cache header; never assume generic `s-maxage` belongs to protected operator content without route attribution |
 | P3-BR-14 | Server-side role revocation of a strictly synthetic operator (separately guarded, if approved) | Existing signed-in session denied on fresh APIs/HTML and no new protected Flight; no effect on another tenant; DO NOT use direct production account mutation |
 
+## Closing P3-BR-11: genuine Chrome 200% page zoom
+
+**Still PENDING.** The scoped Chrome 148 run at application SHA
+`55dab6cd659d0200a3db86babbc274c9e5e5d8a8` proved labels, required
+validation, keyboard focus, a narrow viewport and a simulated 2× visual
+scale. Repeated automated keyboard shortcuts left `devicePixelRatio` and
+`innerWidth` unchanged; **they did not verify browser zoom**. CDP
+`Emulation.setPageScaleFactor`, mobile emulation and
+`--force-device-scale-factor` are **not interchangeable** with Chrome's
+desktop page zoom. Do not turn that historical result into a PASS.
+
+The remaining subcase must be completed on the **same reviewed code SHA**
+(or clearly attributed to a new code SHA) and on the existing verified
+local synthetic browser fixture. Do not provision another fixture or
+reapply migrations to inspect zoom. Preserve the 37/37 migration and
+122/327 regression results already obtained for `55dab6c`.
+
+1. Confirm the exact branch, clean worktree, source SHA and Docker target.
+   Use the existing local-only production build and private test
+   environment. Start the application bound to `127.0.0.1:3000`.
+   In Chrome use the **same hostname as the existing configured
+   `BETTER_AUTH_URL`** (previous local browser used
+   `http://localhost:3000`); mixing `localhost` and `127.0.0.1`
+   can invalidate same-origin Better Auth cookies and is not an
+   application-authentication failure.
+2. Use a disposable Chrome profile and sign in **only** as the existing
+   synthetic Platform Super Admin. Visit `/platform` and verify the
+   subscription console is rendered. Do not show credentials in
+   screenshots or save cookies, HAR archives, response bodies or school
+   identifiers. Leave the historical plan/period data unchanged.
+3. Hold the desktop browser's **outer window dimensions constant**.
+   Open Chrome's three-dot menu and confirm its **Zoom reads 100%**.
+   In DevTools Console (on the `/platform` tab) run the safe
+   measurement expression below and copy only the **numeric/boolean**
+   observation to private evidence. It contains no names or values.
+4. Using the **Chrome UI zoom control**, increase **Zoom to 200%**.
+   Confirm the menu visibly reads **200%**, not `visualViewport.scale=2`
+   produced by a CDP emulation command. Record the 200% setting as an
+   operator-observed fact and rerun the same expression at the
+   **same outer window size**. Reload `/platform` once and recheck
+   that the authorized heading, plan and subscription forms remain
+   usable.
+5. At 200%, use Tab and Shift+Tab to reach the school selector, plan
+   selector, required inputs, submit buttons and the Back link. Confirm
+   visible keyboard focus, label association, reachable status/error
+   messages and no overlapping/cropped critical controls. Switch between
+   the **existing synthetic** schools without saving changes and verify
+   the selected school is unambiguous and no stale subscription history
+   is presented as belonging to the other school. Test required
+   validation without submitting a valid mutation.
+6. If there is horizontal overflow, record the **numeric** widths and
+   the inaccessible control, but do not automatically fail the whole
+   application based only on a long string or a console-only element.
+   Horizontal scrolling that makes a required action inaccessible or
+   hides its label is a **FAIL**. Distinguish page reflow defects from
+   Chrome's own DevTools or toolbar size.
+7. Restore 100% zoom (`Ctrl+0` or the Chrome zoom menu), sign out,
+   and stop **only** the local test application process. Do not reset,
+   reseed or stop an unrelated container.
+
+Run **this exact expression** at 100% and 200%:
+
+```js
+(() => {
+  const root = document.documentElement;
+  const controls = [...document.querySelectorAll("input, select, textarea, button")];
+  return {
+    routeIsPlatform: location.pathname === "/platform",
+    dpr: window.devicePixelRatio,
+    innerWidth: window.innerWidth,
+    clientWidth: root.clientWidth,
+    scrollWidth: root.scrollWidth,
+    viewportScale: window.visualViewport?.scale ?? null,
+    inputCount: controls.length,
+    unlabeledInputs: [...document.querySelectorAll("input, select, textarea")]
+      .filter((el) => !el.labels?.length && !el.getAttribute("aria-label"))
+      .length,
+    platformHeadingPresent: Boolean(document.querySelector("#platform-heading")),
+    focusVisibleElement: Boolean(document.activeElement && document.activeElement !== document.body),
+  };
+})()
+```
+
+Before calling P3-BR-11 **PASS**, record all of: actual Chrome
+zoom menu **200%**, source SHA and browser version, the 100% and 200%
+numeric measurements, observed form/keyboard and error usability,
+absence of clipped/inaccessible required controls, and recovery after
+reload and return to 100%. As corroboration at unchanged outer window
+size, desktop page zoom normally increases the ratio
+`dpr_200 / dpr_100` to approximately **2.0** and reduces the CSS
+`innerWidth` materially; a 2× `visualViewport.scale` alone is
+**not** proof. If a desktop/OS display setup produces different
+measurements, preserve the difference and classify it for review,
+rather than changing thresholds or inventing a zoom pass.
+
+Write only sanitized P3-BR-11 evidence (source SHA, case, browser
+version, 100% and 200% metrics, manually witnessed Chrome-menu zoom
+setting, focus/reflow result, PASS/FAIL/BLOCKED and date) in the
+private evidence directory. Never commit credentials, private profile
+files or user/session data. Update the cumulative acceptance ledger
+only after observing this specific subcase; do not generalize a
+scoped console zoom pass into full Phase 3 functional or accessibility
+acceptance.
+
 Observe all actual response statuses and headers. Next.js streamed not-found
 pages may have HTTP 200 while showing a not-found UI with `noindex`;
 **record both**. A fully server-returned private API 404 is different.
