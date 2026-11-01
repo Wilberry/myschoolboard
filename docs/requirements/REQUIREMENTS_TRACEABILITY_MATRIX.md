@@ -1,8 +1,47 @@
 # Requirements Traceability Matrix
 
-## Phase 3 SUB-REQ-001 / PLAT-REQ-001 subscription foundation — 2026-10-31
+## Phase 3 authenticated platform-console browser evidence — 2026-11-01 (SCOPED PARTIAL; NOT ACCEPTED)
 
-**AUTHORED, NOT EXECUTED — PARTIAL.** The cumulative branch adds an immutable
+At application/test SHA
+`55dab6cd659d0200a3db86babbc274c9e5e5d8a8` on
+`verify/pr97-integrated-pupil-workflow`, synthetic Chrome
+`148.0.7778.96` execution passed P3-BR-01..10 and P3-BR-12..13.
+P3-BR-11 is **PARTIAL**: labels, focus, required-field feedback, 2x
+visual-scale and narrow-viewport behavior were observed, but actual 200%
+browser zoom was not established. The tested surface included anonymous
+and school-admin denial, current
+Platform Super Admin console access, catalog/subscription forms, school
+switching, browser history/print/keyboard/responsive behavior and
+route-attributed Flight responses. The optional P3-BR-14 revocation
+browser probe was not run. See the [Phase 3 browser matrix](../quality/PHASE3_PLATFORM_BROWSER_ACCEPTANCE.md)
+for exact route/cache observations and the instrumentation corrections.
+
+- **PLAT-REQ-001 / SUB-REQ-001:** positive operator-console observations
+  support only the implemented plan-revision and explicit subscription
+  subset. Billing, automatic expiry, entitlement enforcement, complete
+  lifecycle administration and full platform acceptance remain open.
+- **SEC-REQ-001 / TEN-REQ-001 / USR-REQ-001:** anonymous and school-admin
+  route-state Flight denials returned private/no-store responses without
+  protected school/plan markers; authorized operator data was observed
+  only in private/no-store Flight responses. The generic prefetch shell
+  used `s-maxage=31536000` but contained no protected marker. The streamed
+  school-admin document returned HTTP 200 with a 404-style not-found UI
+  and `noindex`; it is not misreported as an HTTP 404. This is scoped
+  synthetic browser evidence, not full authorization, tenant, session or
+  security acceptance.
+- The original private runner recorded 27 PASS / 7 FAIL observations;
+  follow-up exact route-state probes resolved those harness-only failures.
+  The original evidence is retained unchanged. Current-SHA full tests
+  passed 122/122 Node and 327/327 Vitest; migration, lint/build/audit
+  boundaries and remaining limitations are recorded in the
+  [cumulative acceptance ledger](../quality/PHASE1_7_CUMULATIVE_ACCEPTANCE_LEDGER.md).
+
+No requirement status changes to complete. Phase 3 remains PARTIAL and
+Phase 1–7 remains NOT ACCEPTED.
+
+## Phase 3 SUB-REQ-001 / PLAT-REQ-001 subscription foundation — 2026-10-31 (authored checkpoint; current execution above)
+
+**AUTHORED AT THIS CHECKPOINT — PARTIAL.** The cumulative branch adds an immutable
 `PlatformPlanRevision` catalog (explicit version, feature list, nullable
 advisory limits, current platform operator, reason/time), school-owned
 `SchoolSubscriptionPeriod` with half-open UTC windows and SQL-serialized
@@ -11,8 +50,9 @@ Additive migration `20261101000000_phase3_platform_subscriptions` is **#37**;
 earlier 36-migration evidence remains historical and not a pass for this
 new schema. New policy and authenticated DB/route/concurrency/audit tests
 are authored. Historical SQL/role/tenant protections remain unchanged.
-No payments, automatic expiry, school activation, real entitlement
-enforcement, platform UI or production identity rollout are introduced.
+The current implementation includes a scoped platform operator console;
+no payments, automatic expiry, real entitlement enforcement or production
+identity rollout is introduced.
 The full SUB-REQ-001 and PLAT-REQ-001 completion criteria are **NOT MET**.
 
 ## Authenticated pupil browser evidence — 2026-10-31 (scoped; NOT ACCEPTED)

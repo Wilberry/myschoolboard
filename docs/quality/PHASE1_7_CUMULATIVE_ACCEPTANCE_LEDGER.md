@@ -1,6 +1,64 @@
 # Phase 1–7 cumulative acceptance ledger
 
-## Phase 3 browser fixture preparation — 2026-11-01 (AUTHORED, UNEXECUTED)
+## Phase 3 authenticated platform-console browser acceptance — 2026-11-01 (SCOPED PARTIAL; NOT ACCEPTED)
+
+**Application/test SHA:** `55dab6cd659d0200a3db86babbc274c9e5e5d8a8`
+on `verify/pr97-integrated-pupil-workflow`. **Fixture-source SHA:**
+`1f2a58cb8ce00275ea0e9db6c4ca12711ca00993`. Synthetic run
+`p3b-b81242077a`, Chrome `148.0.7778.96`.
+
+Cases P3-BR-01..13 were executed for the scoped `/platform` console at
+the application/test SHA above. P3-BR-01..10 and P3-BR-12..13 passed;
+P3-BR-11 is **PARTIAL** because labels, focus, required-field feedback,
+2x visual-scale and narrow-viewport behavior passed, but actual 200%
+browser zoom was not established. Observations also covered anonymous
+and school-admin denial, operator school/plan access, plan and
+subscription-period writes, overlap/adjacency, school switching,
+print/history/duplicate tabs, sign-out and route-attributed Flight
+responses. The streamed school-admin `/platform` document was HTTP 200
+with a 404-style not-found title and `noindex`; it is not recorded as an
+HTTP 404. The optional P3-BR-14 server-side operator revocation browser
+probe was not run.
+
+The first private browser runner output recorded 27 PASS and 7 FAIL entries.
+The seven failures were harness limitations, not application assertions:
+the anonymous RSC probe supplied an empty route-state header and got HTTP
+500; five Flight bodies were unavailable through the original CDP body
+retrieval; and the school-admin probe could not derive the route-state
+header. That original evidence file remains unchanged. Follow-up probes
+replayed the actual route state captured from operator navigation:
+anonymous and school-admin Flight responses were HTTP 200
+`text/x-component`, private/no-store, and contained zero protected school
+or plan markers; the content-bearing operator response was private/no-store
+and contained both expected synthetic school markers and the operator
+heading. A separate 215-byte shared-cache prefetch shell had
+`s-maxage=31536000` and zero protected markers. No cache or authorization
+policy was changed. Sanitized follow-up evidence is retained privately;
+the browser runbook records the detailed observations.
+
+At this same application/test SHA, the disposable PostgreSQL 17 target had
+passed its read-only preflight and **37/37** migration checksum verification
+before the browser run. No migration deployment or database reset was
+performed for browser testing; synthetic plan/subscription history was
+added through the authorized UI/API.
+
+Fresh full validation at `55dab6cd659d0200a3db86babbc274c9e5e5d8a8`
+passed **122/122 Node tests** and **327/327 Vitest tests across 39 files**,
+with no skips or failures. Prettier, ESLint, TypeScript, production build,
+`npm audit --audit-level=high`, full `npm audit`, and `git diff --check`
+passed; both audits reported **0 vulnerabilities**. These are current-SHA
+results and do not replace or get conflated with the historical **117/117
+Node** and **327/327 Vitest** results at `e249955e64fafe5887a536074f8547ff25d3584f`.
+
+**Status:** current-SHA engineering gates passed; scoped browser
+acceptance remains PARTIAL pending actual 200% browser zoom and the
+optional P3-BR-14 probe.
+PLAT-REQ-001, SUB-REQ-001, SEC-REQ-001, TEN-REQ-001 and USR-REQ-001 remain
+**PARTIAL**; P3-BR-14 and broader platform lifecycle, entitlement, billing,
+accessibility and release acceptance remain open. Phase 1–7 overall remains
+**NOT ACCEPTED**. See the [Phase 3 browser matrix](PHASE3_PLATFORM_BROWSER_ACCEPTANCE.md).
+
+## Phase 3 browser fixture preparation — 2026-11-01 (HISTORICAL CHECKPOINT: AUTHORED, UNEXECUTED)
 
 At documented checkpoint `9930e298b4ad6199d23195bd4daea055206f6a5e`,
 the locally reported Phase 3 migration (37/37), focused 19/19,

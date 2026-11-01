@@ -50,8 +50,12 @@ target; complete automated gates and remaining browser/policy gaps are
 recorded in the [acceptance ledger](../quality/PHASE1_7_CUMULATIVE_ACCEPTANCE_LEDGER.md).
 See the
 [Phase 3 acceptance runbook](../quality/PHASE3_SUBSCRIPTIONS_ACCEPTANCE.md)
-for the exact tests and deployment restrictions. No production-browser pass
-is claimed for this code.
+for the exact tests and deployment restrictions. Scoped authenticated
+Chrome browser acceptance of the compiled console passed at application SHA
+`55dab6cd659d0200a3db86babbc274c9e5e5d8a8`; this is local nonproduction
+evidence, not a production deployment or production-browser test. Broader
+platform administration and full UI/accessibility acceptance remain open;
+actual 200% browser zoom remains unverified (P3-BR-11).
 
 ## Platform-only subscription observation — automated gates passed
 
@@ -63,8 +67,11 @@ counts. Current-plan quotas are advisory only; null means unspecified,
 not paid. No individual pupil or staff data is returned. The console labels
 billing NOT_TRACKED and entitlement enforcement NOT_ENABLED; a CURRENT
 subscription never reactivates a suspended school. Migration and automated
-database tests passed on the disposable PostgreSQL target; production-browser
-and full UI/accessibility acceptance remain open. See the acceptance ledger.
+database tests passed on the disposable PostgreSQL target. The scoped local
+browser run verified operator status reads and school switching; broader
+platform administration, actual 200% browser zoom and full
+UI/accessibility acceptance remain open.
+See the acceptance ledger.
 
 ## Phase 3 immutable plan catalog and subscription periods (2026-10-31)
 

@@ -1,11 +1,82 @@
 # Phase 3 authenticated platform-console browser acceptance
 
-**Status:** TEST PLAN AUTHORED, NOT EXECUTED. This is an extension of
-[Phase 3 acceptance](PHASE3_SUBSCRIPTIONS_ACCEPTANCE.md) at the existing
-Phase 1–7 integration branch/PR #98. The 37/37 migration, 117/117 Node
-tests, 327/327 Vitest tests and production-build/audit passes at code
-`e249955e64fafe5887a536074f8547ff25d3584f` remain historical
-evidence; this new fixture tool is not covered by those exact-SHA runs.
+**Status:** EXECUTED — P3-BR-01..10 and P3-BR-12..13 passed at
+`55dab6cd659d0200a3db86babbc274c9e5e5d8a8`; P3-BR-11 is **PARTIAL**
+because actual 200% browser zoom was not established. This is scoped
+browser evidence only; Phase 3 and Phase 1–7 remain open.
+The earlier 37/37 migration, 117/117 Node tests, 327/327 Vitest tests
+and production-build/audit passes at
+`e249955e64fafe5887a536074f8547ff25d3584f` remain historical evidence.
+
+## Execution record — 2026-11-01
+
+- Branch: `verify/pr97-integrated-pupil-workflow`.
+- Application/test SHA: `55dab6cd659d0200a3db86babbc274c9e5e5d8a8`.
+- Fixture-source SHA: `1f2a58cb8ce00275ea0e9db6c4ca12711ca00993`.
+- Synthetic run: `p3b-b81242077a`; browser: Chrome `148.0.7778.96`.
+- The existing disposable PostgreSQL 17 target had already passed the
+  read-only target guard and exact **37/37** migration checksum check at
+  this SHA. No migration deployment or database reset was performed for
+  this browser run. The browser matrix added synthetic plan/subscription
+  history through the authorized operator UI/API only.
+- Cases P3-BR-01..13 were executed; P3-BR-01..10 and P3-BR-12..13
+  passed. P3-BR-11's labels, focus, required-field feedback, narrow
+  viewport and 2x visual-scale observations passed, but that scale change
+  did not establish actual browser zoom at 200%; this subcriterion remains
+  open. P3-BR-14, the optional operator-role-revocation browser probe,
+  was not run.
+- The first private browser result file contains 27 PASS and 7 FAIL
+  entries. All seven failures were probe instrumentation limitations:
+  one anonymous Flight request used an empty route-state header and
+  returned HTTP 500; five Flight response bodies were not retained by
+  CDP; and the school-admin probe could not derive a route-state header.
+  The original file is preserved unchanged. Follow-up requests replayed
+  the actual route-state captured from the operator's `/platform`
+  navigation. Anonymous and school-admin responses were private/no-store
+  and contained no synthetic school or plan markers. The operator's
+  content-bearing response was private/no-store and contained the
+  expected operator heading and both synthetic school markers.
+- A separate route-attributed prefetch shell returned HTTP 200,
+  `text/x-component`, `s-maxage=31536000`, and a 215-byte body with no
+  protected school or plan markers. Protected console data was observed
+  only in private/no-store responses. No cache policy or authorization
+  behavior was changed to obtain these results.
+- The anonymous invalid probe is not a route failure: its empty
+  `Next-Router-State-Tree` was produced by selecting a prefetch response
+  that had no route-state header. With the actual captured route state,
+  anonymous Flight returned HTTP 200 `text/x-component`,
+  `private, no-cache, no-store, max-age=0, must-revalidate`, with no
+  protected markers. The streamed school-admin document remained HTTP
+  200 with a 404-style not-found title and `noindex`; it is not reported
+  as an HTTP 404.
+
+| Case | Result | Observed outcome |
+| --- | --- | --- |
+| P3-BR-01 | PASS | Anonymous HTML, print, history and route-state Flight contained no protected names; fresh route-state Flight was private/no-store. |
+| P3-BR-02 | PASS | All three anonymous GET APIs returned 401/private/no-store without school metadata. |
+| P3-BR-03 | PASS | School admin had no platform link/data; streamed `/platform` was HTTP 200 with 404-style UI and `noindex`. |
+| P3-BR-04 | PASS | Five unauthorized GET/POST probes returned generic 404/private/no-store; no mutation was observed. |
+| P3-BR-05 | PASS | Platform operator saw the platform link, console heading and both synthetic schools. |
+| P3-BR-06 | PASS | Catalog and school status reads were 200/private/no-store, aggregate-only, with PENDING and SUSPENDED states distinct. |
+| P3-BR-07 | PASS | Operator form created and reread a plan revision; validation controls were also exercised. |
+| P3-BR-08 | PASS | Operator created an explicit subscription period; school remained PENDING/inactive. |
+| P3-BR-09 | PASS | Overlap returned 409/private/no-store; adjacent period returned 201; no overlapping history was added. |
+| P3-BR-10 | PASS | Switching schools showed no stale School A subscription observation for School B. |
+| P3-BR-11 | PARTIAL | Labels, keyboard focus, required-field feedback, 2x visual scale and narrow-screen no-overflow were observed; actual 200% browser zoom was not verified. |
+| P3-BR-12 | PASS | Print/history/duplicate-tab observations were captured; after sign-out fresh access returned to sign-in, APIs denied access, and Back/Forward disclosed no fresh protected response. |
+| P3-BR-13 | PASS | Route-attributed Flight evidence separated the generic shared-cache shell from private/no-store operator and denial payloads. |
+
+At this exact SHA, fresh `npm test` passed **122/122 Node tests** and
+**327/327 Vitest tests across 39 files**, with no skips or failures.
+Prettier, ESLint, TypeScript, production build,
+`npm audit --audit-level=high`, full `npm audit`, and `git diff --check`
+passed; both audits reported **0 vulnerabilities**. These current-SHA
+results are distinct from the earlier historical 117/327 suite at
+`e249955`. P3-BR-11's unverified browser-zoom subcriterion and full local validation
+do not complete
+The unverified zoom subcriterion and these scoped browser/engineering
+results do not complete PLAT-REQ-001, SUB-REQ-001, SEC-REQ-001,
+TEN-REQ-001, USR-REQ-001 or Phase 1–7 acceptance.
 
 ## Purpose and scope
 
@@ -105,7 +176,8 @@ without capturing raw cookies, auth headers, student data or full HARs.
 
 ## Required browser acceptance matrix
 
-All tests below are **PENDING** at this code checkpoint.
+The following matrix defines the required observations; execution
+outcomes for the exact SHA above are recorded in the table above.
 
 | Case | Actor and action | Required browser/HTTP observation |
 | --- | --- | --- |

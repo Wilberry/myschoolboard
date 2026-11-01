@@ -22,9 +22,9 @@ Existing schools are **not** assigned a guessed lifecycle history: `lifecycleSta
 
 The platform lifecycle and authorization implementation has database-backed integration coverage in the locally executed cumulative Phase 1–7 test suite. The latest Phase 3 disposable-DB checkpoint passed all 37 migrations, 117 Node tests, 327 Vitest tests, build, format, lint, TypeScript and both audits at code SHA `e249955e64fafe5887a536074f8547ff25d3584f`. This is tested Phase 3 **subset** evidence, not full onboarding, subscription, support, metrics, retention or browser acceptance.
 
-## Platform operator subscription console — database-tested, browser pending
+## Platform operator subscription console — database-tested; scoped browser evidence
 
-The `/platform` route uses a React Suspense boundary around a server-side Platform Super Admin check and an actor-row-locked, serializable school read capped at 100 records. The generic prerendered fallback contains no school data; production build passed, but actual HTTP/Flight cache and browser privacy still require verification.
+The `/platform` route uses a React Suspense boundary around a server-side Platform Super Admin check and an actor-row-locked, serializable school read capped at 100 records. The generic prerendered fallback contains no school data. Production build and scoped HTTP/Flight cache and browser privacy checks passed at application SHA `55dab6cd659d0200a3db86babbc274c9e5e5d8a8`.
 The `PlatformSubscriptionEditor` records immutable plan revisions and
 explicit school subscription periods via separately authorized private
 GET/POST endpoints. Closed/unclassified schools cannot be selected for
@@ -32,19 +32,24 @@ a new period. All forms include explicit labels, reasons and a distinct
 message confirming that no payment, school activation or quota permission
 changed. A second actor/role check inside each API transaction remains
 required irrespective of UI navigation. Historical periods are viewed,
-never overwritten. No production rollout or full platform administration
-or authenticated-browser acceptance has occurred; see
+never overwritten. Chrome 148 browser acceptance verified the scoped
+console, role denials, responsive layout and route-attributed Flight
+behavior. Actual 200% browser zoom remains unverified (P3-BR-11);
+no production rollout or full platform administration acceptance has
+occurred; see
 [Phase 3 acceptance](../quality/PHASE3_SUBSCRIPTIONS_ACCEPTANCE.md).
 
-## Read-only subscription status — database-tested, browser pending
+## Read-only subscription status — database-tested; scoped browser evidence
 
 The operator page includes a private exact-school subscription snapshot:
 CURRENT/UPCOMING/ENDED/NONE status, active school lifecycle and school-scoped
 aggregate pupil/staff counts compared with advisory current-plan ceilings.
 No student/staff identities, paid-status inference, quota enforcement or
 school access change. Authenticated route/database integration tests passed
-as part of the Phase 3 checkpoint at `e249955`; production browser and
-accessibility checks remain pending. See the
+as part of the Phase 3 checkpoint at `e249955`; the scoped Chrome browser
+run verified operator status reads and school switching. Actual 200%
+browser zoom and broader accessibility and production acceptance remain
+pending. See the
 [Phase 3 browser matrix](../quality/PHASE3_PLATFORM_BROWSER_ACCEPTANCE.md).
 
 ## Hard boundaries
