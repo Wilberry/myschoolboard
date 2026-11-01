@@ -305,6 +305,26 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
     ).toBe(0);
   });
 
+  it("rejects direct database links to memberships in another school", async () => {
+    const foreign = await prisma.membership.findUniqueOrThrow({
+      where: {
+        schoolId_userId: { schoolId: schoolB, userId: userIds.otherAdmin },
+      },
+    });
+    await expect(
+      prisma.guardianStudentLink.create({
+        data: {
+          schoolId: schoolA,
+          studentId: studentA,
+          guardianMembershipId: foreign.id,
+          attestedByMembershipId: adminMembershipId,
+          attestedByUserId: userIds.admin,
+          attestationReason: "Forged cross-school family relationship",
+        },
+      }),
+    ).rejects.toThrow();
+  });
+
   it("a role, matching identifier or unknown link cannot confer relationship", async () => {
     expect(await currentRelationship("guardian")).toBe(false);
     expect(await currentRelationship("teacher")).toBe(false);
@@ -377,6 +397,33 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
       });
     }
     expect(await currentRelationship("guardian")).toBe(true);
+
+    await prisma.school.update({
+      where: { id: schoolA },
+      data: { isActive: false },
+    });
+    try {
+      expect(await currentRelationship("guardian")).toBe(false);
+    } finally {
+      await prisma.school.update({
+        where: { id: schoolA },
+        data: { isActive: true },
+      });
+    }
+
+    await prisma.schoolSection.update({
+      where: { id: sectionA },
+      data: { isActive: false },
+    });
+    try {
+      expect(await currentRelationship("guardian")).toBe(false);
+    } finally {
+      await prisma.schoolSection.update({
+        where: { id: sectionA },
+        data: { isActive: true },
+      });
+    }
+    expect(await currentRelationship("guardian")).toBe(true);
   });
 
   it("does not permit direct updates or deletions of attested history", async () => {
@@ -403,6 +450,17 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
   });
 
   it("revokes once, preserves the original record, and denies resurrection", async () => {
+    await expect(
+      prisma.guardianStudentLinkRevocation.create({
+        data: {
+          schoolId: schoolA,
+          linkId,
+          actorMembershipId: teacherMembershipId,
+          actorUserId: userIds.teacher,
+          reason: "Forged guardian revocation from teacher role",
+        },
+      }),
+    ).rejects.toThrow();
     expect((await revoke("teacher")).status).toBe(404);
     expect((await revoke("otherAdmin")).status).toBe(404);
     const result = await revoke("admin");
