@@ -532,6 +532,14 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
     });
     expect(ended.status).toBe("ENDED");
     expect(ended.endedAt).not.toBeNull();
+
+    // Withdrawal must suppress eligibility without erasing attestation history.
+    const historicalLink = await prisma.guardianStudentLink.findFirstOrThrow({
+      where: { schoolId: schoolA, studentId: studentWithdrawal },
+      include: { revocation: true },
+    });
+    expect(historicalLink.revocation).toBeNull();
+    expect(historicalLink.guardianMembershipId).toBe(guardianMembershipId);
   });
 
   it("does not permit direct updates or deletions of attested history", async () => {
