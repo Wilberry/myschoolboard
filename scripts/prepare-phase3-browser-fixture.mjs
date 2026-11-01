@@ -28,11 +28,22 @@ function command(executable, args) {
 function assertExactDocker() {
   const context = command("docker", ["context", "show"]);
   const endpoint = command("docker", [
-    "context", "inspect", context, "--format", "{{.Endpoints.docker.Host}}",
+    "context",
+    "inspect",
+    context,
+    "--format",
+    "{{.Endpoints.docker.Host}}",
   ]);
   const ids = command("docker", [
-    "compose", "--profile", "test", "ps", "-q", "postgres-test",
-  ]).split("\n").filter(Boolean);
+    "compose",
+    "--profile",
+    "test",
+    "ps",
+    "-q",
+    "postgres-test",
+  ])
+    .split("\n")
+    .filter(Boolean);
   if (ids.length !== 1 || !/^[a-f0-9]{12,64}$/i.test(ids[0])) {
     throw new Error("Exactly one matching local test container required");
   }
@@ -108,7 +119,12 @@ async function main() {
             lifecycleStatus: "PENDING",
             isActive: false,
           },
-          select: { id: true, slug: true, lifecycleStatus: true, isActive: true },
+          select: {
+            id: true,
+            slug: true,
+            lifecycleStatus: true,
+            isActive: true,
+          },
         });
         const b = await tx.school.create({
           data: {
@@ -117,7 +133,12 @@ async function main() {
             lifecycleStatus: "SUSPENDED",
             isActive: false,
           },
-          select: { id: true, slug: true, lifecycleStatus: true, isActive: true },
+          select: {
+            id: true,
+            slug: true,
+            lifecycleStatus: true,
+            isActive: true,
+          },
         });
         const membership = await tx.membership.create({
           data: {
@@ -137,20 +158,23 @@ async function main() {
     ) {
       throw new Error("Synthetic fixture role verification failed");
     }
-    console.info(JSON.stringify({
-      event: "phase3_synthetic_browser_fixture_ready",
-      runId: fixture.runId,
-      testedCommit: commit,
-      migrationCount,
-      schools: result.schools,
-      accounts: {
-        platform: fixture.operatorEmail,
-        schoolAdmin: fixture.schoolAdminEmail,
-      },
-      password: "Stored in private PHASE3_BROWSER_PASSWORD only",
-      nextStep: "Run browser checks; write plan/periods only through authorized UI",
-      acceptance: "FIXTURE_ONLY_NOT_BROWSER_ACCEPTED",
-    }));
+    console.info(
+      JSON.stringify({
+        event: "phase3_synthetic_browser_fixture_ready",
+        runId: fixture.runId,
+        testedCommit: commit,
+        migrationCount,
+        schools: result.schools,
+        accounts: {
+          platform: fixture.operatorEmail,
+          schoolAdmin: fixture.schoolAdminEmail,
+        },
+        password: "Stored in private PHASE3_BROWSER_PASSWORD only",
+        nextStep:
+          "Run browser checks; write plan/periods only through authorized UI",
+        acceptance: "FIXTURE_ONLY_NOT_BROWSER_ACCEPTED",
+      }),
+    );
   } finally {
     await prisma.$disconnect();
   }
@@ -158,10 +182,12 @@ async function main() {
 
 main().catch((error) => {
   // Error objects may contain connection strings or cookies. Never print.
-  console.error(JSON.stringify({
-    event: "phase3_synthetic_browser_fixture_blocked",
-    errorType: error instanceof Error ? error.name : "unknown",
-    warning: "Do not rerun a partially created fixture; use a fresh run ID",
-  }));
+  console.error(
+    JSON.stringify({
+      event: "phase3_synthetic_browser_fixture_blocked",
+      errorType: error instanceof Error ? error.name : "unknown",
+      warning: "Do not rerun a partially created fixture; use a fresh run ID",
+    }),
+  );
   process.exitCode = 1;
 });
