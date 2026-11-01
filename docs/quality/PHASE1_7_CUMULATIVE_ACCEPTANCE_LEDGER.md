@@ -1,5 +1,18 @@
 # Phase 1–7 cumulative acceptance ledger
 
+## Owner-approved development integration decision — 2026-11-01
+
+**Disposition: LOCALLY VERIFIED IMPLEMENTATION CHECKPOINT APPROVED FOR DEVELOPMENT `main` INTEGRATION; FULL FUNCTIONAL/RELEASE ACCEPTANCE REMAINS OPEN.** The owner directed that GitHub Actions runner/build-infrastructure failures are not a merge gate: only reproducible local CI-equivalent verification counts. See [D-051](../project/DECISION_LOG.md).
+
+- Exact local application SHA: `55dab6cd659d0200a3db86babbc274c9e5e5d8a8`. Passed 37/37 migration checksums against the guarded disposable database, 122/122 Node, 327/327 Vitest across 39 files, formatting, lint, TypeScript, production build, strict and complete audits with zero reported vulnerabilities. Subsequent changes through the original integration branch head were documentation-only, not new runtime changes.
+- Synthetic Chrome role/privacy evidence P3-BR-01..10 and P3-BR-12..13 passed for the **implemented** operator console. P3-BR-11 actual Chrome 200% zoom is still unverified; the optional P3-BR-14 server-side role revocation browser probe has not run. The broader Phase 1–7 browser matrix remains partial.
+- Accepted scope is **code integration**, not full product functionality: Phase 3 entitlement/billing/automatic expiry/full administration, Phase 4 complete admissions/promotion/transfer/graduation, Phase 7 student-facing CBT and remaining accessibility/authorization workflows are still explicitly tracked as unfinished. No feature requirement is reclassified to COMPLETE by this decision.
+- Main remains a development integration branch; no production deployment, real-money, email-provider rollout or shared-data migration is approved. Do not reframe locally successful automated checks as proof of missing product flows. Future changes must pass their own local acceptance gates.
+- PR #98's original base was the stacked Phase 1–7 fixture branch; to integrate the full cumulative ancestry, its target must be reviewed against `main` rather than just the final 51-file stacked PR patch. Phase 8/9 implementation is out of this merge.
+
+**GitHub Actions status:** hosted CI is known unreliable due to infrastructure and is not required for this **owner-approved development integration**; no failed local security, audit, application build, PostgreSQL or test gate is waived.
+
+
 ## Phase 3 browser zoom closure protocol — 2026-11-01 (PENDING)
 
 P3-BR-11 remains PARTIAL at the exact verified application code SHA
