@@ -6,6 +6,22 @@ partial Phase 3 acceptance, not financial gateway approval or production
 release. Exact commit-level results and open gaps are recorded in the
 [cumulative acceptance ledger](PHASE1_7_CUMULATIVE_ACCEPTANCE_LEDGER.md).
 
+## Next acceptance gate — authenticated platform browser
+
+The disposable PostgreSQL migration and automated gates **passed** at
+application code SHA `e249955e64fafe5887a536074f8547ff25d3584f`.
+The next independent acceptance task is
+[Phase 3 platform browser security and accessibility verification](PHASE3_PLATFORM_BROWSER_ACCEPTANCE.md).
+A deliberately separate test-only fixture preparation command and opt-in
+policy are now authored on the existing branch. They create **only**
+fresh synthetic platform/school-admin actors on the exact verified
+disposable DB, and will not execute without an explicit local write flag.
+They are **not yet locally tested or executed**. Do not reuse the older
+117/327 test results to claim coverage of these new files; rerun focused
+source-policy, formatting, lint and TypeScript gates before provisioning
+any fixture. The new code makes no payment, school activation or
+entitlement-enforcement changes.
+
 ## What this checkpoint adds
 
 - Append-only, global catalog of versioned Platform Super Admin plan revisions,
