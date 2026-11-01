@@ -23,6 +23,7 @@ const subscriptionStatusRoute = file(
   "app/api/platform/schools/[schoolId]/subscription-status/route.ts",
 );
 const subscriptionPolicy = file("src/modules/platform/subscription-policy.ts");
+const globalStyles = file("app/globals.css");
 
 test("preflight validates pending SQL shape before connecting to PostgreSQL", () => {
   assert.match(
@@ -84,6 +85,11 @@ test("operator page and forms revalidate role before reading any school data", (
   );
   assert.match(operatorEditor, /credentials: "same-origin"/);
   assert.match(operatorEditor, /cache: "no-store"/);
+  assert.match(operatorEditor, /school-card platform-subscription-card/);
+  assert.match(
+    globalStyles,
+    /\.platform-subscription-card select\s*\{[^}]*width: 100%;[^}]*max-width: 100%;[^}]*min-width: 0;/,
+  );
   assert.match(operatorEditor, /type="datetime-local"/);
   assert.match(homePage, /platformActor\?\.platformRole === "SUPER_ADMIN"/);
   assert.match(homePage, /href="\/platform"/);

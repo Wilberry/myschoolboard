@@ -220,7 +220,10 @@ export function PlatformSubscriptionEditor({ schools }: { schools: School[] }) {
 
   return (
     <>
-      <section className="school-card" aria-labelledby="plan-revision-heading">
+      <section
+        className="school-card platform-subscription-card"
+        aria-labelledby="plan-revision-heading"
+      >
         <h2 id="plan-revision-heading">Create immutable plan revision</h2>
         <p>
           Reusing a plan code creates the next version. Earlier versions and
@@ -324,7 +327,7 @@ export function PlatformSubscriptionEditor({ schools }: { schools: School[] }) {
       </section>
 
       <section
-        className="school-card"
+        className="school-card platform-subscription-card"
         aria-labelledby="subscription-period-heading"
       >
         <h2 id="subscription-period-heading">

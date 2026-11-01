@@ -562,3 +562,9 @@ h1 {
 .lesson-workspace .setup-panel button + button {
   margin-top: 8px;
 }
+
+.platform-subscription-card select {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
