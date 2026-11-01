@@ -1,5 +1,12 @@
 # Current Status
 
+## Development-main integration disposition — 2026-11-01
+
+**Owner-approved, local-checkpoint scope:** integrate the locally tested Phase 1–7 baseline as the next development `main` milestone. See [D-051](../project/DECISION_LOG.md) and the [acceptance ledger](../quality/PHASE1_7_CUMULATIVE_ACCEPTANCE_LEDGER.md). The `55dab6c` source passed 37/37 migrations, 122 Node and 327 Vitest, build, lint, typecheck, formatting, and full/strict zero-vulnerability audits; subsequent source-head differences before integration were documentation-only. Hosted GitHub Actions infrastructure failures do **not** override this local test evidence.
+
+**Not complete:** Phase 3 paid subscription/entitlement enforcement and broader management, Phase 4 full admissions/student lifecycle, Phase 7 student-facing CBT and some mandatory Chrome accessibility/role cases. These requirements remain PARTIAL and remain in roadmap order. This is a development code integration decision, **not** a production release or a claim that Phases 1–7 are functionally finished. Continue focused implementation/testing on non-default branches; retain the unmodified security and privacy gates.
+
+
 ## Phase 3 operator-only subscription status — 2026-10-31 (AUTHORED, UNVERIFIED)
 
 A private Platform Super Admin-only status endpoint and console now observe
