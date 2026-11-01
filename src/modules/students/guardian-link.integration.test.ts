@@ -29,6 +29,7 @@ const studentA = `guardian-student-${tag}`;
 const studentUnenrolled = `guardian-no-enrollment-${tag}`;
 const studentEnded = `guardian-ended-${tag}`;
 const studentWithdrawal = `guardian-withdrawal-${tag}`;
+const studentConcurrent = `guardian-concurrent-${tag}`;
 const password = "synthetic-guardian-relationship-test-42";
 const emails = {
   admin: `guardian-admin-${tag}@example.test`,
@@ -201,6 +202,14 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
           familyName: "Withdrawn",
           status: "ENROLLED",
         },
+        {
+          id: studentConcurrent,
+          schoolId: schoolA,
+          admissionNumber: `G-C-${tag}`.toUpperCase(),
+          givenName: "Concurrent",
+          familyName: "Revocation",
+          status: "ENROLLED",
+        },
       ],
     });
     await prisma.studentEnrollment.createMany({
@@ -219,6 +228,13 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
           classId: classA,
           status: "ENDED",
           endedAt: new Date(),
+        },
+        {
+          schoolId: schoolA,
+          studentId: studentConcurrent,
+          sessionId: sessionA,
+          classId: classA,
+          status: "ACTIVE",
         },
       ],
     });
@@ -563,6 +579,46 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
         where: { schoolId: schoolA, studentId: studentEnded },
       }),
     ).toBe(0);
+  });
+
+  it("never double-revokes under concurrent authenticated requests", async () => {
+    const created = await create("admin", {
+      ...attestation(),
+      studentId: studentConcurrent,
+    });
+    expect(created.status).toBe(201);
+    const concurrentLinkId = (await created.json()).link.id as string;
+    expect(await currentRelationship("guardian", studentConcurrent)).toBe(true);
+
+    const attempts = await Promise.all([
+      revoke("admin", concurrentLinkId),
+      revoke("admin", concurrentLinkId),
+    ]);
+    const statuses = attempts.map((response) => response.status).sort();
+    expect([statuses[0], statuses[1]]).toEqual(
+      expect.arrayContaining([201]),
+    );
+    expect(statuses.filter((status) => status === 201)).toHaveLength(1);
+    expect(statuses.every((status) => [201, 404, 409].includes(status))).toBe(
+      true,
+    );
+    for (const response of attempts) {
+      expect(response.headers.get("cache-control")).toBe("private, no-store");
+    }
+    expect(
+      await prisma.guardianStudentLinkRevocation.count({
+        where: { schoolId: schoolA, linkId: concurrentLinkId },
+      }),
+    ).toBe(1);
+    expect(await currentRelationship("guardian", studentConcurrent)).toBe(
+      false,
+    );
+    const original = await prisma.guardianStudentLink.findUniqueOrThrow({
+      where: { id: concurrentLinkId },
+      select: { studentId: true, revocation: { select: { id: true } } },
+    });
+    expect(original.studentId).toBe(studentConcurrent);
+    expect(original.revocation).not.toBeNull();
   });
 
   it("revokes once, preserves the original record, and denies resurrection", async () => {
