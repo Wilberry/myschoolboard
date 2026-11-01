@@ -456,6 +456,29 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
     expect(await currentRelationship("guardian", studentA, schoolB)).toBe(false);
   });
 
+  it("rechecks the administrator role before reading or revoking stored links", async () => {
+    await prisma.membership.update({
+      where: { id: adminMembershipId },
+      data: { role: "TEACHER" },
+    });
+    try {
+      expect((await list("admin")).status).toBe(404);
+      expect((await revoke("admin")).status).toBe(404);
+      expect(
+        await prisma.guardianStudentLinkRevocation.count({
+          where: { schoolId: schoolA, linkId },
+        }),
+      ).toBe(0);
+    } finally {
+      await prisma.membership.update({
+        where: { id: adminMembershipId },
+        data: { role: "SCHOOL_ADMIN" },
+      });
+    }
+    expect((await list("admin")).status).toBe(200);
+    expect(await currentRelationship("guardian")).toBe(true);
+  });
+
   it("rechecks current guardian membership, school and section instead of trusting history", async () => {
     await prisma.membership.update({
       where: { id: guardianMembershipId },
