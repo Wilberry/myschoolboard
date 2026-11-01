@@ -52,6 +52,66 @@ and selected pupil privacy browser checks passed. Separate later guard and
 browser evidence is recorded on the acceptance matrix. These runs are
 **historical**, not passes for the new migration #37 or operator console.
 
+## Tmpfs container absent or stopped — two safe migration paths
+
+A stopped or missing `postgres-test` container is **not** evidence that the
+36 historical migrations are still present. Its PostgreSQL data directory
+is tmpfs, and stopping/removing the container can erase the whole schema.
+Never recreate a shared database or call `db:reset`, `db:seed`,
+`docker compose down`, `docker rm`, or `docker volume prune` to force a pass.
+
+First inspect the exact worktree and Docker service without modification:
+
+~~~sh
+cd ~/Desktop/project/myschoolboard-format || exit 1
+git status --short --branch
+docker context show
+docker compose --profile test ps -a postgres-test
+docker ps --filter publish=5434 --format '{{.ID}} {{.Names}} {{.Ports}}'
+~~~
+
+If port 5434 belongs to an unrelated container or service, stop and
+investigate; never kill or recreate that container. When the port is free
+and the worktree is clean, start only the configured test service, not
+the normal development database:
+
+~~~sh
+docker compose --profile test up -d --no-deps --no-recreate postgres-test
+docker compose --profile test ps postgres-test
+~~~
+
+The exact Docker test-target assertion must still succeed: local Unix
+socket, image `postgres:17-alpine`, matching Compose worktree/service
+labels, healthy, loopback-only `127.0.0.1:5434`, tmpfs under
+`/var/lib/postgresql/data`, no host-data bind.
+
+With the existing private test configuration loaded, use **exactly one**
+read-only preflight based on database state:
+
+- **Previously migrated; 36 historical applied migrations:**
+  `npm run verify:phase3:migration-preflight` requires 36 exact matching
+  checksums and only migration #37 pending.
+- **Truly fresh empty tmpfs database:** run
+  `npm run verify:phase3:empty-bootstrap-preflight`. This distinct guard
+  checks the same exact Git SHA, Docker ownership, URL/role and pending
+  SQL, plus 37 valid local migration files and a read-only catalog
+  inspection showing **zero** nonsystem relations and no unknown schemas.
+  It rejects any Prisma migration table, school/pupil data, unknown schema
+  or wrong database user.
+
+Do **not** use the fresh-empty route to bypass a failed historical
+checksum or unknown database contents. Never run `db:deploy` until one of
+the *mutually exclusive* preflights passes. On the previously migrated
+target, the deployment must add only #37; on a certified completely
+empty target, it will apply the original 37 migrations from scratch.
+
+Then use `npm run verify:migration-checksums` to require 37/37 exact
+applied hashes, followed by current-SHA focused and full integration
+tests. The fresh preflight intentionally fails once migrations exist.
+Neither preflight is a substitute for successful PostgreSQL SQL execution,
+and no preflight itself writes to the database. If neither path passes,
+record the blocker and do not mutate the database.
+
 ## Exact local procedure — **only** the established disposable DB
 
 Do not run against a production or shared database. Preserve all other Docker
