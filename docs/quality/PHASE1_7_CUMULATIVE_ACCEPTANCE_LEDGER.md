@@ -1,5 +1,25 @@
 # Phase 1–7 cumulative acceptance ledger
 
+## Phase 3 browser fixture preparation — 2026-11-01 (AUTHORED, UNEXECUTED)
+
+At documented checkpoint `9930e298b4ad6199d23195bd4daea055206f6a5e`,
+the locally reported Phase 3 migration (37/37), focused 19/19,
+full 117/117 Node and 327/327 DB Vitest, build, typecheck, formatting,
+lint and both zero-vulnerability audits passed for code SHA `e249955`.
+Those exact-SHA passes remain accepted as **historical engineering evidence**;
+no rerun is implied.
+
+A separate [Phase 3 browser acceptance matrix](PHASE3_PLATFORM_BROWSER_ACCEPTANCE.md)
+and explicitly gated synthetic actor fixture scripts were subsequently
+authored on the existing PR #98 branch. They require a verified local
+tmpfs PostgreSQL target, 37 exact migrations, clean integration branch,
+new synthetic identities and separate password/write opt-in. They do
+not constitute a browser run, and the new source has **not** passed
+the local Node, format, lint, TypeScript or build gates yet. No
+Phase 3 browser case is newly marked PASS. Remaining browser security,
+quota/entitlement enforcement, billing lifecycle and platform admin
+features keep Phase 3 and cumulative Phase 1–7 acceptance PARTIAL/BLOCKED.
+
 ## Phase 3 disposable-database acceptance — 2026-11-01 (DB/CI GATES PASSED; PARTIAL)
 
 **Final code/test SHA:** `e249955e64fafe5887a536074f8547ff25d3584f`
