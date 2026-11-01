@@ -28,7 +28,7 @@ export function assertPhase3SubscriptionSqlSource(sql) {
     throw new Error("Phase 3 SQL contains missing or duplicated DDL");
   }
   for (const token of [
-    '"code" ~ ' + String.fromCharCode(39) + '^[a-z][a-z0-9]*(-[a-z0-9]+)*$' + String.fromCharCode(39),
+    `"code" ~ '^[a-z][a-z0-9]*(-[a-z0-9]+)*$'`,
     "INTERVAL '1825 days'",
     "count(DISTINCT feature_value)",
     "SchoolSubscriptionPeriod_no_overlap",
