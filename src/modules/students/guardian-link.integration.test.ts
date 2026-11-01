@@ -243,6 +243,22 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
     expect(await prisma.guardianStudentLink.count()).toBe(0);
   });
 
+  it("rejects direct database attestation by an unqualified TEACHER actor", async () => {
+    await expect(
+      prisma.guardianStudentLink.create({
+        data: {
+          schoolId: schoolA,
+          studentId: studentA,
+          guardianMembershipId,
+          attestedByMembershipId: teacherMembershipId,
+          attestedByUserId: userIds.teacher,
+          attestationReason: "Forged identity attestation using teacher role",
+        },
+      }),
+    ).rejects.toThrow();
+    expect(await prisma.guardianStudentLink.count()).toBe(0);
+  });
+
   it("persists exactly one attested same-school relationship with minimal response", async () => {
     const result = await create("admin", attestation());
     expect(result.status).toBe(201);
