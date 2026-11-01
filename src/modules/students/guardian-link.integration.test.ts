@@ -243,6 +243,22 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
     expect(await prisma.guardianStudentLink.count()).toBe(0);
   });
 
+  it("rejects an inactive guardian membership before attestation", async () => {
+    await prisma.membership.update({
+      where: { id: guardianMembershipId },
+      data: { isActive: false },
+    });
+    try {
+      expect((await create("admin", attestation())).status).toBe(404);
+      expect(await prisma.guardianStudentLink.count()).toBe(0);
+    } finally {
+      await prisma.membership.update({
+        where: { id: guardianMembershipId },
+        data: { isActive: true },
+      });
+    }
+  });
+
   it("rejects direct database attestation by an unqualified TEACHER actor", async () => {
     await expect(
       prisma.guardianStudentLink.create({
@@ -321,6 +337,7 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
     expect(result.status).toBe(201);
     expect(result.headers.get("cache-control")).toBe("private, no-store");
     expect((await revoke("admin")).status).toBe(404);
+    expect((await create("admin", attestation())).status).toBe(409);
     const link = await prisma.guardianStudentLink.findFirstOrThrow({
       where: { schoolId: schoolA, id: linkId },
       include: { revocation: true },
