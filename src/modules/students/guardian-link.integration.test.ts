@@ -34,6 +34,7 @@ const emails = {
   admin: `guardian-admin-${tag}@example.test`,
   otherAdmin: `guardian-foreign-${tag}@example.test`,
   guardian: `guardian-parent-${tag}@example.test`,
+  unlinkedGuardian: `guardian-unlinked-parent-${tag}@example.test`,
   teacher: `guardian-teacher-${tag}@example.test`,
 };
 const userIds: Record<string, string> = {};
@@ -132,6 +133,7 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
         { schoolId: schoolA, userId: userIds.admin, role: "SCHOOL_ADMIN" },
         { schoolId: schoolB, userId: userIds.otherAdmin, role: "SCHOOL_ADMIN" },
         { schoolId: schoolA, userId: userIds.guardian, role: "PARENT" },
+        { schoolId: schoolA, userId: userIds.unlinkedGuardian, role: "PARENT" },
         { schoolId: schoolA, userId: userIds.teacher, role: "TEACHER" },
       ],
     });
@@ -249,6 +251,7 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
       ["", 401],
       ["teacher", 404],
       ["guardian", 404],
+      ["unlinkedGuardian", 404],
       ["otherAdmin", 404],
     ] as const) {
       const result = await create(person, attestation());
@@ -393,6 +396,7 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
 
   it("a role, matching identifier or unknown link cannot confer relationship", async () => {
     expect(await currentRelationship("guardian")).toBe(false);
+    expect(await currentRelationship("unlinkedGuardian")).toBe(false);
     expect(await currentRelationship("teacher")).toBe(false);
     expect(await currentRelationship("guardian", studentUnenrolled)).toBe(false);
     expect(await currentRelationship("guardian", studentA, schoolB)).toBe(false);
@@ -429,6 +433,7 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
     });
     expect(JSON.stringify(links)).not.toContain("Synthetic");
     expect(await currentRelationship("guardian")).toBe(true);
+    expect(await currentRelationship("unlinkedGuardian")).toBe(false);
     expect(await currentRelationship("teacher")).toBe(false);
     expect(await currentRelationship("otherAdmin")).toBe(false);
     expect(await currentRelationship("guardian", studentUnenrolled)).toBe(false);
@@ -485,6 +490,9 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
     });
     expect(created.status).toBe(201);
     expect(await currentRelationship("guardian", studentWithdrawal)).toBe(true);
+    expect(await currentRelationship("unlinkedGuardian", studentWithdrawal)).toBe(
+      false,
+    );
 
     const withdrawn = await withdrawRoute(
       request(
@@ -504,6 +512,7 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
     expect(withdrawn.status).toBe(200);
     expect(withdrawn.headers.get("cache-control")).toBe("private, no-store");
     expect(await currentRelationship("guardian", studentWithdrawal)).toBe(false);
+    expect(await currentRelationship("guardian", studentA)).toBe(true);
     expect(
       (await create("admin", { ...attestation(), studentId: studentWithdrawal }))
         .status,
