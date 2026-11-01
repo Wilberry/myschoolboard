@@ -186,3 +186,49 @@ export async function listGuardianStudentLinksForAdmin(schoolId: string) {
   if (!school) throw new AcademicConfigError("NOT_FOUND");
   return school.guardianStudentLinks;
 }
+
+/** Internal predicate for future recipient services, NOT a data read or
+ * child:read permission. Derive the guardian from the signed-in session and
+ * evaluate the relationship, member, school and enrollment *now*. A historic
+ * attestation does not survive revocation, withdrawal or tenant deactivation.
+ */
+export async function hasCurrentGuardianRelationship(
+  schoolId: string,
+  studentId: string,
+): Promise<boolean> {
+  requireId(schoolId);
+  requireId(studentId);
+  const userId = await actorId();
+  const link = await prisma.guardianStudentLink.findFirst({
+    where: {
+      schoolId,
+      studentId,
+      revocation: null,
+      school: { isActive: true },
+      guardian: {
+        schoolId,
+        userId,
+        role: "PARENT",
+        isActive: true,
+      },
+      student: {
+        schoolId,
+        status: "ENROLLED",
+        enrollments: {
+          some: {
+            schoolId,
+            status: "ACTIVE",
+            session: { schoolId, status: "ACTIVE" },
+            schoolClass: {
+              schoolId,
+              isActive: true,
+              section: { schoolId, isActive: true },
+            },
+          },
+        },
+      },
+    },
+    select: { id: true },
+  });
+  return link !== null;
+}
