@@ -64,7 +64,14 @@ containers and Phase 8/9 worktrees.
    echoing secrets. The prior PostgreSQL 17 \`postgres-test\` container must
    be running, healthy, tmpfs-backed and loopback-bound at
    \`127.0.0.1:5434/myschoolboard_test\`.
-3. Run the **read-only** Phase 3 preflight. It requires exact SHA-256
+3. Run the **read-only** Phase 3 preflight. Before opening any database
+   connection, it also verifies that the pending migration #37 file has
+   exactly two tables, four functions, six triggers, a complete validated
+   plan-code expression, the bounded window, the exclusion constraint, and
+   the immutable-history protection. Regression tests reject duplicate,
+   truncated, unsafe-ALTER and missing-constraint SQL. This structural
+   check does **not** replace real PostgreSQL syntax validation.
+   It requires exact SHA-256
    matches for all 36 previously applied migrations, **exactly one**
    remaining named migration (#37), a clean exact Git SHA, the correct
    Docker context/container/worktree and matching DB URL variables.
