@@ -9,6 +9,7 @@
 - Add `GuardianStudentLink` and `GuardianStudentLinkRevocation` with school-bound foreign keys, one immutable attestation per parent/child pair, actor/guardian/student validation triggers, reason checks and append-only protections. No historic guesses or links auto-created.
 - Require active school administrator identity, currently active PARENT membership, ENROLLED student with ACTIVE enrollment/session/class/section; one explicit `relationshipVerified: true` attestation.
 - Add school-admin-only POST/GET metadata and reasoned revoke routes with private/no-store responses. These routes return no pupil personal records or grades; no guardian GET exists.
+- Add a session-derived internal boolean relationship predicate that rejects absent/revoked links, inactive PARENT accounts, changed school/section status, withdrawn enrollment and other-school claims; this predicate **does not** enable `child:read` or release content.
 - Add synthetic authenticated database integration cases for anonymous/foreign/teacher/parent denials, wrong role, unenrolled/withdrawn pupil, forged direct database actors, duplicate pair, immutable history, and terminal revocation.
 - Retain draft #102's unconditional generic `child:read` denial, excluding all unbound CHILD scopes. The ledger is *not* an access grant.
 
