@@ -1,5 +1,24 @@
 # Phase 1–7 cumulative acceptance ledger
 
+## Phase 3 browser zoom closure protocol — 2026-11-01 (PENDING)
+
+P3-BR-11 remains PARTIAL at the exact verified application code SHA
+`55dab6cd659d0200a3db86babbc274c9e5e5d8a8`. The earlier Chrome
+run verified keyboard/required-field behavior and narrow responsive
+layout, but automated OS/Chrome zoom shortcuts did not change the
+desktop zoom state. It did **not** establish actual Chrome 200% page
+zoom. The [Phase 3 browser runbook](PHASE3_PLATFORM_BROWSER_ACCEPTANCE.md)
+now contains an explicit human-observed Chrome Zoom-menu 100% → 200%
+procedure, non-sensitive before/after CSS viewport measurements, keyboard
+and form reflow checks, and a clear distinction between genuine browser
+zoom and CDP visual page scale. It reuses the existing synthetic
+fixture and local build; no new account, DB migration or broader
+regression rerun is implied. **No new browser evidence has been executed
+by this documentation change.** Mark PASS only after the operator
+records the actual 200% setting, reflow/focus observations, source
+SHA and browser version in private evidence. Optional P3-BR-14 role
+revocation and broader Phase 3/Phase 1–7 acceptance remain open.
+
 ## Phase 3 authenticated platform-console browser acceptance — 2026-11-01 (SCOPED PARTIAL; NOT ACCEPTED)
 
 **Application/test SHA:** `55dab6cd659d0200a3db86babbc274c9e5e5d8a8`
