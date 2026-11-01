@@ -15,4 +15,4 @@
 
 ## Current status
 
-No hosting or deployment configuration exists in the repository. This remains a proposed architecture until approved.
+The repository includes local development configuration for PostgreSQL through Docker Compose and a CI workflow. No app hosting provider, domain, staging environment, or production deployment is configured. Hosting provider and domain selection are deferred until local development and testing are complete. No deployment has been verified.

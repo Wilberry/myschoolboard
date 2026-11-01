@@ -1,5 +1,7 @@
 # Permissions Matrix
 
+For assignment-administration list/detail reads **only**, the D-020/D-023 development implementation default is authenticated, active, same-school `school:configure` (currently School Administrator and School Super Admin), plus tenant-scoped resource checks and minimum needed fields. This does **not** grant general assignment-administration read to every `academic:read` role, Platform Super Admin, parents, or teachers. Teacher self-service requires a distinct exact-active-assignment-scoped design. Read handlers are not implemented or validated merely by recording this policy.
+
 The matrix below expresses the governing permission model. Server-side governance is mandatory; UI hiding is not sufficient.
 
 | Role | View | Create | Edit | Submit | Approve | Publish | Export | Restore | Delete | Permanently delete | Manage permissions |

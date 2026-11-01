@@ -12,4 +12,4 @@ A feature is done only when:
 
 ## Current status
 
-No product feature implementation exists yet, so this definition is a forward standard rather than a completed milestone.
+The local foundation has verified implementation subsets, but the broader platform and security requirements remain incomplete. The new local CI runner and liveness handler must not be declared validated or release-ready until the owner executes the full local verification and reviews its failures, including the unchanged audit gate.

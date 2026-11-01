@@ -16,6 +16,7 @@ The product should adopt a shared-infrastructure, isolated-tenant model.
 - The client must not be trusted to provide tenant scope.
 - Composite uniqueness constraints must include tenant context where relevant.
 - File storage, jobs, reports, and caches must also be tenant-aware.
+- A protected school metadata read must bind the authenticated user, active membership, role, and active school to its final database lookup. A principal resolved in an earlier query is not sufficient on its own if a membership was revoked or its role changed between queries. This is a final-query recheck, not a claim of serializable authorization across the whole HTTP response.
 
 ## Cross-tenant threats
 

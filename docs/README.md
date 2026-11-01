@@ -12,10 +12,13 @@ This folder is the canonical documentation set for the MySchoolBoard project.
 - [project/GLOSSARY.md](project/GLOSSARY.md) — common terminology
 - [project/ASSUMPTIONS_AND_CONSTRAINTS.md](project/ASSUMPTIONS_AND_CONSTRAINTS.md) — assumptions, constraints, and explicit decisions
 - [project/DECISION_LOG.md](project/DECISION_LOG.md) — material decisions and unresolved matters
-- [project/PRODUCT_DECISIONS_FOR_APPROVAL.md](project/PRODUCT_DECISIONS_FOR_APPROVAL.md) — product-owner approval register for Phase 1 decisions
+- [project/STANDING_DEVELOPMENT_MANDATE.md](project/STANDING_DEVELOPMENT_MANDATE.md) — D-023 standing authority for roadmap-led development and narrow approval exceptions
+- [project/PRODUCT_DECISIONS_FOR_APPROVAL.md](project/PRODUCT_DECISIONS_FOR_APPROVAL.md) — development policy defaults, configurable choices, and decisions reserved for owner review
 - [project/RISK_REGISTER.md](project/RISK_REGISTER.md) — product, technical, security, and delivery risks
 
 ### Requirements and quality
+
+- [quality/PHASE2_ACCEPTANCE_MATRIX.md](quality/PHASE2_ACCEPTANCE_MATRIX.md) — Phase 2 tenant, identity, and session security acceptance gates and evidence plan
 
 - [requirements/FUNCTIONAL_REQUIREMENTS.md](requirements/FUNCTIONAL_REQUIREMENTS.md) — functional requirement catalog
 - [requirements/NON_FUNCTIONAL_REQUIREMENTS.md](requirements/NON_FUNCTIONAL_REQUIREMENTS.md) — measurable quality and platform targets
@@ -44,7 +47,7 @@ This folder is the canonical documentation set for the MySchoolBoard project.
 
 - [architecture/SYSTEM_OVERVIEW.md](architecture/SYSTEM_OVERVIEW.md) — system context and module layout
 - [architecture/ARCHITECTURE_DECISION_RECORDS.md](architecture/ARCHITECTURE_DECISION_RECORDS.md) — architecture decisions and unresolved choices
-- [architecture/PHASE_1_ENGINEERING_PLAN.md](architecture/PHASE_1_ENGINEERING_PLAN.md) — proposed engineering foundation for Phase 1
+- [architecture/PHASE_1_ENGINEERING_PLAN.md](architecture/PHASE_1_ENGINEERING_PLAN.md) — approved local foundation, implementation evidence, and remaining Phase 1 gates
 - [architecture/MULTI_TENANCY.md](architecture/MULTI_TENANCY.md) — tenant boundary model and isolation controls
 - [architecture/MODULE_BOUNDARIES.md](architecture/MODULE_BOUNDARIES.md) — module boundaries and responsibilities
 - [architecture/DATA_FLOW_DIAGRAMS.md](architecture/DATA_FLOW_DIAGRAMS.md) — key flow diagrams
@@ -83,6 +86,7 @@ This folder is the canonical documentation set for the MySchoolBoard project.
 
 ### Security and quality
 
+- [security/DEPENDENCY_ADVISORY_ASSESSMENT.md](security/DEPENDENCY_ADVISORY_ASSESSMENT.md) — current dependency advisory evidence, exposure assessment, and remediation decision
 - [security/SECURITY_REQUIREMENTS.md](security/SECURITY_REQUIREMENTS.md)
 - [security/THREAT_MODEL.md](security/THREAT_MODEL.md)
 - [security/PRIVACY_AND_DATA_PROTECTION.md](security/PRIVACY_AND_DATA_PROTECTION.md)
@@ -92,6 +96,7 @@ This folder is the canonical documentation set for the MySchoolBoard project.
 - [security/SECRETS_AND_CONFIGURATION.md](security/SECRETS_AND_CONFIGURATION.md)
 - [security/INCIDENT_RESPONSE.md](security/INCIDENT_RESPONSE.md)
 
+- [quality/LOCAL_CI_RUNBOOK.md](quality/LOCAL_CI_RUNBOOK.md) — locally execute the unchanged GitHub CI workflow using the disposable test database when hosted runners are unavailable
 - [quality/TEST_STRATEGY.md](quality/TEST_STRATEGY.md)
 - [quality/TEST_CASE_CATALOG.md](quality/TEST_CASE_CATALOG.md)
 - [quality/SECURITY_TESTING.md](quality/SECURITY_TESTING.md)

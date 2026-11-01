@@ -21,7 +21,8 @@
 - QR token revocation
 - Trash retention and restoration
 - Fee verification workflows
+- Teacher assignment tenant foreign keys, tuple uniqueness, lifecycle transitions, restrictive deletion, and exact-pair policy enforcement
 
 ## Execution status
 
-No tests have been executed in the repository at this time.
+The repository contains unit and database integration tests. Teacher-assignment service and route integration tests use only the guarded tmpfs-backed `myschoolboard_test` Compose service on localhost port 5434. Execution status is reported by the relevant validation run and does not imply production-database coverage.

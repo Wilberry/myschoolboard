@@ -1,0 +1,354 @@
+# Dependency Advisory Assessment
+
+## Minimatch advisory remediation — 2026-10-31
+
+At base `de14ead0bb35ec625c8ba488fe18f63d135804a7`, full `npm audit`
+reported 16 moderate affected-package entries, all attributable to
+**GHSA-g3hv-75wg-m249** (`minimatch` potential denial of service through
+globparts amplification). The audit had zero high/critical findings. The
+single advisory affected two installed versions: root `minimatch@3.1.5`
+through ESLint and related lint plugins, and nested `minimatch@10.2.6`
+through `@typescript-eslint/typescript-estree@8.71.1`. The seven declaring
+parents are all development-only in the lockfile: `eslint`,
+`@eslint/config-array`, `@eslint/eslintrc`, `@typescript-eslint/typescript-estree`,
+`eslint-plugin-import`, `eslint-plugin-jsx-a11y`, and `eslint-plugin-react`.
+Their published ranges accept 3.x or 10.x; npm identifies **11.0.1+** as
+patched and offers no semver-compatible upgrade for the existing ranges.
+
+The safe-replacement candidate is isolated on branch
+`verify/minimatch-ghsa-20261031`, based on `de14ead`. Its dependency-only
+commit is `5ca6f63643fc646db1bd3084138751ef632ffbbe`. It adds the npm override
+`minimatch: 11.0.3`, resolving all seven dev-tool consumers to the patched
+version. No direct package major upgrade or application dependency change was
+made. This is a deliberate semver override because upstream dependents have
+not yet widened their declared ranges; the patched library documents the
+same CommonJS/ESM function and `Minimatch` APIs these consumers call, but v11
+changes the matching engine. The compatibility risk is recorded rather than
+treated as eliminated by version resolution alone.
+
+Compatibility checks compared nine representative glob cases and the
+`Minimatch` class against the prior 3.1.5 implementation with no result
+differences. `npm ls minimatch --all` resolved all seven consumers to 11.0.3
+without invalid dependencies. A clean `npm ci`, `npm run lint`, all 106
+security guards, format check, TypeScript, and a production build passed.
+Both `npm audit --audit-level=high` and full `npm audit` report zero
+vulnerabilities. Build/Prisma generation used only dummy loopback configuration;
+no database was contacted or changed. Full database-backed Vitest, migration
+integrity, and browser acceptance were not run.
+
+**Status:** the moderate advisory is resolved on this isolated candidate,
+not on `de14ead` or any other branch until the candidate is integrated and
+revalidated. Residual risk is limited to semver-override glob behavior in
+development tooling; the lint command and representative patterns pass, but
+the full database-backed and browser acceptance gates remain open.
+
+## Isolated Phase 1–7 dependency remediation — 2026-10-30
+
+At base `d8e80e0`, a fresh `npm audit --json` reported three affected
+packages: `next@16.4.0` (critical, three Next.js advisories), `zod@4.6.5`
+(high), and transitive `fast-uri@3.1.8` (moderate). The audit identifies
+Next.js 16.4.3, Zod 4.6.6 or later, and fast-uri 3.1.9 as patched
+versions. The base worktree and its active browser environment were not
+modified.
+
+The Next.js findings are GHSA-2464-fhr4-w9xw (SVG image-optimization RCE),
+GHSA-p3m5-59mp-jv5r (App Router Server Actions denial of service), and
+GHSA-673q-mjm6-r5xr (typed-array `use cache` RCE). Zod is GHSA-mrhx-c7xc-m3w5.
+The four fast-uri findings are GHSA-w74x-v6f9-j3xg, GHSA-xhq7-xmqj-769h,
+GHSA-wjr9-j795-jxcr, and GHSA-333x-w4r6-6crp.
+
+The isolated branch `verify/dependency-security-20261030`, created from
+`d8e80e0`, committed the narrow dependency update as
+`b20c40dfc0b752b4bbc85e9128051fae0f2503ed`: Next.js and
+`eslint-config-next` 16.4.3, Zod `^4.6.7` (resolved to 4.6.7), and
+transitive fast-uri 3.1.9. No override, telemetry upgrade command,
+schema/migration, or application source change was used. This is a
+verification candidate only; it has not been merged or copied into the
+active Phase 1–7 worktree.
+
+On that candidate, `npm audit --audit-level=high` and full `npm audit`
+both exited 0 with zero findings. `npm run verify:local:guards` passed
+106/106; formatting, ESLint, TypeScript, and a production build passed.
+Prisma Client generation used a dummy URL on loopback port 1, and the
+build used a dummy auth secret and loopback URL with telemetry disabled;
+no database connection or write was made. The full database-backed
+`npm test` was attempted and exited 1 because the current process has no
+disposable-database configuration; all 37 Vitest files stopped at their
+required environment guard before any test case ran. The migration
+checksum command also exited 1 before comparing against a database.
+Browser acceptance and production startup were not run on the dependency
+candidate.
+
+The dependency advisory blocker is therefore resolved **on the isolated
+candidate only**. The base branch still has its audited vulnerable lockfile
+until the candidate is integrated and revalidated.
+
+## Current Phase 1–7 release-audit checkpoint (2026-10-21)
+
+The owner's separate, clean local verification of the Phase 1–7
+experimental head `5fc40e2` reported **59/59** Node source guards
+and **302/302** Vitest tests passing, with **zero skipped tests**.
+Format, lint, typecheck, Prisma 7.10.1 generation and the Next.js
+production build passed at that exact commit. The test service was
+confirmed as local PostgreSQL 17 with a loopback-only 5434 binding and
+tmpfs data; **36/36** reviewed migrations were applied successfully.
+Neither `main` nor any shared/production database was changed.
+
+The strict `npm audit --audit-level=high` continues to report
+**five high affected-package entries**, all resulting from the single
+reviewed advisory **GHSA-vfj7-8cjw-p6xm /
+CVE-2026-93687**. `npm audit --omit=dev --audit-level=high`
+passed with **zero vulnerabilities** on the same commit. The
+recorded five-entry chain is `eslint-config-next@16.4.0` ->
+`@next/eslint-plugin-next@16.4.0` -> `fast-glob@3.3.1` ->
+`micromatch@4.0.8` -> `braces@3.0.3`. These are all marked
+development-only in the checked-in lockfile. The existing lint
+configuration imports Next's recommended core web vitals and
+TypeScript rules and defines **no externally supplied**
+`settings.next.rootDir`. This is a reachability assessment of
+the *current source and lockfile*, not a guarantee against all
+future build inputs or developer-tool usage.
+
+On 2026-10-21, the reviewed GitHub advisory still declares
+**affected `braces <=3.0.3`, patched versions: none**.
+The upstream author disputes aspects of the advisory and has closed
+the relevant maintainer issue; the advisory is nevertheless
+published and npm's unchanged strict audit still fails.
+There is therefore no honest patched-version update to apply
+today. Pinning or overriding to the already affected version
+is not a fix, and replacing Next's lint tooling or disabling
+`npm audit` solely to manufacture a green result would
+remove existing protection. Do **not** do either.
+
+**Review options, neither pre-approved as a release exception:**
+
+1. Retain the existing hard block while waiting for a
+   *genuinely verified* compatible patched upstream release
+   or safe replacement, then refresh the lockfile and rerun
+   format/lint/typecheck, all tests, build, both audits,
+   and authenticated-browser access checks.
+2. Request an **explicit, separately documented and
+   time-limited security-risk disposition** from the project
+   owner/security authority that includes exact package,
+   version, advisory, dev-only exposure, no-untrusted-glob
+   controls, review/expiration date and criteria for withdrawal.
+   This must not be inferred from D-023, the expired D-022
+   publication exception or the clean production-only audit.
+   Unless governance deliberately authorizes a separate
+   narrowly-scoped exception gate, the unchanged strict
+   `npm audit --audit-level=high` command remains **red**.
+
+At present, **neither a patched release nor a new risk
+disposition has been recorded**. The original full-audit
+gate is still failing and Phase 1–7 cannot be called
+security-approved or merged to `main`.
+
+Sources: [GitHub GHSA](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm),
+[upstream maintainer discussion](https://github.com/micromatch/braces/issues/84),
+[Prisma migration checksum storage](https://github.com/prisma/prisma-engines/blob/main/schema-engine/ARCHITECTURE.md).
+
+
+## Prisma 7 experimental lockfile checkpoint (2026-10-19)
+
+This is **additional current experimental evidence**, not a retroactive
+change to the 2026-10-11 Prisma 6 checkpoint or its historical decisions.
+
+The local experimental stack now pins Prisma / `@prisma/client` /
+`@prisma/adapter-pg` **7.10.1** and Next.js **16.4.0**.
+The tracked `package-lock.json` on
+`fix/phase1-7-school-private-suspense-layout` contains
+`braces@3.0.3`, `micromatch@4.0.8`,
+`fast-glob@3.3.1`, and a development-only ESLint plugin chain.
+Those inspected lockfile entries are marked `dev: true`.
+The previous experimental local verification reported **five high**
+findings in `npm audit --audit-level=high` and **zero production**
+findings in `npm audit --omit=dev --audit-level=high`; neither audit
+has been rerun on the latest validated commit `2b361ed`.
+The package count is not the advisory count.
+
+GitHub's reviewed `GHSA-vfj7-8cjw-p6xm` still affects
+`braces <=3.0.3`, lists **no patched version**, and the npm latest
+version inspected on October 19 remains 3.0.3. The exact source
+reachability/configuration is bounded as assessed above and must be
+reconfirmed for changes in tooling. Do not claim that the package is
+safe, pin the same vulnerable version as a "fix", or disable the
+strict audit. Await a compatible published patch/upstream dependency
+change, or obtain a distinct future security-risk disposition before
+any merge/release, under the governing project policies.
+
+Evidence links:
+[GHSA advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm),
+[npm braces versions](https://www.npmjs.com/package/braces?activeTab=versions).
+
+
+## Development governance clarification (2026-10-12)
+
+The Project Owner's [Standing Development Mandate](../project/STANDING_DEVELOPMENT_MANDATE.md), recorded as D-023, authorizes ongoing **non-production** roadmap implementation, reviewed development feature-branch pushes, and draft PRs without repeated per-feature approval. This document records the actual security findings and **historical scope** of the original D-022 exception; its 2026-10-18 review/expiry is **not** a project development deadline, does not stop normal coding, and is neither renewed nor expanded by D-023. The current findings remain unresolved and block any claim of passing security audit, production readiness, or release. **Keep `npm audit --audit-level=high` enabled and report its actual local results without suppression.** Merging to `main`, deploying, and accepting a failing production gate still require distinct review and authorization.
+
+## Assessment metadata
+
+- Reviewed: 2026-10-11 (reverified)
+- Direct dependency versions: Next.js / eslint-config-next 16.4.0; Prisma / @prisma/client 6.19.3
+- Audit evidence on 2026-10-11: `npm audit --audit-level=high` reports 8 high package findings; `npm audit --omit=dev --audit-level=high` exits nonzero with 3 high package findings. Neither audit command changes dependency files.
+- These are two distinct upstream advisories. The other package findings in npm output are dependency-chain effects, not additional advisories.
+- No dependency changes or overrides were applied during this assessment.
+- Proposed-checkpoint scope: `src/lib/private-storage.ts`, `src/modules/storage/local-private-storage.ts`, and `src/modules/storage/local-private-storage.test.ts` are excluded from the proposed first GitHub checkpoint. They remain in the working tree, and no application code outside that prototype imports or uses it. `PRIVATE_STORAGE_ROOT` has been removed from the proposed checkpoint's environment example, runtime schema, and CI environment. The candidate also excludes the unused `app/favicon.ico`, `app/page.module.css`, and unreferenced `public/file.svg`, `public/globe.svg`, `public/next.svg`, `public/vercel.svg`, and `public/window.svg`. The private-files inventory row below describes only the excluded prototype; its five tests are not part of the reduced checkpoint test count.
+
+## GHSA-vfj7-8cjw-p6xm — braces stack exhaustion
+
+- Advisory: CVE-2026-93687; High. NVD publication date: 2026-09-18 (record awaits enrichment). GitHub Advisory Database reports CVSS 4.0 8.7. npm audit identifies CVSS 3.1 7.5.
+- Affected and patched versions: `braces <=3.0.3`; installed/latest is 3.0.3 (published 2024-05-21); no patched version is currently listed by the GitHub advisory.
+- Installed path and versions: `eslint-config-next@16.4.0` -> `@next/eslint-plugin-next@16.4.0` -> `fast-glob@3.3.1` -> `micromatch@4.0.8` -> `braces@3.0.3`.
+- Installation scope: all packages in this path are marked `dev: true` in `package-lock.json`; this is not in the production dependency installation.
+- Functionality: the installed Next ESLint plugin imports `fast-glob` in `get-root-dirs.js` and uses it to expand the `settings.next.rootDir` glob. The current `eslint.config.mjs` has no `settings.next.rootDir` entry. The app does not directly use `braces`, `micromatch`, or `fast-glob`.
+- Reachability assessment: the vulnerable parser can be reached when lint runs with a glob supplied through ESLint `settings.next.rootDir`. That setting is absent in the current configuration, and no HTTP/request path supplies it. This lowers current application exposure; it does not eliminate the advisory from developer tooling or future configurations.
+- Remediation: the advisory lists no patched `braces` version. Current `eslint-config-next@16.4.0` and `next@16.4.0` are the latest published 16.x versions checked. Downgrading the Next ESLint config to 14.2.35 is incompatible with the Next 16 stack and was not attempted. No override can install a patched braces release while none is published.
+- Reverification: npm still publishes `braces@3.0.3` as latest and the GHSA still says patched versions: none. `fast-glob@3.3.3` (published 2025-01-05) is published, but its manifest still uses `micromatch@^4.0.8`; that micromatch line depends on `braces@^3.0.3`, whose latest is still the affected 3.0.3. The installed Next 16.4.0 plugin pins `fast-glob@3.3.1`; stable `eslint-config-next@16.4.0` and `16.5.0-canary.7` both pin plugin versions that use fast-glob 3.3.1. Changing only that transitive package would not resolve the advisory.
+- Upstream uncertainty: the braces maintainer issue contains a maintainer dispute of the CVE's practical impact and argues for restricting untrusted user-provided glob patterns. The CVE/GHSA remains published with a high rating, while the public issue also contains a reporter's reproducibility claim. This disagreement is evidence of uncertainty, not proof of exploitability or harmlessness. The installed plugin's current configuration path is documented above; do not generalize that code inspection to other consumers.
+- Decision needed: wait for a patched upstream release or an upstream dependency change, then update and validate. Only the specifically scoped, time-limited D-022 development-publication exception below is approved; no broader security risk acceptance is assumed.
+
+Authoritative sources:
+
+- [GitHub Advisory GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
+- [NVD CVE-2026-93687](https://nvd.nist.gov/vuln/detail/CVE-2026-93687)
+- [braces maintainer issue #70](https://github.com/micromatch/braces/issues/70)
+- [npm metadata for braces](https://registry.npmjs.org/braces/latest)
+- [npm metadata for fast-glob](https://registry.npmjs.org/fast-glob/latest)
+- [npm metadata for micromatch](https://registry.npmjs.org/micromatch/latest)
+- [Next.js releases](https://github.com/vercel/next.js/releases)
+
+## GHSA-ggr8-5vv4-36mx — deepmerge-ts recursive object stack exhaustion
+
+- Advisory: CVE-2026-40345; High. GitHub Advisory published 2026-08-16, updated 2026-08-17; NVD publication date: 2026-08-20 (not scheduled for enrichment). GitHub reports CVSS 4.0 8.2. npm audit reports a null CVSS vector for the direct package advisory entry.
+- Affected and patched versions: `deepmerge-ts <8.0.0`; patched in 8.0.0 (published 2026-08-16). Version 8.0.2 was published 2026-08-21. Installed version is `7.1.5` (published 2025-02-23).
+- Dependency path: runtime packages `@prisma/client@6.19.3` and Better Auth's Prisma adapter declare Prisma as an optional peer; installed `prisma@6.19.3` -> `@prisma/config@6.19.3` -> `deepmerge-ts@7.1.5`. The lockfile does not mark this Prisma/config path as dev-only, and npm's `--omit=dev` audit still reports it. The ESLint/braces path is excluded when dev dependencies are omitted.
+- Functionality: Prisma's `@prisma/config` implementation dynamically imports `deepmerge-ts` in `loadConfigTsOrJs` and passes `deepmerge` as the `c12` config `merger`. The project uses `prisma.config.ts` for Prisma CLI operations. The application does not import Prisma config or invoke this loader from a request handler; Prisma Client database calls use a different path.
+- Reachability assessment: the package is present in the production dependency graph, but the identified vulnerable merge call is in Prisma config loading, not in the app's request-time DB access path. The current Prisma config is repository-controlled code. No application request supplies recursive JavaScript object graphs to this merger. CLI/config loading remains reachable to local development/build tooling and could be affected by untrusted config/code introduced into the workspace. This is a source-inspection assessment, not a proof that every future runtime packaging mode excludes the code.
+- Remediation: upstream `deepmerge-ts@8.0.0` fixes the advisory, and `8.0.2` is published. Prisma `6.19.3` pins `deepmerge-ts@7.1.5` exactly; the latest Prisma 6 release checked remains 6.19.3 and still has that pin. Prisma's config package declares no compatibility with v8. The v8.0.0 maintainer release notes identify breaking changes (including Map merging defaults and `deepmergeInto` mutation behavior), although the currently observed Prisma call only passes the named `deepmerge` function. Therefore a v8 npm override is technically conceivable but not upstream-compatibility-verified; it was not applied. Downgrading Prisma to 6.12.0, as suggested by npm's automatic fix metadata, would regress the selected Prisma line and was not attempted.
+- Reverification: the stable Prisma 6 line remains `6.19.3`; its `@prisma/config@6.19.3` manifest pins `deepmerge-ts@7.1.5`. Stable Prisma 7 is `7.10.0`, but its `@prisma/config@7.10.0` manifest also pins `deepmerge-ts@7.1.5`. Prisma's `latest` npm tag currently points to `8.0.0-rc.22`; this is a release candidate, not a stable compatible update. `npm view prisma@8 version` returns E404 (no stable Prisma 8 package is published in the registry queried). The Prisma 8 RC package graph uses a different CLI/toolchain, and `@prisma/config@8.0.0-rc.22` is not published. The official Prisma 7 upgrade guide currently refers to Prisma 8 as the current release, which conflicts with the npm version/tag metadata observed on 2026-10-10; the actual compatible stable package could not be verified. No authoritative Prisma statement was found declaring compatibility with a `deepmerge-ts@8` override. Prisma 7's official upgrade guide documents breaking changes including generated-client configuration/output, driver adapters, ESM/runtime requirements, CLI behavior, and migration workflow. Neither a Prisma 7 upgrade nor the Prisma 8 RC qualifies as a verified remediation here.
+- Decision needed: Prisma must publish a compatible fixed release, or the project owner/security risk owner must approve any additional, specifically scoped exception after reviewing production installation and config-loading exposure. Only D-022's limited development-publication exception is currently approved; production risk acceptance remains unapproved.
+
+Authoritative sources:
+
+- [GitHub Advisory GHSA-ggr8-5vv4-36mx](https://github.com/advisories/GHSA-ggr8-5vv4-36mx)
+- [deepmerge-ts v8.0.0 release notes](https://github.com/RebeccaStevens/deepmerge-ts/releases/tag/v8.0.0)
+- [Prisma config source package](https://github.com/prisma/prisma/tree/6.19.3/packages/config)
+- [Prisma 7.10.0 release notes](https://github.com/prisma/orm/releases/tag/7.10.0)
+- [Official Prisma 7 upgrade guide](https://www.prisma.io/docs/orm/more/upgrade-guides/upgrading-versions/upgrading-to-prisma-7)
+- [npm metadata for Prisma](https://registry.npmjs.org/prisma/latest)
+- [npm metadata for Prisma config 7.10.0](https://registry.npmjs.org/@prisma%2fconfig/7.10.0)
+
+## npm audit package entries
+
+The eight high entries reported by npm comprise the two advisories above and their affected dependents:
+
+- `braces@3.0.3`, `micromatch@4.0.8`, `fast-glob@3.3.1`, `@next/eslint-plugin-next@16.4.0`, and `eslint-config-next@16.4.0` are the GHSA-vfj7-8cjw-p6xm chain.
+- `deepmerge-ts@7.1.5`, `@prisma/config@6.19.3`, and `prisma@6.19.3` are the GHSA-ggr8-5vv4-36mx chain.
+
+## Checkpoint disposition
+
+- Full audit: failed, 8 high package findings.
+- Production-only audit: failed, 3 high package findings in the Prisma/config chain.
+- Compatible update: none verified as of 2026-10-10. Prisma 7.10.0 retains the vulnerable transitive pin; Prisma 8 is only a prerelease and not a compatible update candidate; no braces patch is published.
+- CI gate: remains unchanged and failing; no advisory was suppressed.
+- Owner decision: D-015 Option A was selected on 2026-10-10 and remains active outside D-022 Option C. Option C was explicitly approved for 2026-10-11 through 2026-10-18 solely for the validated development branch and draft PR. The unresolved findings continue to block merge, deployment, and release.
+
+## Historical risk-owner decision and limited original-checkpoint exception
+
+**Historical status:** D-015 Option A was selected before the D-022 original-checkpoint publication exception (2026-10-11 through 2026-10-18). D-023 now provides ordinary prospective non-production development authority, **not** renewed dependency-risk acceptance or permission to merge/deploy. The security audit gate remains unchanged and was failing at the last recorded audit evidence; the eventual local run must report its actual result.
+
+### Option A — Keep checkpoint blocked
+
+Do not accept an exception. Keep the checkpoint blocked until compatible upstream releases resolve both advisory chains, then update and rerun the full local and CI checks. This option requires no risk acceptance.
+
+### Option B — Temporary local-only risk exception
+
+The project owner may explicitly permit continued local development and checkpoint preparation for these two named advisories only. This is not a finding that the advisories are harmless or unexploitable. It does not change dependency versions, suppress audit output, alter the CI audit gate, or automatically authorize a commit, production deployment, or release. The audit remains failing until fixed.
+
+Approval is valid only after the owner records all of the following:
+
+- Decision: Option B approved
+- Approver name and role:
+- Approval date:
+- Review/expiry date:
+- Accepted advisory IDs: GHSA-vfj7-8cjw-p6xm and GHSA-ggr8-5vv4-36mx
+- Scope: local development and checkpoint preparation only
+- Conditions or compensating controls:
+
+Option B is not active and must not be inferred from this record. Production deployment and release would require a separate review and decision even if a future owner explicitly approved a local-only exception.
+
+### D-022 Option C — Limited development branch and pull-request publication
+
+**Status: Approved 2026-10-11 through review/expiry 2026-10-18 for the limited scope below. This is not production security acceptance; D-015 Option A remains active outside this exception.**
+
+The authorized owner approved a narrowly scoped exception for development-only feature-branch and draft pull-request publication while the two named advisories remain unresolved. This does not authorize merging to `main`, production deployment, or release. The existing CI audit step must remain unchanged; its expected failure must be disclosed in the pull request. The advisories must not be described as harmless merely because their paths are transitive or their current application reachability is limited.
+
+The assessed scope is GHSA-vfj7-8cjw-p6xm (CVE-2026-93687; braces dependency chain, currently dev-only in the inspected lockfile) and GHSA-ggr8-5vv4-36mx (CVE-2026-40345; deepmerge-ts via Prisma config, still reported by production-only audit). See the per-advisory exposure and compatibility analysis above. No dependency override or forced downgrade is proposed.
+
+Approval record:
+
+- Approver: Platform Admin — MySchoolBoard Project Owner
+- Risk Owner: Platform Admin — MySchoolBoard Security Risk Owner
+- Authority: Sole Project Owner and Final Decision-Maker
+- Decision: Option C approved
+- Approval date: 2026-10-11
+- Review/expiry date: 2026-10-18
+- Approved scope: Development-only feature-branch publication and draft pull request for the validated 81-file changed/new checkpoint manifest (139 projected repository paths), subject to separate push authorization
+- Findings disclosed: 8 high-severity dependency findings in the full audit, including 3 reported by the production-only audit
+- Compensating controls: Preserve `npm audit --audit-level=high` in CI and disclose the findings and expected audit failure in the PR; do not bypass, disable, weaken, or misreport the gate; retain current dependency versions and audit output; track both advisories and reconsider when compatible remediation is available
+- Restrictions: No merge to `main`, production deployment, release, or claim of production readiness. TCH-REQ-001, TEN-REQ-001, and SEC-REQ-001 remain open. This limited development-publication exception is not production risk acceptance.
+- Separate authorization: Push, merge, deployment, and release require separate explicit authorization. This approval does not itself authorize those operations.
+
+Any later merge, production deployment, or release requires a separate decision. After 2026-10-18, the exception must not be relied on unless it is explicitly renewed.
+
+## Remediation Decision Matrix
+
+| Candidate                          | Evidence                                                                                                                                                                                                                                                                 | Compatibility                                                                                | Security effect                                                                                                                                       | Regression risk                                                              | Decision                                |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------- |
+| Patch `braces` directly            | GHSA lists patched versions: none; npm latest remains 3.0.3 (published 2024-05-21).                                                                                                                                                                                      | No fixed release exists to select.                                                           | No change possible currently.                                                                                                                         | Unknown until maintainer release.                                            | **No fix available**                    |
+| Upgrade `fast-glob`                | Latest 3.3.3 (2025-01-05) still depends on `micromatch@^4.0.8`, which depends on `braces@^3.0.3`; Next's plugin pins 3.3.1.                                                                                                                                              | 3.x may be API compatible, but parent does not consume it and it retains the affected range. | Does not resolve the finding.                                                                                                                         | A local transitive divergence would be unsupported and ineffective.          | **Rejected**                            |
+| Upgrade Next/ESLint parent         | Latest stable Next and eslint-config-next 16.x checked are 16.4.0. Next 16.5 canary plugin 16.5.0-canary.7 continues using fast-glob 3.3.1.                                                                                                                              | No stable patched parent; canary is prerelease.                                              | No observed removal/fix of braces.                                                                                                                    | Prerelease framework/tooling without security effect.                        | **No fix available**                    |
+| Replace Next ESLint config         | Current `settings.next.rootDir` is unset, so inspected plugin code does not call its `fast-glob` root expansion. Replacing config would also remove Next-specific lint rules.                                                                                            | Not an upstream-supported equivalent replacement established here.                           | Removing a lint rule package is not a braces fix and may weaken lint coverage.                                                                        | Lost Next-specific checks and changed CI quality coverage.                   | **Rejected**                            |
+| Keep `settings.next.rootDir` unset | This is already the current config; installed plugin only invokes `fast-glob` for that setting.                                                                                                                                                                          | Fully compatible; no change.                                                                 | Mitigates this identified plugin callsite under current config, but does not remove package/audit finding or cover other consumers/changed PR config. | None from current config; residual developer/CI exposure remains.            | **Mitigation only**                     |
+| Upgrade Prisma 6                   | Stable Prisma 6 latest checked is 6.19.3; its config pins deepmerge-ts 7.1.5.                                                                                                                                                                                            | Already current within Prisma 6.                                                             | No effect.                                                                                                                                            | None, but no remediation.                                                    | **No fix available**                    |
+| Upgrade to stable Prisma 7         | Latest stable is 7.10.0; `@prisma/config@7.10.0` still pins 7.1.5. Official guide documents generator/output/import, driver adapter, ESM/runtime, CLI and seed changes. Better Auth peers allow Prisma 7, but that alone is not full application compatibility evidence. | Requires major ORM migration and generated-client, connection and CLI changes.               | Does not fix deepmerge advisory.                                                                                                                      | High migration/regression cost with no advisory benefit.                     | **Rejected**                            |
+| Upgrade to Prisma 8 RC             | npm `latest` is 8.0.0-rc.22; `npm view prisma@8 version` returns E404 for a stable line, and matching config package is unpublished.                                                                                                                                     | Unstable prerelease and no verified client/config compatibility for this app.                | No fixed Prisma config dependency graph demonstrated.                                                                                                 | High ORM, migration, generated client, runtime/toolchain risk.               | **Rejected**                            |
+| Override deepmerge-ts to 8.0.2     | deepmerge-ts 8 fixes GHSA, but Prisma 6.19.3 and 7.10.0 pin 7.1.5 exactly and do not declare v8 compatibility. v8 release notes contain breaking behavior changes.                                                                                                       | No upstream compatibility statement or Prisma test evidence for override.                    | Could remove audit entry if resolution changes, but that alone would not verify correct merge behavior.                                               | Unknown configuration merge semantics.                                       | **Rejected**                            |
+| Restrict Prisma config loading     | `deepmerge` is loaded from `@prisma/config` when CLI reads TypeScript/JavaScript Prisma config; this is repository code, not normal app request data.                                                                                                                    | Operational restriction only.                                                                | Limits exposure to reviewed CLI/config workflows but leaves packages and audit finding in place.                                                      | CI/developer workflows still execute config; does not prove inputs are safe. | **Mitigation only**                     |
+| Wait for supported upstream fixes  | No stable compatible parent release found for either chain. Prisma 7 retains the pin; braces has no patch.                                                                                                                                                               | Compatible once published and verified against this tree.                                    | Fixes findings only after package update and audit/test verification.                                                                                 | Routine upgrade risk, testable after release.                                | **No fix available; Option A selected** |
+
+No candidate is a verified remediation. No dependency, lockfile, application, or CI changes were made.
+
+## Broader Phase 1 Security Review
+
+This is a source review of the current local foundation, not a production certification.
+
+| Area                      | Code-reviewed evidence                                                                                                                                                                                                                                                                           | Automated evidence and limitations                                                                                                                                                                                                                                                                                                                                                                                  | Recommended next action                                                                                                                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| School read authorization | Home page and school page/API call Better Auth server-side. School access resolves membership by authenticated user plus requested school, active membership, and active school, then authorizes before a minimal school select.                                                                 | New tests call the actual exported school `GET` handler with `Request`/`Response`, real Better Auth cookies, and real PostgreSQL memberships. They cover unauthenticated, invalid/expired session, authorized member, cross-school, insufficient role, revoked membership, query ID substitution, missing/unknown IDs, minimal response, and simulated DB lookup failure. Only Next `headers()` context is stubbed. | Extend this pattern to future protected routes/operations; this does not test Next server/browser transport or other page/mutation routes.                                                              |
+| Parent/student access     | `child:read` now requires child ID; parent requires a verified CHILD grant, student must target own user ID.                                                                                                                                                                                     | Unit tests cover matching/mismatched/omitted child IDs. Child is not yet a schema entity with a tenant FK.                                                                                                                                                                                                                                                                                                          | Bind future child grants to tenant-owned records and test relationship and tenant constraints before portal reads.                                                                                      |
+| Teacher scopes            | Policy separately checks class and subject IDs; schema stores independent CLASS and SUBJECT ScopeGrant rows, not a teacher-assignment pair.                                                                                                                                                      | Tests check missing scope and mismatched subject, not whether the supplied class/subject pair is an actual assignment. No current academic endpoint calls this policy.                                                                                                                                                                                                                                              | Before implementing academic reads/writes, authorize using a canonical pair/assignment relation and add mismatched-pair tests.                                                                          |
+| Platform/school roles     | `platform:manage` uses PlatformRole separately; school operations require school membership/role.                                                                                                                                                                                                | Tests prove SCHOOL_ADMIN cannot platform-manage and SCHOOL_SUPER_ADMIN cannot academic-edit; no platform-admin feature exists, and the full action-role matrix is not tested.                                                                                                                                                                                                                                       | Add policy coverage at each operation; protect/audit platform-role assignment.                                                                                                                          |
+| Auth/session              | Better Auth owns credential/session handling; secure cookies are enabled only when NODE_ENV is production; exact configured origin is trusted. Email/password sign-in is enabled, email verification is disabled, and no MFA/recovery provider/custom throttle is configured in this foundation. | Route tests use real Better Auth sign-in cookies and prove absent, invalid, and expired sessions are denied by the school API. Next server/browser cookie transport and origin enforcement are not covered.                                                                                                                                                                                                         | Keep local-only. Define account admission, verification/recovery, admin MFA, abuse throttling, and production session controls before release.                                                          |
+| Private files (excluded)  | The excluded local prototype checks callback authorization, tenant/key patterns, lexical path containment, declared MIME allowlist, 5 MiB limit, exclusive create and restrictive modes.                                                                                                         | Its five unit tests cover denied callback, tenant mismatch, traversal, declared type and size. No application endpoint binds the callback to an authenticated user/membership. Declared MIME is not content-signature validation; symlinks inside a writable storage root are not addressed. This code and its tests are not in the proposed checkpoint.                                                            | Keep excluded from this checkpoint; do not expose endpoints until authorization is wired/tested, content signatures are validated, and symlink-safe access is considered.                               |
+| Schema/migration          | Six migrations include tenant-scoped constraints, teacher assignment audit events and PostgreSQL triggers; RLS is not enabled.                                                                                                                                                                   | On 2026-10-11 all six migrations applied to the tmpfs-backed disposable PostgreSQL test service; the full working-tree suite passed 83 tests across 8 files, including the five excluded prototype tests. The proposed reduced checkpoint is validated separately in the reconciliation record below. No shared database was used.                                                                                  | Keep RLS and broader security requirements open; review tenant constraints for every new entity and protect Prisma CLI targets operationally.                                                           |
+| Seed/env/secrets          | Seed requires `ALLOW_DEMO_SEED=1` and exact local dev or explicitly disposable test database targets. Reset requires `ALLOW_LOCAL_DB_RESET=1` and the exact loopback dev target. `.env*` is ignored except the placeholder example.                                                              | Guard tests passed 11/11; demo seed ran only against the disposable test database. Environment validation checks URL shape and secret length >=32, not secret entropy.                                                                                                                                                                                                                                              | Keep credentials local-only and use high-entropy managed secrets for production. Prisma migrate/dev/deploy CLI commands are not target-guarded; validate `DATABASE_URL` carefully before invoking them. |
+| CI/install                | CI runs npm ci, DB tasks, tests/lint/typecheck/build and `npm audit --audit-level=high`; it is unchanged. Actions use major tags rather than immutable SHAs.                                                                                                                                     | CI itself was not run. Audit currently fails. Route tests call the exported handler directly and stub only Next's `headers()` context.                                                                                                                                                                                                                                                                              | Keep audit gate. Pin third-party Actions to reviewed immutable SHAs as a separate CI-hardening task.                                                                                                    |
+
+### Proposed first-checkpoint validation (2026-10-11)
+
+For exact-content validation, the candidate was reconstructed from HEAD `34aab87e9d928486aff3944d18ba426236683aa8` plus only the selected working-tree changes; the original worktree and Git index were not used as a test tree. The manifest comprises 28 modified tracked files and 53 selected new files. The full candidate tree contains the 86 HEAD files plus 53 additions (139 paths); 58 existing HEAD paths remain unchanged. The ten explicit exclusions are the three private-storage prototype files and the seven unused starter assets listed above. No excluded file was deleted from the original working tree.
+
+In that exact snapshot, `npm ci` and Prisma Client generation succeeded; all six migrations applied to a tmpfs-backed disposable PostgreSQL service, and the guarded demo seed succeeded. The reduced suite passed 78 tests across 7 files. Formatting, lint, typecheck, and production build passed. This validation preceded the D-022 approval; at validation time, Option A remained active. The known high-severity dependency findings remain unresolved, and the configured `npm audit --audit-level=high` CI step was not removed or suppressed. D-022 is now approved only for the limited scope above; no branch publication or push has occurred. The validation run itself took no branch, staging, commit, push, merge, or release action.
+
+### Untrusted-input and operational exposure
+
+`src/modules/tenancy/school-route.integration.test.ts` invokes the actual school API handler, creates synthetic Better Auth users/sessions and PostgreSQL memberships, and passes the issued cookies into the server session lookup. Only the Next `headers()` accessor is substituted because the test runner has no Next request context. The simulated DB-failure case rejects the membership lookup once to verify generic 500 mapping; it does not prove behavior during a real database outage. Teacher-assignment mutation handlers have separate direct integration coverage. The server-rendered school page and full browser/server transport are not integration-tested.
+
+- `braces`: the advisory requires deeply nested brace patterns reaching `braces` compile/expand. In the inspected Next ESLint plugin, the relevant `fast-glob` root expansion is conditional on `settings.next.rootDir`, absent from current config. This supports “not reached by that current config path,” not “package harmless.” CI runs on pull requests and checks out contributor changes; no claim is made that a hostile change could not alter config or execute other code in CI. The maintainer publicly disputes the CVE's practical premise while the reporter documents a reproduction. Exploitability in this particular CI job is not established.
+- `deepmerge-ts`: the advisory requires corresponding cyclic JavaScript object graphs, not plain JSON. Prisma's config loader supplies `deepmerge` to c12 while loading TS/JS config. The current config is repository code; no request handler invokes this function or supplies such graphs. CLI/build/migration config execution remains in the installed toolchain. This is not proof that the function can never be reached or that arbitrary code in a config would be safe.
+- Both advisories describe availability impact (stack exhaustion/process failure); the cited advisories do not report confidentiality or integrity impact. No app-specific exploit was run. No mitigation removes either audit finding.
+
+### Reassessment triggers
+
+Reassess when a fixed braces release is listed by the advisory and its compatible parent adopts it; a stable Next parent removes/updates the chain; Prisma publishes a stable config pin at `deepmerge-ts >=8` with supported compatibility evidence; or the owner changes Option A in the decision log. Until then, the audit gate and Phase 1 block remain.

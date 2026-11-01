@@ -13,4 +13,60 @@ Before release, the team must verify:
 
 ## Current status
 
-The repository has no release candidate or implementation; therefore no release validation has occurred.
+The repository contains a local Phase 1 implementation foundation and draft development PRs, but **no release candidate or deployment**. Local test results do not replace missing production security, operations, and release checks. The full CI-equivalent sequence must be run locally while GitHub Actions is unavailable, including the existing failing `npm audit --audit-level=high` gate; no merge or deployment is approved.
+
+## Phase 1–7 integration merge review — 2026-10-21
+
+The predecessor PR #94 at exact local commit `9eb5e6e` passed
+**65/65 Node source guards**, **302/302 Vitest tests**,
+**36/36 database migration checksum matches**, lint,
+typecheck, production build, and production-only audit
+with **zero findings**. Its formatting check **failed**
+for the new checksum test file; the next stacked PR
+normalizes that test's layout without reducing assertions.
+This new formatting change is **not yet locally verified**.
+
+The full strict `npm audit --audit-level=high`
+continues to report **five high affected package entries**
+from one unpatched, dev-only `braces` vulnerability
+in Next's lint dependency graph. No risk exception or
+alternate audit gate has been approved. A clean
+production-only audit alone does not clear it.
+
+The detailed [Phase 1–7 authenticated-browser security
+acceptance matrix](PHASE1_7_BROWSER_SECURITY_ACCEPTANCE.md)
+is **PARTIALLY EXECUTED, NOT ACCEPTED**. The
+[local browser evidence](PHASE1_7_BROWSER_EVIDENCE_2026_10_21.md)
+covers only signed-out and school-B-only negative-access smoke checks. Its required evidence
+includes active versus revoked sessions and school membership,
+cross-school/verified-section isolation, exact teacher assignment,
+student identity binding, no private RSC/browser-history caching
+and print/keyboard accessibility. Positive guardian access
+is not proven as an implemented Phase 1–7 flow; report
+such gaps truthfully rather than calling them passed.
+
+At exact PR #96 checkpoint `7e1c609`,
+the owner revalidated **Prettier, ESLint, TypeScript,
+production build, 36 migration file checksums**,
+and used a production-compiled browser to verify
+that cross-school streamed not-found HTML
+contains `noindex`, RSC exposes the 404 fallback
+marker rather than either school name, and the
+private lesson-notes API independently denies
+foreign-school access with HTTP 404 and
+`private, no-store`. The prior dev-mode prerender
+error did not recur in production. These checks
+resolve the *narrow streamed 200/404 question*,
+**not** the full BR-01..BR-16 browser acceptance.
+The current-head cumulative tests and both audits
+were not re-run on this commit; prior evidence
+remains explicitly commit-scoped. Details:
+[local browser evidence](PHASE1_7_BROWSER_EVIDENCE_2026_10_21.md).
+
+**Do not merge** stacked Phase 1–7 draft branches
+into `main` or deploy until current-head formatting/tests/build,
+browser release evidence, strict audit remediation or separately
+approved security disposition, migration change reconciliation and
+explicit owner merge approval are recorded. The standing
+non-production development mandate does not imply release approval.
+

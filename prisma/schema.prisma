@@ -1,0 +1,1483 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PlatformRole {
+  NONE
+  SUPER_ADMIN
+}
+
+enum MembershipRole {
+  SCHOOL_SUPER_ADMIN
+  SCHOOL_ADMIN
+  HEAD_OF_SECTION
+  PRINCIPAL
+  TEACHER
+  FORM_TEACHER
+  PARENT
+  STUDENT
+}
+
+enum ScopeType {
+  SECTION
+  CLASS
+  SUBJECT
+  CHILD
+}
+
+enum SchoolLifecycleStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+  CLOSED
+}
+
+enum SchoolLifecycleEventType {
+  ONBOARDED
+  ACTIVATED
+  SUSPENDED
+  EXPIRED
+  CLOSED
+  REACTIVATED
+}
+
+// Platform plan features are catalog metadata until entitlement enforcement
+// receives its own authorization, fallback and rollout acceptance.
+enum PlatformPlanFeature {
+  ATTENDANCE
+  LESSONS
+  ASSESSMENTS
+  CBT
+}
+
+enum AcademicPeriodStatus {
+  PLANNED
+  ACTIVE
+  CLOSED
+}
+
+enum FormTeacherKind {
+  PRIMARY
+  SUPPORT
+}
+
+enum FormTeacherStatus {
+  ACTIVE
+  ENDED
+}
+
+enum FormTeacherEventType {
+  ASSIGNED
+  HANDOVER_OUT
+  HANDOVER_IN
+  ENDED
+}
+
+enum TimetableSlotStatus {
+  ACTIVE
+  CANCELLED
+}
+
+enum TimetableEventType {
+  CREATED
+  CANCELLED
+}
+
+enum SchoolSectionStage {
+  PRIMARY
+  SECONDARY
+}
+
+enum StudentLifecycleStatus {
+  REGISTERED
+  ENROLLED
+  WITHDRAWN
+}
+
+enum StudentEnrollmentStatus {
+  ACTIVE
+  ENDED
+}
+
+enum StudentEventType {
+  REGISTERED
+  ENROLLED
+  WITHDRAWN
+}
+
+enum AttendanceRegisterStatus {
+  SUBMITTED
+  APPROVED
+  RETURNED
+}
+
+enum AttendanceMark {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum AttendanceEventType {
+  SUBMITTED
+  APPROVED
+  RETURNED
+}
+
+enum LessonDocumentKind {
+  LESSON_NOTE
+  SCHEME_OF_WORK
+}
+
+enum LessonNoteStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  RETURNED
+}
+
+enum LessonReleaseEventType {
+  RELEASED
+  WITHDRAWN
+}
+
+enum LessonNoteEventType {
+  CREATED
+  REVISED
+  SUBMITTED
+  APPROVED
+  RETURNED
+}
+
+enum SchoolConfigurationEventType {
+  ACADEMIC_SESSION_CREATED
+  ACADEMIC_TERM_CREATED
+  ACADEMIC_SESSION_ACTIVATED
+  ACADEMIC_SESSION_CLOSED
+  ACADEMIC_TERM_ACTIVATED
+  ACADEMIC_TERM_CLOSED
+  CLASS_CREATED
+  SUBJECT_CREATED
+  FORM_TEACHER_POLICY_CHANGED
+  TIMETABLE_ROOM_CREATED
+  SECTION_CREATED
+  CLASS_SECTION_ASSIGNED
+}
+
+model User {
+  id            String       @id
+  name          String
+  email         String       @unique
+  emailVerified Boolean      @default(false)
+  image         String?
+  platformRole  PlatformRole @default(NONE)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  memberships   Membership[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+model School {
+  id                                  String                               @id @default(cuid())
+  name                                String
+  slug                                String                               @unique
+  isActive                            Boolean                              @default(true)
+  lifecycleStatus                     SchoolLifecycleStatus?
+  allowCoFormTeachers                 Boolean                              @default(false)
+  createdAt                           DateTime                             @default(now())
+  updatedAt                           DateTime                             @updatedAt
+  memberships                         Membership[]
+  classes                             SchoolClass[]
+  subjects                            Subject[]
+  teacherClassSubjectAssignments      TeacherClassSubjectAssignment[]
+  teacherClassSubjectAssignmentEvents TeacherClassSubjectAssignmentEvent[]
+  lifecycleEvents                     SchoolLifecycleEvent[]
+  subscriptionPeriods                 SchoolSubscriptionPeriod[]
+  academicSessions                    AcademicSession[]
+  academicTerms                       AcademicTerm[]
+  configurationEvents                 SchoolConfigurationEvent[]
+  formTeacherResponsibilities         FormTeacherResponsibility[]
+  formTeacherEvents                   FormTeacherEvent[]
+  timetableRooms                      TimetableRoom[]
+  timetableSlots                      TimetableSlot[]
+  timetableEvents                     TimetableEvent[]
+  lessonNotes                         LessonNote[]
+  lessonNoteRevisions                 LessonNoteRevision[]
+  lessonNoteEvents                    LessonNoteEvent[]
+  sections                            SchoolSection[]
+  studentRecords                      StudentRecord[]
+  studentEnrollments                  StudentEnrollment[]
+  studentEvents                       StudentEvent[]
+  attendanceRegisters AttendanceRegister[]
+  attendanceEntries AttendanceEntry[]
+  attendanceEvents AttendanceEvent[]
+  attendanceCorrectionRequests AttendanceCorrectionRequest[]
+  attendanceCorrectionDecisions AttendanceCorrectionDecision[]
+  attendancePolicyRevisions SchoolAttendancePolicyRevision[]
+  attendanceDayRevisions SchoolAttendanceDayRevision[]
+  lessonReleaseEvents LessonReleaseEvent[]
+  studentAccountLinks StudentAccountLink[]
+  studentAccountLinkRevocations StudentAccountLinkRevocation[]
+  assessmentQuestions AssessmentQuestion[]
+  assessmentQuestionKeys AssessmentQuestionKey[]
+  assessmentDrafts AssessmentDraft[]
+  assessmentDraftQuestions AssessmentDraftQuestion[]
+  assessmentDraftSeals AssessmentDraftSeal[]
+  assessmentReviewEvents AssessmentReviewEvent[]
+  assessmentPublicationEvents AssessmentPublicationEvent[]
+  assessmentAttempts AssessmentAttempt[]
+  assessmentAnswerEvents AssessmentAttemptAnswerEvent[]
+  assessmentSubmissions AssessmentAttemptSubmission[]
+  assessmentScores AssessmentAttemptScore[]
+  assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
+  assessmentManualComponents AssessmentManualComponent[]
+  assessmentManualMarkProposals AssessmentManualMarkProposal[]
+  assessmentManualMarkDecisions AssessmentManualMarkDecision[]
+  assessmentManualCorrectionRequests AssessmentManualCorrectionRequest[]
+  assessmentManualCorrectionDecisions AssessmentManualCorrectionDecision[]
+}
+
+model Membership {
+  id                             String                          @id @default(cuid())
+  userId                         String
+  schoolId                       String
+  role                           MembershipRole
+  isActive                       Boolean                         @default(true)
+  createdAt                      DateTime                        @default(now())
+  updatedAt                      DateTime                        @updatedAt
+  user                           User                            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  school                         School                          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  scopes                         ScopeGrant[]
+  teacherClassSubjectAssignments TeacherClassSubjectAssignment[]
+  formTeacherResponsibilities    FormTeacherResponsibility[]
+  timetableSlots                 TimetableSlot[]
+  lessonNotes                    LessonNote[]
+
+  attendanceEvents AttendanceEvent[]
+  @@unique([schoolId, userId])
+  @@unique([schoolId, id])
+  @@index([userId, isActive])
+  attendanceCorrectionRequests AttendanceCorrectionRequest[] @relation("AttendanceCorrectionRequester")
+  attendanceCorrectionDecisions AttendanceCorrectionDecision[] @relation("AttendanceCorrectionReviewer")
+  attendancePolicyRevisions SchoolAttendancePolicyRevision[]
+  attendanceDayRevisions SchoolAttendanceDayRevision[]
+  lessonReleaseEvents LessonReleaseEvent[]
+  studentAccountLink StudentAccountLink? @relation("LinkedStudentMembership")
+  studentLinkAttestations StudentAccountLink[] @relation("StudentLinkAttestor")
+  studentLinkRevocations StudentAccountLinkRevocation[] @relation("StudentLinkRevoker")
+  assessmentQuestions AssessmentQuestion[]
+  assessmentDrafts AssessmentDraft[]
+  assessmentReviewEvents AssessmentReviewEvent[]
+  assessmentPublicationEvents AssessmentPublicationEvent[]
+  assessmentAttempts AssessmentAttempt[]
+  assessmentAnswerEvents AssessmentAttemptAnswerEvent[]
+  assessmentSubmissions AssessmentAttemptSubmission[]
+  assessmentScores AssessmentAttemptScore[]
+  assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
+  assessmentManualComponents AssessmentManualComponent[]
+  assessmentManualMarkProposals AssessmentManualMarkProposal[]
+  assessmentManualMarkDecisions AssessmentManualMarkDecision[]
+  assessmentManualCorrectionRequests AssessmentManualCorrectionRequest[]
+  assessmentManualCorrectionDecisions AssessmentManualCorrectionDecision[]
+}
+
+model ScopeGrant {
+  id           String     @id @default(cuid())
+  membershipId String
+  type         ScopeType
+  scopeId      String
+  verified     Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  membership   Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@unique([membershipId, type, scopeId])
+  @@index([type, scopeId])
+}
+
+enum TeacherClassSubjectAssignmentStatus {
+  ACTIVE
+  INACTIVE
+  REVOKED
+}
+
+enum TeacherClassSubjectAssignmentEventType {
+  CREATED
+  DEACTIVATED
+  REVOKED
+  REACTIVATED
+}
+
+model SchoolClass {
+  id                             String                          @id @default(cuid())
+  schoolId                       String
+  sectionId                      String?
+  name                           String
+  isActive                       Boolean                         @default(true)
+  createdAt                      DateTime                        @default(now())
+  updatedAt                      DateTime                        @updatedAt
+  school                         School                          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  section                        SchoolSection?                 @relation(fields: [schoolId, sectionId], references: [schoolId, id], onDelete: NoAction)
+  teacherClassSubjectAssignments TeacherClassSubjectAssignment[]
+  formTeacherResponsibilities    FormTeacherResponsibility[]
+  timetableSlots                 TimetableSlot[]
+  lessonNotes                    LessonNote[]
+  studentEnrollments             StudentEnrollment[]
+
+  attendanceRegisters AttendanceRegister[]
+  @@unique([schoolId, id])
+  @@index([schoolId])
+  @@index([schoolId, sectionId])
+  assessmentQuestions AssessmentQuestion[]
+  assessmentDrafts AssessmentDraft[]
+  assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
+  assessmentManualComponents AssessmentManualComponent[]
+}
+
+model Subject {
+  id                             String                          @id @default(cuid())
+  schoolId                       String
+  name                           String
+  isActive                       Boolean                         @default(true)
+  createdAt                      DateTime                        @default(now())
+  updatedAt                      DateTime                        @updatedAt
+  school                         School                          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teacherClassSubjectAssignments TeacherClassSubjectAssignment[]
+  lessonNotes                   LessonNote[]
+
+  @@unique([schoolId, id])
+  @@index([schoolId])
+  assessmentQuestions AssessmentQuestion[]
+  assessmentDrafts AssessmentDraft[]
+  assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
+  assessmentManualComponents AssessmentManualComponent[]
+}
+
+model TeacherClassSubjectAssignment {
+  id           String                              @id @default(cuid())
+  schoolId     String
+  membershipId String
+  classId      String
+  subjectId    String
+  sessionId    String?
+  status       TeacherClassSubjectAssignmentStatus @default(ACTIVE)
+  createdAt    DateTime                            @default(now())
+  updatedAt    DateTime                            @updatedAt
+  school       School                              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  membership   Membership                          @relation(fields: [schoolId, membershipId], references: [schoolId, id], onDelete: NoAction)
+  schoolClass  SchoolClass                         @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
+  subject      Subject                             @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction)
+  academicSession AcademicSession?                    @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
+  events       TeacherClassSubjectAssignmentEvent[]
+  timetableSlots TimetableSlot[]
+  lessonNotes LessonNote[]
+
+  // Existing NULL-session assignments retain uniqueness via a SQL partial index.
+  // Non-null session assignments are unique per teacher, class, subject and session.
+  @@unique([schoolId, membershipId, classId, subjectId, sessionId], map: "TeacherAssignment_period_unique")
+  @@unique([schoolId, id, membershipId])
+  @@unique([schoolId, id, membershipId, classId, sessionId], map: "TeacherAssignment_schedule_identity")
+  @@unique([schoolId, id, membershipId, classId, subjectId, sessionId], map: "TeacherAssignment_lesson_identity")
+  @@unique([schoolId, id])
+  @@index([schoolId, membershipId, status])
+  @@index([schoolId, classId, subjectId, status])
+  @@index([schoolId, sessionId, status])
+  assessmentQuestions AssessmentQuestion[]
+  assessmentDrafts AssessmentDraft[]
+  assessmentManualComponents AssessmentManualComponent[]
+}
+
+model TeacherClassSubjectAssignmentEvent {
+  id                  String                                 @id @default(cuid())
+  schoolId            String
+  actorUserId         String
+  actorMembershipId   String
+  teacherMembershipId String
+  assignmentId        String
+  eventType           TeacherClassSubjectAssignmentEventType
+  previousStatus      TeacherClassSubjectAssignmentStatus?
+  newStatus           TeacherClassSubjectAssignmentStatus
+  reason              String?
+  createdAt           DateTime                               @default(now())
+  school              School                                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  assignment          TeacherClassSubjectAssignment         @relation(fields: [schoolId, assignmentId, teacherMembershipId], references: [schoolId, id, membershipId], onDelete: NoAction)
+
+  @@index([schoolId, createdAt])
+  @@index([schoolId, assignmentId, createdAt])
+  @@index([schoolId, actorUserId, createdAt])
+  @@index([schoolId, teacherMembershipId, createdAt])
+}
+
+model SchoolLifecycleEvent {
+  id             String                   @id @default(cuid())
+  schoolId       String
+  actorUserId    String
+  eventType      SchoolLifecycleEventType
+  previousStatus SchoolLifecycleStatus?
+  newStatus      SchoolLifecycleStatus
+  reason         String?
+  createdAt      DateTime                 @default(now())
+  school         School                   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId, createdAt])
+  @@index([actorUserId, createdAt])
+}
+
+model AcademicSession {
+  id        String               @id @default(cuid())
+  schoolId  String
+  name      String
+  startsOn  DateTime             @db.Date
+  endsOn    DateTime             @db.Date
+  status    AcademicPeriodStatus @default(PLANNED)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  school    School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  terms     AcademicTerm[]
+  teacherAssignments TeacherClassSubjectAssignment[]
+  formTeacherResponsibilities FormTeacherResponsibility[]
+  timetableSlots TimetableSlot[]
+  lessonNotes LessonNote[]
+  studentEnrollments StudentEnrollment[]
+
+  attendanceRegisters AttendanceRegister[]
+  @@unique([schoolId, id])
+  @@unique([schoolId, name])
+  @@index([schoolId, status])
+  assessmentQuestions AssessmentQuestion[]
+  assessmentDrafts AssessmentDraft[]
+  assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
+  assessmentManualComponents AssessmentManualComponent[]
+}
+
+model AcademicTerm {
+  id        String               @id @default(cuid())
+  schoolId  String
+  sessionId String
+  name      String
+  position  Int
+  startsOn  DateTime             @db.Date
+  endsOn    DateTime             @db.Date
+  status    AcademicPeriodStatus @default(PLANNED)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  school    School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  session   AcademicSession      @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
+  timetableSlots TimetableSlot[]
+  lessonNotes LessonNote[]
+
+  @@unique([schoolId, sessionId, name])
+  @@unique([schoolId, sessionId, position])
+  @@unique([schoolId, id])
+  @@unique([schoolId, sessionId, id])
+  @@index([schoolId, sessionId, status])
+  assessmentQuestions AssessmentQuestion[]
+  assessmentDrafts AssessmentDraft[]
+  assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
+  assessmentManualComponents AssessmentManualComponent[]
+}
+
+model SchoolConfigurationEvent {
+  id                String                       @id @default(cuid())
+  schoolId          String
+  actorUserId       String
+  actorMembershipId String
+  eventType         SchoolConfigurationEventType
+  resourceId        String
+  reason            String?
+  createdAt         DateTime                     @default(now())
+  school            School                       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId, createdAt])
+  @@index([schoolId, eventType, createdAt])
+}
+
+model FormTeacherResponsibility {
+  id           String            @id @default(cuid())
+  schoolId     String
+  sessionId    String
+  classId      String
+  membershipId String
+  kind         FormTeacherKind   @default(PRIMARY)
+  status       FormTeacherStatus @default(ACTIVE)
+  createdAt    DateTime          @default(now())
+  endedAt      DateTime?
+  school       School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  session      AcademicSession   @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
+  schoolClass  SchoolClass       @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
+  membership   Membership        @relation(fields: [schoolId, membershipId], references: [schoolId, id], onDelete: NoAction)
+  events       FormTeacherEvent[]
+
+  attendanceRegisters AttendanceRegister[]
+  @@unique([schoolId, id, membershipId, classId, sessionId], map: "FormTeacherResponsibility_attendance_identity")
+  @@unique([schoolId, id, membershipId])
+  @@unique([schoolId, id])
+  @@index([schoolId, sessionId, classId, status])
+  @@index([schoolId, membershipId, status])
+}
+
+model FormTeacherEvent {
+  id                  String               @id @default(cuid())
+  schoolId            String
+  responsibilityId    String
+  teacherMembershipId String
+  actorUserId         String
+  actorMembershipId   String
+  eventType           FormTeacherEventType
+  reason              String?
+  createdAt           DateTime             @default(now())
+  school              School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  responsibility      FormTeacherResponsibility @relation(fields: [schoolId, responsibilityId, teacherMembershipId], references: [schoolId, id, membershipId], onDelete: NoAction)
+
+  @@index([schoolId, responsibilityId, createdAt])
+  @@index([schoolId, actorUserId, createdAt])
+}
+
+model TimetableRoom {
+  id        String   @id @default(cuid())
+  schoolId  String
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  slots     TimetableSlot[]
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, name])
+}
+
+model TimetableSlot {
+  id           String              @id @default(cuid())
+  schoolId     String
+  sessionId    String
+  termId       String
+  assignmentId String
+  membershipId String
+  classId      String
+  roomId       String?
+  weekday      Int
+  startMinute  Int
+  endMinute    Int
+  status       TimetableSlotStatus @default(ACTIVE)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  school       School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  session      AcademicSession     @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
+  term         AcademicTerm        @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction)
+  assignment   TeacherClassSubjectAssignment @relation(fields: [schoolId, assignmentId, membershipId, classId, sessionId], references: [schoolId, id, membershipId, classId, sessionId], onDelete: NoAction, map: "AttendanceRegister_form_teacher_exact_fkey")
+  membership   Membership          @relation(fields: [schoolId, membershipId], references: [schoolId, id], onDelete: NoAction)
+  schoolClass  SchoolClass         @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
+  room         TimetableRoom?      @relation(fields: [schoolId, roomId], references: [schoolId, id], onDelete: NoAction)
+  events       TimetableEvent[]
+
+  @@unique([schoolId, id])
+  @@index([schoolId, termId, weekday, startMinute])
+  @@index([schoolId, assignmentId, status])
+}
+
+model TimetableEvent {
+  id                String             @id @default(cuid())
+  schoolId          String
+  slotId            String
+  actorUserId       String
+  actorMembershipId String
+  eventType         TimetableEventType
+  reason            String
+  createdAt         DateTime           @default(now())
+  school            School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  slot              TimetableSlot      @relation(fields: [schoolId, slotId], references: [schoolId, id], onDelete: NoAction)
+
+  @@index([schoolId, slotId, createdAt])
+  @@index([schoolId, actorUserId, createdAt])
+}
+
+model LessonNote {
+  kind LessonDocumentKind @default(LESSON_NOTE)
+  weekStart Int?
+  weekEnd Int?
+  id                  String           @id @default(cuid())
+  schoolId            String
+  sessionId           String
+  termId              String
+  assignmentId        String
+  teacherMembershipId String
+  classId             String
+  subjectId           String
+  topic               String
+  status              LessonNoteStatus @default(DRAFT)
+  currentRevision     Int              @default(1)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  submittedAt         DateTime?
+  school              School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  session             AcademicSession  @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
+  term                AcademicTerm     @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction)
+  assignment          TeacherClassSubjectAssignment @relation(fields: [schoolId, assignmentId, teacherMembershipId, classId, subjectId, sessionId], references: [schoolId, id, membershipId, classId, subjectId, sessionId], onDelete: NoAction)
+  teacherMembership   Membership       @relation(fields: [schoolId, teacherMembershipId], references: [schoolId, id], onDelete: NoAction)
+  schoolClass         SchoolClass      @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
+  subject             Subject          @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction)
+  revisions           LessonNoteRevision[]
+  events              LessonNoteEvent[]
+
+  @@unique([schoolId, id])
+  @@index([schoolId, termId, status])
+  @@index([schoolId, teacherMembershipId, updatedAt])
+  releaseEvents LessonReleaseEvent[]
+}
+
+model LessonNoteRevision {
+  id             String      @id @default(cuid())
+  schoolId       String
+  noteId         String
+  revisionNumber Int
+  topic          String
+  objectives     String
+  content        String
+  actorUserId    String
+  createdAt      DateTime    @default(now())
+  school         School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  note           LessonNote  @relation(fields: [schoolId, noteId], references: [schoolId, id], onDelete: NoAction)
+
+  @@unique([schoolId, noteId, revisionNumber])
+  @@index([schoolId, noteId, createdAt])
+}
+
+model LessonNoteEvent {
+  id                String              @id @default(cuid())
+  schoolId          String
+  noteId            String
+  actorUserId       String
+  actorMembershipId String
+  eventType         LessonNoteEventType
+  revisionNumber    Int
+  reason            String?
+  createdAt         DateTime            @default(now())
+  school            School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  note              LessonNote          @relation(fields: [schoolId, noteId], references: [schoolId, id], onDelete: NoAction)
+
+  @@index([schoolId, noteId, createdAt])
+  @@index([schoolId, actorUserId, createdAt])
+}
+
+model SchoolSection {
+  id        String             @id @default(cuid())
+  schoolId  String
+  name      String
+  stage     SchoolSectionStage
+  isActive  Boolean            @default(true)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  school    School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  classes   SchoolClass[]
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, name])
+  @@index([schoolId, stage, isActive])
+}
+
+model StudentRecord {
+  id              String                 @id @default(cuid())
+  schoolId        String
+  admissionNumber String
+  givenName       String
+  familyName      String
+  status          StudentLifecycleStatus @default(REGISTERED)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  school          School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  enrollments     StudentEnrollment[]
+  events          StudentEvent[]
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, admissionNumber])
+  @@index([schoolId, status])
+  accountLink StudentAccountLink?
+  assessmentAttempts AssessmentAttempt[]
+  assessmentManualMarkProposals AssessmentManualMarkProposal[]
+}
+
+model StudentEnrollment {
+  id         String                  @id @default(cuid())
+  schoolId   String
+  studentId  String
+  sessionId  String
+  classId    String
+  status     StudentEnrollmentStatus @default(ACTIVE)
+  startedAt  DateTime                @default(now())
+  endedAt    DateTime?
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+  school     School                  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student    StudentRecord           @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction)
+  session    AcademicSession         @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
+  schoolClass SchoolClass            @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
+  events     StudentEvent[]
+
+  attendanceEntries AttendanceEntry[]
+  @@unique([schoolId, id, studentId, classId, sessionId], map: "StudentEnrollment_attendance_identity")
+  @@unique([schoolId, id])
+  @@unique([schoolId, id, studentId])
+  @@index([schoolId, studentId, sessionId, status])
+  @@index([schoolId, classId, sessionId, status])
+  assessmentAttempts AssessmentAttempt[]
+  assessmentManualMarkProposals AssessmentManualMarkProposal[]
+}
+
+model StudentEvent {
+  id                String           @id @default(cuid())
+  schoolId          String
+  studentId         String
+  enrollmentId      String?
+  actorUserId       String
+  actorMembershipId String
+  eventType         StudentEventType
+  reason            String
+  createdAt         DateTime         @default(now())
+  school            School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student           StudentRecord    @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction)
+  enrollment        StudentEnrollment? @relation(fields: [schoolId, enrollmentId, studentId], references: [schoolId, id, studentId], onDelete: NoAction)
+
+  @@index([schoolId, studentId, createdAt])
+  @@index([schoolId, actorUserId, createdAt])
+}
+
+/** One immutable daily class roster snapshot. Only status and reviewedAt may
+ * transition once; entries and history are append-only in PostgreSQL. */
+model AttendanceRegister {
+  id                          String                   @id @default(cuid())
+  schoolId                    String
+  sessionId                   String
+  classId                     String
+  attendanceDate              DateTime                 @db.Date
+  status                      AttendanceRegisterStatus @default(SUBMITTED)
+  submittedByMembershipId     String
+  formTeacherResponsibilityId String
+  submittedAt                 DateTime                 @default(now())
+  reviewedAt                  DateTime?
+  school                      School                   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  session                     AcademicSession          @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
+  schoolClass                 SchoolClass              @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
+  formTeacherResponsibility   FormTeacherResponsibility @relation(fields: [schoolId, formTeacherResponsibilityId, submittedByMembershipId, classId, sessionId], references: [schoolId, id, membershipId, classId, sessionId], onDelete: NoAction, map: "AttendanceRegister_form_teacher_exact_fkey")
+  entries                     AttendanceEntry[]
+  events                      AttendanceEvent[]
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, id, sessionId, classId], map: "AttendanceRegister_entry_identity")
+  @@unique([schoolId, sessionId, classId, attendanceDate])
+  @@index([schoolId, status, attendanceDate])
+}
+
+/** Student identity and enrollment are bound through an exact composite FK. */
+model AttendanceEntry {
+  id           String             @id @default(cuid())
+  schoolId     String
+  registerId   String
+  sessionId    String
+  classId      String
+  enrollmentId String
+  studentId    String
+  mark         AttendanceMark
+  createdAt    DateTime           @default(now())
+  school       School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  register     AttendanceRegister @relation(fields: [schoolId, registerId, sessionId, classId], references: [schoolId, id, sessionId, classId], onDelete: NoAction, map: "AttendanceEntry_register_exact_fkey")
+  enrollment   StudentEnrollment  @relation(fields: [schoolId, enrollmentId, studentId, classId, sessionId], references: [schoolId, id, studentId, classId, sessionId], onDelete: NoAction, map: "AttendanceEntry_enrollment_exact_fkey")
+
+  @@unique([schoolId, registerId, studentId])
+  @@index([schoolId, studentId, createdAt])
+  correctionRequests AttendanceCorrectionRequest[]
+  @@unique([schoolId, id, registerId], map: "AttendanceEntry_correction_identity")
+}
+
+/** Every submit and decision event is immutable, actor-validated and scoped. */
+model AttendanceEvent {
+  id                String              @id @default(cuid())
+  schoolId          String
+  registerId        String
+  actorUserId       String
+  actorMembershipId String
+  eventType         AttendanceEventType
+  reason            String?
+  createdAt         DateTime            @default(now())
+  school            School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  register          AttendanceRegister  @relation(fields: [schoolId, registerId], references: [schoolId, id], onDelete: NoAction, map: "AttendanceEvent_schoolId_registerId_fkey")
+  actorMembership   Membership          @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AttendanceEvent_actor_membership_fkey")
+
+  @@unique([schoolId, registerId, eventType])
+  @@index([schoolId, actorUserId, createdAt])
+}
+
+/** Original AttendanceEntry remains immutable. Each reasoned correction is a
+ * separate immutable request; reviewer decision is an immutable separate row. */
+model AttendanceCorrectionRequest {
+  id                      String   @id @default(cuid())
+  schoolId                String
+  registerId              String
+  entryId                 String
+  revision                Int
+  expectedMark            AttendanceMark
+  proposedMark            AttendanceMark
+  reason                  String
+  requestedByUserId       String
+  requestedByMembershipId String
+  createdAt               DateTime @default(now())
+  school                  School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  entry                   AttendanceEntry @relation(fields: [schoolId, entryId, registerId], references: [schoolId, id, registerId], onDelete: NoAction, map: "AttendanceCorrectionRequest_entry_fkey")
+  requester               Membership @relation("AttendanceCorrectionRequester", fields: [schoolId, requestedByMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AttendanceCorrectionRequest_requester_fkey")
+  decisions               AttendanceCorrectionDecision[]
+
+  @@unique([schoolId, id, registerId], map: "AttendanceCorrectionRequest_decision_identity")
+  @@unique([schoolId, entryId, revision])
+  @@index([schoolId, registerId, createdAt])
+}
+
+/** One reviewer decision per immutable request; true = approve; false = return.
+ * Effective attendance reads must use only the latest APPROVED correction. */
+model AttendanceCorrectionDecision {
+  id                   String   @id @default(cuid())
+  schoolId             String
+  requestId            String
+  registerId           String
+  reviewerUserId       String
+  reviewerMembershipId String
+  approved             Boolean
+  reason               String
+  createdAt            DateTime @default(now())
+  school               School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  request              AttendanceCorrectionRequest @relation(fields: [schoolId, requestId, registerId], references: [schoolId, id, registerId], onDelete: NoAction, map: "AttendanceCorrectionDecision_request_fkey")
+  reviewer             Membership @relation("AttendanceCorrectionReviewer", fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AttendanceCorrectionDecision_reviewer_fkey")
+
+  @@unique([schoolId, requestId])
+  @@index([schoolId, reviewerUserId, createdAt])
+}
+
+
+/** School-approved, immutable attendance calendar policy history. No mutable
+ * policy pointer: the highest authorized revision is authoritative. Legacy
+ * schools with no revision retain the conservative documented UTC default. */
+model SchoolAttendancePolicyRevision {
+  id                       String   @id @default(cuid())
+  schoolId                 String
+  revision                 Int
+  timeZone                 String   @db.VarChar(64)
+  submissionBackdateDays   Int
+  correctionWindowDays     Int
+  reason                   String   @db.VarChar(500)
+  actorUserId              String
+  actorMembershipId        String
+  createdAt                DateTime @default(now())
+  school                   School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  actorMembership          Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "SchoolAttendancePolicyRevision_actor_fkey")
+
+  @@unique([schoolId, revision])
+  @@index([schoolId, createdAt])
+}
+
+/** Audit-preserving per-school calendar-day designation, explicit by date.
+ * No automatic weekend/holiday assumptions; the latest recorded revision
+ * applies only to future submissions and never revises existing history. */
+model SchoolAttendanceDayRevision {
+  id String @id @default(cuid())
+  schoolId String
+  attendanceDate DateTime @db.Date
+  revision Int
+  isTeachingDay Boolean
+  reason String @db.VarChar(500)
+  actorUserId String
+  actorMembershipId String
+  createdAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  actorMembership Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "SchoolAttendanceDayRevision_actor_fkey")
+
+  @@unique([schoolId, attendanceDate, revision])
+  @@index([schoolId, attendanceDate, createdAt])
+}
+
+/** Release is separate from section approval: only append-only scoped
+ * publication/withdrawal decisions expose an approved immutable revision. */
+model LessonReleaseEvent {
+  id String @id @default(cuid())
+  schoolId String
+  noteId String
+  revisionNumber Int
+  eventType LessonReleaseEventType
+  reason String @db.VarChar(500)
+  actorUserId String
+  actorMembershipId String
+  createdAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  note LessonNote @relation(fields: [schoolId, noteId], references: [schoolId, id], onDelete: NoAction)
+  actorMembership Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "LessonReleaseEvent_actor_fkey")
+
+  @@unique([schoolId, noteId, revisionNumber, eventType])
+  @@index([schoolId, createdAt])
+}
+
+/** Explicit administrator-attested one-to-one identity binding. IDs are
+ * selected from existing STUDENT Membership and existing enrolled student,
+ * never derived from name, email or admission number. */
+model StudentAccountLink {
+  id String @id @default(cuid())
+  schoolId String
+  studentId String
+  studentMembershipId String
+  attestedByMembershipId String
+  attestedByUserId String
+  attestationReason String @db.VarChar(500)
+  createdAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student StudentRecord @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction, map: "StudentAccountLink_student_fkey")
+  studentMembership Membership @relation("LinkedStudentMembership", fields: [schoolId, studentMembershipId], references: [schoolId, id], onDelete: NoAction, map: "StudentAccountLink_student_member_fkey")
+  attestor Membership @relation("StudentLinkAttestor", fields: [schoolId, attestedByMembershipId], references: [schoolId, id], onDelete: NoAction, map: "StudentAccountLink_attestor_fkey")
+  revocation StudentAccountLinkRevocation?
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, studentId])
+  @@unique([schoolId, studentMembershipId])
+  assessmentAttempts AssessmentAttempt[]
+}
+
+/** Revocation is terminal; an identity cannot silently be reassigned.
+ * A new linking policy needs a separately reviewed historical lifecycle. */
+model StudentAccountLinkRevocation {
+  id String @id @default(cuid())
+  schoolId String
+  linkId String
+  actorMembershipId String
+  actorUserId String
+  reason String @db.VarChar(500)
+  createdAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  link StudentAccountLink @relation(fields: [schoolId, linkId], references: [schoolId, id], onDelete: NoAction, map: "StudentAccountLinkRevocation_link_fkey")
+  actor Membership @relation("StudentLinkRevoker", fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "StudentAccountLinkRevocation_actor_fkey")
+
+  @@unique([schoolId, linkId])
+}
+
+/** A private, immutable subject-question snapshot. Correct answers are NEVER
+ * returned by the question metadata endpoint and live in a separate table. */
+model AssessmentQuestion {
+  id String @id @default(cuid())
+  schoolId String
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  assignmentId String
+  teacherMembershipId String
+  teacherUserId String
+  prompt String @db.VarChar(2000)
+  options Json
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  session AcademicSession @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
+  term AcademicTerm @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction)
+  schoolClass SchoolClass @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
+  subject Subject @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction)
+  teacherMembership Membership @relation(fields: [schoolId, teacherMembershipId], references: [schoolId, id], onDelete: NoAction)
+  assignment TeacherClassSubjectAssignment @relation(fields: [schoolId, assignmentId, teacherMembershipId, classId, subjectId, sessionId], references: [schoolId, id, membershipId, classId, subjectId, sessionId], onDelete: NoAction, map: "AssessmentQuestion_exact_assignment_fkey")
+  answerKey AssessmentQuestionKey?
+
+  @@unique([schoolId, id])
+  @@index([schoolId, classId, subjectId, termId])
+  @@index([schoolId, teacherMembershipId, createdAt])
+  assessmentDraftQuestions AssessmentDraftQuestion[]
+  assessmentAnswerEvents AssessmentAttemptAnswerEvent[]
+}
+
+/** Kept physically and permission-wise apart from question metadata.
+ * No route projects this model to students or before authorized marking. */
+model AssessmentQuestionKey {
+  questionId String @id
+  schoolId String
+  correctIndex Int
+  createdAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  question AssessmentQuestion @relation(fields: [schoolId, questionId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentQuestionKey_question_fkey")
+
+  @@unique([schoolId, questionId])
+}
+
+enum AssessmentDraftKind {
+  QUIZ
+  TEST
+  EXAM
+}
+
+/** Draft configuration only. There is deliberately no publication flag,
+ * active attempt, CBT delivery, score or grading-result entity in this slice.
+ * A changed draft is a NEW immutable snapshot, never an UPDATE. */
+model AssessmentDraft {
+  id String @id @default(cuid())
+  schoolId String
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  assignmentId String
+  teacherMembershipId String
+  teacherUserId String
+  kind AssessmentDraftKind
+  title String @db.VarChar(180)
+  startsAt DateTime
+  endsAt DateTime
+  durationMinutes Int
+  maxAttempts Int
+  passPercent Int
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  session AcademicSession @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction)
+  term AcademicTerm @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction)
+  schoolClass SchoolClass @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction)
+  subject Subject @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction)
+  teacherMembership Membership @relation(fields: [schoolId, teacherMembershipId], references: [schoolId, id], onDelete: NoAction)
+  assignment TeacherClassSubjectAssignment @relation(fields: [schoolId, assignmentId, teacherMembershipId, classId, subjectId, sessionId], references: [schoolId, id, membershipId, classId, subjectId, sessionId], onDelete: NoAction, map: "AssessmentDraft_exact_assignment_fkey")
+  questions AssessmentDraftQuestion[]
+
+  @@unique([schoolId, id])
+  @@index([schoolId, teacherMembershipId, createdAt])
+  @@index([schoolId, classId, subjectId, termId])
+  seal AssessmentDraftSeal?
+  reviews AssessmentReviewEvent[]
+  publicationEvents AssessmentPublicationEvent[]
+  attempts AssessmentAttempt[]
+}
+
+/** Snapshot of the chosen private question IDs and their positive marks.
+ * No future student renderer is permitted to query secret QuestionKey. */
+model AssessmentDraftQuestion {
+  id String @id @default(cuid())
+  schoolId String
+  draftId String
+  questionId String
+  position Int
+  points Int
+  createdAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  draft AssessmentDraft @relation(fields: [schoolId, draftId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentDraftQuestion_draft_fkey")
+  question AssessmentQuestion @relation(fields: [schoolId, questionId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentDraftQuestion_question_fkey")
+
+  @@unique([schoolId, draftId, position])
+  @@unique([schoolId, draftId, questionId])
+  @@index([schoolId, questionId])
+}
+
+/** Atomically seals the exact immutable DRAFT item snapshot. Only sealed
+ * drafts are visible to staff lists; sealing never publishes a student exam. */
+model AssessmentDraftSeal {
+  draftId String @id
+  schoolId String
+  sealedAt DateTime @default(now())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  draft AssessmentDraft @relation(fields: [schoolId, draftId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentDraftSeal_draft_fkey")
+
+  @@unique([schoolId, draftId])
+}
+
+/** Exact, terminal section academic moderation of one sealed draft.
+ * This is NOT a publication or permission to begin CBT attempts. */
+enum AssessmentReviewDecision {
+  APPROVED
+  RETURNED
+}
+
+model AssessmentReviewEvent {
+  id String @id @default(cuid())
+  schoolId String
+  draftId String
+  decision AssessmentReviewDecision
+  reason String @db.VarChar(500)
+  reviewerMembershipId String
+  reviewerUserId String
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  draft AssessmentDraft @relation(fields: [schoolId, draftId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentReviewEvent_draft_fkey")
+  reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentReviewEvent_reviewer_fkey")
+
+  @@unique([schoolId, draftId])
+  @@index([schoolId, createdAt])
+}
+
+/** Separate school-super-admin publication authorization, never inferred
+ * from the academic HM/Principal APPROVED decision. Still no student
+ * delivery route, attempt, scoring or answer-key release in this subset. */
+enum AssessmentPublicationAction {
+  PUBLISHED
+  WITHDRAWN
+}
+
+model AssessmentPublicationEvent {
+  id String @id @default(cuid())
+  schoolId String
+  draftId String
+  action AssessmentPublicationAction
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  draft AssessmentDraft @relation(fields: [schoolId, draftId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentPublicationEvent_draft_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentPublicationEvent_actor_fkey")
+
+  @@unique([schoolId, draftId, action])
+  @@index([schoolId, createdAt])
+}
+
+/** Server-and-database admitted enrollment-bound CBT attempt reservation.
+ * This foundation intentionally has NO student HTTP route, question delivery,
+ * autosave, completion or marking. Once created its identity and deadline
+ * cannot be edited. Attempt numbers are assigned by the DB, not by clients. */
+model AssessmentAttempt {
+  id String @id
+  schoolId String
+  draftId String
+  studentId String
+  enrollmentId String
+  classId String
+  sessionId String
+  studentMembershipId String
+  linkId String
+  studentUserId String
+  attemptNumber Int @default(1)
+  startedAt DateTime @default(now())
+  deadlineAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  draft AssessmentDraft @relation(fields: [schoolId, draftId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttempt_draft_fkey")
+  student StudentRecord @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttempt_student_fkey")
+  enrollment StudentEnrollment @relation(fields: [schoolId, enrollmentId, studentId, classId, sessionId], references: [schoolId, id, studentId, classId, sessionId], onDelete: NoAction, map: "AssessmentAttempt_enrollment_fkey")
+  member Membership @relation(fields: [schoolId, studentMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttempt_membership_fkey")
+  link StudentAccountLink @relation(fields: [schoolId, linkId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttempt_link_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, draftId, studentId, attemptNumber])
+  @@index([schoolId, studentId, startedAt])
+  answerEvents AssessmentAttemptAnswerEvent[]
+  submission AssessmentAttemptSubmission?
+  score AssessmentAttemptScore?
+}
+
+/** Each autosave is an immutable event. The DB assigns the per-question
+ * revision under a school lock; client retry keys cannot change payload.
+ * No correct key, grade or score appears in this table. */
+model AssessmentAttemptAnswerEvent {
+  id String @id
+  schoolId String
+  attemptId String
+  questionId String
+  requestKey String @db.VarChar(128)
+  selectedIndex Int
+  revision Int @default(1)
+  actorMembershipId String
+  actorUserId String
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  attempt AssessmentAttempt @relation(fields: [schoolId, attemptId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttemptAnswerEvent_attempt_fkey")
+  question AssessmentQuestion @relation(fields: [schoolId, questionId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttemptAnswerEvent_question_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttemptAnswerEvent_actor_fkey")
+
+  @@unique([schoolId, attemptId, requestKey])
+  @@unique([schoolId, attemptId, questionId, revision])
+  @@index([schoolId, attemptId, createdAt])
+}
+
+/** Terminal submitted event, one per attempt. Expiry is represented by
+ * the immutable attempt.deadlineAt; no backdated submission is allowed. */
+model AssessmentAttemptSubmission {
+  id String @id
+  schoolId String
+  attemptId String
+  requestKey String @db.VarChar(128)
+  actorMembershipId String
+  actorUserId String
+  submittedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  attempt AssessmentAttempt @relation(fields: [schoolId, attemptId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttemptSubmission_attempt_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttemptSubmission_actor_fkey")
+
+  @@unique([schoolId, attemptId])
+}
+
+/** One immutable, strictly server-side objective score per FINALIZED attempt.
+ * Correct keys are read ONLY by the database trigger, not returned in APIs. */
+model AssessmentAttemptScore {
+  id String @id
+  schoolId String
+  attemptId String
+  scorerMembershipId String
+  scorerUserId String
+  maxPoints Int @default(0)
+  earnedPoints Int @default(0)
+  percentBps Int @default(0)
+  questionCount Int @default(0)
+  correctCount Int @default(0)
+  passed Boolean @default(false)
+  scoredAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  attempt AssessmentAttempt @relation(fields: [schoolId, attemptId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttemptScore_attempt_fkey")
+  scorer Membership @relation(fields: [schoolId, scorerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentAttemptScore_scorer_fkey")
+
+  @@unique([schoolId, attemptId])
+  @@index([schoolId, scoredAt])
+}
+
+/** School-configurable, append-only DRAFT profile for provisional grading
+ * previews. No official activation, student result or publication rights.
+ * New profiles receive DB-serialized version numbers; no in-place edits. */
+model AssessmentGradingPolicyRevision {
+  id String @id
+  schoolId String
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  version Int @default(1)
+  quizWeight Int
+  testWeight Int
+  examWeight Int
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  session AcademicSession @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentGradingPolicyRevision_session_fkey")
+  term AcademicTerm @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction, map: "AssessmentGradingPolicyRevision_term_fkey")
+  schoolClass SchoolClass @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentGradingPolicyRevision_schoolClass_fkey")
+  subject Subject @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentGradingPolicyRevision_subject_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentGradingPolicyRevision_actor_fkey")
+
+  @@unique([schoolId, sessionId, termId, classId, subjectId, version], map: "AssessmentGradingPolicyRevision_context_version_key")
+  @@index([schoolId, classId, subjectId, termId])
+}
+
+/** Immutable teacher-authored offline/written assessment definition. It is
+ * not CBT, teacher marking approval or official grade publication. */
+model AssessmentManualComponent {
+  id String @id
+  schoolId String
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  assignmentId String
+  teacherMembershipId String
+  teacherUserId String
+  kind AssessmentDraftKind
+  title String @db.VarChar(180)
+  maxPoints Int
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  session AcademicSession @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualComponent_session_fkey")
+  term AcademicTerm @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction, map: "AssessmentManualComponent_term_fkey")
+  schoolClass SchoolClass @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualComponent_class_fkey")
+  subject Subject @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualComponent_subject_fkey")
+  teacher Membership @relation(fields: [schoolId, teacherMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualComponent_teacher_fkey")
+  assignment TeacherClassSubjectAssignment @relation(fields: [schoolId, assignmentId, teacherMembershipId, classId, subjectId, sessionId], references: [schoolId, id, membershipId, classId, subjectId, sessionId], onDelete: NoAction, map: "AssessmentManualComponent_assignment_fkey")
+  marks AssessmentManualMarkProposal[]
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, id, classId, sessionId])
+  @@index([schoolId, classId, subjectId, termId])
+}
+
+/** Teacher's first score PROPOSAL for one student and manual component.
+ * A different proposal, correction or release requires a separate reviewed
+ * append-only decision design. Does NOT feed official or provisional grades. */
+model AssessmentManualMarkProposal {
+  id String @id
+  schoolId String
+  componentId String
+  studentId String
+  enrollmentId String
+  classId String
+  sessionId String
+  earnedPoints Int
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  component AssessmentManualComponent @relation(fields: [schoolId, componentId, classId, sessionId], references: [schoolId, id, classId, sessionId], onDelete: NoAction, map: "AssessmentManualMarkProposal_component_fkey")
+  student StudentRecord @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualMarkProposal_student_fkey")
+  enrollment StudentEnrollment @relation(fields: [schoolId, enrollmentId, studentId, classId, sessionId], references: [schoolId, id, studentId, classId, sessionId], onDelete: NoAction, map: "AssessmentManualMarkProposal_enrollment_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualMarkProposal_actor_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, componentId, studentId])
+  @@index([schoolId, studentId, createdAt])
+  decision AssessmentManualMarkDecision?
+  correctionRequests AssessmentManualCorrectionRequest[]
+}
+
+enum ManualMarkReviewAction {
+  APPROVED
+  RETURNED
+}
+
+/** Terminal verified-section decision on an initial teacher mark proposal.
+ * No score mutation or publication, and no self-review. */
+model AssessmentManualMarkDecision {
+  id String @id
+  schoolId String
+  proposalId String
+  reviewerMembershipId String
+  reviewerUserId String
+  action ManualMarkReviewAction
+  reason String @db.VarChar(500)
+  decidedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  proposal AssessmentManualMarkProposal @relation(fields: [schoolId, proposalId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualMarkDecision_proposal_fkey")
+  reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualMarkDecision_reviewer_fkey")
+
+  @@unique([schoolId, proposalId])
+  @@index([schoolId, decidedAt])
+}
+
+/** Monotonic, immutable correction proposal by the original assigned teacher.
+ * The SQL trigger assigns revision and verifies initial APPROVED decision.
+ * A request by itself never changes effective marks. */
+model AssessmentManualCorrectionRequest {
+  id String @id
+  schoolId String
+  proposalId String
+  revision Int @default(1)
+  proposedPoints Int
+  reason String @db.VarChar(500)
+  requesterMembershipId String
+  requesterUserId String
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  proposal AssessmentManualMarkProposal @relation(fields: [schoolId, proposalId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualCorrectionRequest_proposal_fkey")
+  requester Membership @relation(fields: [schoolId, requesterMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualCorrectionRequest_requester_fkey")
+  decision AssessmentManualCorrectionDecision?
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, proposalId, revision])
+  @@index([schoolId, proposalId, createdAt])
+}
+
+/** Independent one-time verified-section decision for each correction.
+ * Approved corrected values are derived, never written over earlier marks. */
+model AssessmentManualCorrectionDecision {
+  id String @id
+  schoolId String
+  requestId String
+  reviewerMembershipId String
+  reviewerUserId String
+  action ManualMarkReviewAction
+  reason String @db.VarChar(500)
+  decidedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  request AssessmentManualCorrectionRequest @relation(fields: [schoolId, requestId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualCorrectionDecision_request_fkey")
+  reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentManualCorrectionDecision_reviewer_fkey")
+
+  @@unique([schoolId, requestId])
+  @@index([schoolId, decidedAt])
+}
+
+
+/**
+ * Immutable catalog revisions. A revision is never an automatic entitlement:
+ * only an explicit, non-overlapping SchoolSubscriptionPeriod attaches it to
+ * a tenant, and existing academic permissions are never expanded.
+ */
+model PlatformPlanRevision {
+  id                  String                  @id @default(cuid())
+  code                String
+  version             Int
+  name                String
+  features            PlatformPlanFeature[]
+  maxStudents         Int?
+  maxStaff            Int?
+  reason              String
+  actorUserId         String
+  createdAt           DateTime                @default(now())
+  subscriptionPeriods SchoolSubscriptionPeriod[]
+
+  @@unique([code, version])
+  @@index([code, createdAt])
+}
+
+/**
+ * Append-only, non-overlapping periods per school (half-open UTC windows).
+ * Period existence does not activate or suspend a School. Enforcement of
+ * feature quotas and payment/renewal policies is a later reviewed milestone.
+ */
+model SchoolSubscriptionPeriod {
+  id             String               @id @default(cuid())
+  schoolId       String
+  planRevisionId String
+  startsAt       DateTime
+  endsAt         DateTime
+  reason         String
+  actorUserId    String
+  createdAt      DateTime             @default(now())
+  school         School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  planRevision   PlatformPlanRevision @relation(fields: [planRevisionId], references: [id], onDelete: Restrict)
+
+  @@unique([schoolId, id])
+  @@index([schoolId, startsAt, endsAt])
+  @@index([planRevisionId])
+}

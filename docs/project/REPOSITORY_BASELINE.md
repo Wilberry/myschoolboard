@@ -10,7 +10,7 @@
 
 The repository was initially verified as a documentation-only project with no application code. At that time, the branch had no commits and remote origin/main had been disconnected from local state. That historical observation is preserved as evidence of the project’s starting point.
 
-## Current repository state
+## Repository state at the initial documentation checkpoint
 
 ### Verified current state
 
@@ -31,7 +31,7 @@ The repository was initially verified as a documentation-only project with no ap
 
 This repository is a documentation-first product specification and governance baseline. It is not a deployed product or a working application implementation. The repository does contain a committed initial documentation set, which is materially different from its initial empty-state baseline.
 
-## Verified architecture and technology evidence
+## Architecture and technology evidence at the initial checkpoint
 
 No stack evidence exists beyond the documentation package itself. The following items remain unverified in code or live configuration:
 
@@ -46,21 +46,21 @@ No stack evidence exists beyond the documentation package itself. The following 
 
 The project remains a technology-neutral specification and documentation baseline.
 
-## Existing implemented features
+## Implemented features at the initial checkpoint
 
 None. There is no application-level feature implementation present in the repository.
 
-## Existing tests and observed status
+## Tests at the initial checkpoint
 
 Status: No implementation tests present.
 
 The repository contains no automated tests or manual validation scripts for product functionality at this time.
 
-## Existing migrations and schema evidence
+## Migrations and schema at the initial checkpoint
 
 None. No migration files or schema implementation are present.
 
-## Missing infrastructure
+## Missing infrastructure at the initial checkpoint
 
 The following are still missing or unverified:
 
@@ -74,7 +74,7 @@ The following are still missing or unverified:
 - Monitoring and observability configuration
 - Security scanning configuration
 
-## Risks and uncertainties
+## Risks and uncertainties recorded at the initial checkpoint
 
 - The product remains in the specification stage rather than implementation stage.
 - Authentication, tenancy, and identity security choices remain unresolved.
@@ -82,7 +82,7 @@ The following are still missing or unverified:
 - No payment provider, hosting target, or operational model is approved.
 - Security and compliance controls remain documentation-based rather than implementation-validated.
 
-## Distinctions
+## Status distinctions at the initial checkpoint
 
 ### Verified
 
@@ -127,3 +127,7 @@ The following are still missing or unverified:
 ## Decision constraints
 
 No technology decisions may be inferred as final without evidence from repository code or explicit product-owner approval. This baseline intentionally distinguishes between historical observations, current documentation status, and future implementation decisions.
+
+## Later local foundation
+
+The repository subsequently gained a local Next.js, TypeScript, Better Auth, Prisma, and PostgreSQL foundation with a migration, synthetic seed, CI workflow, authorization tests, and a protected school-details path. Its current implementation evidence and limitations are recorded in [Current Status](../roadmap/CURRENT_STATUS.md). This remains local-development-ready only; it is not a production deployment.

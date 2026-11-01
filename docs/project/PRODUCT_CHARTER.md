@@ -63,4 +63,4 @@ The product is successful when schools can operate core academic and administrat
 
 ## Product ownership status
 
-This project is currently documentation-first. Product-owner decisions marked as unresolved should be treated as explicit blockers until approved.
+MySchoolBoard is in **active, roadmap-led implementation**. The Project Owner's [Standing Development Mandate](STANDING_DEVELOPMENT_MANDATE.md) (D-023) authorizes normal engineering, development branches, draft PRs, and secure/reversible implementation defaults without recurring approvals. Deferred product/vendor choices block only the specific unsafe or irreversible operation they genuinely affect—not the rest of the roadmap. The in-product approval flows for academic records, payments, and school administration remain mandatory, and no feature is complete without executed validation evidence.

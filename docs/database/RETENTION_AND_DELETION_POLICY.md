@@ -27,3 +27,11 @@
 - Retention windows must not become a loophole for indefinite storage.
 - Historical academic, financial, and audit records must not be physically deleted in ways that corrupt retention obligations.
 - Recovery operations must preserve the object and its ownership metadata.
+
+## Teacher assignment references
+
+- Normal assignment changes use `INACTIVE` or `REVOKED` status transitions, not hard deletion.
+- Memberships, classes, and subjects referenced by assignments are protected by restrictive database references and should be deactivated rather than physically deleted.
+- School deletion remains governed by the existing tenant-level cascade convention; assignment rows are removed with their owning school. This does not establish any additional legal retention period.
+- Assignment lifecycle events are append-only under direct SQL UPDATE/DELETE/TRUNCATE, but are removed by the existing school-level cascade cleanup. No additional audit retention period is defined here.
+- By owner decision on 2026-10-10, actor user and membership IDs are retained as immutable event snapshots without foreign keys, so later user or membership deletion preserves the event. School deletion remains the explicit exception and removes school-owned assignment events under tenant cleanup; this does not define any additional retention period.
