@@ -3,8 +3,9 @@ import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 
 /**
- * Reproduces the existing GitHub CI commands against a separately provisioned,
- * disposable, loopback-only test database. This command never provisions a DB.
+ * Reproduces GitHub CI commands and additionally checks exact applied
+ * migration checksums immediately after database deployment, against a
+ * disposable loopback-only test DB. This command never provisions a DB.
  */
 export function assertLocalVerificationTarget(environment) {
   if (environment.NODE_ENV !== "test") {
@@ -83,11 +84,20 @@ export const workflowCommands = Object.freeze([
   ["audit", "--audit-level=high"],
 ]);
 
+// Keep workflowCommands an exact mirror of the tracked GitHub CI workflow.
+// Local acceptance adds a read-only, checksum-exact migration gate before
+// seeding or tests, so a partially applied or edited migration fails closed.
+export const localVerificationCommands = Object.freeze([
+  ...workflowCommands.slice(0, 3),
+  ["run", "verify:migration-checksums"],
+  ...workflowCommands.slice(3),
+]);
+
 export function runLocalVerification(environment = process.env) {
   assertLocalVerificationTarget(environment);
   const executable = process.platform === "win32" ? "npm.cmd" : "npm";
   const projectRoot = fileURLToPath(new URL("../", import.meta.url));
-  for (const args of workflowCommands) {
+  for (const args of localVerificationCommands) {
     console.info(`Running: npm ${args.join(" ")}`);
     const result = spawnSync(executable, args, {
       cwd: projectRoot,
@@ -116,7 +126,7 @@ if (
     const args = process.argv.slice(2);
     if (args.length === 1 && args[0] === "--help") {
       console.info(
-        "Usage: npm run verify:local (runs actual CI steps) or npm run verify:local:preflight (checks safe test DB target only)",
+        "Usage: npm run verify:local (runs CI steps plus exact migration checksums) or npm run verify:local:preflight (checks safe test DB target only)",
       );
     } else if (args.length === 1 && args[0] === "--preflight") {
       assertLocalVerificationTarget(process.env);
