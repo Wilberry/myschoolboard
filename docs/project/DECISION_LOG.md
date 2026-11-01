@@ -1,5 +1,14 @@
 # Decision Log
 
+## D-051: Local verification is the development-integration merge gate (2026-11-01)
+
+- **Owner decision:** GitHub Actions hosted job failures attributable to unreliable runner/build infrastructure are not an acceptance authority for MySchoolBoard. Use locally executed, reproducible CI-equivalent checks instead. The owner has explicitly authorized a `main` integration of the **locally tested Phase 1–7 development baseline**, without waiting for hosted Actions success.
+- **Verified source boundary:** The cumulative branch was locally tested at code SHA `55dab6cd659d0200a3db86babbc274c9e5e5d8a8`: 37/37 exact disposable PostgreSQL migrations, 122/122 Node guards, 327/327 Vitest, formatting, lint, TypeScript, production build, strict and full npm audits (zero vulnerabilities), and scoped authenticated Chrome role/privacy tests. Later branch commits before this integration modified documentation only; preserve that distinction.
+- **Meaning of acceptance:** Approval is for **integration of this verified implementation checkpoint into the development `main` branch**, not for declaring every Phase 1–7 functional requirement complete, billing operational, real student CBT exposed, full browser/accessibility requirements passed, or a production release authorized. SUB-REQ-001, PLAT-REQ-001, ADM-REQ-001, ASM-REQ-001 and the remaining browser matrix cases stay open in traceability and acceptance documentation. Deferred operations must remain fail-closed and cannot be described as implemented.
+- **Future procedure:** For each later change, obtain actual local DB/Node/Vitest/format/lint/typecheck/build/strict+full audit evidence at its own source SHA and scoped authenticated-browser evidence where relevant. Review changed-file scope and security/privacy. A failed hosted CI job may be annotated as infrastructure-only without replacing any local test or waiving a verified code/security defect.
+- **Release boundary:** Merging development code into `main` does **not** deploy to production, authorize live data/users, bypass role/tenant/audit controls, permit real financial processing, or waive accessibility/feature release exit gates. Phase 8 and Phase 9 branches are excluded. Owner approval for this specific development integration is recorded; distinct future production merges/releases require their own applicable authorization.
+
+
 ## D-050: Enable correction-based remediation of returned initial manual marks
 
 - Status: Authored; not executed. A returned initial manual mark must not strand the teacher. Permit a new reasoned bounded changed correction after either terminal initial review outcome; only an independently APPROVED correction may establish a first effective academic-approved mark after RETURNED, with originals/history never modified. Keep the gradebook INCOMPLETE until then. ADR-036.
