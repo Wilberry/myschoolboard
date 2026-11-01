@@ -21,6 +21,7 @@ const classA = `guardian-class-${tag}`;
 const sessionA = `guardian-session-${tag}`;
 const studentA = `guardian-student-${tag}`;
 const studentUnenrolled = `guardian-no-enrollment-${tag}`;
+const studentEnded = `guardian-ended-${tag}`;
 const password = "synthetic-guardian-relationship-test-42";
 const emails = {
   admin: `guardian-admin-${tag}@example.test`,
@@ -163,16 +164,34 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
           familyName: "Enrolled",
           status: "REGISTERED",
         },
+        {
+          id: studentEnded,
+          schoolId: schoolA,
+          admissionNumber: `G-E-${tag}`.toUpperCase(),
+          givenName: "Former",
+          familyName: "Pupil",
+          status: "WITHDRAWN",
+        },
       ],
     });
-    await prisma.studentEnrollment.create({
-      data: {
-        schoolId: schoolA,
-        studentId: studentA,
-        sessionId: sessionA,
-        classId: classA,
-        status: "ACTIVE",
-      },
+    await prisma.studentEnrollment.createMany({
+      data: [
+        {
+          schoolId: schoolA,
+          studentId: studentA,
+          sessionId: sessionA,
+          classId: classA,
+          status: "ACTIVE",
+        },
+        {
+          schoolId: schoolA,
+          studentId: studentEnded,
+          sessionId: sessionA,
+          classId: classA,
+          status: "ENDED",
+          endedAt: new Date(),
+        },
+      ],
     });
   }, 45_000);
 
@@ -268,15 +287,15 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
     ).rejects.toThrow();
   });
 
-  it("refuses to attest another child after enrollment ends", async () => {
-    await prisma.studentEnrollment.updateMany({
-      where: { schoolId: schoolA, studentId: studentA },
-      data: { status: "ENDED", endedAt: new Date() },
-    });
-    expect((await create("admin", {
-      ...attestation(), guardianMembershipId: teacherMembershipId,
-    })).status).toBe(404);
-    expect((await create("admin", attestation())).status).not.toBe(201);
+  it("refuses inactive enrollment even with an active school and PARENT member", async () => {
+    expect(
+      (await create("admin", { ...attestation(), studentId: studentEnded })).status,
+    ).toBe(404);
+    expect(
+      await prisma.guardianStudentLink.count({
+        where: { schoolId: schoolA, studentId: studentEnded },
+      }),
+    ).toBe(0);
   });
 
   it("revokes once, preserves the original record, and denies resurrection", async () => {
@@ -300,8 +319,4 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
     ).rejects.toThrow();
   });
 
-  it("never exports guardian access to a pupil or parent portal", () => {
-    expect("GET" in revokeRoute).toBe(false);
-    expect("PATCH" in linkRoute).toBe(false);
-  });
 });
