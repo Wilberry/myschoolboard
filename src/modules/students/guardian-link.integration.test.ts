@@ -15,6 +15,9 @@ import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
 import { env } from "@/src/lib/env";
 import { hasCurrentGuardianRelationship } from "./guardian-link-service";
+import {
+  POST as withdrawRoute,
+} from "@/app/api/schools/[schoolId]/students/[studentId]/enrollments/[enrollmentId]/withdraw/route";
 
 const tag = randomUUID();
 const schoolA = `guardian-a-${tag}`;
@@ -25,6 +28,7 @@ const sessionA = `guardian-session-${tag}`;
 const studentA = `guardian-student-${tag}`;
 const studentUnenrolled = `guardian-no-enrollment-${tag}`;
 const studentEnded = `guardian-ended-${tag}`;
+const studentWithdrawal = `guardian-withdrawal-${tag}`;
 const password = "synthetic-guardian-relationship-test-42";
 const emails = {
   admin: `guardian-admin-${tag}@example.test`,
@@ -38,6 +42,7 @@ let adminMembershipId = "";
 let guardianMembershipId = "";
 let teacherMembershipId = "";
 let linkId = "";
+let withdrawalEnrollmentId = "";
 
 async function signIn(email: string) {
   const result = await auth.api.signInEmail({
@@ -186,6 +191,14 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
           familyName: "Pupil",
           status: "WITHDRAWN",
         },
+        {
+          id: studentWithdrawal,
+          schoolId: schoolA,
+          admissionNumber: `G-W-${tag}`.toUpperCase(),
+          givenName: "Soon",
+          familyName: "Withdrawn",
+          status: "ENROLLED",
+        },
       ],
     });
     await prisma.studentEnrollment.createMany({
@@ -207,6 +220,17 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
         },
       ],
     });
+    const withdrawalEnrollment = await prisma.studentEnrollment.create({
+      data: {
+        schoolId: schoolA,
+        studentId: studentWithdrawal,
+        sessionId: sessionA,
+        classId: classA,
+        status: "ACTIVE",
+      },
+      select: { id: true },
+    });
+    withdrawalEnrollmentId = withdrawalEnrollment.id;
   }, 45_000);
 
   afterAll(async () => {
@@ -411,7 +435,7 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
     expect(await currentRelationship("guardian", studentA, schoolB)).toBe(false);
   });
 
-  it("rechecks current guardian membership and enrollment instead of trusting history", async () => {
+  it("rechecks current guardian membership, school and section instead of trusting history", async () => {
     await prisma.membership.update({
       where: { id: guardianMembershipId },
       data: { isActive: false },
@@ -422,20 +446,6 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
       await prisma.membership.update({
         where: { id: guardianMembershipId },
         data: { isActive: true },
-      });
-    }
-    expect(await currentRelationship("guardian")).toBe(true);
-
-    await prisma.studentEnrollment.updateMany({
-      where: { schoolId: schoolA, studentId: studentA, status: "ACTIVE" },
-      data: { status: "ENDED", endedAt: new Date() },
-    });
-    try {
-      expect(await currentRelationship("guardian")).toBe(false);
-    } finally {
-      await prisma.studentEnrollment.updateMany({
-        where: { schoolId: schoolA, studentId: studentA, status: "ENDED" },
-        data: { status: "ACTIVE", endedAt: null },
       });
     }
     expect(await currentRelationship("guardian")).toBe(true);
@@ -466,6 +476,53 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
       });
     }
     expect(await currentRelationship("guardian")).toBe(true);
+  });
+
+  it("a real withdrawn enrollment permanently invalidates the guardian link", async () => {
+    const created = await create("admin", {
+      ...attestation(),
+      studentId: studentWithdrawal,
+    });
+    expect(created.status).toBe(201);
+    expect(await currentRelationship("guardian", studentWithdrawal)).toBe(true);
+
+    const withdrawn = await withdrawRoute(
+      request(
+        "admin",
+        `/api/schools/${schoolA}/students/${studentWithdrawal}/enrollments/${withdrawalEnrollmentId}/withdraw`,
+        "POST",
+        { reason: "Synthetic school-approved pupil withdrawal" },
+      ),
+      {
+        params: Promise.resolve({
+          schoolId: schoolA,
+          studentId: studentWithdrawal,
+          enrollmentId: withdrawalEnrollmentId,
+        }),
+      },
+    );
+    expect(withdrawn.status).toBe(200);
+    expect(withdrawn.headers.get("cache-control")).toBe("private, no-store");
+    expect(await currentRelationship("guardian", studentWithdrawal)).toBe(false);
+    expect(
+      (await create("admin", { ...attestation(), studentId: studentWithdrawal }))
+        .status,
+    ).not.toBe(201);
+    expect(
+      await prisma.studentEvent.count({
+        where: {
+          schoolId: schoolA,
+          studentId: studentWithdrawal,
+          eventType: "WITHDRAWN",
+        },
+      }),
+    ).toBe(1);
+    const ended = await prisma.studentEnrollment.findUniqueOrThrow({
+      where: { id: withdrawalEnrollmentId },
+      select: { status: true, endedAt: true },
+    });
+    expect(ended.status).toBe("ENDED");
+    expect(ended.endedAt).not.toBeNull();
   });
 
   it("does not permit direct updates or deletions of attested history", async () => {
