@@ -4,7 +4,7 @@
 
 GitHub-hosted Actions jobs for draft PR #1 could not acquire a runner on 2026-10-11. The owner reports an account billing restriction and has chosen **local execution** of the existing CI checks until GitHub Actions is available. This is a delivery workaround, not a bypass of the failing security audit or a production-release exception.
 
-The script `scripts/verify-local.mjs` executes the **same npm commands in the same order** as `.github/workflows/ci.yml`, including the final `npm audit --audit-level=high`. It stops at the first failed command and returns a nonzero exit status. The Node built-in test `scripts/verify-local.test.mjs` checks target guards and compares that command list with the tracked workflow. The GitHub Actions workflow is not modified or disabled.
+The script `scripts/verify-local.mjs` executes the **same GitHub CI npm commands in the same order**, plus `npm run verify:migration-checksums` **immediately after `db:deploy` and before `db:seed`**, including the final unchanged `npm audit --audit-level=high`. The extra step performs exact SHA-256 checks of every applied migration on the guarded disposable local database and fails closed for missing, altered, duplicated or unfinished migrations. It stops at the first failed command and returns a nonzero exit status. The Node built-in test `scripts/verify-local.test.mjs` checks target guards, verifies the hosted-CI command list remains identical to the tracked workflow, and checks the extra local checksum step ordering. The GitHub Actions workflow is not modified or disabled.
 
 The script **does not start Docker, create databases, select a shared environment, merge branches, or deploy**. The owner must inspect and start the disposable database deliberately.
 
@@ -57,15 +57,16 @@ The full runner then executes:
 1. `npm ci`
 2. `npm run db:generate`
 3. `npm run db:deploy`
-4. `npm run db:seed`
-5. `npm run format:check`
-6. `npm run lint`
-7. `npm run typecheck`
-8. `npm test`
-9. `npm run build`
-10. `npm audit --audit-level=high`
+4. **`npm run verify:migration-checksums` — local-only exact applied-migration verification**
+5. `npm run db:seed`
+6. `npm run format:check`
+7. `npm run lint`
+8. `npm run typecheck`
+9. `npm test`
+10. `npm run build`
+11. `npm audit --audit-level=high`
 
-Expect the last step to fail while the existing eight high-severity dependency package findings remain. **Do not remove, skip, weaken, or fake that result.** An apparently successful test/build stage is not a successful full CI gate. When a step fails, capture its command, exit code, relevant log excerpt, and exact commit SHA without exposing tokens or credentials. Rerun after a reviewed fix.
+The final audit must run without reduced thresholds. Historical security-advisory counts are not current evidence: inspect the **actual** audit output for the exact commit. **Do not remove, skip, weaken, or fake that result.** An apparently successful test/build stage is not a successful full local acceptance gate. When a step fails, capture its command, exit code, relevant log excerpt, and exact commit SHA without exposing tokens or credentials. Rerun after a reviewed fix.
 
 The Vitest test setup also requires the disposable database guard. Neither this runbook nor the runner authorizes a reset of the development/production database.
 
