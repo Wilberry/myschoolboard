@@ -34,24 +34,38 @@ describe("server authorization policy", () => {
     ).toBe(false);
   });
 
-  it("requires a verified child grant for parent access", () => {
-    const parent = principal("PARENT", {
-      scopes: [{ type: "CHILD", scopeId: "child-a", verified: true }],
-    });
+  it("does not grant parent access from verified or unverified CHILD IDs alone", () => {
+    for (const verified of [true, false]) {
+      const parent = principal("PARENT", {
+        scopes: [{ type: "CHILD", scopeId: "child-a", verified }],
+      });
+      for (const childUserId of ["child-a", "child-b"]) {
+        expect(
+          authorize(parent, "child:read", {
+            schoolId: "school-a",
+            childUserId,
+          }),
+        ).toEqual({ allowed: false, reason: "forbidden" });
+      }
+      expect(
+        authorize(parent, "child:read", { schoolId: "school-a" }).allowed,
+      ).toBe(false);
+    }
+  });
+
+  it("does not infer enrolled student access from a STUDENT role or own user ID", () => {
+    const student = principal("STUDENT");
     expect(
-      authorize(parent, "child:read", {
+      authorize(student, "child:read", {
         schoolId: "school-a",
-        childUserId: "child-a",
-      }).allowed,
-    ).toBe(true);
+        childUserId: "user-a",
+      }),
+    ).toEqual({ allowed: false, reason: "forbidden" });
     expect(
-      authorize(parent, "child:read", {
-        schoolId: "school-a",
-        childUserId: "child-b",
+      authorize(student, "child:read", {
+        schoolId: "school-b",
+        childUserId: "user-a",
       }).allowed,
-    ).toBe(false);
-    expect(
-      authorize(parent, "child:read", { schoolId: "school-a" }).allowed,
     ).toBe(false);
   });
 
