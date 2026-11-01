@@ -178,9 +178,9 @@ describe("database-backed tenant context", () => {
   it("never turns verified unbound CHILD scope IDs into guardian authority", async () => {
     const parent = await resolveSchoolPrincipal(parentUser, schoolA);
     expect(parent?.membership?.role).toBe("PARENT");
-    expect(parent?.membership?.scopes.some((scope) => scope.type === "CHILD")).toBe(
-      false,
-    );
+    expect(
+      parent?.membership?.scopes.some((scope) => scope.type === "CHILD"),
+    ).toBe(false);
 
     for (const childUserId of [claimedChild, userB]) {
       expect(
