@@ -1,5 +1,9 @@
 # Authorization Rules
 
+## Issue #20 — explicit guardian attestation (authored; not accepted)
+
+`GuardianStudentLink` is an append-only, administrator-attested, composite school-owned mapping between an active `PARENT` membership and an enrolled `StudentRecord`, with separate terminal revocation history. School administrators alone can attest, revoke and inspect minimal link metadata. The generic `child:read` permission remains **denied to every caller** and `resolveSchoolPrincipal` filters out unbound CHILD grants. The presence of a row is not permission to access grades, fees, attendance, or a report. Every future recipient route must separately enforce current school, membership, relationship, enrollment, publication and browser privacy constraints. No parent data read/portal is implemented.
+
 ## Issue #20 — unbound CHILD grants fail closed (authored; local verification pending)
 
 Before a school-verified guardian-to-student relationship, active enrollment, and terminal revocation model are implemented, `child:read` is denied even for a PARENT with a stored verified CHILD scope or a STUDENT with a matching user ID. `resolveSchoolPrincipal` does not export CHILD grants. These IDs are not proof of a current school-owned relationship. Existing independently authorized student lesson/assessment services are unchanged. No parent portal, result publication, or access expansion is enabled. Negative policy and disposable-DB regression tests are authored but must be executed locally before merging; issue #20 remains open for the complete relationship workflow.
