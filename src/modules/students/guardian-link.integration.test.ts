@@ -265,6 +265,48 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
     ).toBe(0);
   });
 
+  it("denies existing administrator sessions after role demotion", async () => {
+    await prisma.membership.update({
+      where: { id: adminMembershipId },
+      data: { role: "TEACHER" },
+    });
+    try {
+      expect((await create("admin", attestation())).status).toBe(404);
+      expect((await list("admin")).status).toBe(404);
+      expect(
+        await prisma.guardianStudentLink.count({
+          where: { schoolId: schoolA },
+        }),
+      ).toBe(0);
+    } finally {
+      await prisma.membership.update({
+        where: { id: adminMembershipId },
+        data: { role: "SCHOOL_ADMIN" },
+      });
+    }
+  });
+
+  it("denies attestation and listing when the school is inactive", async () => {
+    await prisma.school.update({
+      where: { id: schoolA },
+      data: { isActive: false },
+    });
+    try {
+      expect((await create("admin", attestation())).status).toBe(404);
+      expect((await list("admin")).status).toBe(404);
+      expect(
+        await prisma.guardianStudentLink.count({
+          where: { schoolId: schoolA },
+        }),
+      ).toBe(0);
+    } finally {
+      await prisma.school.update({
+        where: { id: schoolA },
+        data: { isActive: true },
+      });
+    }
+  });
+
   it("rejects an inactive guardian membership before attestation", async () => {
     await prisma.membership.update({
       where: { id: guardianMembershipId },
