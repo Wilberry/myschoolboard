@@ -8,7 +8,9 @@ vi.mock("next/headers", () => ({
 }));
 
 import * as linkRoute from "@/app/api/schools/[schoolId]/guardian-links/route";
-import { POST as revokeRoute } from "@/app/api/schools/[schoolId]/guardian-links/[linkId]/revoke/route";
+import {
+  POST as revokeRoute,
+} from "@/app/api/schools/[schoolId]/guardian-links/[linkId]/revoke/route";
 import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
 import { env } from "@/src/lib/env";
