@@ -81,6 +81,78 @@ test("rejects existing database objects and extra schemas", () => {
       [{ schema: "public", name: "leftover_extension", kind: "extension" }],
       [{ schema: "public" }],
     ],
+    [
+      [
+        {
+          schema: "public",
+          name: "leftover_operator_class",
+          kind: "operator class",
+        },
+      ],
+      [{ schema: "public" }],
+    ],
+    [
+      [
+        {
+          schema: "public",
+          name: "leftover_operator_family",
+          kind: "operator family",
+        },
+      ],
+      [{ schema: "public" }],
+    ],
+    [
+      [{ schema: "public", name: "leftover_collation", kind: "collation" }],
+      [{ schema: "public" }],
+    ],
+    [
+      [{ schema: "public", name: "leftover_conversion", kind: "conversion" }],
+      [{ schema: "public" }],
+    ],
+    [
+      [
+        {
+          schema: "public",
+          name: "leftover_ts_config",
+          kind: "text search configuration",
+        },
+      ],
+      [{ schema: "public" }],
+    ],
+    [
+      [
+        {
+          schema: "public",
+          name: "leftover_ts_dict",
+          kind: "text search dictionary",
+        },
+      ],
+      [{ schema: "public" }],
+    ],
+    [
+      [
+        {
+          schema: "public",
+          name: "leftover_ts_parser",
+          kind: "text search parser",
+        },
+      ],
+      [{ schema: "public" }],
+    ],
+    [
+      [
+        {
+          schema: "public",
+          name: "leftover_ts_template",
+          kind: "text search template",
+        },
+      ],
+      [{ schema: "public" }],
+    ],
+    [
+      [{ schema: "public", name: "leftover_stats", kind: "statistics object" }],
+      [{ schema: "public" }],
+    ],
     [[], [{ schema: "public" }, { schema: "other" }]],
   ]) {
     assert.throws(() =>

@@ -155,6 +155,69 @@ export async function verifyPhase3FreshEmptyPreflight(
         "JOIN pg_catalog.pg_namespace AS n ON n.oid = e.extnamespace " +
         "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') " +
         "AND n.nspname NOT LIKE 'pg_toast%' " +
+        "AND n.nspname NOT LIKE 'pg_temp_%' " +
+        "UNION ALL " +
+        "SELECT n.nspname, o.opcname, 'operator class' " +
+        "FROM pg_catalog.pg_opclass AS o " +
+        "JOIN pg_catalog.pg_namespace AS n ON n.oid = o.opcnamespace " +
+        "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') " +
+        "AND n.nspname NOT LIKE 'pg_toast%' " +
+        "AND n.nspname NOT LIKE 'pg_temp_%' " +
+        "UNION ALL " +
+        "SELECT n.nspname, o.opfname, 'operator family' " +
+        "FROM pg_catalog.pg_opfamily AS o " +
+        "JOIN pg_catalog.pg_namespace AS n ON n.oid = o.opfnamespace " +
+        "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') " +
+        "AND n.nspname NOT LIKE 'pg_toast%' " +
+        "AND n.nspname NOT LIKE 'pg_temp_%' " +
+        "UNION ALL " +
+        "SELECT n.nspname, c.collname, 'collation' " +
+        "FROM pg_catalog.pg_collation AS c " +
+        "JOIN pg_catalog.pg_namespace AS n ON n.oid = c.collnamespace " +
+        "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') " +
+        "AND n.nspname NOT LIKE 'pg_toast%' " +
+        "AND n.nspname NOT LIKE 'pg_temp_%' " +
+        "UNION ALL " +
+        "SELECT n.nspname, c.conname, 'conversion' " +
+        "FROM pg_catalog.pg_conversion AS c " +
+        "JOIN pg_catalog.pg_namespace AS n ON n.oid = c.connamespace " +
+        "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') " +
+        "AND n.nspname NOT LIKE 'pg_toast%' " +
+        "AND n.nspname NOT LIKE 'pg_temp_%' " +
+        "UNION ALL " +
+        "SELECT n.nspname, c.cfgname, 'text search configuration' " +
+        "FROM pg_catalog.pg_ts_config AS c " +
+        "JOIN pg_catalog.pg_namespace AS n ON n.oid = c.cfgnamespace " +
+        "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') " +
+        "AND n.nspname NOT LIKE 'pg_toast%' " +
+        "AND n.nspname NOT LIKE 'pg_temp_%' " +
+        "UNION ALL " +
+        "SELECT n.nspname, d.dictname, 'text search dictionary' " +
+        "FROM pg_catalog.pg_ts_dict AS d " +
+        "JOIN pg_catalog.pg_namespace AS n ON n.oid = d.dictnamespace " +
+        "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') " +
+        "AND n.nspname NOT LIKE 'pg_toast%' " +
+        "AND n.nspname NOT LIKE 'pg_temp_%' " +
+        "UNION ALL " +
+        "SELECT n.nspname, p.prsname, 'text search parser' " +
+        "FROM pg_catalog.pg_ts_parser AS p " +
+        "JOIN pg_catalog.pg_namespace AS n ON n.oid = p.prsnamespace " +
+        "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') " +
+        "AND n.nspname NOT LIKE 'pg_toast%' " +
+        "AND n.nspname NOT LIKE 'pg_temp_%' " +
+        "UNION ALL " +
+        "SELECT n.nspname, t.tmplname, 'text search template' " +
+        "FROM pg_catalog.pg_ts_template AS t " +
+        "JOIN pg_catalog.pg_namespace AS n ON n.oid = t.tmplnamespace " +
+        "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') " +
+        "AND n.nspname NOT LIKE 'pg_toast%' " +
+        "AND n.nspname NOT LIKE 'pg_temp_%' " +
+        "UNION ALL " +
+        "SELECT n.nspname, s.stxname, 'statistics object' " +
+        "FROM pg_catalog.pg_statistic_ext AS s " +
+        "JOIN pg_catalog.pg_namespace AS n ON n.oid = s.stxnamespace " +
+        "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') " +
+        "AND n.nspname NOT LIKE 'pg_toast%' " +
         "AND n.nspname NOT LIKE 'pg_temp_%'",
     );
     const schemaResult = await client.query(
