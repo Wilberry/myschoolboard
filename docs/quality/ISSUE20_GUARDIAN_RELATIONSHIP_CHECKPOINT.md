@@ -19,6 +19,12 @@
 
 **Limitations:** The current model permits multiple separately attested PARENT memberships for one child but does not resolve actual custody/consent policy, historic transfers, parent-facing read, or real-user identity verification. A revoked pair is terminal and cannot be silently reattached. Future guardian access requires **separate** per-request checks of actor, school, school membership, relationship, revocation, student status, active enrollment, actual publication/visible resource, caching and browser history. No student/guardian data release, production operation or main integration.
 
+## Migration inventory and runner compatibility
+
+The combined PR #102 + #103 branch contains **38 migrations** (37 accepted foundation migrations and the additive guardian attestation migration). The guarded synthetic browser launcher now requires **exactly 38**, with tests rejecting missing or extra migrations and the existing SHA-256 verification checking every applied migration. The Phase 3-specific preflight helpers deliberately remain frozen at their historical **37-migration** checkpoint; they must not be used as the current guardian-branch bootstrap gate. The general `npm run verify:local:preflight`, `npm run verify:local`, and `npm run verify:migration-checksums` remain the authoritative guarded local paths.
+
+Two additional synthetic admin-route regressions deny writes and reads after actor role demotion or school deactivation. The updated checks are **authored only**, not executed in this environment.
+
 ## Required local checks before acceptance
 
 On an explicitly disposable local PostgreSQL 17 database, verify the migration order/checksums, run `npx prisma validate` and `npx prisma generate`, targeted `npx vitest run src/modules/students/guardian-link.integration.test.ts src/modules/tenancy/context.integration.test.ts src/modules/authorization/policy.test.ts`, then repository's documented full local equivalent including format/lint/types/build and **unchanged strict and full dependency audits**. Review fresh actual results for the exact candidate SHA; do not presume previous SHA evidence applies.
