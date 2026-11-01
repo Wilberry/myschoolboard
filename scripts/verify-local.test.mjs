@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   assertLocalVerificationTarget,
+  localVerificationCommands,
   workflowCommands,
 } from "./verify-local.mjs";
 
@@ -77,4 +78,28 @@ test("keeps the configured GitHub CI command order and audit threshold", () => {
   );
   assert.deepEqual(workflowCommands, actualCommands);
   assert.deepEqual(workflowCommands.at(-1), ["audit", "--audit-level=high"]);
+});
+
+test("local acceptance checks exact migrations after deploy and before seeding", () => {
+  const deploy = workflowCommands.findIndex(
+    (command) => command[0] === "run" && command[1] === "db:deploy",
+  );
+  assert.equal(deploy, 2);
+  assert.equal(localVerificationCommands.length, workflowCommands.length + 1);
+  assert.deepEqual(
+    localVerificationCommands,
+    [
+      ...workflowCommands.slice(0, deploy + 1),
+      ["run", "verify:migration-checksums"],
+      ...workflowCommands.slice(deploy + 1),
+    ],
+  );
+  assert.deepEqual(
+    localVerificationCommands[deploy + 2],
+    ["run", "db:seed"],
+  );
+  assert.deepEqual(
+    localVerificationCommands.at(-1),
+    ["audit", "--audit-level=high"],
+  );
 });
