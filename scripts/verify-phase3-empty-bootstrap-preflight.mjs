@@ -2,9 +2,7 @@ import { spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  readLocalMigrationChecksums,
-} from "./verify-migration-checksums.mjs";
+import { readLocalMigrationChecksums } from "./verify-migration-checksums.mjs";
 import { assertLocalVerificationTarget } from "./verify-local.mjs";
 import {
   assertPhase3SubscriptionSqlSource,
@@ -45,7 +43,7 @@ export function assertPhase3FreshMigrationInventory(local) {
   return { total: 37, finalMigration: newMigrationName };
 }
 
-export function assertPhase3FreshDatabaseEmpty(identity, relations, schemas) {
+export function assertPhase3FreshDatabaseEmpty(identity, objects, schemas) {
   if (
     !identity ||
     identity.database !== "myschoolboard_test" ||
@@ -53,11 +51,11 @@ export function assertPhase3FreshDatabaseEmpty(identity, relations, schemas) {
   ) {
     throw new Error("Unexpected fresh test database identity");
   }
-  if (!Array.isArray(relations) || !Array.isArray(schemas)) {
+  if (!Array.isArray(objects) || !Array.isArray(schemas)) {
     throw new Error("Unable to classify disposable test database schema");
   }
   if (
-    relations.length !== 0 ||
+    objects.length !== 0 ||
     schemas.length !== 1 ||
     schemas[0]?.schema !== "public"
   ) {
@@ -78,11 +76,15 @@ function assertExactVerificationBranch() {
     command.status !== 0 ||
     command.stdout.trim() !== exactBranch
   ) {
-    throw new Error("Fresh fixture preflight requires the exact verification branch");
+    throw new Error(
+      "Fresh fixture preflight requires the exact verification branch",
+    );
   }
 }
 
-export async function verifyPhase3FreshEmptyPreflight(environment = process.env) {
+export async function verifyPhase3FreshEmptyPreflight(
+  environment = process.env,
+) {
   assertLocalVerificationTarget(environment);
   assertExactVerificationBranch();
   const commit = verifyCleanGitHead();
@@ -91,7 +93,10 @@ export async function verifyPhase3FreshEmptyPreflight(environment = process.env)
   const local = await readLocalMigrationChecksums();
   const inventory = assertPhase3FreshMigrationInventory(local);
   const sql = await readFile(
-    new URL("../prisma/migrations/" + newMigrationName + "/migration.sql", import.meta.url),
+    new URL(
+      "../prisma/migrations/" + newMigrationName + "/migration.sql",
+      import.meta.url,
+    ),
     "utf8",
   );
   assertPhase3SubscriptionSqlSource(sql);
@@ -115,14 +120,42 @@ export async function verifyPhase3FreshEmptyPreflight(environment = process.env)
       throw new Error("Unexpected database identity result");
     }
 
-    const relationResult = await client.query(
-      "SELECT n.nspname AS schema, c.relname AS name " +
+    const objectResult = await client.query(
+      "SELECT n.nspname AS schema, c.relname AS name, 'relation' AS kind " +
         "FROM pg_catalog.pg_class AS c " +
         "JOIN pg_catalog.pg_namespace AS n ON n.oid = c.relnamespace " +
         "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') " +
         "AND n.nspname NOT LIKE 'pg_toast%' " +
         "AND n.nspname NOT LIKE 'pg_temp_%' " +
-        "AND c.relkind IN ('r', 'p', 'v', 'm', 'S', 'f')",
+        "AND c.relkind IN ('r', 'p', 'v', 'm', 'S', 'f') " +
+        "UNION ALL " +
+        "SELECT n.nspname, p.proname, 'routine' " +
+        "FROM pg_catalog.pg_proc AS p " +
+        "JOIN pg_catalog.pg_namespace AS n ON n.oid = p.pronamespace " +
+        "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') " +
+        "AND n.nspname NOT LIKE 'pg_toast%' " +
+        "AND n.nspname NOT LIKE 'pg_temp_%' " +
+        "UNION ALL " +
+        "SELECT n.nspname, t.typname, 'type' " +
+        "FROM pg_catalog.pg_type AS t " +
+        "JOIN pg_catalog.pg_namespace AS n ON n.oid = t.typnamespace " +
+        "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') " +
+        "AND n.nspname NOT LIKE 'pg_toast%' " +
+        "AND n.nspname NOT LIKE 'pg_temp_%' " +
+        "UNION ALL " +
+        "SELECT n.nspname, o.oprname, 'operator' " +
+        "FROM pg_catalog.pg_operator AS o " +
+        "JOIN pg_catalog.pg_namespace AS n ON n.oid = o.oprnamespace " +
+        "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') " +
+        "AND n.nspname NOT LIKE 'pg_toast%' " +
+        "AND n.nspname NOT LIKE 'pg_temp_%' " +
+        "UNION ALL " +
+        "SELECT n.nspname, e.extname, 'extension' " +
+        "FROM pg_catalog.pg_extension AS e " +
+        "JOIN pg_catalog.pg_namespace AS n ON n.oid = e.extnamespace " +
+        "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') " +
+        "AND n.nspname NOT LIKE 'pg_toast%' " +
+        "AND n.nspname NOT LIKE 'pg_temp_%'",
     );
     const schemaResult = await client.query(
       "SELECT nspname AS schema FROM pg_catalog.pg_namespace " +
@@ -134,15 +167,17 @@ export async function verifyPhase3FreshEmptyPreflight(environment = process.env)
 
     assertPhase3FreshDatabaseEmpty(
       identityResult.rows[0],
-      relationResult.rows,
+      objectResult.rows,
       schemaResult.rows,
     );
     await client.query("ROLLBACK");
     inTransaction = false;
     console.info(
       "Phase 3 fresh disposable preflight passed: exactly " +
-        inventory.total + " local migrations, completely empty test database, " +
-        "correct Docker identity and source SHA " + commit.slice(0, 12) +
+        inventory.total +
+        " local migrations, completely empty test database, " +
+        "correct Docker identity and source SHA " +
+        commit.slice(0, 12) +
         ". No migration or seed executed.",
     );
     return { commit, ...inventory, empty: true };

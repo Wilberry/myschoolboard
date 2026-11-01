@@ -29,7 +29,10 @@ test("refuses duplicate, missing and extra migration files", () => {
     migrations.slice(0, 36),
     [...migrations, migrations[0]],
     [...migrations.slice(0, 35), migrations[0], migrations[36]],
-    [...migrations.slice(0, 36), { name: "unexpected", checksum: migrations[36].checksum }],
+    [
+      ...migrations.slice(0, 36),
+      { name: "unexpected", checksum: migrations[36].checksum },
+    ],
   ]) {
     assert.throws(() => assertPhase3FreshMigrationInventory(altered));
   }
@@ -46,30 +49,61 @@ test("rejects invalid or missing SHA-256 migration evidence", () => {
 });
 
 test("permits only a truly empty correct-name and correct-role database", () => {
-  assert.equal(assertPhase3FreshDatabaseEmpty(identity, [], [{ schema: "public" }]), true);
+  assert.equal(
+    assertPhase3FreshDatabaseEmpty(identity, [], [{ schema: "public" }]),
+    true,
+  );
 });
 
-test("rejects existing Prisma migrations, synthetic tables and extra schemas", () => {
-  for (const [relations, schemas] of [
-    [[{ schema: "public", name: "_prisma_migrations" }], [{ schema: "public" }]],
-    [[{ schema: "public", name: "School" }], [{ schema: "public" }]],
+test("rejects existing database objects and extra schemas", () => {
+  for (const [objects, schemas] of [
+    [
+      [{ schema: "public", name: "_prisma_migrations", kind: "relation" }],
+      [{ schema: "public" }],
+    ],
+    [
+      [{ schema: "public", name: "School", kind: "relation" }],
+      [{ schema: "public" }],
+    ],
+    [
+      [{ schema: "public", name: "leftover_function", kind: "routine" }],
+      [{ schema: "public" }],
+    ],
+    [
+      [{ schema: "public", name: "leftover_type", kind: "type" }],
+      [{ schema: "public" }],
+    ],
+    [
+      [{ schema: "public", name: "leftover_operator", kind: "operator" }],
+      [{ schema: "public" }],
+    ],
+    [
+      [{ schema: "public", name: "leftover_extension", kind: "extension" }],
+      [{ schema: "public" }],
+    ],
     [[], [{ schema: "public" }, { schema: "other" }]],
   ]) {
-    assert.throws(() => assertPhase3FreshDatabaseEmpty(identity, relations, schemas));
+    assert.throws(() =>
+      assertPhase3FreshDatabaseEmpty(identity, objects, schemas),
+    );
   }
 });
 
 test("rejects production-looking identity, missing schema metadata and malformed responses", () => {
-  assert.throws(() => assertPhase3FreshDatabaseEmpty(
-    { database: "myschoolboard", role: "myschoolboard" },
-    [],
-    [{ schema: "public" }],
-  ));
-  assert.throws(() => assertPhase3FreshDatabaseEmpty(
-    { database: "myschoolboard_test", role: "postgres" },
-    [],
-    [{ schema: "public" }],
-  ));
+  assert.throws(() =>
+    assertPhase3FreshDatabaseEmpty(
+      { database: "myschoolboard", role: "myschoolboard" },
+      [],
+      [{ schema: "public" }],
+    ),
+  );
+  assert.throws(() =>
+    assertPhase3FreshDatabaseEmpty(
+      { database: "myschoolboard_test", role: "postgres" },
+      [],
+      [{ schema: "public" }],
+    ),
+  );
   assert.throws(() => assertPhase3FreshDatabaseEmpty(identity, null, []));
   assert.throws(() => assertPhase3FreshDatabaseEmpty(identity, [], null));
 });
