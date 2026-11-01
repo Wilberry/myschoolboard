@@ -418,7 +418,7 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
     expect(await currentRelationship("guardian", studentA, schoolB)).toBe(false);
   });
 
-  it("persists exactly one attested same-school relationship with minimal response", async () => {
+  it("persists an attested link with minimal response", async () => {
     const result = await create("admin", attestation());
     expect(result.status).toBe(201);
     expect(result.headers.get("cache-control")).toBe("private, no-store");
@@ -479,7 +479,7 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
     expect(await currentRelationship("guardian")).toBe(true);
   });
 
-  it("rechecks current guardian membership, school and section instead of trusting history", async () => {
+  it("rechecks current guardian, school, and section", async () => {
     await prisma.membership.update({
       where: { id: guardianMembershipId },
       data: { isActive: false },
@@ -617,10 +617,7 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
       revoke("admin", concurrentLinkId),
       revoke("admin", concurrentLinkId),
     ]);
-    const statuses = attempts.map((response) => response.status).sort();
-    expect([statuses[0], statuses[1]]).toEqual(
-      expect.arrayContaining([201]),
-    );
+    const statuses = attempts.map((response) => response.status);
     expect(statuses.filter((status) => status === 201)).toHaveLength(1);
     expect(statuses.every((status) => [201, 404, 409].includes(status))).toBe(
       true,
