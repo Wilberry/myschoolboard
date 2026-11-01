@@ -14,6 +14,9 @@ const service = file("src/modules/platform/subscription-service.ts");
 const http = file("src/modules/platform/subscription-http.ts");
 const launcher = file("scripts/launch-phase1-7-verification.mjs");
 const launcherTests = file("scripts/launch-phase1-7-verification.test.mjs");
+const subscriptionMigrationPreflight = file(
+  "scripts/verify-phase3-subscription-migration-preflight.mjs",
+);
 const platformPage = file("app/platform/page.tsx");
 const operatorEditor = file("src/components/platform-subscription-editor.tsx");
 const homePage = file("app/page.tsx");
@@ -21,6 +24,24 @@ const subscriptionStatusRoute = file(
   "app/api/platform/schools/[schoolId]/subscription-status/route.ts",
 );
 const subscriptionPolicy = file("src/modules/platform/subscription-policy.ts");
+
+test("preflight validates pending SQL shape before connecting to PostgreSQL", () => {
+  assert.match(
+    subscriptionMigrationPreflight,
+    /export function assertPhase3SubscriptionSqlSource/,
+  );
+  assert.match(
+    subscriptionMigrationPreflight,
+    /assertPhase3SubscriptionSqlSource\(migrationSource\)/,
+  );
+  assert.ok(
+    subscriptionMigrationPreflight.indexOf(
+      "assertPhase3SubscriptionSqlSource(migrationSource)",
+    ) < subscriptionMigrationPreflight.indexOf('await import("pg")'),
+  );
+  assert.match(subscriptionMigrationPreflight, /assertLocalDockerFixtureTarget/);
+  assert.match(subscriptionMigrationPreflight, /verifyMigrationChecksums/);
+});
 
 test("migration is complete and not duplicated or truncated", () => {
   assert.equal((migration.match(/^CREATE TABLE /gm) ?? []).length, 2);
