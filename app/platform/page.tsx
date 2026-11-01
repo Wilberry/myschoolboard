@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -6,11 +7,23 @@ import { prisma } from "@/src/lib/db";
 import { authorize } from "@/src/modules/authorization/policy";
 import { PlatformSubscriptionEditor } from "@/src/components/platform-subscription-editor";
 
-// Operator pages cannot be statically cached or shared across user sessions.
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
+export default function PlatformAdministrationPage() {
+  return (
+    <main className="workspace">
+      <Suspense
+        fallback={
+          <p className="workspace-note" role="status">
+            Checking platform administrator access…
+          </p>
+        }
+      >
+        <AuthorizedPlatformAdministration />
+      </Suspense>
+    </main>
+  );
+}
 
-export default async function PlatformAdministrationPage() {
+async function AuthorizedPlatformAdministration() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/");
 
@@ -53,7 +66,7 @@ export default async function PlatformAdministrationPage() {
   if (!schools) notFound();
 
   return (
-    <main className="workspace">
+    <>
       <header className="topbar">
         <Link className="brand" href="/" aria-label="MySchoolBoard home">
           <span className="brand-mark">M</span>
@@ -72,6 +85,6 @@ export default async function PlatformAdministrationPage() {
         </p>
         <PlatformSubscriptionEditor schools={schools} />
       </section>
-    </main>
+    </>
   );
 }

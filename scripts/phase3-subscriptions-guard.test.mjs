@@ -66,8 +66,15 @@ test("migration is complete and not duplicated or truncated", () => {
 });
 
 test("operator page and forms revalidate role before reading any school data", () => {
-  assert.match(platformPage, /dynamic = "force-dynamic"/);
-  assert.match(platformPage, /fetchCache = "force-no-store"/);
+  assert.match(platformPage, /import \{ Suspense \} from "react"/);
+  assert.match(
+    platformPage,
+    /<Suspense[\s\S]*<AuthorizedPlatformAdministration \/>[\s\S]*<\/Suspense>/,
+  );
+  assert.match(
+    platformPage,
+    /async function AuthorizedPlatformAdministration\(\)[\s\S]*auth\.api\.getSession/,
+  );
   assert.match(platformPage, /"platform:manage"/);
   assert.match(platformPage, /FOR UPDATE/);
   assert.match(platformPage, /if \(!schools\) notFound\(\)/);
