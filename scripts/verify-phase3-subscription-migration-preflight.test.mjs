@@ -1,8 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { sha256Migration } from "./verify-migration-checksums.mjs";
 import {
   assertPhase3SubscriptionMigrationPending,
+  assertPhase3SubscriptionSqlSource,
   newMigrationName,
 } from "./verify-phase3-subscription-migration-preflight.mjs";
 
@@ -78,4 +80,32 @@ test("refuses unexpected or missing migration names, including extra files", () 
     ),
     /one exact additive/,
   );
+});
+
+const realSource = readFileSync(
+  new URL(
+    "../prisma/migrations/20261101000000_phase3_platform_subscriptions/migration.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
+
+test("validates the single complete reviewed SQL migration before deployment", () => {
+  assert.equal(assertPhase3SubscriptionSqlSource(realSource), true);
+});
+
+test("rejects SQL duplication, accidental truncation and unsafe existing-table edits", () => {
+  for (const invalid of [
+    realSource + realSource,
+    realSource.slice(0, 2000),
+    realSource.replace("EXCLUDE USING gist", "EXCLUDE USING btree"),
+    realSource.replace("INTERVAL '1825 days'", "INTERVAL '50 years'"),
+    realSource.replace("(-[a-z0-9]+)*$", "(-[a-z0-9]+)*"),
+    realSource + '\nALTER TABLE "School" ADD COLUMN "unsafe" text;\n',
+  ]) {
+    assert.throws(
+      () => assertPhase3SubscriptionSqlSource(invalid),
+      /Phase 3|Unexpected/,
+    );
+  }
 });
