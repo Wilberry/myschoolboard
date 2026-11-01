@@ -51,27 +51,39 @@ describe("platform subscription validation and temporal visibility", () => {
       { ...period, schoolId: "other-school" },
       { ...period, planRevisionId: "" },
     ]) {
-      expect(assignSchoolSubscriptionInput.safeParse(input).success).toBe(false);
+      expect(assignSchoolSubscriptionInput.safeParse(input).success).toBe(
+        false,
+      );
     }
   });
 
   it("derives current/upcoming/ended without mutating school state", () => {
     const start = new Date("2026-11-01T00:00:00.000Z");
     const end = new Date("2027-01-01T00:00:00.000Z");
-    expect(subscriptionPeriodView(start, end, new Date("2026-10-31T00:00:00Z"))).toBe("UPCOMING");
+    expect(
+      subscriptionPeriodView(start, end, new Date("2026-10-31T00:00:00Z")),
+    ).toBe("UPCOMING");
     expect(subscriptionPeriodView(start, end, start)).toBe("CURRENT");
-    expect(subscriptionPeriodView(start, end, new Date("2026-12-01T00:00:00Z"))).toBe("CURRENT");
+    expect(
+      subscriptionPeriodView(start, end, new Date("2026-12-01T00:00:00Z")),
+    ).toBe("CURRENT");
     expect(subscriptionPeriodView(start, end, end)).toBe("ENDED");
   });
   it("treats advisory quota state as observation, not an access decision", () => {
     expect(quotaObservation(2, 2)).toEqual({
-      used: 2, limit: 2, exceedsLimit: false,
+      used: 2,
+      limit: 2,
+      exceedsLimit: false,
     });
     expect(quotaObservation(3, 2)).toEqual({
-      used: 3, limit: 2, exceedsLimit: true,
+      used: 3,
+      limit: 2,
+      exceedsLimit: true,
     });
     expect(quotaObservation(200, null)).toEqual({
-      used: 200, limit: null, exceedsLimit: null,
+      used: 200,
+      limit: null,
+      exceedsLimit: null,
     });
     for (const used of [-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
       expect(() => quotaObservation(used, 1)).toThrow();
@@ -85,9 +97,10 @@ describe("platform subscription validation and temporal visibility", () => {
     const earlier = new Date("2026-11-01T00:00:00Z");
     const later = new Date("2027-01-01T00:00:00Z");
     expect(observedSubscriptionStatus(null, null, now)).toBe("NONE");
-    expect(observedSubscriptionStatus(later, new Date("2027-02-01T00:00:00Z"), now)).toBe("UPCOMING");
+    expect(
+      observedSubscriptionStatus(later, new Date("2027-02-01T00:00:00Z"), now),
+    ).toBe("UPCOMING");
     expect(observedSubscriptionStatus(earlier, later, now)).toBe("CURRENT");
     expect(observedSubscriptionStatus(earlier, now, now)).toBe("ENDED");
   });
-
 });

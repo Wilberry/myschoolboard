@@ -60,16 +60,26 @@ async function privateJson(url: string, init?: RequestInit) {
 
 export function PlatformSubscriptionEditor({ schools }: { schools: School[] }) {
   const [plans, setPlans] = useState<Plan[]>([]);
-  const [periods, setPeriods] = useState<Period[]>([]);
-  const [snapshot, setSnapshot] = useState<SubscriptionSnapshot | null>(null);
+  const [periods, setPeriods] = useState<{
+    schoolId: string;
+    value: Period[];
+  } | null>(null);
+  const [snapshot, setSnapshot] = useState<{
+    schoolId: string;
+    value: SubscriptionSnapshot;
+  } | null>(null);
   const [schoolId, setSchoolId] = useState(
-    schools.find((school) => school.lifecycleStatus !== null &&
-      school.lifecycleStatus !== "CLOSED")?.id ?? "",
+    schools.find(
+      (school) =>
+        school.lifecycleStatus !== null && school.lifecycleStatus !== "CLOSED",
+    )?.id ?? "",
   );
   const [planRevisionId, setPlanRevisionId] = useState("");
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
-  const [selectedFeatures, setSelectedFeatures] = useState<Feature[]>(["ATTENDANCE"]);
+  const [selectedFeatures, setSelectedFeatures] = useState<Feature[]>([
+    "ATTENDANCE",
+  ]);
   const [maxStudents, setMaxStudents] = useState("");
   const [maxStaff, setMaxStaff] = useState("");
   const [planReason, setPlanReason] = useState("");
@@ -80,6 +90,9 @@ export function PlatformSubscriptionEditor({ schools }: { schools: School[] }) {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [refresh, setRefresh] = useState(0);
+  const selectedPeriods = periods?.schoolId === schoolId ? periods.value : [];
+  const selectedSnapshot =
+    snapshot?.schoolId === schoolId ? snapshot.value : null;
 
   useEffect(() => {
     let active = true;
@@ -90,38 +103,40 @@ export function PlatformSubscriptionEditor({ schools }: { schools: School[] }) {
       .catch(() => {
         if (active) setError("The private plan catalog could not be loaded.");
       });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [refresh]);
 
   useEffect(() => {
-    if (!schoolId) {
-      setPeriods([]);
-      setSnapshot(null);
-      return;
-    }
+    if (!schoolId) return;
     let active = true;
-    setPeriods([]);
-    setSnapshot(null);
     privateJson(
-      "/api/platform/schools/" + encodeURIComponent(schoolId) + "/subscriptions",
+      "/api/platform/schools/" +
+        encodeURIComponent(schoolId) +
+        "/subscriptions",
     )
       .then((data: { subscriptions: Period[] }) => {
-        if (active) setPeriods(data.subscriptions);
+        if (active) setPeriods({ schoolId, value: data.subscriptions });
       })
       .catch(() => {
         if (active) setError("Subscription history could not be loaded.");
       });
     privateJson(
-      "/api/platform/schools/" + encodeURIComponent(schoolId) +
+      "/api/platform/schools/" +
+        encodeURIComponent(schoolId) +
         "/subscription-status",
     )
       .then((data: { status: SubscriptionSnapshot }) => {
-        if (active) setSnapshot(data.status);
+        if (active) setSnapshot({ schoolId, value: data.status });
       })
       .catch(() => {
-        if (active) setError("The private subscription status could not be loaded.");
+        if (active)
+          setError("The private subscription status could not be loaded.");
       });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [schoolId, refresh]);
 
   async function savePlan(event: FormEvent<HTMLFormElement>) {
@@ -131,7 +146,7 @@ export function PlatformSubscriptionEditor({ schools }: { schools: School[] }) {
     setError("");
     setMessage("");
     try {
-      const data = await privateJson("/api/platform/plans", {
+      const data = (await privateJson("/api/platform/plans", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -142,16 +157,21 @@ export function PlatformSubscriptionEditor({ schools }: { schools: School[] }) {
           maxStaff: maxStaff === "" ? null : Number(maxStaff),
           reason: planReason,
         }),
-      }) as { plan: Plan };
+      })) as { plan: Plan };
       setMessage(
-        "Plan " + data.plan.code + " revision " + data.plan.version +
-        " recorded. No school permissions or payments changed.",
+        "Plan " +
+          data.plan.code +
+          " revision " +
+          data.plan.version +
+          " recorded. No school permissions or payments changed.",
       );
       setPlanRevisionId(data.plan.id);
       setPlanReason("");
       setRefresh((n) => n + 1);
     } catch {
-      setError("Plan revision rejected. Check the fields and current operator access.");
+      setError(
+        "Plan revision rejected. Check the fields and current operator access.",
+      );
     } finally {
       setBusy(false);
     }
@@ -167,14 +187,20 @@ export function PlatformSubscriptionEditor({ schools }: { schools: School[] }) {
     try {
       const startsAt = new Date(startsLocal).toISOString();
       const endsAt = new Date(endsLocal).toISOString();
-      if (new Date(endsAt) <= new Date(startsAt)) throw new Error("Invalid window");
+      if (new Date(endsAt) <= new Date(startsAt))
+        throw new Error("Invalid window");
       await privateJson(
-        "/api/platform/schools/" + encodeURIComponent(schoolId) + "/subscriptions",
+        "/api/platform/schools/" +
+          encodeURIComponent(schoolId) +
+          "/subscriptions",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            planRevisionId, startsAt, endsAt, reason: periodReason,
+            planRevisionId,
+            startsAt,
+            endsAt,
+            reason: periodReason,
           }),
         },
       );
@@ -197,43 +223,86 @@ export function PlatformSubscriptionEditor({ schools }: { schools: School[] }) {
       <section className="school-card" aria-labelledby="plan-revision-heading">
         <h2 id="plan-revision-heading">Create immutable plan revision</h2>
         <p>
-          Reusing a plan code creates the next version. Earlier versions
-          and school subscriptions remain unchanged.
+          Reusing a plan code creates the next version. Earlier versions and
+          school subscriptions remain unchanged.
         </p>
         <form onSubmit={savePlan}>
           <label htmlFor="platform-plan-code">Plan code</label>
-          <input id="platform-plan-code" required minLength={3} maxLength={36}
+          <input
+            id="platform-plan-code"
+            required
+            minLength={3}
+            maxLength={36}
             pattern="[a-z][a-z0-9]*(-[a-z0-9]+)*"
-            value={code} onChange={(e) => setCode(e.target.value)} />
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+          />
           <label htmlFor="platform-plan-name">Plan display name</label>
-          <input id="platform-plan-name" required minLength={3} maxLength={100}
-            value={name} onChange={(e) => setName(e.target.value)} />
+          <input
+            id="platform-plan-name"
+            required
+            minLength={3}
+            maxLength={100}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
           <fieldset>
             <legend>Catalog features (metadata only)</legend>
             {features.map((feature) => (
               <label key={feature}>
-                <input type="checkbox" value={feature}
+                <input
+                  type="checkbox"
+                  value={feature}
                   checked={selectedFeatures.includes(feature)}
-                  onChange={(e) => setSelectedFeatures((current) => e.target.checked
-                    ? [...current, feature]
-                    : current.filter((item) => item !== feature))}
+                  onChange={(e) =>
+                    setSelectedFeatures((current) =>
+                      e.target.checked
+                        ? [...current, feature]
+                        : current.filter((item) => item !== feature),
+                    )
+                  }
                 />
                 {feature}
               </label>
             ))}
           </fieldset>
-          <label htmlFor="platform-max-students">Advisory maximum students (optional)</label>
-          <input id="platform-max-students" type="number" min={1} max={1000000}
-            step={1} value={maxStudents}
-            onChange={(e) => setMaxStudents(e.target.value)} />
-          <label htmlFor="platform-max-staff">Advisory maximum staff (optional)</label>
-          <input id="platform-max-staff" type="number" min={1} max={1000000}
-            step={1} value={maxStaff}
-            onChange={(e) => setMaxStaff(e.target.value)} />
+          <label htmlFor="platform-max-students">
+            Advisory maximum students (optional)
+          </label>
+          <input
+            id="platform-max-students"
+            type="number"
+            min={1}
+            max={1000000}
+            step={1}
+            value={maxStudents}
+            onChange={(e) => setMaxStudents(e.target.value)}
+          />
+          <label htmlFor="platform-max-staff">
+            Advisory maximum staff (optional)
+          </label>
+          <input
+            id="platform-max-staff"
+            type="number"
+            min={1}
+            max={1000000}
+            step={1}
+            value={maxStaff}
+            onChange={(e) => setMaxStaff(e.target.value)}
+          />
           <label htmlFor="platform-plan-reason">Reason for this revision</label>
-          <textarea id="platform-plan-reason" required minLength={5} maxLength={500}
-            value={planReason} onChange={(e) => setPlanReason(e.target.value)} />
-          <button type="submit" disabled={busy || selectedFeatures.length === 0}>
+          <textarea
+            id="platform-plan-reason"
+            required
+            minLength={5}
+            maxLength={500}
+            value={planReason}
+            onChange={(e) => setPlanReason(e.target.value)}
+          />
+          <button
+            type="submit"
+            disabled={busy || selectedFeatures.length === 0}
+          >
             Record plan revision
           </button>
         </form>
@@ -242,38 +311,61 @@ export function PlatformSubscriptionEditor({ schools }: { schools: School[] }) {
           <ul>
             {plans.map((plan) => (
               <li key={plan.id}>
-                <strong>{plan.name}</strong> — {plan.code}, revision {plan.version};
-                features: {plan.features.join(", ")};
-                student cap: {plan.maxStudents ?? "not set"};
-                staff cap: {plan.maxStaff ?? "not set"} (not enforced)
+                <strong>{plan.name}</strong> — {plan.code}, revision{" "}
+                {plan.version}; features: {plan.features.join(", ")}; student
+                cap: {plan.maxStudents ?? "not set"}; staff cap:{" "}
+                {plan.maxStaff ?? "not set"} (not enforced)
               </li>
             ))}
           </ul>
-        ) : <p>No plan revisions available.</p>}
+        ) : (
+          <p>No plan revisions available.</p>
+        )}
       </section>
 
-      <section className="school-card" aria-labelledby="subscription-period-heading">
-        <h2 id="subscription-period-heading">Assign a school subscription period</h2>
+      <section
+        className="school-card"
+        aria-labelledby="subscription-period-heading"
+      >
+        <h2 id="subscription-period-heading">
+          Assign a school subscription period
+        </h2>
         <p>
-          Each interval is immutable and cannot overlap another period for
-          the same school. An active subscription is not school activation.
+          Each interval is immutable and cannot overlap another period for the
+          same school. An active subscription is not school activation.
         </p>
         <form onSubmit={savePeriod}>
           <label htmlFor="platform-period-school">School</label>
-          <select id="platform-period-school" required value={schoolId}
-            onChange={(e) => setSchoolId(e.target.value)}>
+          <select
+            id="platform-period-school"
+            required
+            value={schoolId}
+            onChange={(e) => {
+              setPeriods(null);
+              setSnapshot(null);
+              setSchoolId(e.target.value);
+            }}
+          >
             <option value="">Choose a school</option>
             {schools.map((school) => (
-              <option key={school.id} value={school.id}
-                disabled={!school.lifecycleStatus ||
-                  school.lifecycleStatus === "CLOSED"}>
+              <option
+                key={school.id}
+                value={school.id}
+                disabled={
+                  !school.lifecycleStatus || school.lifecycleStatus === "CLOSED"
+                }
+              >
                 {school.name} ({school.lifecycleStatus ?? "UNCLASSIFIED"})
               </option>
             ))}
           </select>
           <label htmlFor="platform-period-plan">Exact plan revision</label>
-          <select id="platform-period-plan" required value={planRevisionId}
-            onChange={(e) => setPlanRevisionId(e.target.value)}>
+          <select
+            id="platform-period-plan"
+            required
+            value={planRevisionId}
+            onChange={(e) => setPlanRevisionId(e.target.value)}
+          >
             <option value="">Choose a revision</option>
             {plans.map((plan) => (
               <option key={plan.id} value={plan.id}>
@@ -281,70 +373,114 @@ export function PlatformSubscriptionEditor({ schools }: { schools: School[] }) {
               </option>
             ))}
           </select>
-          <label htmlFor="platform-period-start">Starts (your local time)</label>
-          <input id="platform-period-start" type="datetime-local" required
-            value={startsLocal} onChange={(e) => setStartsLocal(e.target.value)} />
+          <label htmlFor="platform-period-start">
+            Starts (your local time)
+          </label>
+          <input
+            id="platform-period-start"
+            type="datetime-local"
+            required
+            value={startsLocal}
+            onChange={(e) => setStartsLocal(e.target.value)}
+          />
           <label htmlFor="platform-period-end">Ends (your local time)</label>
-          <input id="platform-period-end" type="datetime-local" required
-            value={endsLocal} onChange={(e) => setEndsLocal(e.target.value)} />
-          <label htmlFor="platform-period-reason">Reason for assigning this period</label>
-          <textarea id="platform-period-reason" required minLength={5} maxLength={500}
-            value={periodReason} onChange={(e) => setPeriodReason(e.target.value)} />
+          <input
+            id="platform-period-end"
+            type="datetime-local"
+            required
+            value={endsLocal}
+            onChange={(e) => setEndsLocal(e.target.value)}
+          />
+          <label htmlFor="platform-period-reason">
+            Reason for assigning this period
+          </label>
+          <textarea
+            id="platform-period-reason"
+            required
+            minLength={5}
+            maxLength={500}
+            value={periodReason}
+            onChange={(e) => setPeriodReason(e.target.value)}
+          />
           <button type="submit" disabled={busy || !schoolId || !planRevisionId}>
             Record subscription period
           </button>
         </form>
         <h3>Current subscription observation (not entitlement enforcement)</h3>
-        {snapshot ? (
+        {selectedSnapshot ? (
           <div aria-label="School subscription observation">
             <p>
-              As of {new Date(snapshot.asOf).toISOString()}:
-              {" "}school lifecycle {snapshot.school.lifecycleStatus ?? "UNCLASSIFIED"};
-              {" "}school active flag {snapshot.school.isActive ? "yes" : "no"};
-              {" "}subscription {snapshot.subscriptionStatus}.
+              As of {new Date(selectedSnapshot.asOf).toISOString()}: school
+              lifecycle{" "}
+              {selectedSnapshot.school.lifecycleStatus ?? "UNCLASSIFIED"};
+              school active flag{" "}
+              {selectedSnapshot.school.isActive ? "yes" : "no"}; subscription{" "}
+              {selectedSnapshot.subscriptionStatus}.
             </p>
             <p>
-              Observed plan: {snapshot.observedPeriod
-                ? snapshot.observedPeriod.planRevision.code + " v" +
-                  snapshot.observedPeriod.planRevision.version
-                : "none"}.
-              {" "}Payment status: not tracked. Product entitlement enforcement: off.
+              Observed plan:{" "}
+              {selectedSnapshot.observedPeriod
+                ? selectedSnapshot.observedPeriod.planRevision.code +
+                  " v" +
+                  selectedSnapshot.observedPeriod.planRevision.version
+                : "none"}
+              .
+              {
+                " Payment status: not tracked. Product entitlement enforcement: off."
+              }
             </p>
             <p>
-              Actively enrolled pupils: {snapshot.usage.enrolledStudents.used};
-              {" "}current plan advisory limit:
-              {" "}{snapshot.usage.enrolledStudents.limit ?? "not configured"};
-              {" "}over limit:
-              {" "}{snapshot.usage.enrolledStudents.exceedsLimit === null
+              Actively enrolled pupils:{" "}
+              {selectedSnapshot.usage.enrolledStudents.used}; current plan
+              advisory limit:{" "}
+              {selectedSnapshot.usage.enrolledStudents.limit ??
+                "not configured"}
+              ; over limit:{" "}
+              {selectedSnapshot.usage.enrolledStudents.exceedsLimit === null
                 ? "not evaluated"
-                : snapshot.usage.enrolledStudents.exceedsLimit ? "yes" : "no"}.
+                : selectedSnapshot.usage.enrolledStudents.exceedsLimit
+                  ? "yes"
+                  : "no"}
+              .
             </p>
             <p>
-              Active staff memberships: {snapshot.usage.activeStaff.used};
-              {" "}current plan advisory limit:
-              {" "}{snapshot.usage.activeStaff.limit ?? "not configured"};
-              {" "}over limit:
-              {" "}{snapshot.usage.activeStaff.exceedsLimit === null
+              Active staff memberships:{" "}
+              {selectedSnapshot.usage.activeStaff.used}; current plan advisory
+              limit:{" "}
+              {selectedSnapshot.usage.activeStaff.limit ?? "not configured"};
+              over limit:{" "}
+              {selectedSnapshot.usage.activeStaff.exceedsLimit === null
                 ? "not evaluated"
-                : snapshot.usage.activeStaff.exceedsLimit ? "yes" : "no"}.
+                : selectedSnapshot.usage.activeStaff.exceedsLimit
+                  ? "yes"
+                  : "no"}
+              .
             </p>
           </div>
-        ) : <p>No current subscription observation loaded.</p>}
+        ) : (
+          <p>No current subscription observation loaded.</p>
+        )}
         <h3>Recorded periods for the selected school</h3>
-        {periods.length ? (
+        {selectedPeriods.length ? (
           <ul>
-            {periods.map((period) => (
+            {selectedPeriods.map((period) => (
               <li key={period.id}>
-                <strong>{period.planRevision.code} v{period.planRevision.version}</strong>
-                {" "}— {period.periodStatus};
-                {" "}UTC {new Date(period.startsAt).toISOString()} to
-                {" "}{new Date(period.endsAt).toISOString()}
+                <strong>
+                  {period.planRevision.code} v{period.planRevision.version}
+                </strong>{" "}
+                — {period.periodStatus}; UTC{" "}
+                {new Date(period.startsAt).toISOString()} to{" "}
+                {new Date(period.endsAt).toISOString()}
               </li>
             ))}
           </ul>
-        ) : <p>No subscription periods recorded for this school.</p>}
+        ) : (
+          <p>No subscription periods recorded for this school.</p>
+        )}
       </section>
-      <p role="status" aria-live="polite">{message}</p>
+      <p role="status" aria-live="polite">
+        {message}
+      </p>
       {error && <p role="alert">{error}</p>}
     </>
   );

@@ -33,7 +33,7 @@ export function assertPhase3SubscriptionSqlSource(sql) {
     "count(DISTINCT feature_value)",
     "SchoolSubscriptionPeriod_no_overlap",
     "EXCLUDE USING gist",
-    "tsrange(\"startsAt\", \"endsAt\", '[)') WITH &&",
+    'tsrange("startsAt", "endsAt", \'[)\') WITH &&',
     '"schoolId" WITH =',
     'CREATE TRIGGER "PlatformPlanRevision_immutable"',
     'CREATE TRIGGER "SchoolSubscriptionPeriod_immutable"',
@@ -46,12 +46,20 @@ export function assertPhase3SubscriptionSqlSource(sql) {
       throw new Error("Phase 3 SQL missing a required safety boundary");
     }
   }
-  if (/\b(?:DROP|ALTER)\s+(?:TABLE|SCHEMA)\s+"?(?:School|User|StudentRecord)"?(?=\s|;|$)/i.test(sql)) {
+  if (
+    /\b(?:DROP|ALTER)\s+(?:TABLE|SCHEMA)\s+"?(?:School|User|StudentRecord)"?(?=\s|;|$)/i.test(
+      sql,
+    )
+  ) {
     throw new Error("Phase 3 SQL must not rewrite identity or school tables");
   }
-  if (!sql.trimEnd().endsWith(
-    'FOR EACH STATEMENT EXECUTE FUNCTION "prevent_platform_subscription_truncate"();'
-  )) {
+  if (
+    !sql
+      .trimEnd()
+      .endsWith(
+        'FOR EACH STATEMENT EXECUTE FUNCTION "prevent_platform_subscription_truncate"();',
+      )
+  ) {
     throw new Error("Phase 3 SQL has an unexpected ending");
   }
   return true;
@@ -95,7 +103,11 @@ function command(executable, args) {
 }
 
 function verifyCleanGitHead() {
-  const status = command("git", ["status", "--porcelain", "--untracked-files=all"]);
+  const status = command("git", [
+    "status",
+    "--porcelain",
+    "--untracked-files=all",
+  ]);
   if (status) {
     throw new Error("Verification requires a clean reviewed worktree");
   }
@@ -112,11 +124,22 @@ function verifyExactDisposableDocker() {
     throw new Error("Unrecognized local Docker context");
   }
   const endpoint = command("docker", [
-    "context", "inspect", context, "--format", "{{.Endpoints.docker.Host}}",
+    "context",
+    "inspect",
+    context,
+    "--format",
+    "{{.Endpoints.docker.Host}}",
   ]);
   const ids = command("docker", [
-    "compose", "--profile", "test", "ps", "-q", "postgres-test",
-  ]).split("\n").filter(Boolean);
+    "compose",
+    "--profile",
+    "test",
+    "ps",
+    "-q",
+    "postgres-test",
+  ])
+    .split("\n")
+    .filter(Boolean);
   if (ids.length !== 1 || !/^[a-f0-9]{12,64}$/i.test(ids[0])) {
     throw new Error("Expected one exact disposable PostgreSQL service");
   }
@@ -135,7 +158,10 @@ export async function verifyPhase3SubscriptionMigrationPreflight(
   verifyExactDisposableDocker();
   const migrations = await readLocalMigrationChecksums();
   const migrationSource = await readFile(
-    new URL("../prisma/migrations/" + newMigrationName + "/migration.sql", import.meta.url),
+    new URL(
+      "../prisma/migrations/" + newMigrationName + "/migration.sql",
+      import.meta.url,
+    ),
     "utf8",
   );
   assertPhase3SubscriptionSqlSource(migrationSource);
@@ -161,9 +187,12 @@ export async function verifyPhase3SubscriptionMigrationPreflight(
     began = false;
     console.info(
       "Phase 3 read-only migration preflight passed: " +
-        summary.applied + " exact applied; only " + summary.pending +
+        summary.applied +
+        " exact applied; only " +
+        summary.pending +
         " remains pending. No migration was executed. Tested commit " +
-        commit.slice(0, 12) + ".",
+        commit.slice(0, 12) +
+        ".",
     );
     return summary;
   } finally {

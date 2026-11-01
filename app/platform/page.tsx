@@ -27,10 +27,15 @@ export default async function PlatformAdministrationPage() {
       if (
         !actor ||
         !authorize(
-          { userId: actor.id, platformRole: actor.platformRole, membership: null },
+          {
+            userId: actor.id,
+            platformRole: actor.platformRole,
+            membership: null,
+          },
           "platform:manage",
         ).allowed
-      ) return null;
+      )
+        return null;
       return tx.school.findMany({
         select: {
           id: true,
@@ -54,7 +59,9 @@ export default async function PlatformAdministrationPage() {
           <span className="brand-mark">M</span>
           <span>MySchoolBoard</span>
         </Link>
-        <Link className="secondary-link" href="/">Back to workspace</Link>
+        <Link className="secondary-link" href="/">
+          Back to workspace
+        </Link>
       </header>
       <section className="workspace-content" aria-labelledby="platform-heading">
         <p className="eyebrow">PLATFORM SUPER ADMIN / DEVELOPMENT</p>

@@ -54,10 +54,7 @@ export async function handlePlatformPlansGet() {
 export async function handlePlatformPlansPost(request: Request) {
   try {
     const input: unknown = await request.json();
-    return response(
-      { plan: await createPlatformPlanRevision(input) },
-      201,
-    );
+    return response({ plan: await createPlatformPlanRevision(input) }, 201);
   } catch (error) {
     if (error instanceof SyntaxError)
       return response({ error: "Invalid request" }, 400);

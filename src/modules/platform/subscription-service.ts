@@ -61,7 +61,14 @@ function translate(error: unknown): never {
   // Recognize ONLY uniqueness and transient serialization/deadlock failures.
   const queue: unknown[] = [error];
   const visited = new Set<object>();
-  const conflicts = new Set(["P2002", "P2034", "23505", "23P01", "40001", "40P01"]);
+  const conflicts = new Set([
+    "P2002",
+    "P2034",
+    "23505",
+    "23P01",
+    "40001",
+    "40P01",
+  ]);
   for (let index = 0; index < queue.length && index < 24; index += 1) {
     const node = queue[index];
     if (!node || typeof node !== "object" || visited.has(node)) continue;
@@ -312,9 +319,8 @@ export async function readSchoolSubscriptionStatus(schoolId: string) {
           period?.endsAt ?? null,
           asOf,
         );
-        const currentPlan = status === "CURRENT"
-          ? period?.planRevision ?? null
-          : null;
+        const currentPlan =
+          status === "CURRENT" ? (period?.planRevision ?? null) : null;
         return {
           asOf: asOf.toISOString(),
           school: {
@@ -337,10 +343,7 @@ export async function readSchoolSubscriptionStatus(schoolId: string) {
               students,
               currentPlan?.maxStudents ?? null,
             ),
-            activeStaff: quotaObservation(
-              staff,
-              currentPlan?.maxStaff ?? null,
-            ),
+            activeStaff: quotaObservation(staff, currentPlan?.maxStaff ?? null),
           },
           billingStatus: "NOT_TRACKED" as const,
           entitlementEnforcement: "NOT_ENABLED" as const,

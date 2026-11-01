@@ -1,7 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 
 const file = (path) =>
   readFileSync(new URL("../" + path, import.meta.url), "utf8");
@@ -39,7 +38,10 @@ test("preflight validates pending SQL shape before connecting to PostgreSQL", ()
       "assertPhase3SubscriptionSqlSource(migrationSource)",
     ) < subscriptionMigrationPreflight.indexOf('await import("pg")'),
   );
-  assert.match(subscriptionMigrationPreflight, /assertLocalDockerFixtureTarget/);
+  assert.match(
+    subscriptionMigrationPreflight,
+    /assertLocalDockerFixtureTarget/,
+  );
   assert.match(subscriptionMigrationPreflight, /verifyMigrationChecksums/);
 });
 
@@ -51,17 +53,15 @@ test("migration is complete and not duplicated or truncated", () => {
     (migration.match(/CREATE TABLE "SchoolSubscriptionPeriod"/g) ?? []).length,
     1,
   );
-  assert.ok(
-    migration.includes(
-      `"code" ~ '^[a-z][a-z0-9]*(-[a-z0-9]+)*$'`,
-    ),
-  );
+  assert.ok(migration.includes(`"code" ~ '^[a-z][a-z0-9]*(-[a-z0-9]+)*$'`));
   assert.match(migration, /INTERVAL '1825 days'/);
   assert.match(migration, /count\(DISTINCT feature_value\)/);
   assert.ok(
-    migration.trimEnd().endsWith(
-      'FOR EACH STATEMENT EXECUTE FUNCTION "prevent_platform_subscription_truncate"();',
-    ),
+    migration
+      .trimEnd()
+      .endsWith(
+        'FOR EACH STATEMENT EXECUTE FUNCTION "prevent_platform_subscription_truncate"();',
+      ),
   );
 });
 
@@ -103,24 +103,27 @@ test("keeps subscription migration additive and platform-only", () => {
   for (const token of [
     'CREATE TABLE "PlatformPlanRevision"',
     'CREATE TABLE "SchoolSubscriptionPeriod"',
-    'pg_advisory_xact_lock',
+    "pg_advisory_xact_lock",
     'school."lifecycleStatus" IN',
     'school."id" = NEW."schoolId"',
     'school."isActive"',
-    'SchoolSubscriptionPeriod_validate',
-    'PlatformPlanRevision_validate',
-    'SchoolSubscriptionPeriod_immutable',
-    'PlatformPlanRevision_immutable',
-    'SchoolSubscriptionPeriod_no_truncate',
-    'SchoolSubscriptionPeriod_no_overlap',
-    'EXCLUDE USING gist',
+    "SchoolSubscriptionPeriod_validate",
+    "PlatformPlanRevision_validate",
+    "SchoolSubscriptionPeriod_immutable",
+    "PlatformPlanRevision_immutable",
+    "SchoolSubscriptionPeriod_no_truncate",
+    "SchoolSubscriptionPeriod_no_overlap",
+    "EXCLUDE USING gist",
     'tsrange("startsAt", "endsAt", \'[)\') WITH &&',
-    'PlatformPlanRevision_no_truncate',
+    "PlatformPlanRevision_no_truncate",
   ]) {
     if (token === 'school."isActive"') {
       assert.doesNotMatch(migration, /UPDATE\s+"School"\s+SET\s+"isActive"/i);
     } else {
-      assert.ok(migration.includes(token), "Missing subscription boundary: " + token);
+      assert.ok(
+        migration.includes(token),
+        "Missing subscription boundary: " + token,
+      );
     }
   }
   assert.doesNotMatch(migration, /\bDROP\s+TABLE\b|\bTRUNCATE\s+TABLE\b/i);
@@ -152,7 +155,10 @@ test("rechecks real platform roles and never changes school lifecycle", () => {
 
 test("updates fixed browser fixture migration inventory without weakening checksum gate", () => {
   assert.match(launcher, /expectedMigrationCount = 37/);
-  assert.match(launcherTests, /requires the expected complete 37-migration inventory/);
+  assert.match(
+    launcherTests,
+    /requires the expected complete 37-migration inventory/,
+  );
   assert.doesNotMatch(launcherTests, /exactly 36/);
   assert.match(launcher, /runMigrationChecksumVerification\(environment\)/);
 });

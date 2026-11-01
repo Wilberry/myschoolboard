@@ -67,7 +67,6 @@ export function subscriptionPeriodView(
   return "CURRENT";
 }
 
-
 /**
  * Advisory observation only: this is NOT an access-control decision.
  * A null limit means the catalog has not specified a quota, not unlimited
@@ -89,10 +88,7 @@ export function quotaObservation(used: number, limit: number | null) {
 }
 
 export type ObservedSubscriptionStatus =
-  | "NONE"
-  | "CURRENT"
-  | "UPCOMING"
-  | "ENDED";
+  "NONE" | "CURRENT" | "UPCOMING" | "ENDED";
 
 /** Server-clock classification; no implicit renewal or school suspension. */
 export function observedSubscriptionStatus(

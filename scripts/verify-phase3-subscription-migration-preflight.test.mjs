@@ -38,9 +38,11 @@ test("refuses already-applied migration #37; it is not safe to re-deploy blindly
     rolled_back_at: null,
   };
   assert.throws(
-    () => assertPhase3SubscriptionMigrationPending([...prior, added], [
-      ...recorded, extra,
-    ]),
+    () =>
+      assertPhase3SubscriptionMigrationPending(
+        [...prior, added],
+        [...recorded, extra],
+      ),
     /Unexpected database migration/,
   );
 });
@@ -55,8 +57,8 @@ test("refuses modified, missing, duplicate, unfinished or rolled-back baseline",
     [{ ...recorded[0], rolled_back_at: new Date() }, ...recorded.slice(1)],
   ];
   for (const altered of mutations) {
-    assert.throws(
-      () => assertPhase3SubscriptionMigrationPending(local, altered),
+    assert.throws(() =>
+      assertPhase3SubscriptionMigrationPending(local, altered),
     );
   }
 });
@@ -67,17 +69,19 @@ test("refuses unexpected or missing migration names, including extra files", () 
     /exactly 37/,
   );
   assert.throws(
-    () => assertPhase3SubscriptionMigrationPending(
-      [...prior, { name: "different", checksum: added.checksum }],
-      recorded,
-    ),
+    () =>
+      assertPhase3SubscriptionMigrationPending(
+        [...prior, { name: "different", checksum: added.checksum }],
+        recorded,
+      ),
     /exact additive/,
   );
   assert.throws(
-    () => assertPhase3SubscriptionMigrationPending(
-      [...prior.slice(1), added, added],
-      recorded,
-    ),
+    () =>
+      assertPhase3SubscriptionMigrationPending(
+        [...prior.slice(1), added, added],
+        recorded,
+      ),
     /one exact additive/,
   );
 });
