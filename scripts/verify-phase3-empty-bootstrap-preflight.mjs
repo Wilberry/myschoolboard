@@ -58,7 +58,8 @@ export function assertPhase3FreshDatabaseEmpty(identity, relations, schemas) {
   }
   if (
     relations.length !== 0 ||
-    schemas.some((item) => item?.schema !== "public")
+    schemas.length !== 1 ||
+    schemas[0]?.schema !== "public"
   ) {
     throw new Error("Fresh fixture requires an entirely empty test schema");
   }
