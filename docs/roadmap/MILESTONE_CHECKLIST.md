@@ -1,5 +1,14 @@
 # Milestone Checklist
 
+## Owner-approved Phase 1–7 development integration — 2026-11-01
+
+- [x] Locally verify candidate application SHA `55dab6cd659d0200a3db86babbc274c9e5e5d8a8`: **37/37 migration checksums, 122/122 Node, 327/327 Vitest, formatting, lint, typecheck, Next build, strict and full npm audit (0 vulnerabilities)**.
+- [x] Review target `main...verify/pr97-integrated-pupil-workflow` rather than relying only on stacked PR #98's 51-file diff; exclude Phase 8/9 implementation and production deployment.
+- [x] Owner D-051 authorizes a **development integration checkpoint** into `main` using reproducible local acceptance evidence; failing hosted GitHub Actions infrastructure is not a gate. This is not a waiver of any local security/audit failure.
+- [ ] Finish genuine 200% Chrome zoom, other Phase 1–7 browser/privacy/accessibility cases, and outstanding full feature requirements (subscriptions, admissions lifecycle and student CBT) with targeted tests.
+- [ ] Declare full functional Phase 1–7 acceptance and production readiness **only** after their separately documented criteria have actual evidence. Merging the tested development baseline does not tick this box.
+
+
 ## Phase 3 subscription status visibility — source only, 2026-10-31
 
 - [x] Author platform-only, no-store subscription status and operator
