@@ -46,7 +46,7 @@ export function assertPhase3SubscriptionSqlSource(sql) {
       throw new Error("Phase 3 SQL missing a required safety boundary");
     }
   }
-  if (/\b(?:DROP|ALTER)\s+(?:TABLE|SCHEMA)\s+"?(?:School|User|StudentRecord)"?/i.test(sql)) {
+  if (/\b(?:DROP|ALTER)\s+(?:TABLE|SCHEMA)\s+"?(?:School|User|StudentRecord)"?(?=\s|;|$)/i.test(sql)) {
     throw new Error("Phase 3 SQL must not rewrite identity or school tables");
   }
   if (!sql.trimEnd().endsWith(
