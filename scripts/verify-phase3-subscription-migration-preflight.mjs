@@ -102,7 +102,7 @@ function command(executable, args) {
   return result.stdout.trim();
 }
 
-function verifyCleanGitHead() {
+export function verifyCleanGitHead() {
   const status = command("git", [
     "status",
     "--porcelain",
@@ -118,7 +118,7 @@ function verifyCleanGitHead() {
   return head;
 }
 
-function verifyExactDisposableDocker() {
+export function verifyExactDisposableDocker() {
   const context = command("docker", ["context", "show"]);
   if (!/^[A-Za-z0-9._][A-Za-z0-9._-]*$/.test(context)) {
     throw new Error("Unrecognized local Docker context");
