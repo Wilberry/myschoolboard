@@ -273,10 +273,10 @@ describe("guardian relationship attestation stays admin-only and school-scoped",
     try {
       expect((await create("admin", attestation())).status).toBe(404);
       expect(
-      await prisma.guardianStudentLink.count({
-        where: { schoolId: schoolA },
-      }),
-    ).toBe(0);
+        await prisma.guardianStudentLink.count({
+          where: { schoolId: schoolA },
+        }),
+      ).toBe(0);
     } finally {
       await prisma.membership.update({
         where: { id: guardianMembershipId },
