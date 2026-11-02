@@ -92,7 +92,9 @@ test("student lesson HTML and RSC segment prefetches opt out of HTTP caching", (
   ]) {
     assert.ok(config.includes(`source: "${path}"`));
   }
-  assert.ok(config.includes("private, no-cache, no-store, max-age=0, must-revalidate"));
+  assert.ok(
+    config.includes("private, no-cache, no-store, max-age=0, must-revalidate"),
+  );
   assert.match(config, /cacheComponents: true/);
   assert.match(config, /partialPrefetching: true/);
 });
