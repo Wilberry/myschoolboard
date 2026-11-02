@@ -130,8 +130,12 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
 
   useEffect(() => {
     const handleVisibility = () => {
-      if (document.visibilityState === "hidden") redact();
-      else void revalidate(true);
+      if (document.visibilityState === "hidden") {
+        // Browser print preview may temporarily hide the source tab.
+        if (printGrantUntil.current <= Date.now()) redact();
+      } else if (printGrantUntil.current <= Date.now()) {
+        void revalidate(true);
+      }
     };
     const handleFocus = () => {
       if (printGrantUntil.current > Date.now()) return;
