@@ -107,7 +107,12 @@ export function authorize(
     return { allowed: false, reason: "forbidden" };
   }
 
-  if (action === "child:read" && !resource.childUserId) {
+  // A stored CHILD ScopeGrant does not prove a guardian-child relationship,
+  // and a STUDENT role alone does not prove an enrolled student identity.
+  // Deny this generic action until an independently verified, school-owned
+  // relationship reader is implemented. Existing guarded pupil-specific
+  // routes remain separate and are not authorized by this helper.
+  if (action === "child:read") {
     return { allowed: false, reason: "forbidden" };
   }
 

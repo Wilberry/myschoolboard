@@ -8,6 +8,8 @@ import { requireSchoolAccess } from "./school-access";
 const testId = randomUUID();
 const userA = `tenant-test-a-${testId}`;
 const userB = `tenant-test-b-${testId}`;
+const parentUser = `tenant-test-parent-${testId}`;
+const claimedChild = `unattested-child-${testId}`;
 const schoolA = `tenant-test-school-a-${testId}`;
 const schoolB = `tenant-test-school-b-${testId}`;
 const classA = `tenant-class-a-${testId}`;
@@ -29,6 +31,11 @@ describe("database-backed tenant context", () => {
           name: "Synthetic Teacher B",
           email: `${userB}@example.test`,
         },
+        {
+          id: parentUser,
+          name: "Synthetic Parent",
+          email: `${parentUser}@example.test`,
+        },
       ],
     });
     await prisma.school.createMany({
@@ -41,6 +48,7 @@ describe("database-backed tenant context", () => {
       data: [
         { userId: userA, schoolId: schoolA, role: "SCHOOL_ADMIN" },
         { userId: userB, schoolId: schoolB, role: "SCHOOL_ADMIN" },
+        { userId: parentUser, schoolId: schoolA, role: "PARENT" },
       ],
     });
     await prisma.schoolClass.createMany({
@@ -58,6 +66,10 @@ describe("database-backed tenant context", () => {
 
     const memberA = await prisma.membership.findUniqueOrThrow({
       where: { schoolId_userId: { schoolId: schoolA, userId: userA } },
+      select: { id: true },
+    });
+    const parentMembership = await prisma.membership.findUniqueOrThrow({
+      where: { schoolId_userId: { schoolId: schoolA, userId: parentUser } },
       select: { id: true },
     });
     await prisma.scopeGrant.createMany({
@@ -86,12 +98,26 @@ describe("database-backed tenant context", () => {
           scopeId: subjectB,
           verified: true,
         },
+        {
+          membershipId: parentMembership.id,
+          type: "CHILD",
+          scopeId: claimedChild,
+          verified: true,
+        },
+        {
+          membershipId: parentMembership.id,
+          type: "CHILD",
+          scopeId: userB,
+          verified: true,
+        },
       ],
     });
   });
 
   afterAll(async () => {
-    await prisma.user.deleteMany({ where: { id: { in: [userA, userB] } } });
+    await prisma.user.deleteMany({
+      where: { id: { in: [userA, userB, parentUser] } },
+    });
     await prisma.school.deleteMany({
       where: { id: { in: [schoolA, schoolB] } },
     });
@@ -145,6 +171,26 @@ describe("database-backed tenant context", () => {
       authorize(principal, "academic:read", {
         schoolId: schoolA,
         subjectId: subjectB,
+      }).allowed,
+    ).toBe(false);
+  });
+
+  it("never turns verified unbound CHILD scope IDs into guardian authority", async () => {
+    const parent = await resolveSchoolPrincipal(parentUser, schoolA);
+    expect(parent?.membership?.role).toBe("PARENT");
+    expect(
+      parent?.membership?.scopes.some((scope) => scope.type === "CHILD"),
+    ).toBe(false);
+
+    for (const childUserId of [claimedChild, userB]) {
+      expect(
+        authorize(parent, "child:read", { schoolId: schoolA, childUserId }),
+      ).toEqual({ allowed: false, reason: "forbidden" });
+    }
+    expect(
+      authorize(parent, "child:read", {
+        schoolId: schoolB,
+        childUserId: userB,
       }).allowed,
     ).toBe(false);
   });
