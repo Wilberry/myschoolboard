@@ -86,17 +86,13 @@ test("UI mitigation does not replace existing server-authorized routes", () => {
 
 test("student lesson HTML and RSC segment prefetches opt out of HTTP caching", () => {
   assert.match(config, /async headers\(\)/);
-  assert.ok(config.includes('source: "/schools/:schoolId/my-lessons"'));
-  assert.ok(
-    config.includes(
-      'source: "/schools/:schoolId/my-lessons.segments/:path*"',
-    ),
-  );
-  assert.ok(
-    config.includes(
-      'value: "private, no-cache, no-store, max-age=0, must-revalidate"',
-    ),
-  );
+  for (const path of [
+    "/schools/:schoolId/my-lessons",
+    "/schools/:schoolId/my-lessons.segments/:path*",
+  ]) {
+    assert.ok(config.includes(`source: "${path}"`));
+  }
+  assert.ok(config.includes("private, no-cache, no-store, max-age=0, must-revalidate"));
   assert.match(config, /cacheComponents: true/);
   assert.match(config, /partialPrefetching: true/);
 });
