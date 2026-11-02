@@ -66,7 +66,10 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
       setWorking(false);
 
       // A hung request must not leave a revoked lesson visible indefinitely.
-      const deadline = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      const deadline = window.setTimeout(
+        () => controller.abort(),
+        REQUEST_TIMEOUT_MS,
+      );
       try {
         const response = await fetch(listUrl, {
           credentials: "same-origin",
@@ -76,6 +79,7 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
         if (!response.ok) throw Error("Access denied");
         const payload = (await response.json()) as { lessons?: Lesson[] };
         if (!Array.isArray(payload.lessons)) throw Error("Invalid response");
+        if (sequence !== epoch.current || controller.signal.aborted) return;
 
         const id = selectedId.current;
         let verifiedDetail: Lesson | null = null;
@@ -129,12 +133,14 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
       if (document.visibilityState === "visible") void revalidate(true);
     };
     const handlePageHide = () => redact();
+    const handleBlur = () => redact();
     const interval = window.setInterval(() => {
       if (document.visibilityState === "visible") void revalidate(false);
     }, RECHECK_MS);
 
     document.addEventListener("visibilitychange", handleVisibility);
     window.addEventListener("focus", handleFocus);
+    window.addEventListener("blur", handleBlur);
     window.addEventListener("pageshow", handleFocus);
     window.addEventListener("pagehide", handlePageHide);
     void revalidate(true);
@@ -142,6 +148,7 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("blur", handleBlur);
       window.removeEventListener("pageshow", handleFocus);
       window.removeEventListener("pagehide", handlePageHide);
       epoch.current += 1;
@@ -150,7 +157,9 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
   }, [redact, revalidate]);
 
   async function open(id: string) {
-    if (working || !authorized || document.visibilityState !== "visible") return;
+    if (working || !authorized || document.visibilityState !== "visible") {
+      return;
+    }
     const sequence = ++epoch.current;
     pending.current?.abort();
     const controller = new AbortController();
@@ -159,7 +168,10 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
     setWorking(true);
     setActive(null);
     setMessage("");
-    const deadline = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const deadline = window.setTimeout(
+      () => controller.abort(),
+      REQUEST_TIMEOUT_MS,
+    );
     try {
       const response = await fetch(listUrl + "/" + encodeURIComponent(id), {
         credentials: "same-origin",
