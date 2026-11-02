@@ -52,7 +52,7 @@ The student lesson client component now:
   permit expiration clear it and recheck access. Printing remains a
   separately unverified browser acceptance gate.
 
-The new `scripts/issue20-stale-lesson-guard.test.mjs` has four authored
+The new `scripts/issue20-stale-lesson-guard.test.mjs` has six authored
 source regression checks, included in `npm test` and
 `npm run verify:local:guards`. Source inspection is **not** a passing browser
 or application test.
@@ -78,6 +78,46 @@ route-specific cache attribution also remains pending; it must capture URL,
 status, content type, cache headers and absence of synthetic lesson markers
 after revocation. Do not claim parent-facing content access; it is not
 implemented in either draft.
+
+## Local checkpoint and RSC cache-header follow-up — 2 November 2026
+
+The operator's exact-SHA guarded run at
+`30f4947dbfd8ed8d8e805b9cd5e357f2a88ed391` passed 38/38 migration
+checksums, 144 Node tests, 345 Vitest tests, Prettier, lint, typecheck, build,
+Prisma validation and both npm audits with zero reported vulnerabilities.
+Chrome confirmed synthetic student lesson authorization, parent/foreign-school
+denials, post-revocation API 404/no-store and original-tab concealment. This
+evidence applies **only to that immutable commit**.
+
+Three outstanding browser findings are independently tracked:
+
+- One actual Next.js **Flight prefetch response lacked `Cache-Control`**,
+  while other Flight/document responses were private/no-store. The particular
+  response path and body were not captured in the summary, so there is not yet
+  proof whether it carried a public static fallback or private data.
+- Authorized lesson print preview visibly contained the released lesson, but
+  Chrome's Save to PDF stalled; a verified positive PDF output is missing.
+  Denied post-revocation PDF contained no lesson marker.
+- The observed Back/Forward checks had `pageshow.persisted === false`, so
+  the true BFCache lifecycle remains untested.
+
+A narrow follow-up adds a **route-scoped `Cache-Control: private, no-cache,
+no-store, max-age=0, must-revalidate` rule** in `next.config.ts` for
+`/schools/:schoolId/my-lessons` and its Next.js 16
+`my-lessons.segments/:path*` prefetch form. This is HTTP response cache
+hardening only; it must not replace server-side guardian/student access
+checks or falsely imply client-side router memory is cleared. The existing
+Next.js `cacheComponents` and `partialPrefetching` configuration remains
+enabled for other routes. A new source regression guard checks the matching
+paths and header policy.
+
+**None of the previously passing checks automatically verify the new
+follow-up commit.** Re-run the guarded full suite on the new clean SHA and
+capture **every actual network response** (URL, request and response headers,
+status, content type and checked synthetic marker absence/presence),
+including default prefetch and segment prefetch. If any response is still
+cacheable or missing the intended header, or an unauthorized payload includes
+a lesson marker, keep acceptance blocked and investigate the exact route.
 
 ## Required local gates before acceptance
 
