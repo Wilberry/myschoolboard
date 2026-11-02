@@ -7,6 +7,7 @@ const read = (path) =>
 const client = read("src/components/student-lessons-editor.tsx");
 const page = read("app/schools/[schoolId]/my-lessons/page.tsx");
 const route = read("app/api/schools/[schoolId]/student-lessons/route.ts");
+const config = read("next.config.ts");
 
 test("student lesson UI conceals content on tab hiding and BFCache restoration", () => {
   assert.match(client, /privatePanel\.current\.hidden = true/);
@@ -81,4 +82,21 @@ test("UI mitigation does not replace existing server-authorized routes", () => {
   assert.match(page, /if \(!eligible\) notFound\(\)/);
   assert.match(route, /readPupilReleasedLessons\(schoolId\)/);
   assert.match(route, /"Cache-Control": "private, no-store"/);
+});
+
+test("student lesson HTML and RSC segment prefetches opt out of HTTP caching", () => {
+  assert.match(config, /async headers\(\)/);
+  assert.ok(config.includes('source: "/schools/:schoolId/my-lessons"'));
+  assert.ok(
+    config.includes(
+      'source: "/schools/:schoolId/my-lessons.segments/:path*"',
+    ),
+  );
+  assert.ok(
+    config.includes(
+      'value: "private, no-cache, no-store, max-age=0, must-revalidate"',
+    ),
+  );
+  assert.match(config, /cacheComponents: true/);
+  assert.match(config, /partialPrefetching: true/);
 });
