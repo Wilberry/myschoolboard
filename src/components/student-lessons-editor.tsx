@@ -88,14 +88,11 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
         const id = selectedId.current;
         let verifiedDetail: Lesson | null = null;
         if (id && payload.lessons.some((item) => item.id === id)) {
-          const detail = await fetch(
-            listUrl + "/" + encodeURIComponent(id),
-            {
-              credentials: "same-origin",
-              cache: "no-store",
-              signal: controller.signal,
-            },
-          );
+          const detail = await fetch(listUrl + "/" + encodeURIComponent(id), {
+            credentials: "same-origin",
+            cache: "no-store",
+            signal: controller.signal,
+          });
           if (!detail.ok) throw Error("Lesson unavailable");
           const result = (await detail.json()) as { lesson?: Lesson };
           if (!result.lesson || result.lesson.id !== id) {
@@ -298,10 +295,14 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
         <ul>
           {lessons.map((item) => (
             <li key={item.id}>
-              {item.kind === "SCHEME_OF_WORK" ? "Scheme of work" : "Lesson note"}{" "}
+              {item.kind === "SCHEME_OF_WORK"
+                ? "Scheme of work"
+                : "Lesson note"}{" "}
               · {item.subjectName}: {item.topic} — {item.className},{" "}
               {item.termName}
-              {item.weekStart ? ` · Weeks ${item.weekStart}–${item.weekEnd}` : ""}
+              {item.weekStart
+                ? ` · Weeks ${item.weekStart}–${item.weekEnd}`
+                : ""}
               <button
                 type="button"
                 disabled={working}

@@ -36,7 +36,10 @@ test("student lesson revalidation stays authorized and race-safe", () => {
   assert.match(client, /sequence !== epoch\.current/);
   assert.match(client, /controller\.abort\(\)/);
   assert.match(client, /if \(!response\.ok\) throw Error\("Access denied"\)/);
-  assert.match(client, /if \(!detail\.ok\) throw Error\("Lesson unavailable"\)/);
+  assert.match(
+    client,
+    /if \(!detail\.ok\) throw Error\("Lesson unavailable"\)/,
+  );
   assert.match(
     client,
     /if \(privatePanel\.current\) privatePanel\.current\.hidden = false/,
@@ -54,7 +57,10 @@ test("print requires fresh lesson authorization and clears its temporary grant",
   assert.match(client, /window\.print\(\)/);
   assert.match(client, /"beforeprint", handleBeforePrint/);
   assert.match(client, /"afterprint", handleAfterPrint/);
-  assert.match(client, /if \(printGrantUntil\.current <= Date\.now\(\)\) redact\(\)/);
+  assert.match(
+    client,
+    /if \(printGrantUntil\.current <= Date\.now\(\)\) redact\(\)/,
+  );
   assert.match(client, /printGrantUntil\.current = 0/);
   assert.match(client, /Print this lesson/);
 });
