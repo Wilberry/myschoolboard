@@ -18,7 +18,9 @@ const revokeRoute = read(
   "app/api/schools/[schoolId]/guardian-links/[linkId]/revoke/route.ts",
 );
 const browserLauncher = read("scripts/launch-phase1-7-verification.mjs");
-const guardianIntegration = read("src/modules/students/guardian-link.integration.test.ts");
+const guardianIntegration = read(
+  "src/modules/students/guardian-link.integration.test.ts",
+);
 
 test("Issue #20 remains fail-closed for generic child reads", () => {
   assert.match(
@@ -85,20 +87,35 @@ test("guarded browser runner requires the current 38 exact migrations", () => {
   ).filter((entry) => entry.isDirectory());
   assert.equal(migrations.length, 38);
   assert.match(browserLauncher, /expectedMigrationCount = 38/);
-  assert.match(browserLauncher, /runMigrationChecksumVerification\(environment\)/);
+  assert.match(
+    browserLauncher,
+    /runMigrationChecksumVerification\(environment\)/,
+  );
   assert.match(browserLauncher, /assertFreshFixtureDatabase\(databaseState\)/);
 });
 
 test("guardian regression retains real withdrawal, revocation races and parent isolation", () => {
   const cases = guardianIntegration.match(/^  it\("/gm) ?? [];
-  assert.ok(cases.length >= 16, "Guardian regressions must not be silently removed");
+  assert.ok(
+    cases.length >= 16,
+    "Guardian regressions must not be silently removed",
+  );
   assert.match(guardianIntegration, /await withdrawRoute\(/);
   assert.match(guardianIntegration, /eventType: "WITHDRAWN"/);
   assert.match(guardianIntegration, /expect\(ended.status\).toBe\("ENDED"\)/);
-  assert.match(guardianIntegration, /expect\(historicalLink.revocation\).toBeNull\(\)/);
+  assert.match(
+    guardianIntegration,
+    /expect\(historicalLink.revocation\).toBeNull\(\)/,
+  );
   assert.match(guardianIntegration, /currentRelationship\("unlinkedGuardian"/);
-  assert.match(guardianIntegration, /never double-revokes under concurrent authenticated requests/);
+  assert.match(
+    guardianIntegration,
+    /never double-revokes under concurrent authenticated requests/,
+  );
   assert.match(guardianIntegration, /Promise.all\(\[/);
   assert.match(guardianIntegration, /guardianStudentLinkRevocation.count/);
-  assert.match(guardianIntegration, /rechecks the administrator role before reading or revoking stored links/);
+  assert.match(
+    guardianIntegration,
+    /rechecks the administrator role before reading or revoking stored links/,
+  );
 });

@@ -86,20 +86,14 @@ test("local acceptance checks exact migrations after deploy and before seeding",
   );
   assert.equal(deploy, 2);
   assert.equal(localVerificationCommands.length, workflowCommands.length + 1);
-  assert.deepEqual(
-    localVerificationCommands,
-    [
-      ...workflowCommands.slice(0, deploy + 1),
-      ["run", "verify:migration-checksums"],
-      ...workflowCommands.slice(deploy + 1),
-    ],
-  );
-  assert.deepEqual(
-    localVerificationCommands[deploy + 2],
-    ["run", "db:seed"],
-  );
-  assert.deepEqual(
-    localVerificationCommands.at(-1),
-    ["audit", "--audit-level=high"],
-  );
+  assert.deepEqual(localVerificationCommands, [
+    ...workflowCommands.slice(0, deploy + 1),
+    ["run", "verify:migration-checksums"],
+    ...workflowCommands.slice(deploy + 1),
+  ]);
+  assert.deepEqual(localVerificationCommands[deploy + 2], ["run", "db:seed"]);
+  assert.deepEqual(localVerificationCommands.at(-1), [
+    "audit",
+    "--audit-level=high",
+  ]);
 });

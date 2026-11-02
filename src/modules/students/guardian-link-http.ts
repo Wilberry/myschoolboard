@@ -21,16 +21,17 @@ function failure(error: unknown) {
       return reply({ error: "Not found" }, 404);
     if (error.code === "INVALID_INPUT")
       return reply({ error: "Invalid request" }, 400);
-    if (error.code === "CONFLICT")
-      return reply({ error: "Conflict" }, 409);
+    if (error.code === "CONFLICT") return reply({ error: "Conflict" }, 409);
   }
   if (error instanceof SyntaxError)
     return reply({ error: "Invalid request" }, 400);
   try {
-    console.warn(JSON.stringify({
-      event: "guardian_student_link_failed",
-      requestId: randomUUID(),
-    }));
+    console.warn(
+      JSON.stringify({
+        event: "guardian_student_link_failed",
+        requestId: randomUUID(),
+      }),
+    );
   } catch {
     // Never log child identifiers, guardian details, cookies or personal data.
   }
@@ -49,17 +50,23 @@ export async function handleGuardianLink(
     if (action === "list")
       return reply({ links: await listGuardianStudentLinksForAdmin(schoolId) });
     if (action === "attest")
-      return reply({
-        link: await attestGuardianStudentLink(schoolId, await request.json()),
-      }, 201);
+      return reply(
+        {
+          link: await attestGuardianStudentLink(schoolId, await request.json()),
+        },
+        201,
+      );
     if (!linkId) return reply({ error: "Invalid request" }, 400);
-    return reply({
-      revocation: await revokeGuardianStudentLink(
-        schoolId,
-        linkId,
-        await request.json(),
-      ),
-    }, 201);
+    return reply(
+      {
+        revocation: await revokeGuardianStudentLink(
+          schoolId,
+          linkId,
+          await request.json(),
+        ),
+      },
+      201,
+    );
   } catch (error) {
     return failure(error);
   }
