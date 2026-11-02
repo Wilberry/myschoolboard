@@ -32,6 +32,8 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
   const epoch = useRef(0);
   const pending = useRef<AbortController | null>(null);
   const selectedId = useRef<string | null>(null);
+  // Printing is allowed only after a fresh server-authorized detail check.
+  const printGrantUntil = useRef(0);
   const privatePanel = useRef<HTMLDivElement | null>(null);
   const listUrl =
     "/api/schools/" + encodeURIComponent(schoolId) + "/student-lessons";
@@ -40,6 +42,7 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
     epoch.current += 1;
     pending.current?.abort();
     selectedId.current = null;
+    printGrantUntil.current = 0;
     // Synchronous concealment protects BFCache restores before React commits.
     if (privatePanel.current) privatePanel.current.hidden = true;
     setAuthorized(false);
@@ -57,6 +60,7 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
       pending.current = controller;
       if (concealFirst) {
         selectedId.current = null;
+        printGrantUntil.current = 0;
         if (privatePanel.current) privatePanel.current.hidden = true;
         setAuthorized(false);
         setLessons([]);
@@ -130,10 +134,24 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
       else void revalidate(true);
     };
     const handleFocus = () => {
+      if (printGrantUntil.current > Date.now()) return;
       if (document.visibilityState === "visible") void revalidate(true);
     };
     const handlePageHide = () => redact();
-    const handleBlur = () => redact();
+    const handleBlur = () => {
+      // Opening the browser's print dialog may blur the document.
+      if (printGrantUntil.current > Date.now()) return;
+      redact();
+    };
+    const handleBeforePrint = () => {
+      // Native Ctrl+P cannot rely on previously cached permission.
+      if (printGrantUntil.current <= Date.now()) redact();
+    };
+    const handleAfterPrint = () => {
+      printGrantUntil.current = 0;
+      redact();
+      if (document.visibilityState === "visible") void revalidate(true);
+    };
     const interval = window.setInterval(() => {
       if (document.visibilityState === "visible") void revalidate(false);
     }, RECHECK_MS);
@@ -143,6 +161,8 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
     window.addEventListener("blur", handleBlur);
     window.addEventListener("pageshow", handleFocus);
     window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("beforeprint", handleBeforePrint);
+    window.addEventListener("afterprint", handleAfterPrint);
     void revalidate(true);
     return () => {
       window.clearInterval(interval);
@@ -151,6 +171,8 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
       window.removeEventListener("blur", handleBlur);
       window.removeEventListener("pageshow", handleFocus);
       window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("beforeprint", handleBeforePrint);
+      window.removeEventListener("afterprint", handleAfterPrint);
       epoch.current += 1;
       pending.current?.abort();
     };
@@ -201,6 +223,65 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
     }
   }
 
+  async function printLesson() {
+    if (!active || working || !authorized) return;
+    const lesson = active;
+    const sequence = ++epoch.current;
+    pending.current?.abort();
+    const controller = new AbortController();
+    pending.current = controller;
+    setWorking(true);
+    const deadline = window.setTimeout(
+      () => controller.abort(),
+      REQUEST_TIMEOUT_MS,
+    );
+    try {
+      // Print only the exact lesson contents most recently authorized.
+      // If its revision changed, clear old text and require a fresh open.
+      const response = await fetch(
+        listUrl + "/" + encodeURIComponent(lesson.id),
+        {
+          credentials: "same-origin",
+          cache: "no-store",
+          signal: controller.signal,
+        },
+      );
+      if (!response.ok) throw Error("Access denied");
+      const payload = (await response.json()) as { lesson?: Lesson };
+      if (sequence !== epoch.current || controller.signal.aborted) return;
+      const fresh = payload.lesson;
+      if (
+        !fresh ||
+        fresh.id !== lesson.id ||
+        fresh.revisionNumber !== lesson.revisionNumber ||
+        fresh.content !== lesson.content ||
+        fresh.objectives !== lesson.objectives
+      ) {
+        redact();
+        setMessage("Lesson changed. Open it again before printing.");
+        return;
+      }
+      const grant = Date.now() + REQUEST_TIMEOUT_MS;
+      printGrantUntil.current = grant;
+      // This explicit print action preserves authorized content across the
+      // browser print-dialog blur; native Ctrl+P remains fail-closed.
+      window.print();
+      window.setTimeout(() => {
+        if (printGrantUntil.current !== grant) return;
+        redact();
+        if (document.visibilityState === "visible") void revalidate(true);
+      }, REQUEST_TIMEOUT_MS);
+    } catch {
+      if (sequence !== epoch.current) return;
+      redact();
+      setMessage(accessDenied);
+    } finally {
+      window.clearTimeout(deadline);
+      if (pending.current === controller) pending.current = null;
+      if (sequence === epoch.current) setWorking(false);
+    }
+  }
+
   return (
     <section className="school-card" aria-labelledby="my-lessons">
       <h2 id="my-lessons">Released class lessons</h2>
@@ -233,6 +314,13 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
             <p style={{ whiteSpace: "pre-wrap" }}>{active.objectives}</p>
             <h4>Lesson content</h4>
             <p style={{ whiteSpace: "pre-wrap" }}>{active.content}</p>
+            <button
+              type="button"
+              disabled={working}
+              onClick={() => void printLesson()}
+            >
+              Print this lesson
+            </button>
           </article>
         )}
       </div>
