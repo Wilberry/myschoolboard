@@ -40,8 +40,16 @@ The student lesson client component now:
 - Keeps server-side pupil identity/link/revocation, tenant, enrollment and
   release authorization unchanged; never uses local/session storage to cache
   lesson content.
+- Adds an explicit **Print this lesson** control that first rereads the
+  currently open lesson through the signed-in student's private/no-store
+  detail endpoint and requires an identical revision, objectives and content.
+  A temporary five-second print grant allows the browser print dialog's
+  ordinary window blur without erasing this freshly verified content. Native
+  Ctrl+P without that grant conceals the private panel; `afterprint` and
+  permit expiration clear it and recheck access. Printing remains a
+  separately unverified browser acceptance gate.
 
-The new `scripts/issue20-stale-lesson-guard.test.mjs` has three authored
+The new `scripts/issue20-stale-lesson-guard.test.mjs` has four authored
 source regression checks, included in `npm test` and
 `npm run verify:local:guards`. Source inspection is **not** a passing browser
 or application test.
@@ -56,9 +64,13 @@ cannot erase screenshots, already printed documents, saved content or memory.
 A future real-time invalidation mechanism may be needed for any stronger
 revocation latency guarantee.
 
-The original-tab print and post-revocation print checks **remain blocked**
-until a browser with supported printing APIs can execute them and demonstrate
-that revoked lesson text does not appear in previews or PDFs. RSC/Flight
+The positive authorized **Print this lesson** action, native Ctrl+P
+without a print grant, and original-tab **post-revocation** print checks
+**remain blocked** until a browser with supported printing APIs confirms
+a fresh authorized print includes only the exact current released content,
+and any print attempted after revocation contains none of that lesson text.
+A print dialog can retain content already rendered into a preview; this
+client mitigation cannot revoke a print job already started. RSC/Flight
 route-specific cache attribution also remains pending; it must capture URL,
 status, content type, cache headers and absence of synthetic lesson markers
 after revocation. Do not claim parent-facing content access; it is not
@@ -80,7 +92,9 @@ focus/visibility restoration, and no later than the interval+timeout while
 the page stays foregrounded; verify it does not return following
 Back/Forward, BFCache restoration, duplicate tab, or an in-flight request
 race. Confirm fresh list and detail endpoints remain private/no-store 404.
-Capture printer behavior and RSC/Flight headers separately. Do not run
+Capture explicit Print button / native Ctrl+P / post-revocation print
+preview behavior and RSC/Flight headers separately. Verify both no print
+grant after a 404 and no stale print on blur, focus or pageshow. Do not run
 GitHub Actions. Do not merge or deploy while any gate is outstanding.
 
 **Acceptance disposition: BLOCKED until exact-SHA local and authenticated
