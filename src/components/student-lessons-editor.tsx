@@ -191,6 +191,7 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
     const controller = new AbortController();
     pending.current = controller;
     selectedId.current = null;
+    printGrantUntil.current = 0;
     setWorking(true);
     setActive(null);
     setMessage("");
