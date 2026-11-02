@@ -11,9 +11,16 @@ const route = read("app/api/schools/[schoolId]/student-lessons/route.ts");
 test("student lesson UI conceals content on tab hiding and BFCache restoration", () => {
   assert.match(client, /privatePanel\.current\.hidden = true/);
   assert.match(client, /setAuthorized\(false\)/);
+  assert.match(client, /hidden=\{!authorized\}/);
   assert.match(client, /setActive\(null\)/);
   assert.match(client, /setLessons\(\[\]\)/);
-  for (const event of ["visibilitychange", "focus", "blur", "pageshow", "pagehide"]) {
+  for (const event of [
+    "visibilitychange",
+    "focus",
+    "blur",
+    "pageshow",
+    "pagehide",
+  ]) {
     assert.ok(client.includes('addEventListener("' + event + '"'));
     assert.ok(client.includes('removeEventListener("' + event + '"'));
   }
@@ -30,7 +37,10 @@ test("student lesson revalidation stays authorized and race-safe", () => {
   assert.match(client, /controller\.abort\(\)/);
   assert.match(client, /if \(!response\.ok\) throw Error\("Access denied"\)/);
   assert.match(client, /if \(!detail\.ok\) throw Error\("Lesson unavailable"\)/);
-  assert.match(client, /if \(privatePanel\.current\) privatePanel\.current\.hidden = false/);
+  assert.match(
+    client,
+    /if \(privatePanel\.current\) privatePanel\.current\.hidden = false/,
+  );
   assert.doesNotMatch(client, /localStorage|sessionStorage|serviceWorker/);
 });
 
