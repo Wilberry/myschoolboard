@@ -47,6 +47,16 @@ test("student lesson revalidation stays authorized and race-safe", () => {
   assert.doesNotMatch(client, /localStorage|sessionStorage|serviceWorker/);
 });
 
+test("initial revalidation defers state updates until its request completes", () => {
+  assert.match(client, /const initialCheck = window\.setTimeout\(/);
+  assert.match(client, /clearTimeout\(initialCheck\)/);
+  assert.match(client, /void revalidate\(true\)/);
+  assert.match(
+    client,
+    /if \(sequence === epoch\.current\) setWorking\(false\)/,
+  );
+});
+
 test("print requires fresh lesson authorization and clears its temporary grant", () => {
   assert.match(client, /async function printLesson\(\)/);
   assert.match(client, /if \(!response\.ok\) throw Error\("Access denied"\)/);

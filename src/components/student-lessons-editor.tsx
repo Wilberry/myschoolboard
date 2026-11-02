@@ -67,8 +67,6 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
         setActive(null);
         setMessage("Checking lesson access…");
       }
-      setWorking(false);
-
       // A hung request must not leave a revoked lesson visible indefinitely.
       const deadline = window.setTimeout(
         () => controller.abort(),
@@ -120,6 +118,7 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
       } finally {
         window.clearTimeout(deadline);
         if (pending.current === controller) pending.current = null;
+        if (sequence === epoch.current) setWorking(false);
       }
     },
     [listUrl],
@@ -156,6 +155,7 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
     const interval = window.setInterval(() => {
       if (document.visibilityState === "visible") void revalidate(false);
     }, RECHECK_MS);
+    const initialCheck = window.setTimeout(() => void revalidate(true), 0);
 
     document.addEventListener("visibilitychange", handleVisibility);
     window.addEventListener("focus", handleFocus);
@@ -164,8 +164,8 @@ export function StudentLessonsEditor({ schoolId }: { schoolId: string }) {
     window.addEventListener("pagehide", handlePageHide);
     window.addEventListener("beforeprint", handleBeforePrint);
     window.addEventListener("afterprint", handleAfterPrint);
-    void revalidate(true);
     return () => {
+      window.clearTimeout(initialCheck);
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("focus", handleFocus);
