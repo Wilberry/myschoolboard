@@ -26,10 +26,13 @@ Network denial alone cannot erase content previously delivered into the DOM.
 The student lesson client component now:
 - Conceals all list and detail text immediately when its window loses focus,
   its tab becomes hidden or it receives `pagehide`; it clears React state and
-  synchronously hides the private DOM panel for BFCache restoration.
+  synchronously hides the private DOM panel for BFCache restoration. The only
+  blur/visibility exception is a **five-second print grant** obtained through
+  a fresh authorized detail request; `pagehide` still clears the panel.
 - Starts a new **no-store, same-origin server-authorized request** on focus,
-  visibility restoration and `pageshow`, leaving the private panel hidden
-  until that request succeeds.
+  visibility restoration and `pageshow` (unless a freshly authorized print
+  preview is active), leaving the private panel hidden until that request
+  succeeds.
 - Rechecks list and any currently displayed detail every **10 seconds** while
   the tab remains visible; requests have a **5-second deadline**. Failed,
   timed-out or unauthorized checks conceal previously displayed data rather
