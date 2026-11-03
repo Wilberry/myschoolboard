@@ -8,10 +8,13 @@ class, subject, session and term. It fails closed for identity, roster or
 counter mismatches and reports source-readiness blockers. It never combines
 scores into grades, persists official results, exposes answer keys, approves
 or publishes results, or enables student/guardian result access.
+The browser conceals loaded student data on blur, hidden/page lifecycle,
+printing and sign-out, aborts obsolete requests, rejects stale responses, and
+rechecks authorization on return and at a bounded interval.
 
 Pure readiness, authenticated source-review/role/tenant, and Node source
 invariant tests are authored. Full repository acceptance is pending.
-RES-REQ-001 remains partial under D-052/ADR-037.
+RES-REQ-001 remains partial under D-P8-001/ADR-037.
 
 
 ## Scope

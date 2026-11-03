@@ -23,7 +23,7 @@ Actual local tests used **manually staged exact GitHub-fetched source files**, a
 - `preparation-service.ts`: joins **two independently current teacher-/class-/subject-/session-/term-authorized existing readers** with fail-closed identities/scope; no stored report, raw answer or keys.
 - Private no-store `result-preparation` GET, school-gated teacher page and browser checklist, school navigation; no POST, export, parent/student access, grade calculation, HM/Principal or School Super Admin publication action.
 - Pure Vitest `result-readiness.test.ts`, synthetic authenticated `questions.integration.test.ts` Phase 8 source/role/tenant scenarios, `scripts/phase8-result-preparation-guard.test.mjs` registered in existing full Node/Vitest scripts. These repo tests are **authored not executed**.
-- D-052 / ADR-037, Results and Report Cards module, authorization, roadmap, milestone checklist, requirements traceability documented.
+- D-P8-001 / ADR-037, Results and Report Cards module, authorization, roadmap, milestone checklist, requirements traceability documented.
 
 ## Outstanding gate
 

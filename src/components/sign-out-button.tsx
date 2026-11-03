@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/src/lib/auth-client";
 import { authRequestSucceeded } from "@/src/lib/auth-action";
+import { announceSessionSignOut } from "@/src/lib/auth-session-events";
 
 export function SignOutButton() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export function SignOutButton() {
 
   async function signOut() {
     if (pending) return;
+    announceSessionSignOut();
     setPending(true);
     setError(null);
 

@@ -6,6 +6,9 @@ const pure = read("../src/modules/results/result-readiness.ts");
 const service = read("../src/modules/results/preparation-service.ts");
 const route = read("../app/api/schools/[schoolId]/result-preparation/route.ts");
 const page = read("../app/schools/[schoolId]/result-preparation/page.tsx");
+const workspace = read("../src/components/result-preparation-workspace.tsx");
+const signOut = read("../src/components/sign-out-button.tsx");
+const sessionEvents = read("../src/lib/auth-session-events.ts");
 
 test("Phase 8 preflight never grants publication from a draft grading policy", () => {
   for (const signal of [
@@ -42,4 +45,35 @@ test("student/guardian publishing remains unavailable from preflight API", () =>
   assert.equal(route.includes("Content-Disposition"), false);
   assert.ok(page.includes("readLessonWritingOptions"));
   assert.ok(page.includes("notFound()"));
+});
+test("workspace conceals data and rejects stale authorization responses", () => {
+  for (const event of [
+    '"visibilitychange"',
+    '"focus"',
+    '"blur"',
+    '"pageshow"',
+    '"pagehide"',
+    '"beforeprint"',
+    '"afterprint"',
+  ]) {
+    assert.ok(workspace.includes(event), event);
+  }
+  assert.ok(workspace.includes("privatePanel.current.hidden = true"));
+  assert.ok(workspace.includes("pending.current?.abort()"));
+  assert.ok(workspace.includes("requestEpoch !== epoch.current"));
+  assert.ok(workspace.includes("scope.current !== target"));
+  assert.ok(workspace.includes("RECHECK_MS = 10_000"));
+  assert.ok(workspace.includes("REQUEST_TIMEOUT_MS = 5_000"));
+  assert.ok(workspace.includes('cache: "no-store"'));
+  assert.ok(workspace.includes("signal: controller.signal"));
+  assert.ok(workspace.includes("options.assignments.some"));
+  assert.ok(workspace.includes("options.terms.some"));
+  assert.ok(workspace.includes("clearSelection()"));
+});
+test("sign-out immediately redacts this tab and broadcasts to other tabs", () => {
+  assert.ok(signOut.includes("announceSessionSignOut()"));
+  assert.ok(sessionEvents.includes("SESSION_SIGN_OUT_EVENT"));
+  assert.ok(sessionEvents.includes("BroadcastChannel"));
+  assert.ok(workspace.includes("listenForSessionSignOut"));
+  assert.ok(workspace.includes("scope.current = null"));
 });

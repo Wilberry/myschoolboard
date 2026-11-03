@@ -11,7 +11,7 @@ or publishes results, or enables student/guardian result access.
 
 Pure readiness, authenticated source-review/role/tenant, and Node source
 invariant tests are authored. Full repository acceptance is pending.
-RES-REQ-001 remains partial under D-052/ADR-037.
+RES-REQ-001 remains partial under D-P8-001/ADR-037.
 
 
 ## Phase 7 returned-original-mark correction remediation — AUTHORED, UNVERIFIED

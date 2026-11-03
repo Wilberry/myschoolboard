@@ -12,7 +12,7 @@ Before a school-verified guardian-to-student relationship, active enrollment, an
 
 Only an active TEACHER with the current exact school/class/subject/session/term assignment may read the private preparation checklist. Each source reader must independently reauthorize the teacher, active enrollment and academic scope; source rosters must reconcile by immutable student ID and matching admission number/name, otherwise deny the combined response. The route is private and no-store.
 
-This preparation data is not an approved result. It must not combine marks into grades, persist report-card snapshots, disclose answer keys/correct answers, or enable guardian/student result access. It does not replace the independently reviewed HM/Principal stage or the School Super Admin’s final publication decision. Existing guardian and Issue #20 restrictions remain unchanged. D-052/ADR-037; RES-REQ-001 remains partial.
+This preparation data is not an approved result. It must not combine marks into grades, persist report-card snapshots, disclose answer keys/correct answers, or enable guardian/student result access. It does not replace the independently reviewed HM/Principal stage or the School Super Admin’s final publication decision. Existing guardian and Issue #20 restrictions remain unchanged. D-P8-001/ADR-037; RES-REQ-001 remains partial.
 
 ## Phase 7 returned-original-mark correction remediation — AUTHORED, UNVERIFIED
 
