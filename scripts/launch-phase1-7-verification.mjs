@@ -15,8 +15,8 @@ import { assertLocalVerificationTarget } from "./verify-local.mjs";
 
 const projectRoot = fileURLToPath(new URL("../", import.meta.url));
 const expectedMigrationCount = 38;
-const port = 3000;
-const origin = "http://127.0.0.1:3000";
+const defaultPort = 3000;
+const defaultOrigin = "http://127.0.0.1:3000";
 
 export function assertCleanWorktree(status) {
   if (typeof status !== "string") {
@@ -116,17 +116,40 @@ function verifyDockerTarget() {
     ["context", "inspect", context, "--format", "{{.Endpoints.docker.Host}}"],
     { capture: true },
   );
-  const ids = command(
-    "docker",
-    ["compose", "--profile", "test", "ps", "-q", "postgres-test"],
-    { capture: true },
-  )
-    .split("\n")
-    .filter(Boolean);
-  if (ids.length !== 1 || !/^[a-f0-9]{12,64}$/i.test(ids[0])) {
+  const isolatedContainer =
+    process.env.BROWSER_FIXTURE_DOCKER_CONTAINER?.trim();
+  const namespaceOwnerName =
+    process.env.BROWSER_FIXTURE_DOCKER_NAMESPACE_OWNER?.trim();
+  const namespaceNetworkName =
+    process.env.BROWSER_FIXTURE_DOCKER_NETWORK?.trim();
+  if (
+    Boolean(isolatedContainer || namespaceOwnerName || namespaceNetworkName) &&
+    !(isolatedContainer && namespaceOwnerName && namespaceNetworkName)
+  ) {
     throw new Error(
-      "Expected exactly one running Compose postgres-test container",
+      "Namespaced Docker verification requires the DB, owner and network names",
     );
+  }
+  for (const name of [
+    isolatedContainer,
+    namespaceOwnerName,
+    namespaceNetworkName,
+  ]) {
+    if (name && !/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/.test(name)) {
+      throw new Error("Namespaced Docker target contains an invalid name");
+    }
+  }
+  const ids = isolatedContainer
+    ? [isolatedContainer]
+    : command(
+        "docker",
+        ["compose", "--profile", "test", "ps", "-q", "postgres-test"],
+        { capture: true },
+      )
+        .split("\n")
+        .filter(Boolean);
+  if (ids.length !== 1 || !/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/.test(ids[0])) {
+    throw new Error("Expected exactly one verified test database container");
   }
   const inspected = JSON.parse(
     command("docker", ["inspect", ids[0]], { capture: true }),
@@ -134,7 +157,37 @@ function verifyDockerTarget() {
   if (!Array.isArray(inspected) || inspected.length !== 1) {
     throw new Error("Could not inspect the Compose postgres-test container");
   }
-  assertLocalDockerFixtureTarget(endpoint, inspected[0], projectRoot);
+  const ownerInspection = namespaceOwnerName
+    ? JSON.parse(
+        command("docker", ["inspect", namespaceOwnerName], { capture: true }),
+      )
+    : null;
+  const networkInspection = namespaceNetworkName
+    ? JSON.parse(
+        command("docker", ["network", "inspect", namespaceNetworkName], {
+          capture: true,
+        }),
+      )
+    : null;
+  if (
+    ownerInspection !== null &&
+    (!Array.isArray(ownerInspection) || ownerInspection.length !== 1)
+  ) {
+    throw new Error("Could not inspect the test network namespace owner");
+  }
+  if (
+    networkInspection !== null &&
+    (!Array.isArray(networkInspection) || networkInspection.length !== 1)
+  ) {
+    throw new Error("Could not inspect the isolated test network");
+  }
+  assertLocalDockerFixtureTarget(
+    endpoint,
+    inspected[0],
+    projectRoot,
+    ownerInspection?.[0] ?? null,
+    networkInspection?.[0] ?? null,
+  );
 }
 
 async function readDatabaseRelations(environment) {
@@ -178,7 +231,7 @@ async function readDatabaseRelations(environment) {
 
 export async function assertPortAvailable(
   host = "127.0.0.1",
-  portNumber = port,
+  portNumber = defaultPort,
 ) {
   const server = createServer();
   await new Promise((resolveListen, rejectListen) => {
@@ -193,14 +246,54 @@ export async function assertPortAvailable(
 }
 
 export function assertApplicationOrigin(environment) {
+  let applicationOrigin;
+  try {
+    applicationOrigin = new URL(environment.BETTER_AUTH_URL);
+  } catch {
+    throw new Error("BETTER_AUTH_URL must be a loopback browser origin");
+  }
   if (
-    environment.BETTER_AUTH_URL !== "http://localhost:3000" &&
-    environment.BETTER_AUTH_URL !== origin
+    applicationOrigin.protocol !== "http:" ||
+    !["localhost", "127.0.0.1"].includes(applicationOrigin.hostname) ||
+    !applicationOrigin.port ||
+    Number(applicationOrigin.port) < 3000 ||
+    Number(applicationOrigin.port) > 65535 ||
+    applicationOrigin.username ||
+    applicationOrigin.password ||
+    applicationOrigin.pathname !== "/" ||
+    applicationOrigin.search ||
+    applicationOrigin.hash
   ) {
     throw new Error(
-      "BETTER_AUTH_URL must be localhost port 3000 for local browser verification",
+      "BETTER_AUTH_URL must use a loopback HTTP origin with an explicit browser port",
     );
   }
+}
+
+function applicationOrigin(environment) {
+  return new URL(environment.BETTER_AUTH_URL ?? defaultOrigin).origin;
+}
+
+function applicationPort(environment) {
+  return Number(new URL(applicationOrigin(environment)).port);
+}
+
+function applicationHost(environment) {
+  const host = environment.BROWSER_FIXTURE_APP_HOST ?? "127.0.0.1";
+  if (
+    host !== "127.0.0.1" &&
+    !(
+      host === "0.0.0.0" &&
+      environment.BROWSER_FIXTURE_DOCKER_CONTAINER &&
+      environment.BROWSER_FIXTURE_DOCKER_NAMESPACE_OWNER &&
+      environment.BROWSER_FIXTURE_DOCKER_NETWORK
+    )
+  ) {
+    throw new Error(
+      "Non-loopback app binding requires the verified isolated Docker target",
+    );
+  }
+  return host;
 }
 
 function observeApplication(child) {
@@ -281,7 +374,7 @@ async function runOwnedNpm(args, environment, setActive, checkInterrupted) {
   }
 }
 
-async function waitForApplication(childExited) {
+async function waitForApplication(childExited, origin) {
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
     const exited = await Promise.race([
@@ -304,14 +397,18 @@ async function waitForApplication(childExited) {
       // The server may not yet be listening; retry until the bounded deadline.
     }
   }
-  throw new Error("Local application did not become ready on port 3000");
+  throw new Error(
+    "Local application did not become ready on its configured port",
+  );
 }
 
 function startApplication(environment) {
   const executable = process.platform === "win32" ? "npm.cmd" : "npm";
+  const port = applicationPort(environment);
+  const host = applicationHost(environment);
   return spawn(
     executable,
-    ["run", "start", "--", "--hostname", "127.0.0.1", "--port", "3000"],
+    ["run", "start", "--", "--hostname", host, "--port", String(port)],
     ownedSpawnOptions(environment),
   );
 }
@@ -337,13 +434,14 @@ export async function launchVerification(environment = process.env) {
   assertLocalVerificationTarget(environment);
   assertBrowserFixtureEnvironment(environment);
   assertApplicationOrigin(environment);
+  const origin = applicationOrigin(environment);
   checkCleanGitWorktree();
   const commit = command("git", ["rev-parse", "HEAD"], { capture: true });
   if (!/^[a-f0-9]{40}$/i.test(commit)) {
     throw new Error("Could not identify the verification commit");
   }
   verifyDockerTarget();
-  await assertPortAvailable();
+  await assertPortAvailable("127.0.0.1", applicationPort(environment));
 
   const migrations = await readLocalMigrationChecksums();
   assertExpectedMigrationCount(migrations);
@@ -394,7 +492,7 @@ export async function launchVerification(environment = process.env) {
       setActive,
       checkInterrupted,
     );
-    await assertPortAvailable();
+    await assertPortAvailable("127.0.0.1", applicationPort(environment));
     checkInterrupted();
 
     const application = startApplication(environment);
@@ -402,7 +500,7 @@ export async function launchVerification(environment = process.env) {
     appOwned = { child: application, exited: applicationExited };
     setActive(appOwned);
     try {
-      await waitForApplication(applicationExited);
+      await waitForApplication(applicationExited, origin);
       checkInterrupted();
       // The app and fixture writer are independently owned process groups.
       // Keep the app in `active` for signal delivery while the writer runs.
@@ -416,7 +514,7 @@ export async function launchVerification(environment = process.env) {
       );
       checkInterrupted();
       console.info(
-        `Synthetic browser fixtures are ready at commit ${commit}. The local server remains on 127.0.0.1:3000; stop it with Ctrl-C when finished.`,
+        `Synthetic browser fixtures are ready at commit ${commit}. The local server remains at ${origin}; stop it with Ctrl-C when finished.`,
       );
       await waitForApplicationExit(applicationExited);
       checkInterrupted();

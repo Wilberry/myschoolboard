@@ -62,17 +62,27 @@ test("refuses a non-empty database without Prisma migration history", () => {
   );
 });
 
-test("requires the local application origin on port 3000", () => {
+test("requires a loopback application origin on an explicit local port", () => {
   assert.doesNotThrow(() =>
     assertApplicationOrigin({ BETTER_AUTH_URL: "http://localhost:3000" }),
   );
   assert.doesNotThrow(() =>
     assertApplicationOrigin({ BETTER_AUTH_URL: "http://127.0.0.1:3000" }),
   );
-  assert.throws(
-    () => assertApplicationOrigin({ BETTER_AUTH_URL: "http://localhost:3001" }),
-    /localhost port 3000/,
+  assert.doesNotThrow(() =>
+    assertApplicationOrigin({ BETTER_AUTH_URL: "http://localhost:3001" }),
   );
+  for (const url of [
+    "https://localhost:3001",
+    "http://example.test:3001",
+    "http://localhost",
+    "http://localhost:3001/path",
+  ]) {
+    assert.throws(
+      () => assertApplicationOrigin({ BETTER_AUTH_URL: url }),
+      /loopback HTTP origin/,
+    );
+  }
 });
 
 test("detects an occupied app port before startup", async () => {

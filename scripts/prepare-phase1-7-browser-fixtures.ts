@@ -40,14 +40,39 @@ function assertDockerTarget() {
     "--format",
     "{{.Endpoints.docker.Host}}",
   ]);
-  const ids = docker([
-    "compose",
-    "--profile",
-    "test",
-    "ps",
-    "-q",
-    "postgres-test",
-  ]).split("\n");
+  const isolatedContainer =
+    process.env.BROWSER_FIXTURE_DOCKER_CONTAINER?.trim();
+  const namespaceOwnerName =
+    process.env.BROWSER_FIXTURE_DOCKER_NAMESPACE_OWNER?.trim();
+  const namespaceNetworkName =
+    process.env.BROWSER_FIXTURE_DOCKER_NETWORK?.trim();
+  if (
+    Boolean(isolatedContainer || namespaceOwnerName || namespaceNetworkName) &&
+    !(isolatedContainer && namespaceOwnerName && namespaceNetworkName)
+  ) {
+    throw new Error(
+      "Namespaced Docker verification requires the DB, owner and network names",
+    );
+  }
+  for (const name of [
+    isolatedContainer,
+    namespaceOwnerName,
+    namespaceNetworkName,
+  ]) {
+    if (name && !/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/.test(name)) {
+      throw new Error("Namespaced Docker target contains an invalid name");
+    }
+  }
+  const ids = isolatedContainer
+    ? [isolatedContainer]
+    : docker([
+        "compose",
+        "--profile",
+        "test",
+        "ps",
+        "-q",
+        "postgres-test",
+      ]).split("\n");
   if (ids.length !== 1 || !ids[0]) {
     throw new Error("Expected exactly one Compose postgres-test container");
   }
@@ -55,7 +80,31 @@ function assertDockerTarget() {
   if (!Array.isArray(inspected) || inspected.length !== 1) {
     throw new Error("Unexpected Docker inspection result");
   }
-  assertLocalDockerFixtureTarget(endpoint, inspected[0], repositoryRoot);
+  const ownerInspection = namespaceOwnerName
+    ? JSON.parse(docker(["inspect", namespaceOwnerName]))
+    : null;
+  const networkInspection = namespaceNetworkName
+    ? JSON.parse(docker(["network", "inspect", namespaceNetworkName]))
+    : null;
+  if (
+    ownerInspection !== null &&
+    (!Array.isArray(ownerInspection) || ownerInspection.length !== 1)
+  ) {
+    throw new Error("Could not inspect the test network namespace owner");
+  }
+  if (
+    networkInspection !== null &&
+    (!Array.isArray(networkInspection) || networkInspection.length !== 1)
+  ) {
+    throw new Error("Could not inspect the isolated test network");
+  }
+  assertLocalDockerFixtureTarget(
+    endpoint,
+    inspected[0],
+    repositoryRoot,
+    ownerInspection?.[0] ?? null,
+    networkInspection?.[0] ?? null,
+  );
 }
 
 type FixtureActor = {

@@ -17,7 +17,8 @@ import { assertBrowserPupilWorkflowPolicy } from "./browser-pupil-workflow-polic
  * Browser UI/history/printing acceptance must still be performed separately.
  */
 const root = fileURLToPath(new URL("../", import.meta.url));
-const origin = "http://127.0.0.1:3000";
+const origin = new URL(process.env.BETTER_AUTH_URL ?? "http://127.0.0.1:3000")
+  .origin;
 const phase = process.argv
   .find((part) => part.startsWith("--phase="))
   ?.slice(8);
@@ -46,14 +47,39 @@ function verifyDocker() {
     "--format",
     "{{.Endpoints.docker.Host}}",
   ]);
-  const containers = docker([
-    "compose",
-    "--profile",
-    "test",
-    "ps",
-    "-q",
-    "postgres-test",
-  ]).split("\n");
+  const isolatedContainer =
+    process.env.BROWSER_FIXTURE_DOCKER_CONTAINER?.trim();
+  const namespaceOwnerName =
+    process.env.BROWSER_FIXTURE_DOCKER_NAMESPACE_OWNER?.trim();
+  const namespaceNetworkName =
+    process.env.BROWSER_FIXTURE_DOCKER_NETWORK?.trim();
+  if (
+    Boolean(isolatedContainer || namespaceOwnerName || namespaceNetworkName) &&
+    !(isolatedContainer && namespaceOwnerName && namespaceNetworkName)
+  ) {
+    throw new Error(
+      "Namespaced Docker verification requires the DB, owner and network names",
+    );
+  }
+  for (const name of [
+    isolatedContainer,
+    namespaceOwnerName,
+    namespaceNetworkName,
+  ]) {
+    if (name && !/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/.test(name)) {
+      throw new Error("Namespaced Docker target contains an invalid name");
+    }
+  }
+  const containers = isolatedContainer
+    ? [isolatedContainer]
+    : docker([
+        "compose",
+        "--profile",
+        "test",
+        "ps",
+        "-q",
+        "postgres-test",
+      ]).split("\n");
   if (containers.length !== 1 || !containers[0]) {
     throw new Error("Expected one verified Compose test container");
   }
@@ -61,7 +87,31 @@ function verifyDocker() {
   if (!Array.isArray(inspection) || inspection.length !== 1) {
     throw new Error("Could not inspect test container");
   }
-  assertLocalDockerFixtureTarget(endpoint, inspection[0], root);
+  const ownerInspection = namespaceOwnerName
+    ? JSON.parse(docker(["inspect", namespaceOwnerName]))
+    : null;
+  const networkInspection = namespaceNetworkName
+    ? JSON.parse(docker(["network", "inspect", namespaceNetworkName]))
+    : null;
+  if (
+    ownerInspection !== null &&
+    (!Array.isArray(ownerInspection) || ownerInspection.length !== 1)
+  ) {
+    throw new Error("Could not inspect the test network namespace owner");
+  }
+  if (
+    networkInspection !== null &&
+    (!Array.isArray(networkInspection) || networkInspection.length !== 1)
+  ) {
+    throw new Error("Could not inspect the isolated test network");
+  }
+  assertLocalDockerFixtureTarget(
+    endpoint,
+    inspection[0],
+    root,
+    ownerInspection?.[0] ?? null,
+    networkInspection?.[0] ?? null,
+  );
 }
 
 function requireRecord(value: unknown): Record<string, unknown> {

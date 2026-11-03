@@ -45,6 +45,59 @@ const container = {
   Mounts: [{ Type: "tmpfs", Destination: "/var/lib/postgresql/data" }],
   State: { Running: true, Health: { Status: "healthy" } },
 };
+const namespaceOwner = {
+  Id: "runner-id",
+  Name: "/phase8-browser-runner",
+  Config: {
+    Image: "node:22.16.0-bookworm-slim",
+    Labels: {
+      "myschoolboard.worktree": worktree,
+      "myschoolboard.purpose": "phase8-local-acceptance",
+    },
+  },
+  HostConfig: {
+    NetworkMode: "phase8-browser-acceptance",
+    PortBindings: null,
+    PublishAllPorts: false,
+    Privileged: false,
+  },
+  NetworkSettings: { Ports: {} },
+  State: { Running: true },
+};
+const namespaceNetwork = {
+  Name: "phase8-browser-acceptance",
+  Driver: "bridge",
+  Internal: true,
+  Labels: {
+    "myschoolboard.worktree": worktree,
+    "myschoolboard.purpose": "phase8-local-acceptance",
+  },
+};
+
+function namespacedContainer() {
+  const value = structuredClone(container);
+  value.Config.Labels = {
+    "myschoolboard.worktree": worktree,
+    "myschoolboard.purpose": "phase8-local-acceptance",
+    "myschoolboard.network-namespace.owner": "phase8-browser-runner",
+  };
+  value.Config.Cmd = [
+    "postgres",
+    "-c",
+    "listen_addresses=127.0.0.1",
+    "-c",
+    "port=5434",
+  ];
+  value.HostConfig = {
+    Tmpfs: { "/var/lib/postgresql/data": "" },
+    Binds: null,
+    PortBindings: null,
+    PublishAllPorts: false,
+    NetworkMode: "container:runner-id",
+  };
+  value.NetworkSettings = { Ports: {} };
+  return value;
+}
 
 const inspect = (value = container, endpoint = "unix:///var/run/docker.sock") =>
   assertLocalDockerFixtureTarget(endpoint, value, worktree);
@@ -138,6 +191,71 @@ test("permits Compose tmpfs represented only in HostConfig", () => {
   const inspected = structuredClone(container);
   inspected.Mounts = [];
   assert.doesNotThrow(() => inspect(inspected));
+});
+
+test("accepts PostgreSQL isolated in this worktree's local network namespace", () => {
+  assert.doesNotThrow(() =>
+    assertLocalDockerFixtureTarget(
+      "unix:///var/run/docker.sock",
+      namespacedContainer(),
+      worktree,
+      namespaceOwner,
+      namespaceNetwork,
+    ),
+  );
+});
+
+test("rejects an incorrect or exposed network namespace target", () => {
+  const value = namespacedContainer();
+  for (const changes of [
+    { ownerName: "/another-runner" },
+    { networkMode: "bridge" },
+    { portBinding: true },
+    { command: ["postgres", "-c", "port=5434"] },
+  ]) {
+    const target = structuredClone(value);
+    const owner = structuredClone(namespaceOwner);
+    if (changes.ownerName) owner.Name = changes.ownerName;
+    if (changes.networkMode)
+      target.HostConfig.NetworkMode = changes.networkMode;
+    if (changes.portBinding) {
+      target.HostConfig.PortBindings = {
+        "5434/tcp": [{ HostIp: "0.0.0.0", HostPort: "5434" }],
+      };
+    }
+    if (changes.command) target.Config.Cmd = changes.command;
+    assert.throws(() =>
+      assertLocalDockerFixtureTarget(
+        "unix:///var/run/docker.sock",
+        target,
+        worktree,
+        owner,
+        namespaceNetwork,
+      ),
+    );
+  }
+  const privilegedOwner = structuredClone(namespaceOwner);
+  privilegedOwner.HostConfig.Privileged = true;
+  assert.throws(() =>
+    assertLocalDockerFixtureTarget(
+      "unix:///var/run/docker.sock",
+      value,
+      worktree,
+      privilegedOwner,
+      namespaceNetwork,
+    ),
+  );
+  const externalNetwork = structuredClone(namespaceNetwork);
+  externalNetwork.Internal = false;
+  assert.throws(() =>
+    assertLocalDockerFixtureTarget(
+      "unix:///var/run/docker.sock",
+      value,
+      worktree,
+      namespaceOwner,
+      externalNetwork,
+    ),
+  );
 });
 
 test("rejects stopped or unhealthy containers", () => {

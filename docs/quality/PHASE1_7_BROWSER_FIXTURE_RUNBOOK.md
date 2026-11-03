@@ -1,7 +1,7 @@
 # Phase 1–7 synthetic browser fixture setup
 
 **Status: locally executed on 2026-10-22; browser acceptance remains incomplete.**
-This procedure creates *test-only* actor identities and the minimum
+This procedure creates _test-only_ actor identities and the minimum
 academic structure required to exercise the Phase 1–7
 [authenticated browser matrix](PHASE1_7_BROWSER_SECURITY_ACCEPTANCE.md).
 It does **not** validate real product school onboarding, guardian
@@ -28,10 +28,14 @@ These observations verify fixture preparation, not the full security matrix.
 
 ## Scope and protections
 
-- The only permitted database is the project's existing local
-  `myschoolboard_test` PostgreSQL 17 Compose service on
-  `127.0.0.1:5434`, with tmpfs at `/var/lib/postgresql/data`.
-  No shared, staging, production or normal development DB is allowed.
+- The only permitted database is a verified disposable local
+  `myschoolboard_test` PostgreSQL 17 service. The standard
+  target is this worktree's Compose service on
+  `127.0.0.1:5434`, with tmpfs at
+  `/var/lib/postgresql/data`. When another active worktree
+  owns host port 5434, a private network-namespace target
+  is permitted under the additional checks below. No shared,
+  staging, production or normal development DB is allowed.
 - `scripts/prepare-phase1-7-browser-fixtures.ts` fails closed
   unless `NODE_ENV=test`, `TEST_DATABASE_DISPOSABLE=1`,
   `ALLOW_DEMO_SEED=1`, and both database URLs are **identical**
@@ -47,6 +51,23 @@ These observations verify fixture preparation, not the full security matrix.
   must independently inspect Docker context, target and
   `docker port`; URL/labels alone cannot prove there
   is no unusual forwarding or container escape.
+- When another active worktree owns host port 5434, an
+  isolated namespace target is also supported. It must use
+  a worktree-labeled `node:22.16.0-bookworm-slim` owner
+  attached to a Docker internal bridge network, and a
+  healthy `postgres:17-alpine` container sharing that
+  owner's network namespace. The database must listen
+  only on namespace loopback port 5434, use tmpfs, have no
+  published ports or host data binds, and carry the exact
+  worktree and purpose labels. Set
+  `BROWSER_FIXTURE_DOCKER_CONTAINER` and
+  `BROWSER_FIXTURE_DOCKER_NAMESPACE_OWNER` to the inspected
+  container names and `BROWSER_FIXTURE_DOCKER_NETWORK` to
+  the inspected internal network name; omitting any value
+  fails closed. This mode does not inspect, stop, or reuse
+  the other worktree's database. The Docker endpoint must
+  still be a local Unix socket, and the operator must inspect
+  both containers and the internal network before proceeding.
 - The script fails if either of its two generated school slugs
   or any corresponding user emails already exists. It does
   not update, elevate, delete or reset any existing account
@@ -56,8 +77,8 @@ These observations verify fixture preparation, not the full security matrix.
   The password is taken from a local environment variable,
   never printed or committed. Do not send browser cookies,
   credentials, personal files or raw HAR captures into PRs.
-- The script writes only *new isolated synthetic schools
-  and accounts*. The user signups are completed first via
+- The script writes only _new isolated synthetic schools
+  and accounts_. The user signups are completed first via
   Better Auth, then school/role/academic setup is done
   in one Prisma transaction. If that transaction fails,
   some synthetic signup users may remain: preserve the
@@ -101,18 +122,18 @@ password with the account emails; it is not echoed.
 
 ## Available accounts and test data
 
-| Actor key | Synthetic membership | Intended browser coverage |
-| --- | --- | --- |
-| `adminA` | School A Administrator | BR-02, student setup and school configuration |
-| `superA` | School A Super Admin | BR-09 publication-policy denial/approval boundary |
-| `teacherA` | School A Teacher | BR-04/BR-05 exact active primary + secondary assignment scope |
-| `headA` | School A Head of Section | BR-06: verified PRIMARY grant only |
-| `principalA` | School A Principal | BR-07: verified SECONDARY grant only |
-| `studentA` | School A STUDENT, **initially unlinked** | BR-11/BR-12 after legitimate account attestation |
-| `unlinkedA` | School A STUDENT, deliberately unlinked | Negative identity isolation |
-| `parentA` | School A PARENT, **no child grant** | BR-16 negative case, not proof of a guardian portal |
-| `adminB` | School B Administrator only | BR-02/BR-03 cross-school denial |
-| `outsider` | No school membership | Unaffiliated authenticated denial |
+| Actor key    | Synthetic membership                     | Intended browser coverage                                     |
+| ------------ | ---------------------------------------- | ------------------------------------------------------------- |
+| `adminA`     | School A Administrator                   | BR-02, student setup and school configuration                 |
+| `superA`     | School A Super Admin                     | BR-09 publication-policy denial/approval boundary             |
+| `teacherA`   | School A Teacher                         | BR-04/BR-05 exact active primary + secondary assignment scope |
+| `headA`      | School A Head of Section                 | BR-06: verified PRIMARY grant only                            |
+| `principalA` | School A Principal                       | BR-07: verified SECONDARY grant only                          |
+| `studentA`   | School A STUDENT, **initially unlinked** | BR-11/BR-12 after legitimate account attestation              |
+| `unlinkedA`  | School A STUDENT, deliberately unlinked  | Negative identity isolation                                   |
+| `parentA`    | School A PARENT, **no child grant**      | BR-16 negative case, not proof of a guardian portal           |
+| `adminB`     | School B Administrator only              | BR-02/BR-03 cross-school denial                               |
+| `outsider`   | No school membership                     | Unaffiliated authenticated denial                             |
 
 The fixture creates one ACTIVE academic session, one ACTIVE term,
 PRIMARY and SECONDARY sections, a class in each section,
@@ -132,11 +153,19 @@ review audit requirements.
 Use the existing locally compiled Next app only
 (`npm run build` then `npm run start -- --hostname 127.0.0.1`),
 bound to loopback, with the same synthetic test environment.
+When using the isolated namespace mode and the integrated
+browser cannot reach the runner directly, use a unique
+available loopback port for `BETTER_AUTH_URL`; the launcher
+accepts only explicit HTTP loopback origins. If a browser
+proxy is needed, publish it only on `127.0.0.1` and keep it
+on the isolated internal Docker network. The app binding
+may use `0.0.0.0` only with the verified isolated target,
+never on a host network or a public interface.
 
 First verify BR-01..BR-03 with fresh browser profiles;
 then teacher BR-04/BR-05 and verified section
 BR-06..BR-08. Document a before-and-after
-change to *only* the synthetic teacher assignment
+change to _only_ the synthetic teacher assignment
 or verified section grant through a reviewed
 test-only change or actual school-admin route.
 Never modify another tenant's or a live user's
