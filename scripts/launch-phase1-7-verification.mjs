@@ -6,6 +6,7 @@ import pg from "pg";
 import {
   assertBrowserFixtureEnvironment,
   assertLocalDockerFixtureTarget,
+  isLoopbackBrowserOrigin,
 } from "./browser-fixture-safety.mjs";
 import {
   readLocalMigrationChecksums,
@@ -246,24 +247,7 @@ export async function assertPortAvailable(
 }
 
 export function assertApplicationOrigin(environment) {
-  let applicationOrigin;
-  try {
-    applicationOrigin = new URL(environment.BETTER_AUTH_URL);
-  } catch {
-    throw new Error("BETTER_AUTH_URL must be a loopback browser origin");
-  }
-  if (
-    applicationOrigin.protocol !== "http:" ||
-    !["localhost", "127.0.0.1"].includes(applicationOrigin.hostname) ||
-    !applicationOrigin.port ||
-    Number(applicationOrigin.port) < 3000 ||
-    Number(applicationOrigin.port) > 65535 ||
-    applicationOrigin.username ||
-    applicationOrigin.password ||
-    applicationOrigin.pathname !== "/" ||
-    applicationOrigin.search ||
-    applicationOrigin.hash
-  ) {
+  if (!isLoopbackBrowserOrigin(environment.BETTER_AUTH_URL)) {
     throw new Error(
       "BETTER_AUTH_URL must use a loopback HTTP origin with an explicit browser port",
     );

@@ -11,6 +11,13 @@ const base = {
 
 test("allows explicit synthetic pupil preparation on localhost", () => {
   assert.equal(assertBrowserPupilWorkflowPolicy("prepare", base), "prepare");
+  assert.equal(
+    assertBrowserPupilWorkflowPolicy("prepare", {
+      ...base,
+      BETTER_AUTH_URL: "http://localhost:3001",
+    }),
+    "prepare",
+  );
 });
 
 test("allows verification without a mutation opt-in", () => {
@@ -64,7 +71,10 @@ test("rejects non-loopback or unexpected authentication origins", () => {
     "http://example.test:3000",
     "http://0.0.0.0:3000",
     "https://localhost:3000",
-    "http://localhost:3001",
+    "http://localhost",
+    "http://localhost:3001/path",
+    "http://localhost:3001?query=1",
+    "http://localhost:3001#fragment",
     "",
   ]) {
     assert.throws(

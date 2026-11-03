@@ -3,6 +3,27 @@ import { assertLocalVerificationTarget } from "./verify-local.mjs";
 
 const runIdPattern = /^[a-z][a-z0-9-]{5,25}$/;
 
+export function isLoopbackBrowserOrigin(value) {
+  let origin;
+  try {
+    origin = new URL(value);
+  } catch {
+    return false;
+  }
+  return (
+    origin.protocol === "http:" &&
+    ["localhost", "127.0.0.1"].includes(origin.hostname) &&
+    origin.port !== "" &&
+    Number(origin.port) >= 3000 &&
+    Number(origin.port) <= 65535 &&
+    origin.username === "" &&
+    origin.password === "" &&
+    origin.pathname === "/" &&
+    origin.search === "" &&
+    origin.hash === ""
+  );
+}
+
 export function assertBrowserFixtureEnvironment(environment = process.env) {
   assertLocalVerificationTarget(environment);
   if (environment.BROWSER_FIXTURE_WRITE !== "1") {
