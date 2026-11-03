@@ -7,6 +7,8 @@ const service = read("../src/modules/results/preparation-service.ts");
 const route = read("../app/api/schools/[schoolId]/result-preparation/route.ts");
 const page = read("../app/schools/[schoolId]/result-preparation/page.tsx");
 const workspace = read("../src/components/result-preparation-workspace.tsx");
+const dashboard = read("../app/page.tsx");
+const schoolPage = read("../app/schools/[schoolId]/page.tsx");
 const signOut = read("../src/components/sign-out-button.tsx");
 const sessionEvents = read("../src/lib/auth-session-events.ts");
 
@@ -45,6 +47,13 @@ test("student/guardian publishing remains unavailable from preflight API", () =>
   assert.equal(route.includes("Content-Disposition"), false);
   assert.ok(page.includes("readLessonWritingOptions"));
   assert.ok(page.includes("notFound()"));
+});
+test("teacher-only result preparation is linked from the reachable dashboard", () => {
+  assert.ok(dashboard.includes("canShowResultPreparationLink(role)"));
+  assert.ok(
+    dashboard.includes("href={`/schools/${school.id}/result-preparation`}"),
+  );
+  assert.equal(schoolPage.includes("result-preparation"), false);
 });
 test("workspace conceals data and rejects stale authorization responses", () => {
   for (const event of [
