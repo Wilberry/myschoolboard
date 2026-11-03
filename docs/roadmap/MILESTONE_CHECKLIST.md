@@ -253,6 +253,15 @@ Scope, limitations and actual command results:
 - [ ] Complete role/tenant isolation browser checks, migration checksum
   safety review, and all cumulative release/security exit criteria.
   **Phase 1–7 acceptance BLOCKED; no merge to `main` or deployment.**
+## Phase 8 teacher result-source preparation — AUTHORED; ACCEPTANCE PENDING
+
+- [x] Add teacher-only private/no-store source-preparation page and GET route using the existing independently authorized CBT and reviewed-written-mark readers.
+- [x] Add fail-closed exact-roster reconciliation and private status/blockers; preserve teacher-only scope and exclude official grading/publication and student/parent result access.
+- [x] Add pure readiness, authenticated source-review/role/tenant integration, and Node source-invariant tests; retain all existing guards and assessment integration tests.
+- [ ] Run the conflict audit and review the complete integration diff for answer-key, official-grade, publication, guardian, student and cross-tenant exposure.
+- [ ] Run the exact-SHA full local CI-equivalent suite on the guarded disposable PostgreSQL 17 tmpfs service; record migrations/checksums, test totals, lint/type/build and both audits.
+- [ ] Verify authenticated teacher positive access, wrong-role/cross-school denials, exact academic scope, roster mismatch, assignment revocation and browser privacy after access changes.
+- [ ] Complete Phase 8 acceptance and RES-REQ-001 only after all documented workflow stages have actual evidence; this preflight does not approve or publish results.
 
 
 ## Phase 7 returned-original-mark correction remediation — AUTHORED, UNVERIFIED

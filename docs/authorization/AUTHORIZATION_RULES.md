@@ -8,6 +8,12 @@
 
 Before a school-verified guardian-to-student relationship, active enrollment, and terminal revocation model are implemented, `child:read` is denied even for a PARENT with a stored verified CHILD scope or a STUDENT with a matching user ID. `resolveSchoolPrincipal` does not export CHILD grants. These IDs are not proof of a current school-owned relationship. Existing independently authorized student lesson/assessment services are unchanged. No parent portal, result publication, or access expansion is enabled. Negative policy and disposable-DB regression tests are authored but must be executed locally before merging; issue #20 remains open for the complete relationship workflow.
 
+## Phase 8 teacher result-source preparation (RES-REQ-001; authored, unverified)
+
+Only an active TEACHER with the current exact school/class/subject/session/term assignment may read the private preparation checklist. Each source reader must independently reauthorize the teacher, active enrollment and academic scope; source rosters must reconcile by immutable student ID and matching admission number/name, otherwise deny the combined response. The route is private and no-store.
+
+This preparation data is not an approved result. It must not combine marks into grades, persist report-card snapshots, disclose answer keys/correct answers, or enable guardian/student result access. It does not replace the independently reviewed HM/Principal stage or the School Super Admin’s final publication decision. Existing guardian and Issue #20 restrictions remain unchanged. D-052/ADR-037; RES-REQ-001 remains partial.
+
 ## Phase 7 returned-original-mark correction remediation — AUTHORED, UNVERIFIED
 
 `feature/phase7-returned-manual-mark-remediation` resolves the returned-proposal dead end in the original manual grade review workflow. A **terminally RETURNED initial manual mark** may now be amended only through a new immutable reasoned `AssessmentManualCorrectionRequest` by its current exact assigned teacher, followed by the same independently verified PRIMARY HEAD_OF_SECTION or SECONDARY PRINCIPAL academic decision. SQL requires the original initial review to exist (APPROVED or RETURNED), the same active original teacher/enrollment/school and mark limits, a changed bounded value, and no already pending correction. It does **not** change or overwrite the original mark or returned decision.

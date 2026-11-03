@@ -1,5 +1,22 @@
 # Requirements Traceability Matrix
 
+## RES-REQ-001 — private teacher result-source preparation (AUTHORED; UNVERIFIED)
+
+The Phase 8 source-preparation slice is authored: a teacher-only, private/no-store
+read reconciles the independently authorized exact class/session/term/subject
+CBT and reviewed written-mark sources by immutable pupil ID plus matching
+admission number and names. Mismatched, missing, duplicate or unbounded source
+rows fail closed. It reports source completeness and pending review/correction
+blockers, while every response remains `PRIVATE_PREPARATION_ONLY`.
+
+No grading formula, official grade, result snapshot, approval, publication,
+student/parent result route, export, correct answer or answer key is introduced.
+Issue #20 guardian restrictions remain unchanged. Synthetic authenticated
+role/tenant and source-review integration tests, pure reconciliation tests and
+a Node source guard are authored; full local CI and authenticated browser
+acceptance are pending. RES-REQ-001 remains partial; no requirement is marked
+complete. See [Phase 8 checkpoint](../quality/PHASE67_LOCAL_SOURCE_SMOKE_PHASE8_PREPARATION_CHECKPOINT.md).
+
 ## Phase 3 authenticated platform-console browser evidence — 2026-11-01 (SCOPED PARTIAL; NOT ACCEPTED)
 
 At application/test SHA
@@ -168,7 +185,6 @@ after confirming port 3000 is free, and invokes uniquely labeled synthetic
 fixture preparation. Focused safety tests are authored and run separately;
 the database-writing launcher itself has not been executed. OPS-REQ-001 status
 and Phase 1–7 acceptance are unchanged.
-
 ## Phase 7 returned-original-mark correction remediation — AUTHORED, UNVERIFIED
 
 `feature/phase7-returned-manual-mark-remediation` resolves the returned-proposal dead end in the original manual grade review workflow. A **terminally RETURNED initial manual mark** may now be amended only through a new immutable reasoned `AssessmentManualCorrectionRequest` by its current exact assigned teacher, followed by the same independently verified PRIMARY HEAD_OF_SECTION or SECONDARY PRINCIPAL academic decision. SQL requires the original initial review to exist (APPROVED or RETURNED), the same active original teacher/enrollment/school and mark limits, a changed bounded value, and no already pending correction. It does **not** change or overwrite the original mark or returned decision.

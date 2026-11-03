@@ -1,5 +1,19 @@
 # Results and Report Cards
 
+## Phase 8 private teacher result preparation preflight (AUTHORED; UNVERIFIED)
+
+The teacher-only private/no-store preparation read reconciles independently
+authorized CBT and reviewed written-mark sources for the exact school,
+class, subject, session and term. It fails closed for identity, roster or
+counter mismatches and reports source-readiness blockers. It never combines
+scores into grades, persists official results, exposes answer keys, approves
+or publishes results, or enables student/guardian result access.
+
+Pure readiness, authenticated source-review/role/tenant, and Node source
+invariant tests are authored. Full repository acceptance is pending.
+RES-REQ-001 remains partial under D-052/ADR-037.
+
+
 ## Scope
 
 Result sheets, report-card generation, approval, publication, and visibility policies.
