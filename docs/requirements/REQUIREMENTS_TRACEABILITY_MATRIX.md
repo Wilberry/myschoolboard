@@ -8,6 +8,9 @@ CBT and reviewed written-mark sources by immutable pupil ID plus matching
 admission number and names. Mismatched, missing, duplicate or unbounded source
 rows fail closed. It reports source completeness and pending review/correction
 blockers, while every response remains `PRIVATE_PREPARATION_ONLY`.
+Authenticated HTML, RSC/Flight, and partial route-segment responses use
+private no-store cache headers; authorization remains independently enforced
+by the page and API handlers.
 
 No grading formula, official grade, result snapshot, approval, publication,
 student/parent result route, export, correct answer or answer key is introduced.

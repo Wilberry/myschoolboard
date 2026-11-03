@@ -11,6 +11,7 @@ const dashboard = read("../app/page.tsx");
 const schoolPage = read("../app/schools/[schoolId]/page.tsx");
 const signOut = read("../src/components/sign-out-button.tsx");
 const sessionEvents = read("../src/lib/auth-session-events.ts");
+const nextConfig = read("../next.config.ts");
 
 test("Phase 8 preflight never grants publication from a draft grading policy", () => {
   for (const signal of [
@@ -47,6 +48,25 @@ test("student/guardian publishing remains unavailable from preflight API", () =>
   assert.equal(route.includes("Content-Disposition"), false);
   assert.ok(page.includes("readLessonWritingOptions"));
   assert.ok(page.includes("notFound()"));
+});
+test("result preparation HTML, Flight, and segment prefetch responses are private", () => {
+  for (const path of [
+    "/schools/:schoolId/result-preparation",
+    "/schools/:schoolId/result-preparation.segments/:path*",
+  ]) {
+    assert.ok(
+      nextConfig.includes(
+        `source: "${path}",\n        headers: privateSchoolRouteHeaders,`,
+      ),
+      path,
+    );
+  }
+  assert.ok(
+    nextConfig.includes(
+      "private, no-cache, no-store, max-age=0, must-revalidate",
+    ),
+  );
+  assert.match(nextConfig, /partialPrefetching: true/);
 });
 test("teacher-only result preparation is linked from the reachable dashboard", () => {
   assert.ok(dashboard.includes("canShowResultPreparationLink(role)"));

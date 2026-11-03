@@ -4,7 +4,7 @@ import type { NextConfig } from "next";
 // checks at request time. Keep both HTML/Flight and partial route-shell
 // prefetches out of browser and shared HTTP caches. Authorization remains
 // mandatory in the page and API handlers; headers do not grant access.
-const privateLessonHeaders = [
+const privateSchoolRouteHeaders = [
   {
     key: "Cache-Control",
     value: "private, no-cache, no-store, max-age=0, must-revalidate",
@@ -18,12 +18,20 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/schools/:schoolId/my-lessons",
-        headers: privateLessonHeaders,
+        headers: privateSchoolRouteHeaders,
       },
       {
         // Next.js 16 can fetch independently addressed route segments.
         source: "/schools/:schoolId/my-lessons.segments/:path*",
-        headers: privateLessonHeaders,
+        headers: privateSchoolRouteHeaders,
+      },
+      {
+        source: "/schools/:schoolId/result-preparation",
+        headers: privateSchoolRouteHeaders,
+      },
+      {
+        source: "/schools/:schoolId/result-preparation.segments/:path*",
+        headers: privateSchoolRouteHeaders,
       },
     ];
   },

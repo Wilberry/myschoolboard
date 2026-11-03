@@ -8,6 +8,9 @@ class, subject, session and term. It fails closed for identity, roster or
 counter mismatches and reports source-readiness blockers. It never combines
 scores into grades, persists official results, exposes answer keys, approves
 or publishes results, or enables student/guardian result access.
+Its HTML, RSC/Flight, and partial route-segment responses use
+`private, no-cache, no-store, max-age=0, must-revalidate`; the page and API
+continue to enforce authorization independently of these cache headers.
 Its teacher-only entry link is available from the authenticated school
 dashboard; it does not grant access to the separately restricted school
 details page.
