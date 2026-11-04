@@ -38,7 +38,7 @@ const validQuery = new URLSearchParams(scope).toString();
 describe("Phase 8 private preparation route", () => {
   beforeEach(() => reader.mockReset());
 
-  it("maps source errors to private responses without leaking details", async () => {
+  it("maps denied and internal source errors to private responses", async () => {
     for (const [code, status, message] of [
       ["UNAUTHENTICATED", 401, "Unauthorized"],
       ["FORBIDDEN", 404, "Not found"],
