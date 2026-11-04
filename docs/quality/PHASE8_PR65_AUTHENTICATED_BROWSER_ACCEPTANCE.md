@@ -19,9 +19,12 @@ not a production-release checklist or proof that report cards can be published.
   **These outcomes are not inherited by changed source commits.**
 - `npm ci` and seed replay were skipped on the previously populated test
   runner. Record this explicitly whenever citing that checkpoint.
-- The current hardening branch adds pure roster/counter checks and five
-  stubbed source-reader service tests. Those tests are **authored, not yet
-  passed**, and do not verify PostgreSQL authorization or browser behavior.
+- The current hardening branch adds pure roster/counter checks,
+  five stubbed source-reader service tests, and five HTTP-route tests
+  with a stubbed reader for private success, generic authorization failures,
+  malformed queries and concealed conflicts. These tests are **authored,
+  not yet passed**. Mocked checks do not verify PostgreSQL authorization,
+  real signed-in sessions or browser behavior.
 - Original Phase 8 PR #65 stays draft. `main` is unchanged. No result
   publication, report-card release, guardian results, real student data or
   production deployment is authorized.
