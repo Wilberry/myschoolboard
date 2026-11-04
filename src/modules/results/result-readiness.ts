@@ -85,6 +85,11 @@ export function reconcileResultPreparation(
       !nonnegative(record.pendingCorrections) ||
       typeof record.academicallyComplete !== "boolean" ||
       record.unapprovedCount > record.componentCount ||
+      record.pendingCorrections > record.componentCount ||
+      record.academicallyComplete !==
+        (record.componentCount > 0 &&
+          record.unapprovedCount === 0 &&
+          record.pendingCorrections === 0) ||
       manualById.has(record.studentId)
     ) {
       throw new Error("Invalid or ambiguous manual source roster");
