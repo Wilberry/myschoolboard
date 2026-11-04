@@ -83,6 +83,7 @@ export function reconcileResultPreparation(
       !nonnegative(record.componentCount) ||
       !nonnegative(record.unapprovedCount) ||
       !nonnegative(record.pendingCorrections) ||
+      typeof record.academicallyComplete !== "boolean" ||
       record.unapprovedCount > record.componentCount ||
       manualById.has(record.studentId)
     ) {
