@@ -90,6 +90,64 @@ describe("Phase 8 private result source preflight", () => {
     expect(() => reconcileResultPreparation([...o, ...o], m, null)).toThrow();
     expect(() => reconcileResultPreparation(o, [...m, ...m], null)).toThrow();
   });
+  it("fails closed on malformed academic-completeness flags", () => {
+    const objective = [{ ...child, assessmentCount: 1, unscoredCount: 0 }];
+    const manual = {
+      ...child,
+      componentCount: 1,
+      unapprovedCount: 0,
+      pendingCorrections: 0,
+      academicallyComplete: true,
+    };
+    // Source projections must not treat non-boolean truthy values as approval.
+    for (const invalid of ["false", 1, null, undefined]) {
+      expect(() =>
+        reconcileResultPreparation(
+          objective,
+          [{ ...manual, academicallyComplete: invalid as unknown as boolean }],
+          null,
+        ),
+      ).toThrow("Invalid or ambiguous manual source roster");
+    }
+  });
+  it("refuses equal-size but divergent source rosters without a partial preview", () => {
+    const other = {
+      ...child,
+      studentId: "synthetic-student-2",
+      admissionNumber: "DEMO-002",
+      givenName: "Bola",
+    };
+    const objective = [
+      { ...child, assessmentCount: 1, unscoredCount: 0 },
+      { ...other, assessmentCount: 1, unscoredCount: 0 },
+    ];
+    const approved = {
+      componentCount: 1,
+      unapprovedCount: 0,
+      pendingCorrections: 0,
+      academicallyComplete: true,
+    };
+    expect(() =>
+      reconcileResultPreparation(
+        objective,
+        [
+          { ...child, ...approved },
+          { ...other, studentId: "synthetic-student-3", ...approved },
+        ],
+        null,
+      ),
+    ).toThrow("Result sources disagree on exact active pupil roster");
+    expect(() =>
+      reconcileResultPreparation(
+        objective,
+        [
+          { ...child, ...approved },
+          { ...other, admissionNumber: "DEMO-999", ...approved },
+        ],
+        null,
+      ),
+    ).toThrow("Result sources disagree on exact active pupil roster");
+  });
   it("rejects inconsistent counters and unbounded preview breadth", () => {
     const o = [{ ...child, assessmentCount: 1, unscoredCount: 2 }];
     const m = [
