@@ -76,8 +76,10 @@ describe("Phase 8 private result source boundary (stubbed authorized readers)", 
 
   it("passes the exact academic scope independently to both readers", async () => {
     const result = await readInternalTeacherResultPreparation(...ids);
-    expect(readers.objective).toHaveBeenCalledExactlyOnceWith(...ids);
-    expect(readers.manual).toHaveBeenCalledExactlyOnceWith(...ids);
+    expect(readers.objective).toHaveBeenCalledTimes(1);
+    expect(readers.objective).toHaveBeenCalledWith(...ids);
+    expect(readers.manual).toHaveBeenCalledTimes(1);
+    expect(readers.manual).toHaveBeenCalledWith(...ids);
     expect(result.status).toBe("PRIVATE_PREPARATION_ONLY");
     expect(result.students).toHaveLength(1);
     expect(result.students[0].status).toBe("SOURCES_RECONCILED_NOT_APPROVED");
@@ -98,9 +100,9 @@ describe("Phase 8 private result source boundary (stubbed authorized readers)", 
         ...manualSource(),
         [key]: "synthetic-foreign-scope",
       });
-      await expect(readInternalTeacherResultPreparation(...ids)).rejects.toMatchObject({
-        code: "CONFLICT",
-      });
+      await expect(
+        readInternalTeacherResultPreparation(...ids),
+      ).rejects.toMatchObject({ code: "CONFLICT" });
     }
   });
 
@@ -114,9 +116,9 @@ describe("Phase 8 private result source boundary (stubbed authorized readers)", 
         ...manualSource(),
         students: [{ ...manualSource().students[0], ...changed }],
       });
-      await expect(readInternalTeacherResultPreparation(...ids)).rejects.toMatchObject({
-        code: "CONFLICT",
-      });
+      await expect(
+        readInternalTeacherResultPreparation(...ids),
+      ).rejects.toMatchObject({ code: "CONFLICT" });
     }
   });
 
@@ -125,8 +127,10 @@ describe("Phase 8 private result source boundary (stubbed authorized readers)", 
     await expect(readInternalTeacherResultPreparation(...ids)).rejects.toThrow(
       "DENIED_AFTER_SOURCE_CHANGE",
     );
-    expect(readers.objective).toHaveBeenCalledExactlyOnceWith(...ids);
-    expect(readers.manual).toHaveBeenCalledExactlyOnceWith(...ids);
+    expect(readers.objective).toHaveBeenCalledTimes(1);
+    expect(readers.objective).toHaveBeenCalledWith(...ids);
+    expect(readers.manual).toHaveBeenCalledTimes(1);
+    expect(readers.manual).toHaveBeenCalledWith(...ids);
   });
 
   it("rejects a mismatched source even when the school, class and subject are valid", async () => {
@@ -134,8 +138,8 @@ describe("Phase 8 private result source boundary (stubbed authorized readers)", 
       ...objectiveSource(),
       termId: "synthetic-different-term",
     });
-    await expect(readInternalTeacherResultPreparation(...ids)).rejects.toMatchObject({
-      code: "CONFLICT",
-    });
+    await expect(
+      readInternalTeacherResultPreparation(...ids),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
   });
 });
