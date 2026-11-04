@@ -24,8 +24,7 @@ const scope = {
   subjectId: "synthetic-subject-a",
 };
 
-const endpoint =
-  `http://localhost/api/schools/${schoolId}/result-preparation`;
+const endpoint = `http://localhost/api/schools/${schoolId}/result-preparation`;
 
 function call(query: string) {
   return GET(new Request(`${endpoint}?${query}`), {
@@ -35,10 +34,10 @@ function call(query: string) {
 
 const validQuery = new URLSearchParams(scope).toString();
 
-describe("Phase 8 private result preparation HTTP boundary (stubbed reader)", () => {
+describe("Phase 8 private preparation route", () => {
   beforeEach(() => reader.mockReset());
 
-  it("returns only private preparation data for the exact scoped read", async () => {
+  it("returns private preparation for an exact scoped read", async () => {
     reader.mockResolvedValue({
       status: "PRIVATE_PREPARATION_ONLY",
       studentCount: 0,
@@ -62,7 +61,7 @@ describe("Phase 8 private result preparation HTTP boundary (stubbed reader)", ()
     );
   });
 
-  it("denies malformed, duplicate or extraneous query parameters before reading", async () => {
+  it("rejects malformed and duplicate query parameters", async () => {
     for (const query of [
       "",
       "classId=synthetic-class-a",
@@ -77,7 +76,7 @@ describe("Phase 8 private result preparation HTTP boundary (stubbed reader)", ()
     expect(reader).not.toHaveBeenCalled();
   });
 
-  it("conceals unauthorized and missing scope failures with a generic private 404", async () => {
+  it("conceals denied or missing scopes with a generic 404", async () => {
     for (const code of ["FORBIDDEN", "NOT_FOUND"] as const) {
       reader.mockRejectedValue(new AssessmentError(code));
       const response = await call(validQuery);
@@ -87,7 +86,7 @@ describe("Phase 8 private result preparation HTTP boundary (stubbed reader)", ()
     }
   });
 
-  it("never returns a partial pupil roster when a source reader reports a conflict", async () => {
+  it("never discloses partial roster on reader conflict", async () => {
     reader.mockRejectedValue(new AssessmentError("CONFLICT"));
     const response = await call(validQuery);
     expect(response.status).toBe(409);
@@ -95,7 +94,7 @@ describe("Phase 8 private result preparation HTTP boundary (stubbed reader)", ()
     expect(await response.json()).toEqual({ error: "Conflict" });
   });
 
-  it("fails closed on expired sessions and unexpected sensitive internal errors", async () => {
+  it("hides errors after expiration or internal failure", async () => {
     reader.mockRejectedValue(new AssessmentError("UNAUTHENTICATED"));
     const unauthorized = await call(validQuery);
     expect(unauthorized.status).toBe(401);
