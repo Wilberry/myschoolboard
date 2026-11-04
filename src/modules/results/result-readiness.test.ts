@@ -148,6 +148,35 @@ describe("Phase 8 private result source preflight", () => {
       ),
     ).toThrow("Result sources disagree on exact active pupil roster");
   });
+  it("rejects contradictory manual source counters and completeness claims", () => {
+    const objective = [{ ...child, assessmentCount: 1, unscoredCount: 0 }];
+    const complete = {
+      ...child,
+      componentCount: 1,
+      unapprovedCount: 0,
+      pendingCorrections: 0,
+      academicallyComplete: true,
+    };
+    for (const impossible of [
+      { ...complete, academicallyComplete: false },
+      { ...complete, unapprovedCount: 1 },
+      { ...complete, pendingCorrections: 1 },
+      { ...complete, pendingCorrections: 2, academicallyComplete: false },
+      { ...complete, componentCount: 0 },
+    ]) {
+      expect(() =>
+        reconcileResultPreparation(objective, [impossible], null),
+      ).toThrow("Invalid or ambiguous manual source roster");
+    }
+    // Legitimate pending work is still represented as blocked, not rejected.
+    const pending = reconcileResultPreparation(
+      objective,
+      [{ ...complete, unapprovedCount: 1, academicallyComplete: false }],
+      null,
+    );
+    expect(pending.students[0].status).toBe("NEEDS_SOURCE_WORK");
+    expect(pending.students[0].blockers).toContain("MANUAL_REVIEW_PENDING");
+  });
   it("rejects inconsistent counters and unbounded preview breadth", () => {
     const o = [{ ...child, assessmentCount: 1, unscoredCount: 2 }];
     const m = [
