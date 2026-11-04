@@ -78,7 +78,9 @@ describe("Phase 8 private preparation route", () => {
 
   it("conceals denied or missing scopes with a generic 404", async () => {
     for (const code of ["FORBIDDEN", "NOT_FOUND"] as const) {
-      reader.mockRejectedValue(new AssessmentError(code));
+      reader.mockImplementation(async () => {
+        throw new AssessmentError(code);
+      });
       const response = await call(validQuery);
       expect(response.status).toBe(404);
       expect(response.headers.get("cache-control")).toBe("private, no-store");
@@ -87,7 +89,9 @@ describe("Phase 8 private preparation route", () => {
   });
 
   it("never discloses partial roster on reader conflict", async () => {
-    reader.mockRejectedValue(new AssessmentError("CONFLICT"));
+    reader.mockImplementation(async () => {
+      throw new AssessmentError("CONFLICT");
+    });
     const response = await call(validQuery);
     expect(response.status).toBe(409);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
@@ -95,14 +99,16 @@ describe("Phase 8 private preparation route", () => {
   });
 
   it("hides errors after expiration or internal failure", async () => {
-    reader.mockRejectedValue(new AssessmentError("UNAUTHENTICATED"));
+    reader.mockImplementation(async () => {
+      throw new AssessmentError("UNAUTHENTICATED");
+    });
     const unauthorized = await call(validQuery);
     expect(unauthorized.status).toBe(401);
     expect(await unauthorized.json()).toEqual({ error: "Unauthorized" });
 
-    reader.mockRejectedValue(
-      new Error("synthetic-pupil-name-and-admission-should-not-leak"),
-    );
+    reader.mockImplementation(async () => {
+      throw new Error("synthetic-pupil-name-and-admission-should-not-leak");
+    });
     const failure = await call(validQuery);
     expect(failure.status).toBe(500);
     expect(failure.headers.get("cache-control")).toBe("private, no-store");
