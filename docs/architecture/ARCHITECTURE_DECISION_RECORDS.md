@@ -1,5 +1,36 @@
 # Architecture Decision Records
 
+## ADR-P9-009 — Exact manual accounts, explicit releases and private evidence
+
+**Status:** implemented; local acceptance recorded in the Phase 9 cloud checkpoint.
+
+Keep the existing immutable school-locked foundation. Derive accounting from an
+exact NUMERIC view, with values serialized as minor-unit strings. Add append-only
+FeeAccountRelease versions and immutable FeeReceipt snapshots. SQL independently
+rechecks the real active actor, same-school source, replay key, reviewed claim,
+independent submitter/reviewer and reversal state. A current SQL predicate joins
+all recipient relationship and active enrollment facts for each result row.
+Withdrawal and identity revocation never restore previously revoked identities.
+Receipts retain historical snapshots and acquire a derived reversed status;
+no original charge, receipt or applied migration is rewritten.
+
+Private supporting images use a separately gated, bounded multipart endpoint,
+strict decoding and normalized single-frame PNG bytes via locked sharp. SQL owns
+immutable same-school audit metadata. Server-generated UUID filenames never use
+caller paths. Storage requires private ownership/modes outside public assets;
+downloads use no-follow opens, verify hash/size and recheck current authorization
+after I/O. An ambiguous transaction outcome preserves potentially committed files;
+it never deletes a file when commit status cannot be established. This is a
+single-node private-storage adapter; multi-node/object storage requires a later
+scoped adapter and retention/backup design before production deployment.
+
+The browser uses abort/epoch protection, synchronous concealment, periodic current
+authorization and an explicit fresh-read print lease. No-store applies to HTML,
+APIs, CSV and images. Real exported paper/PDF is outside session revocation.
+Administrative lists are bounded; report aggregation and per-obligation balances
+cover the entire ledger. All new flags default off. No bank settlement, provider
+certification, automatic image verification or actual refund is represented.
+
 ## ADR-047 — Immutable recipient release ledger and current relationship reader
 
 A new forward migration adds publication, withdrawal and guardian acknowledgment
@@ -12,6 +43,244 @@ Recipient names come from the frozen source packet, and only display grade field
 are projected. Acknowledgment is explicit and idempotent, not a GET side effect.
 The client conceals sensitive DOM on lifecycle/sign-out events and rejects stale
 responses; printing requires fresh access. This preserves Phase 1–7 permissions.
+
+## ADR-P9-008: Fail-closed Phase 9 disposable-DB read-only attestation
+
+- **Status:** code and fake-spawn tests authored, PostgreSQL runtime
+  unexecuted (2026-10-18).
+- **Context:** named loopback DB targets may resolve through SSH
+  tunnels/port forwards. The existing `verify-local` runner safely
+  checks target strings but cannot identify physical DB provenance.
+  New Phase 9 financial migration/seed changes must not proceed
+  against a shared/production DB on string checks alone.
+- **Decision:** add an *opt-in stricter wrapper* preceding the
+  existing local CI runner; require an operator-provisioned
+  nonce at `public.myschoolboard_disposable_verification_marker`,
+  verify it through a read-only `psql` SELECT on the actual target,
+  sanitize Prisma URI to libpq and strip inherited `PG*`
+  connection defaults. The expected nonce lives in an
+  ephemeral shell variable, never a committed config.
+  Explicitly reject any finance-write toggle set to true.
+- **Behavior:** missing marker, mismatch, unsafe connection
+  option, missing psql or error => no migration, seed or
+  local CI command is launched. On positive attestation,
+  invoke the untouched `verify:local` chain (npm ci, Prisma,
+  migrations, seed, format/lint/types, full tests, build,
+  high-severity dependency audit). The wrapper never creates
+  a database, marker, school/pupil/payee or payment record.
+- **Caveat:** a deliberately copied nonce or malicious
+  server operator can defeat the guard. The human must verify
+  an actual disposable container separately; the nonce
+  prevents common accidental forwarded-database mistakes,
+  not malicious actors or runtime environment drift. The
+  application remains unverified until real cumulative tests
+  run and all security gates pass. D-P9-008.
+
+
+## ADR-P9-007: Applied waivers are append-only and bounded by reviewed claims
+
+- **Status:** authored, not migration/runtime/CI accepted,
+  2026-10-16.
+- **Context:** independently approved school fee WAIVER
+  governance was advisory-only. Making it accounting-relevant
+  without considering previously VERIFIED bank-reference
+  claims would allow credit beyond the unchanged original fee.
+  A reversed manual allocation still represents an original
+  human bank-review attestation and cannot be silently
+  treated as refunded funds.
+- **Design:** append `FeeWaiverApplication` with same-school
+  composite obligation/proposal/decision/actor FKs and
+  unique proposal/decision/request keys. SQL School-row lock,
+  original active Super Admin, exact APPROVED WAIVER-only
+  decision, distinct proposer, and SQL-derived money protect
+  trusted amount. Existing owner-only manually reviewed
+  balance preview gains applied waivers and adjusted debt.
+- **Concurrency:** one application trigger enforces
+  `waived_total + verified_claim_total + new_waiver <= debt`;
+  new BEFORE INSERT guards on `PaymentVerificationDecision`
+  and `ManualPaymentAllocation` enforce adjusted ceiling
+  after an earlier waiver. Verified amount includes all
+  historic VERIFIED claims regardless of approved preview
+  reversal. Multi-school FKs and School locks serialize the
+  accounting write set. No historic table modification.
+- **Limitations:** this is an INTERNAL accounting preview, NOT
+  a bank provider, cash receipt, real funds settlement or
+  issued school statement. CORRECTION_PROPOSAL is still
+  advisory, and a waiver cannot be reversed without a future
+  reasoned append-only waiver revision/reversal ledger.
+  The application flag and master writes default OFF;
+  never enable on shared/live schools before disposable
+  PostgreSQL, Prisma, concurrency, security, browser and
+  strict dependency audit acceptance. D-P9-007.
+
+
+## ADR-P9-006: Advisory fee-policy review before any effective waiver
+
+- **Status:** authored, unexecuted (2026-10-16).
+- An immutable `FeeAdjustmentProposal` snapshots original school
+  debt, currency, bounded requested amount, kind and authenticated
+  School Administrator. `FeeAdjustmentDecision` records one
+  independent current same-school School Super Admin advisory
+  APPROVED/REJECTED event; SQL guards concurrency by School lock
+  and forbids history updates/deletes/truncation.
+- The resulting decision NEVER creates a payment, settlement,
+  rebate, charge mutation, waiver, verified balance or receipt.
+  Future separately approved accounting event projections must
+  explicitly handle existing verified manual claims, original
+  debt, reversals, over-credit races and term closure.
+- Requests and decisions remain default-OFF and confined to
+  same-school private no-store endpoints. No provider, file upload
+  or student/guardian financial reader is included. D-P9-006.
+
+
+## ADR-P9-005: Append-only manual allocation correction ledger
+
+- **Status:** code, SQL and tests authored, not migrated or verified,
+  2026-10-16.
+- **Context:** manual bank-reference approval is not external payment
+  settlement; silently editing an original manual allocation would
+  destroy traceability. Actual money refunds require a different
+  independent bank/provider workflow.
+- **Decision:** introduce `ManualAllocationReversalRequest` and
+  `ManualAllocationReversalDecision` with school-composite source
+  and actor FKs, school-lock SQL validators, stamped timestamps,
+  strict one-to-one allocation request and terminal reviewer outcome
+  uniqueness and no UPDATE/DELETE/TRUNCATE. School Administrator
+  requests; different active same-school School Super Admin approves
+  or rejects. Service validates actual session and exact
+  idempotent-retry behavior; independent SQL repeats authority checks.
+- **Projection:** original evidence, verified decision and
+  `ManualPaymentAllocation` are never updated. A bounded owner-only
+  preview joins APPROVED decisions and computes gross allocated,
+  approved reversed, net active manual allocated, non-reusable
+  reviewed claims and arithmetic remainder using PostgreSQL NUMERIC
+  decimal strings. Rejected and pending requests have no effect.
+  The projection expressly forbids PAID/SETTLED/refund/receipt claims.
+- **Consequences:** a reversed claim cannot be reapplied due to
+  existing per-evidence and per-decision allocation uniqueness.
+  No partial repeat request after rejection; a future versioned
+  adjustment model must be designed and tested for those operations.
+  Private reference uploads and real refunds remain out of scope.
+  Release requires actual disposable PostgreSQL, Prisma, browser,
+  full CI and strict dependency-security tests. D-P9-005.
+
+
+## ADR-P9-004: School-locked immutable verified-reference allocation and numeric preview
+
+- **Status:** authored / unexecuted, 2026-10-16.
+- **Context:** verified manual bank-reference attestation is not itself
+  an official payment or receipted settlement; claims may be partial,
+  duplicate, rejected or pending. Aggregating claimed sums directly
+  would fabricate money. Corrections, refunds and reversals are not yet
+  designed or accepted.
+- **Decision:** introduce `ManualPaymentAllocation` with immutable
+  same-school obligation/evidence/verified-decision links, exact source
+  claim minor-unit money and currency, actor/reason/idempotency and
+  database-stamped UTC time. Strict school-row-locked trigger checks
+  current SCHOOL_SUPER_ADMIN, independent SCHOOL_ADMIN claim submitter,
+  exact VERIFIED and funds-confirmed decision/reference, money and
+  cumulative allocation cap. SQL unique per-school evidence/decision/
+  request keys plus no-update/delete/truncate protect history.
+- **Reader:** private no-store School Super Admin GET derives a bounded
+  exact PostgreSQL NUMERIC-string preview for original charge,
+  independently reviewed claims, allocated claims, reviewed unallocated
+  claims and arithmetic remainder. Every projection row rechecks actual
+  school/membership in the final SQL. Labels intentionally avoid PAID
+  or FINAL; this is not an external settlement statement, receipt,
+  parent account or official school financial report.
+- **Feature/security:** additional default-OFF
+  `PHASE9_MANUAL_ALLOCATION_ENABLED` and existing master finance
+  gate; strict authenticated input schemas, serializable writes,
+  exact retry, denial of foreign/unauthorized reads and writes, no
+  payment provider/file upload. Deferred: signed bank settlement,
+  audited corrections/reversals/refunds, receipts, tenant-private
+  financial documents and independently verified guardian views.
+  No release before cumulative disposable PostgreSQL and strict
+  dependency/privacy acceptance. D-P9-004.
+
+
+## ADR-P9-003: Immutable manual reference-claim ledger and independent attestation
+
+- **Status:** authored; NOT migrated, integrated or security accepted
+  (2026-10-16).
+- **Context:** transfer upload/reference is not verified funds. No
+  private upload storage, external provider, delegated bursar identity
+  model or actual banking account reconciliation exists in this baseline.
+- **Decision:** additive `PaymentEvidence` records `SUBMITTED`
+  manual reference-only claims, one exact school obligation, issuer,
+  bank-reference digest, claim amount/currency and unique school request
+  and reference keys. `PaymentVerificationDecision` independently
+  records terminal `VERIFIED` or `REJECTED` outcomes, explicit
+  confirmedBankFunds attestation, reviewer, reason and trusted time.
+  School composite FKs, nonmutating SQL triggers, exact active submitter
+  SCHOOL_ADMIN and independent reviewer SCHOOL_SUPER_ADMIN prevent
+  cross-tenant modification. All writes serialize under School lock;
+  verification rechecks the actual reference and caps the sum of
+  earlier VERIFIED claims against the immutable obligation amount.
+  Application services use authenticated actual sessions, strict
+  input shapes, serialized idempotent request/review replay, no-store
+  metadata-only bounded readers and default-OFF master/evidence/review
+  switches. No raw reference, uploaded file, personal bank data or
+  provider credentials stored. Verified reviewer attestation does not
+  create provider settlement or official receipt.
+- **Consequences:** status transitions are represented by new immutable
+  evidence, not UPDATE. No cumulative outstanding balance, refund or
+  reversal shown before a separately audited allocation/reversal
+  design. Fully authenticated real-user, SQL concurrency, tenant
+  deletion, current actor revocation and production privacy acceptance
+  are mandatory before any finance access can be enabled.
+  D-P9-003.
+
+
+## ADR-P9-002: Version-pinned fee debt with database-derived amounts
+
+- **Status:** authored but not migrated or runtime verified (2026-10-16).
+- **Context:** creating a fee policy must not itself fabricate pupil debt;
+  issued debt must not be recalculated when the school changes fee policy.
+- **Decision:** `FeeObligation` stores immutable school/student/enrollment/
+  class/session/term/category/fee revision/amount/currency/issuer/reason
+  evidence. Composite school FKs bind the exact existing StudentEnrollment
+  and chosen FeeStructureRevision. A BEFORE INSERT PostgreSQL guard obtains
+  the school serialization lock, verifies current same-school School Super
+  Admin and ENROLLED pupil with ACTIVE exact enrollment, current
+  nonclosed period and exact SCHOOL/SECTION/CLASS fee applicability, and
+  re-derives **all** child/class/period/category/money fields. Only latest
+  selected context revision may create new debt; previously issued debts
+  retain their pinned historical price. One school-scoped UUID retry key
+  plus uniqueness on pupil/category/session/term prevents duplicate debt;
+  ordinary DELETE/UPDATE/TRUNCATE rejected.
+- **Operational boundary:** all Phase 9 POSTs are default OFF. Application
+  performs strict request and replay checks and returns string minor units.
+  No automatic roster batch issuance, parent visibility, verified payment,
+  balance, receipt, credit, refund or provider integration is added.
+- **Verification pending:** check SQL trigger semantics, composite FK and
+  tenant deletion lifecycle, concurrent SQL replay/version races, immutable
+  event triggers, Prisma schema/client/TypeScript, full CI/security gates
+  and synthetic authenticated browser in a confirmed disposable DB.
+  See D-P9-002.
+
+
+## ADR-P9-001: Fee configuration is a versioned source, not a mutable payment balance
+
+- **Status:** Phase 9 proposal authored, schema/migration/SQL and authenticated
+  route tests NOT EXECUTED (2026-10-16).
+- **Context:** FEE-REQ-001 requires tenant-bound fees and separate payment
+  evidence verification. Concurrent Phase 8 work must remain isolated.
+- **Decision:** introduce school-composite FK-bound FeeCategory and append-only
+  FeeStructureRevision (school/category/session/term/scope + SQL-serialized
+  ordinal, money in minor-unit BIGINT, explicit currency and actor evidence).
+  Transactional application service obtains actual Better Auth session and
+  same-school active School Super Admin; PostgreSQL independently validates
+  actor, nonclosed period, school/section/class target and assigns version,
+  with immutable UPDATE/DELETE/TRUNCATE guards. Expose private bounded
+  configuration-only GET/POST, no provider callback or pupil release.
+- **Consequences:** prices can evolve without mutating original records.
+  Category renames require new category. Later obligations must pin exact
+  revision, payment evidence/verification must be separate append-only
+  ledgers with reversal/allocations, and genuine PostgreSQL tests must
+  validate triggers, deletion cascades and concurrent scope writes.
+  This makes no assumption that an uploaded transfer equals funds.
+  See D-P9-001.
 
 
 ## ADR-001: Modular domain design

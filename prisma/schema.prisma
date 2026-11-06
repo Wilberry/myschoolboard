@@ -29,6 +29,37 @@ enum ScopeType {
   CHILD
 }
 
+enum FeeScope {
+  SCHOOL
+  SECTION
+  CLASS
+}
+
+/** Submission is always evidence only, never a credit or paid status. */
+enum PaymentEvidenceStatus {
+  SUBMITTED
+}
+
+enum PaymentVerificationAction {
+  VERIFIED
+  REJECTED
+}
+
+/** Human correction decision, not a refund or money movement. */
+enum ManualAllocationReversalAction {
+  APPROVED
+  REJECTED
+}
+
+enum FeeAdjustmentKind {
+  WAIVER
+  CORRECTION_PROPOSAL
+}
+enum FeeAdjustmentDecisionAction {
+  APPROVED
+  REJECTED
+}
+
 enum SchoolLifecycleStatus {
   PENDING
   ACTIVE
@@ -228,6 +259,9 @@ model Verification {
 }
 
 model School {
+  paymentEvidenceAttachments PaymentEvidenceAttachment[]
+  feeAccountReleases FeeAccountRelease[]
+  feeReceipts FeeReceipt[]
   reportPublications ReportPublication[]
   reportWithdrawals ReportPublicationWithdrawal[]
   reportAcknowledgments ReportGuardianAcknowledgment[]
@@ -290,6 +324,18 @@ model School {
   assessmentManualMarkDecisions AssessmentManualMarkDecision[]
   assessmentManualCorrectionRequests AssessmentManualCorrectionRequest[]
   assessmentManualCorrectionDecisions AssessmentManualCorrectionDecision[]
+  feeCategories FeeCategory[]
+  feeStructureRevisions FeeStructureRevision[]
+  feeObligations FeeObligation[]
+  paymentEvidence PaymentEvidence[]
+  paymentVerificationDecisions PaymentVerificationDecision[]
+  manualPaymentAllocations ManualPaymentAllocation[]
+  manualAllocationReversalRequests ManualAllocationReversalRequest[]
+  manualAllocationReversalDecisions ManualAllocationReversalDecision[]
+  feeAdjustmentProposals FeeAdjustmentProposal[]
+  feeAdjustmentDecisions FeeAdjustmentDecision[]
+  feeWaiverApplications FeeWaiverApplication[]
+
   resultGradingAdoptions ResultGradingAdoption[]
   resultSheetEvidences ResultSheetEvidence[]
   resultSheetReviews ResultSheetReview[]
@@ -301,6 +347,9 @@ model School {
 }
 
 model Membership {
+  paymentEvidenceAttachments PaymentEvidenceAttachment[]
+  feeAccountReleases FeeAccountRelease[]
+  feeReceipts FeeReceipt[]
   reportPublications ReportPublication[]
   reportWithdrawals ReportPublicationWithdrawal[]
   reportAcknowledgments ReportGuardianAcknowledgment[]
@@ -348,6 +397,18 @@ model Membership {
   assessmentManualMarkDecisions AssessmentManualMarkDecision[]
   assessmentManualCorrectionRequests AssessmentManualCorrectionRequest[]
   assessmentManualCorrectionDecisions AssessmentManualCorrectionDecision[]
+  authoredFeeCategories FeeCategory[]
+  authoredFeeStructureRevisions FeeStructureRevision[]
+  issuedFeeObligations FeeObligation[]
+  submittedPaymentEvidence PaymentEvidence[]
+  reviewedPaymentEvidence PaymentVerificationDecision[]
+  manualPaymentAllocations ManualPaymentAllocation[]
+  manualReversalRequests ManualAllocationReversalRequest[]
+  manualReversalDecisions ManualAllocationReversalDecision[]
+  feeAdjustmentProposals FeeAdjustmentProposal[]
+  feeAdjustmentDecisions FeeAdjustmentDecision[]
+  feeWaiverApplications FeeWaiverApplication[]
+
   resultGradingAdoptions ResultGradingAdoption[]
   resultSheetEvidences ResultSheetEvidence[]
   resultSheetReviews ResultSheetReview[]
@@ -408,6 +469,8 @@ model SchoolClass {
   assessmentDrafts AssessmentDraft[]
   assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
   assessmentManualComponents AssessmentManualComponent[]
+  feeStructureRevisions FeeStructureRevision[]
+  feeObligations FeeObligation[]
 }
 
 model Subject {
@@ -525,6 +588,8 @@ model AcademicSession {
   assessmentDrafts AssessmentDraft[]
   assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
   assessmentManualComponents AssessmentManualComponent[]
+  feeStructureRevisions FeeStructureRevision[]
+  feeObligations FeeObligation[]
 }
 
 model AcademicTerm {
@@ -552,6 +617,8 @@ model AcademicTerm {
   assessmentDrafts AssessmentDraft[]
   assessmentGradingPolicyRevisions AssessmentGradingPolicyRevision[]
   assessmentManualComponents AssessmentManualComponent[]
+  feeStructureRevisions FeeStructureRevision[]
+  feeObligations FeeObligation[]
 }
 
 model SchoolConfigurationEvent {
@@ -751,6 +818,7 @@ model SchoolSection {
   @@unique([schoolId, id])
   @@unique([schoolId, name])
   @@index([schoolId, stage, isActive])
+  feeStructureRevisions FeeStructureRevision[]
 }
 
 model StudentRecord {
@@ -774,6 +842,7 @@ model StudentRecord {
   guardianLinks GuardianStudentLink[]
   assessmentAttempts AssessmentAttempt[]
   assessmentManualMarkProposals AssessmentManualMarkProposal[]
+  feeObligations FeeObligation[]
 }
 
 model StudentEnrollment {
@@ -801,6 +870,7 @@ model StudentEnrollment {
   @@index([schoolId, classId, sessionId, status])
   assessmentAttempts AssessmentAttempt[]
   assessmentManualMarkProposals AssessmentManualMarkProposal[]
+  feeObligations FeeObligation[]
 }
 
 model StudentEvent {
@@ -1510,6 +1580,327 @@ model AssessmentManualCorrectionDecision {
 }
 
 
+/** Immutable category label. Historical renames require a new category. */
+model FeeCategory {
+  id String @id
+  schoolId String
+  code String @db.VarChar(32)
+  name String @db.VarChar(120)
+  actorMembershipId String
+  actorUserId String
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "FeeCategory_actor_fkey")
+  revisions FeeStructureRevision[]
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, code])
+  @@index([schoolId, createdAt])
+  feeObligations FeeObligation[]
+}
+
+/** Fee CONFIGURATION, not student debt or verified payment.
+ * A reasoned revision affects only subsequently created obligations.
+ * PostgreSQL validates school, actor, live period and exact scope target. */
+model FeeStructureRevision {
+  id String @id
+  schoolId String
+  categoryId String
+  sessionId String
+  termId String
+  scope FeeScope
+  scopeId String
+  sectionId String?
+  classId String?
+  version Int @default(1)
+  amountMinor BigInt
+  currency String @db.VarChar(3)
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  createdAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  category FeeCategory @relation(fields: [schoolId, categoryId], references: [schoolId, id], onDelete: NoAction, map: "FeeStructureRevision_category_fkey")
+  session AcademicSession @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction, map: "FeeStructureRevision_session_fkey")
+  term AcademicTerm @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction, map: "FeeStructureRevision_term_fkey")
+  schoolSection SchoolSection? @relation(fields: [schoolId, sectionId], references: [schoolId, id], onDelete: NoAction, map: "FeeStructureRevision_section_fkey")
+  schoolClass SchoolClass? @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction, map: "FeeStructureRevision_class_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "FeeStructureRevision_actor_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, id, categoryId, sessionId, termId], map: "FeeStructureRevision_charge_identity")
+  @@unique([schoolId, categoryId, sessionId, termId, scope, scopeId, version], map: "FeeStructureRevision_context_version_key")
+  @@index([schoolId, sessionId, termId, scope, scopeId])
+  feeObligations FeeObligation[]
+}
+
+
+/** Explicit, immutable student debt, NOT a payment, verified balance or
+ * receipt. PostgreSQL copies money/context from the pinned current fee
+ * revision and exact active school enrollment, never client-supplied amounts.
+ * One issued obligation per pupil/category/term until a future audited
+ * adjustment/reversal ledger is designed. */
+model FeeObligation {
+  accountReleases FeeAccountRelease[]
+  receipts FeeReceipt[]
+  id String @id
+  schoolId String
+  studentId String
+  enrollmentId String
+  classId String
+  sessionId String
+  termId String
+  categoryId String
+  revisionId String
+  amountMinor BigInt
+  currency String @db.VarChar(3)
+  requestKey String @db.VarChar(64)
+  reason String @db.VarChar(500)
+  issuerMembershipId String
+  issuerUserId String
+  issuedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student StudentRecord @relation(fields: [schoolId, studentId], references: [schoolId, id], onDelete: NoAction, map: "FeeObligation_student_fkey")
+  enrollment StudentEnrollment @relation(fields: [schoolId, enrollmentId, studentId, classId, sessionId], references: [schoolId, id, studentId, classId, sessionId], onDelete: NoAction, map: "FeeObligation_enrollment_fkey")
+  schoolClass SchoolClass @relation(fields: [schoolId, classId], references: [schoolId, id], onDelete: NoAction, map: "FeeObligation_class_fkey")
+  session AcademicSession @relation(fields: [schoolId, sessionId], references: [schoolId, id], onDelete: NoAction, map: "FeeObligation_session_fkey")
+  term AcademicTerm @relation(fields: [schoolId, sessionId, termId], references: [schoolId, sessionId, id], onDelete: NoAction, map: "FeeObligation_term_fkey")
+  category FeeCategory @relation(fields: [schoolId, categoryId], references: [schoolId, id], onDelete: NoAction, map: "FeeObligation_category_fkey")
+  revision FeeStructureRevision @relation(fields: [schoolId, revisionId, categoryId, sessionId, termId], references: [schoolId, id, categoryId, sessionId, termId], onDelete: NoAction, map: "FeeObligation_revision_fkey")
+  issuer Membership @relation(fields: [schoolId, issuerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "FeeObligation_issuer_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, requestKey])
+  @@unique([schoolId, studentId, sessionId, termId, categoryId], map: "FeeObligation_student_category_period_key")
+  @@index([schoolId, enrollmentId, issuedAt])
+  paymentEvidence PaymentEvidence[]
+  manualPaymentAllocations ManualPaymentAllocation[]
+  feeAdjustmentProposals FeeAdjustmentProposal[]
+  feeWaiverApplications FeeWaiverApplication[]
+}
+
+
+/** Manual transfer REFERENCE CLAIM, not an upload, settlement or verified
+ * payment. Only a SHA-256 school-bound reference digest is persisted. */
+model PaymentEvidence {
+  paymentEvidenceAttachments PaymentEvidenceAttachment[]
+  id String @id
+  schoolId String
+  obligationId String
+  requestKey String @db.VarChar(64)
+  referenceDigest String @db.VarChar(64)
+  claimedAmountMinor BigInt
+  currency String @db.VarChar(3)
+  status PaymentEvidenceStatus @default(SUBMITTED)
+  reason String @db.VarChar(500)
+  submitterMembershipId String
+  submitterUserId String
+  submittedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  obligation FeeObligation @relation(fields: [schoolId, obligationId], references: [schoolId, id], onDelete: NoAction, map: "PaymentEvidence_obligation_fkey")
+  submitter Membership @relation(fields: [schoolId, submitterMembershipId], references: [schoolId, id], onDelete: NoAction, map: "PaymentEvidence_submitter_fkey")
+  verification PaymentVerificationDecision?
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, requestKey])
+  @@unique([schoolId, referenceDigest])
+  @@index([schoolId, obligationId, submittedAt])
+  manualPaymentAllocations ManualPaymentAllocation[]
+}
+
+/** Independent School Super Admin bank-reconciliation attestation. No
+ * automatic payment/receipt creation and no refund/reversal workflow.
+ * Only VERIFIED decisions can later participate in balance calculation.
+ * A rejection or verification is final and cannot be edited. */
+model PaymentVerificationDecision {
+  id String @id
+  schoolId String
+  evidenceId String
+  action PaymentVerificationAction
+  confirmedBankFunds Boolean
+  confirmedReferenceDigest String? @db.VarChar(64)
+  reason String @db.VarChar(500)
+  reviewerMembershipId String
+  reviewerUserId String
+  decidedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  evidence PaymentEvidence @relation(fields: [schoolId, evidenceId], references: [schoolId, id], onDelete: NoAction, map: "PaymentVerificationDecision_evidence_fkey")
+  reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "PaymentVerificationDecision_reviewer_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, evidenceId])
+  @@index([schoolId, decidedAt])
+  manualPaymentAllocations ManualPaymentAllocation[]
+}
+
+
+/** One exact manual-review amount allocated to the original fee obligation.
+ * Not a provider settlement, funds movement, actual payment or receipt.
+ * External settlement and reversals require independently accepted ledgers. */
+model ManualPaymentAllocation {
+  receipt FeeReceipt?
+  id String @id
+  schoolId String
+  obligationId String
+  evidenceId String
+  verificationId String
+  requestKey String @db.VarChar(64)
+  amountMinor BigInt
+  currency String @db.VarChar(3)
+  reason String @db.VarChar(500)
+  allocatorMembershipId String
+  allocatorUserId String
+  allocatedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  obligation FeeObligation @relation(fields: [schoolId, obligationId], references: [schoolId, id], onDelete: NoAction, map: "ManualPaymentAllocation_obligation_fkey")
+  evidence PaymentEvidence @relation(fields: [schoolId, evidenceId], references: [schoolId, id], onDelete: NoAction, map: "ManualPaymentAllocation_evidence_fkey")
+  verification PaymentVerificationDecision @relation(fields: [schoolId, verificationId], references: [schoolId, id], onDelete: NoAction, map: "ManualPaymentAllocation_verification_fkey")
+  allocator Membership @relation(fields: [schoolId, allocatorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ManualPaymentAllocation_allocator_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, requestKey])
+  @@unique([schoolId, evidenceId])
+  @@unique([schoolId, verificationId])
+  @@index([schoolId, obligationId, allocatedAt])
+  reversalRequest ManualAllocationReversalRequest?
+}
+
+
+/** One immutable correction REQUEST per original manual allocation.
+ * Requesting a reversal is not approval, refund, money movement, credit
+ * or a change to the preserved original allocation. */
+model ManualAllocationReversalRequest {
+  id String @id
+  schoolId String
+  allocationId String
+  requestKey String @db.VarChar(64)
+  amountMinor BigInt
+  currency String @db.VarChar(3)
+  reason String @db.VarChar(500)
+  requesterMembershipId String
+  requesterUserId String
+  requestedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  allocation ManualPaymentAllocation @relation(fields: [schoolId, allocationId], references: [schoolId, id], onDelete: NoAction, map: "ManualAllocationReversalRequest_allocation_fkey")
+  requester Membership @relation(fields: [schoolId, requesterMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ManualAllocationReversalRequest_requester_fkey")
+  decision ManualAllocationReversalDecision?
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, requestKey])
+  @@unique([schoolId, allocationId])
+  @@index([schoolId, requestedAt])
+}
+
+/** Independent and immutable human judgment about a reversal request.
+ * Only APPROVED reverses the MANUAL PREVIEW allocation; it is NOT
+ * an actual refund, charge cancellation, bank transfer or receipt. */
+model ManualAllocationReversalDecision {
+  id String @id
+  schoolId String
+  requestId String
+  action ManualAllocationReversalAction
+  reason String @db.VarChar(500)
+  reviewerMembershipId String
+  reviewerUserId String
+  decidedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  request ManualAllocationReversalRequest @relation(fields: [schoolId, requestId], references: [schoolId, id], onDelete: NoAction, map: "ManualAllocationReversalDecision_request_fkey")
+  reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ManualAllocationReversalDecision_reviewer_fkey")
+
+  @@unique([schoolId, requestId])
+  @@index([schoolId, decidedAt])
+}
+
+
+/** Immutable fee adjustment PROPOSAL ONLY; no charge mutation, approved
+ * balance reduction, refund, payment allocation, waiver execution or receipt. */
+model FeeAdjustmentProposal {
+  id String @id
+  schoolId String
+  obligationId String
+  requestKey String @db.VarChar(64)
+  kind FeeAdjustmentKind
+  proposedAmountMinor BigInt
+  currency String @db.VarChar(3)
+  reason String @db.VarChar(500)
+  proposerMembershipId String
+  proposerUserId String
+  proposedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  obligation FeeObligation @relation(fields: [schoolId, obligationId], references: [schoolId, id], onDelete: NoAction, map: "FeeAdjustmentProposal_obligation_fkey")
+  proposer Membership @relation(fields: [schoolId, proposerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "FeeAdjustmentProposal_proposer_fkey")
+  decision FeeAdjustmentDecision?
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, requestKey])
+  @@index([schoolId, obligationId, proposedAt])
+  feeWaiverApplications FeeWaiverApplication[]
+}
+
+/** Independent human approval/rejection records policy review only.
+ * Even APPROVED creates NO effective waiver or balance mutation:
+ * operational effect requires its own later accepted ledger design. */
+model FeeAdjustmentDecision {
+  id String @id
+  schoolId String
+  proposalId String
+  action FeeAdjustmentDecisionAction
+  reason String @db.VarChar(500)
+  reviewerMembershipId String
+  reviewerUserId String
+  decidedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  proposal FeeAdjustmentProposal @relation(fields: [schoolId, proposalId], references: [schoolId, id], onDelete: NoAction, map: "FeeAdjustmentDecision_proposal_fkey")
+  reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "FeeAdjustmentDecision_reviewer_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, proposalId])
+  @@index([schoolId, decidedAt])
+  feeWaiverApplications FeeWaiverApplication[]
+}
+
+
+/** INTERNAL accounting-waiver application from an independently APPROVED
+ * WAIVER policy decision only. No external bank settlement, refund or
+ * official receipt. Money and currency are copied by a PostgreSQL trigger.
+ * Existing human-reviewed claims must fit the adjusted charge. */
+model FeeWaiverApplication {
+  id String @id
+  schoolId String
+  obligationId String
+  proposalId String
+  decisionId String
+  requestKey String @db.VarChar(64)
+  amountMinor BigInt
+  currency String @db.VarChar(3)
+  reason String @db.VarChar(500)
+  applierMembershipId String
+  applierUserId String
+  appliedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  obligation FeeObligation @relation(fields: [schoolId, obligationId], references: [schoolId, id], onDelete: NoAction, map: "FeeWaiverApplication_obligation_fkey")
+  proposal FeeAdjustmentProposal @relation(fields: [schoolId, proposalId], references: [schoolId, id], onDelete: NoAction, map: "FeeWaiverApplication_proposal_fkey")
+  decision FeeAdjustmentDecision @relation(fields: [schoolId, decisionId], references: [schoolId, id], onDelete: NoAction, map: "FeeWaiverApplication_decision_fkey")
+  applier Membership @relation(fields: [schoolId, applierMembershipId], references: [schoolId, id], onDelete: NoAction, map: "FeeWaiverApplication_applier_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, requestKey])
+  @@unique([schoolId, proposalId])
+  @@unique([schoolId, decisionId])
+  @@index([schoolId, obligationId, appliedAt])
+}
+
 /**
  * Immutable catalog revisions. A revision is never an automatic entitlement:
  * only an explicit, non-overlapping SchoolSubscriptionPeriod attaches it to
@@ -1842,4 +2233,74 @@ model ReportGuardianAcknowledgment {
  guardianLink GuardianStudentLink @relation(fields: [schoolId,guardianLinkId], references: [schoolId,id], onDelete: NoAction)
  actor Membership @relation(fields: [schoolId,actorMembershipId], references: [schoolId,id], onDelete: NoAction)
  @@unique([schoolId,publicationId,studentId,guardianLinkId])
+}
+
+/** Explicit versioned financial account visibility, not payment confirmation. */
+model FeeAccountRelease {
+ id String @id
+ schoolId String
+ obligationId String
+ requestKey String @db.Uuid
+ revision Int @default(1)
+ action String @db.VarChar(16)
+ visibility String @db.VarChar(32)
+ reason String @db.VarChar(500)
+ actorMembershipId String
+ actorUserId String
+ createdAt DateTime @default(now())
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ obligation FeeObligation @relation(fields:[schoolId,obligationId],references:[schoolId,id],onDelete:NoAction)
+ actor Membership @relation(fields:[schoolId,actorMembershipId],references:[schoolId,id],onDelete:NoAction)
+ @@unique([schoolId,id])
+ @@unique([schoolId,requestKey])
+ @@unique([schoolId,obligationId,revision])
+}
+/** School-approved acknowledgment of an actual independently reviewed manual
+ * allocation. This does not claim provider certification or move bank funds. */
+model FeeReceipt {
+ id String @id
+ schoolId String
+ obligationId String
+ allocationId String
+ requestKey String @db.Uuid
+ ordinal Int @default(1)
+ receiptNumber String @default("") @db.VarChar(32)
+ amountMinor BigInt @default(1)
+ currency String @default("XXX") @db.VarChar(3)
+ snapshot Json @default("{}")
+ reason String @db.VarChar(500)
+ actorMembershipId String
+ actorUserId String
+ issuedAt DateTime @default(now())
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ obligation FeeObligation @relation(fields:[schoolId,obligationId],references:[schoolId,id],onDelete:NoAction)
+ allocation ManualPaymentAllocation @relation(fields:[schoolId,allocationId],references:[schoolId,id],onDelete:NoAction)
+ actor Membership @relation(fields:[schoolId,actorMembershipId],references:[schoolId,id],onDelete:NoAction)
+ @@unique([schoolId,id])
+ @@unique([schoolId,allocationId])
+ @@unique([schoolId,ordinal])
+ @@unique([schoolId,receiptNumber])
+ @@unique([schoolId,requestKey])
+}
+
+/** Private normalized raster evidence; no automatic verification or credit. */
+model PaymentEvidenceAttachment {
+ id String @id
+ schoolId String
+ evidenceId String
+ requestKey String @db.Uuid
+ sha256 String @db.VarChar(64)
+ mediaType String @db.VarChar(32)
+ sizeBytes Int
+ width Int
+ height Int
+ actorMembershipId String
+ actorUserId String
+ createdAt DateTime @default(now())
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ evidence PaymentEvidence @relation(fields:[schoolId,evidenceId],references:[schoolId,id],onDelete:NoAction)
+ actor Membership @relation(fields:[schoolId,actorMembershipId],references:[schoolId,id],onDelete:NoAction)
+ @@unique([schoolId,id])
+ @@unique([schoolId,requestKey])
+ @@unique([schoolId,evidenceId,sha256])
 }

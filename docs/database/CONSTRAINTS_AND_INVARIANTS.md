@@ -1,5 +1,89 @@
 # Constraints and Invariants
 
+## Phase 9 append-only internal fee waivers (AUTHORED; SQL NOT VERIFIED)
+
+- One FeeWaiverApplication must reference an exact school-owned
+  FeeObligation, original `kind=WAIVER` FeeAdjustmentProposal
+  and independent terminal `action=APPROVED`
+  FeeAdjustmentDecision. Only an active same-school School
+  Super Admin other than the original School Administrator
+  proposer can apply; PostgreSQL copies exact source money
+  and stamps time, unique school/proposal, school/decision and
+  request UUID. SQL forbids history mutations.
+- School-row-locked SQL guarantees
+  `sum(applied waiver minor units)+
+  sum(independently VERIFIED reference claims)<=
+  original immutable obligation minor units`. All VERIFIED
+  claims are counted, even those with reversed preview
+  allocations; no implicit refunded funds. Companion
+  INSERT guards on future payment VERIFICATION and manual
+  ALLOCATION enforce the adjusted charge after a waiver.
+  Every amount remains PostgreSQL BIGINT/NUMERIC until HTTP
+  serializes exact decimal strings.
+- CORRECTION_PROPOSAL and REJECTED or undecided waiver proposals
+  are not effective adjustments. An approved proposal stays
+  advisory until an explicit once-only waiver application;
+  no PATCH/DELETE/receipt/refund or external settlement.
+- Only privileged current school owner reads the derived
+  adjustment balance preview. No student/guardian/teacher/other
+  school data access, and all writes are default OFF.
+  Actual disposable Postgres concurrency, direct SQL bypass,
+  membership revocation and migration tests remain BLOCKED.
+
+
+## Phase 9 manual allocation reversal (AUTHORED / NOT VERIFIED)
+
+- Only an active same-school School Administrator can append one
+  `ManualAllocationReversalRequest` for an existing allocation;
+  amount/currency are copied from exact original under School row
+  lock. School/requestKey and school/allocation uniqueness make
+  replay and concurrent duplicate correction safe.
+- One independently current same-school School Super Admin can
+  append a one-time APPROVED or REJECTED
+  `ManualAllocationReversalDecision`, with exact requester and
+  original amount/currency revalidation inside SQL. Both tables
+  reject UPDATE, DELETE and TRUNCATE; originals are unchanged.
+- Only APPROVED offsets the FULL original allocation in owner-only
+  numeric-string preview. Gross allocation, approved reversed sum,
+  net active allocation and preview remainder are separate; a
+  reversed verified claim cannot be allocated again. REJECTED
+  preserves the original allocation. Both outcomes are human
+  corrections, not actual bank refunds, cash movements, receipts
+  or official student balances.
+- One request per allocation is deliberately final, including if
+  rejected. A future audited versioning policy is needed for
+  repeated or partial corrections. Runtime migration, concurrency
+  and financial security gates are NOT EXECUTED.
+
+
+## Phase 9 manually verified claim allocation (AUTHORED, NOT VERIFIED)
+
+- A submitted manual bank reference is distinct from a VERIFIED
+  reviewer attestation, and both are distinct from a newly allocated
+  **internal preview credit**. No bank-confirmed settlement, official
+  balance, paid student status, receipt, refund or reversal is implied.
+- Every `ManualPaymentAllocation` references the same original school,
+  obligation, bank-reference evidence and one independently VERIFIED
+  payment-review decision through tenant composite foreign keys.
+  PostgreSQL holds the school's row lock and checks the actual active
+  School Super Admin allocator, distinct original School Administrator
+  evidence submitter, matching decision/reference, original debt and
+  currency, and SUM(previous allocations)+exact source claim amount
+  <= immutable charge.
+- A UNIQUE school/evidence and school/verification relation prohibits
+  repeated manual credit from the same reference under concurrent
+  writes. UUID request keys are unique per school and exact retries
+  require the original member, verification and reason. SQL stamps time
+  and copies amount/currency from trusted immutable evidence. INSERT
+  results cannot be UPDATEd, DELETEd or TRUNCATEd under ordinary writes.
+- Owner-only bounded final SQL projection of original obligation amount,
+  manually verified claim sum, allocated sum, unallocated reviewed sum
+  and arithmetic remainder uses PostgreSQL NUMERIC and decimal strings;
+  it is never an official published bank-cleared financial balance.
+  Tenant-specific reviewer and read revocation tests plus duplicate
+  concurrent SQL writes remain UNEXECUTED.
+
+
 ## Versioned attendance calendar and policy bounds (authored, unverified)
 
 - Each `SchoolAttendancePolicyRevision` row has an exact school and actor membership composite FK, a positive sequential per-school revision, IANA timezone, submissionBackdateDays 0–30, correctionWindowDays 0–365, reason and immutable actor/time history; POST and SQL trigger require active same-school School Administrator / School Super Admin and a valid timezone.

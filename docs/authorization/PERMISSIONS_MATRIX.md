@@ -1,6 +1,93 @@
 # Permissions Matrix
 
+## Phase 9 current financial access
+
+School Super Admin alone configures/charges, independently reviews claims,
+allocates, applies approved waivers, approves full reversals, issues receipts,
+controls publication and reads reports. School Admin submits reference/image
+claims and adjustment/reversal requests, and reads only their own evidence and
+original school charge submission targets. Reviewer must differ from the original
+submitter. Current verified students/guardians read only explicitly released
+accounts/receipts matching their active relationship and chosen visibility.
+No teacher, platform cross-tenant or unverified financial access is implied.
+Private bank images are never available to student/guardian recipients.
+Every endpoint and SQL projection rechecks active school and membership.
+
+## Phase 9 internal applied waivers (AUTHORED, NOT VERIFIED)
+
+The current active same-school `SCHOOL_SUPER_ADMIN` alone may
+apply a previously independent APPROVED WAIVER, using a separate
+default-OFF feature switch and an explicit UUID/reason request.
+The original School Administrator proposer cannot apply the
+waiver or access the full adjusted-fee preview. Both the service
+and PostgreSQL enforce current active same-school membership,
+unique proposal/decision and cross-ledger cap. A Student,
+Guardian, Teacher or Platform Super Admin receives no finance
+view, authority to apply, bank refund or receipt rights. This
+changes an INTERNAL adjusted-charge preview only, not a published
+student fee account. D-P9-007 / ADR-P9-007.
+
+
+## Phase 9 fee waiver proposal / advisory approval — AUTHORED ONLY
+
+Current active same-school SCHOOL_ADMIN may propose reasoned waiver or
+fee correction to an existing immutable school fee debt, bounded to
+its original currency and charge. Only a **different**, current
+same-school SCHOOL_SUPER_ADMIN may record one immutable APPROVED or
+REJECTED advisory decision. Neither role may thereby cancel a student
+debt, produce an effective waiver, refund money or issue a receipt.
+Admin sees only own proposals; owner sees bounded same-school queue.
+All finance writes are default-OFF, and no guardians/students/staff/
+platform roles acquire financial access. D-P9-006.
+
+
 For assignment-administration list/detail reads **only**, the D-020/D-023 development implementation default is authenticated, active, same-school `school:configure` (currently School Administrator and School Super Admin), plus tenant-scoped resource checks and minimum needed fields. This does **not** grant general assignment-administration read to every `academic:read` role, Platform Super Admin, parents, or teachers. Teacher self-service requires a distinct exact-active-assignment-scoped design. Read handlers are not implemented or validated merely by recording this policy.
+
+## Phase 9 interim finance workflow (AUTHORED, NOT VERIFIED)
+
+The configuration catalog continues to reserve fee-category/policy authoring
+and explicit pupil-obligation issuance to the current same-school
+`SCHOOL_SUPER_ADMIN`, guarded independently in application and PostgreSQL.
+For reference-only school operational submissions, an active same-school
+`SCHOOL_ADMIN` may record **unverified** transfer-reference evidence for an
+existing exact-school obligation and see only their own evidence; this does
+**not** authorize fee edits, bank verification, receipts, payment callbacks,
+student-linked finance reports, exports or wider financial data reads.
+A **different** active same-school `SCHOOL_SUPER_ADMIN` must explicitly
+attest the claimed reference against independently observed bank funds to
+append one VERIFIED/REJECTED review; no same-user self-review, no automatic
+settlement or publication. Teachers, students, guardians, platform support
+and Platform Super Admin gain no implied finance access. Both operations
+are disabled by default pending database/security acceptance. D-P9-003,
+ADR-P9-003. This scoped development policy does not silently create a
+delegated bursar role.
+
+## Phase 9 manual allocation scope (AUTHORED, NOT VERIFIED)
+
+Only a current same-school `SCHOOL_SUPER_ADMIN` may allocate a previously
+independently VERIFIED manual evidence claim to its original same-school
+obligation or read the **internal, provisional** school-wide allocation
+preview. `SCHOOL_ADMIN` can submit unverified reference evidence but
+cannot allocate, issue receipts, read the full balance preview or bypass
+the School Super Admin's separate verification. Student/guardian and
+teacher roles gain no fee balance, credit or payment receipt endpoint.
+The allocator's same-school identity and exact source evidence are
+independently revalidated in PostgreSQL under a school lock. It is
+not production payment settlement; writes are disabled by default.
+D-P9-004 / ADR-P9-004.
+
+## Phase 9 correction of manual allocation preview (AUTHORED, NOT VERIFIED)
+
+Current same-school `SCHOOL_ADMIN` may submit only one immutable,
+reasoned full-manual-allocation reversal **request**. A distinct active
+same-school `SCHOOL_SUPER_ADMIN` may independently approve or reject.
+Only APPROVED adjusts the internal owner-only preview, not actual
+funds, original documents, payment status or receipt. Direct SQL
+checks role, school, exact historical allocation, and preserved
+amount/currency under the school lock. No student/guardian or staff
+refund, transfer, paid-status or official balance rights arise from
+this workflow. Both fee and reversal write flags remain OFF.
+D-P9-005 / ADR-P9-005.
 
 The matrix below expresses the governing permission model. Server-side governance is mandatory; UI hiding is not sufficient.
 

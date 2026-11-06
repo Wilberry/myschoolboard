@@ -116,6 +116,93 @@ This preparation data is not an approved result. It must not combine marks into 
 
 Current teacher correction context shows a returned original's approved value as **not yet approved**; the verified reviewer queue includes its correction request. The approved-only gradebook remains incomplete while returned initial marks or correction requests lack approval; when the first correction is independently APPROVED, its points become the reviewed effective mark even if the immutable initial decision remains RETURNED. New `RETURNED_CORRECTION_PENDING` status makes the interim state explicit. Synthetic returned-first/reviewed-correction flow authored; Node regression guard updated. No official/student result, CBT key or report publication. Actual SQL/Node/Vitest/full CI checks NOT RUN, Phase 6/7 acceptance BLOCKED. D-050/ADR-036.
 
+## Phase 9 waiver application guard (AUTHORED / NOT VERIFIED)
+
+Only a signed-in active same-school School Super Admin can
+create an internal FeeWaiverApplication for an exact independent
+APPROVED `kind=WAIVER` proposal. The original current school
+administrator is the proposer. PostgreSQL holds School lock,
+rechecks actors, debt, proposal and decision and bounds all
+applied waivers plus independently verified manual bank
+reference claims to the original debt. Additional SQL INSERT
+guards on new VERIFIED evidence reviews and new manual
+allocations prevent post-waiver overcredit. Request/decision
+reuse is idempotent only on exact member/key/payload. School
+Super Admin-only no-store SQL reader rechecks current school
+and membership for each returned waiver. No receipts, refund,
+actual payment settlement, parent/student access or arbitrary
+fee re-pricing. The default-OFF waiver and master switches
+must both be enabled for writes. D-P9-007 / ADR-P9-007.
+
+
+## Phase 9 advisory fee adjustments — AUTHORED, NOT VERIFIED
+
+Actual signed-in current SCHOOL_ADMIN in the exact active school may
+submit a bounded WAIVER/CORRECTION_PROPOSAL attached to an issued
+fee obligation. A separate same-school active SCHOOL_SUPER_ADMIN
+may record one reasoned terminal advisory approval/rejection. School
+locking and composite database FKs recheck real actor, original debt
+and review independence. No effective school fee amount, paid status,
+manual balance preview or receipt changes. Admin reads own proposals;
+owner reads bounded queue. All write flags default OFF. D-P9-006 /
+ADR-P9-006. Runtime migration, concurrent SQL and authenticated
+privacy tests remain NOT EXECUTED.
+
+
+## Phase 9 manual allocation preview reversal permissions (AUTHORED, NOT VERIFIED)
+
+Only an authenticated current same-school School Administrator may
+request one full manual-allocation preview reversal. They cannot
+approve it, submit a replacement amount or perform an actual refund.
+Only an active distinct same-school School Super Admin may append one
+terminal APPROVED or REJECTED decision, with actor, allocation, school
+and copied amount verified again by PostgreSQL under the School row
+lock. Original evidence and human verification remain unchanged.
+School Administrators see only their own requests; School Super
+Admins may see the bounded school queue. No other role has this
+permission or official fee-status access. All writes require the
+existing default-OFF master flag and the new default-OFF reversal
+flag. Runtime authorization, concurrency and privacy tests remain
+NOT EXECUTED. D-P9-005 / ADR-P9-005.
+
+
+## Phase 9 owner-only manual reviewed-claim allocation (AUTHORED / NOT VERIFIED)
+
+Only a signed-in current active same-school `SCHOOL_SUPER_ADMIN` can
+create a reasoned, once-only `ManualPaymentAllocation` from a
+`VERIFIED`, explicitly bank-attested same-school payment reference
+claim. PostgreSQL locks the same school row as claim submission and
+review and checks independent original School Administrator submitter,
+review verdict/reference/obligation and exact source amount/currency.
+No rejected/pending/duplicate/foreign claim or forged allocator may
+create credits. The owner-only final SQL query repeats active school and
+membership authorization and returns bounded provisional arithmetic
+metadata with no official PAID/SETTLED/receipt semantics. No student,
+guardian, teacher, School Administrator or platform role inherits owner
+balance access. The POST is disabled without both master and allocation
+feature switches. Authoring is NOT acceptance; actual PostgreSQL,
+session, direct-SQL, concurrent transaction and strict security tests
+remain mandatory. D-P9-004 / ADR-P9-004.
+
+
+## Phase 9 payment-reference submission and manual verification (AUTHORED / NOT VERIFIED)
+
+An actual signed-in current same-school `SCHOOL_ADMIN` may append only
+`SUBMITTED` manual bank-reference metadata for one school-owned
+FeeObligation and see **only that member's submitted claims**.
+No teacher, student, guardian, unrelated admin, platform operator or
+School Super Admin may impersonate this submitter. A distinct actual
+signed-in active same-school `SCHOOL_SUPER_ADMIN` is independently
+responsible for the one immutable `VERIFIED`/`REJECTED` review;
+self-review, cross-school review, forged actor IDs, wrong reference,
+over-verified sum and changed replay are rejected again by PostgreSQL
+under the shared school lock. Review `VERIFIED` explicitly records
+manual fundsConfirmed attestation and does not grant proof of external
+settlement, verified receipt, parent access or balance disclosure.
+All three finance write switches are OFF by default. D-P9-003 /
+ADR-P9-003. File uploads remain unavailable until secure storage and
+scanning. Database and browser tests remain unexecuted.
+
 
 ## Phase 7 reviewed-only manual academic gradebook foundation — AUTHORED, NOT VERIFIED
 

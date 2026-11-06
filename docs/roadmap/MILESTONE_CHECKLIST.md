@@ -1,5 +1,23 @@
 # Milestone Checklist
 
+## Phase 9 manual-accounting acceptance — 6 November 2026
+
+**FEE-REQ-001: implemented and locally accepted for development PR integration.**
+Existing Phase 9 history is reconciled with accepted Phases 1–8 on
+`integration/phase9-after-phase8-cloud-20261106`. Exact balances, approved manual
+receipts, private image evidence, independent review/allocation, explicit waiver
+applications, reversals, publication/withdrawal, verified recipient access and
+role-specific workflow screens are implemented. Local verification includes 58
+migrations on independently verified disposable PostgreSQL, all 207 Node guards,
+414 Vitest tests, 11 real browser acceptance scenarios, accessibility, print/privacy,
+financial concurrency, build/lint/types/format and zero-vulnerability audit.
+Official JS/WASM Prisma paths passed; Rust CLI downloads remain proxy-blocked.
+All finance flags default OFF. No live provider or production release.
+GitHub PR integration remains pending API access; main is still accepted Phase 8
+`83676cf9dcae2d416df991956e3dfa411b8ac6a0`, with no Phase 9 merge SHA.
+See [current acceptance and limitations](../quality/PHASE9_CLOUD_ACCEPTANCE_20261106.md).
+This current entry supersedes the historical authored/unverified Phase 9 notes below.
+
 ## Phase 8 local acceptance — 6 November 2026
 
 **RES-REQ-001: implemented and locally accepted for development integration.**
@@ -402,6 +420,246 @@ Scope, limitations and actual command results:
 `feature/phase7-returned-manual-mark-remediation` resolves the returned-proposal dead end in the original manual grade review workflow. A **terminally RETURNED initial manual mark** may now be amended only through a new immutable reasoned `AssessmentManualCorrectionRequest` by its current exact assigned teacher, followed by the same independently verified PRIMARY HEAD_OF_SECTION or SECONDARY PRINCIPAL academic decision. SQL requires the original initial review to exist (APPROVED or RETURNED), the same active original teacher/enrollment/school and mark limits, a changed bounded value, and no already pending correction. It does **not** change or overwrite the original mark or returned decision.
 
 Current teacher correction context shows a returned original's approved value as **not yet approved**; the verified reviewer queue includes its correction request. The approved-only gradebook remains incomplete while returned initial marks or correction requests lack approval; when the first correction is independently APPROVED, its points become the reviewed effective mark even if the immutable initial decision remains RETURNED. New `RETURNED_CORRECTION_PENDING` status makes the interim state explicit. Synthetic returned-first/reviewed-correction flow authored; Node regression guard updated. No official/student result, CBT key or report publication. Actual SQL/Node/Vitest/full CI checks NOT RUN, Phase 6/7 acceptance BLOCKED. D-050/ADR-036.
+
+## Phase 9 — cumulative verification and database target attestation (2026-10-18)
+
+- [x] Audited the existing loopback-only local runner and
+  identified the absence of a proof INSIDE the target database;
+  TCP forwarding can make a shared database look local.
+- [x] Authored Phase 9 stricter wrapper requiring an
+  operator-provisioned per-disposable-test-DB secret nonce,
+  existing synthetic target controls, all finance write
+  gates OFF, sanitized libpq connection parameters and
+  read-only psql attestation **before migrations/seed**.
+- [x] Authored fake-spawn cases for missing/incorrect nonce,
+  untrusted PG overrides, unsafe URL options, wrong DB,
+  command ordering and abort-before-npm. Registered
+  tests and source guard in existing test/local guard scripts
+  without changing GitHub CI or local CI command order.
+- [x] Added exact safe runbook and D-P9-008 / ADR-P9-008.
+- [x] Isolated V8 static guard: 2/2 structural predicates
+  passed against freshly fetched GitHub source files.
+- [ ] **NOT EXECUTED:** actual Node test suite,
+  physical disposable DB attestation, Prisma schema
+  validation/generation, cumulative PostgreSQL migrations,
+  authenticated finance integration/races, typecheck,
+  build and strict `npm audit --audit-level=high`.
+- [ ] Phase 9 FEE-REQ-001 and full security acceptance
+  remain BLOCKED; never run on shared/live DB or enable
+  live payment writes.
+
+
+## Phase 9 — bounded applied fee waivers (2026-10-16)
+
+- [x] Authored append-only `FeeWaiverApplication` with
+  same-school original debt, WAIVER proposal, independent
+  APPROVED decision and actual School Super Admin actor.
+  UUID request/key and source-linked unique constraints
+  prevent double application; SQL copies exact minor units.
+- [x] Authored SQL school-locked
+  `sum(all VERIFIED bank-reference claims)+sum(applied waivers)
+  <= original debt`, including manually reversed allocations.
+  Added companion INSERT guards for future VERIFIED reviews
+  and manual allocations after an applied waiver.
+- [x] Owner-only private no-store GET/POST, strict
+  decisionId/UUID/reason and exact retry, distinct default-OFF
+  waiver + master finance switches. Non-WAIVER corrections
+  remain advisory.
+- [x] Extended exact-decimal owner-only internal preview
+  with applied waived money, adjusted charge and adjusted
+  arithmetic remainder. Original fee and historic verified
+  claims remain immutable. No settlement, refund or receipt.
+- [x] Authored synthetic actor/tenant/policy/cap/replay and
+  future-after-waiver verified-claim guard tests and
+  source-invariant predicates.
+- [ ] **NOT EXECUTED:** actual cumulative migration against
+  confirmed disposable PostgreSQL, Prisma schema validation/
+  generation, authenticated Vitest and concurrency/SQL forgery
+  tests, TS/lint/format/build, browser/privacy review, strict
+  dependency audit and full release gates.
+- [ ] Design separately audited effective CORRECTION_PROPOSAL,
+  waiver correction/reversal, real settled payments, actual
+  refunds, reconciliation and verified receipts.
+- [ ] FEE-REQ-001 Phase 9 acceptance remains BLOCKED and
+  writes must remain default-OFF on shared/live data.
+
+
+## Phase 9 — advisory waiver / fee correction governance (2026-10-16)
+
+- [x] Authored immutable tenant-bound FeeAdjustmentProposal and
+  FeeAdjustmentDecision with reason, actor, time, original fee and
+  independent review (WAIVER/CORRECTION_PROPOSAL; APPROVED/REJECTED).
+- [x] Authored school-locked SQL validators for real SCHOOL_ADMIN
+  proposer, independent SCHOOL_SUPER_ADMIN reviewer, fee amount
+  <= unchanged original, no history mutation, unique request/review.
+- [x] Authored strict no-store own-admin proposal queue, owner queue
+  and independent decision route. No client actor/money spoofing,
+  actual adjustment application, paid status or receipt route.
+- [x] Authored synthetic real-session idempotency, denial, direct
+  SQL tamper and unchanged-fee/preview tests; source guard registered.
+- [x] Added separately default-OFF adjustment-proposal flag.
+- [ ] Execute cumulative disposable PostgreSQL migrations,
+  Prisma schema validation, actual integration/concurrency tests,
+  Node source guards, TS/lint/format/build, browser/privacy review
+  and strict dependency-security audit.
+- [ ] Design and verify actual accounting-effective adjustments,
+  refund and settlement events, reconciliation, receipts and
+  verified student/guardian access.
+- [ ] FEE-REQ-001 and Phase 9 are NOT ACCEPTED/DEPLOYED.
+
+
+## Phase 9 — manual allocation correction and reversal review (2026-10-16)
+
+- [x] Authored immutable `ManualAllocationReversalRequest` tied to
+  exactly one original manual allocation; current active School Admin
+  alone may request whole-amount correction with UUID request key
+  and reason; PostgreSQL copies original amount/currency/time.
+- [x] Authored separate immutable `ManualAllocationReversalDecision`
+  (APPROVED/REJECTED), requiring an independently verified same-school
+  School Super Admin, unique terminal decision, school-locked SQL
+  repeat authorization and no history mutation.
+- [x] Authored scoped private no-store request/list and independent
+  decision POST APIs, strict payloads and idempotent exact replay.
+  Default-OFF master and new manual reversal write switches retained.
+- [x] Updated owner-only internal preview to display gross allocation,
+  approved reversals, effective net allocation, non-reusable claims
+  and exact decimal remaining without PAID/refund/receipt claims.
+- [x] Authored synthetic role/tenant/duplicate/replay/direct database
+  forgery tests, approved/rejected state scenarios, nonmutating
+  history and preview arithmetic. New source guard added to full
+  existing `npm test` / local guard commands.
+- [ ] **NOT EXECUTED:** Prisma/schema and migration verification,
+  actual disposable PostgreSQL current-role/tenant/lock/concurrency
+  tests, Node/Vitest, lint/format/typecheck/build, privacy/browser
+  tests and strict dependency audit.
+- [ ] Plan separately audited actual settlement, refund/charge
+  adjustments/reversals, receipts, provider callbacks and
+  child-relationship-scoped finance views. This slice is
+  INTERNAL preview-only, not the final financial ledger.
+- [ ] Phase 9 FEE-REQ-001 acceptance remains BLOCKED.
+
+
+## Phase 9 — append-only manually reviewed payment allocations (2026-10-16)
+
+- [x] Authored school-locked `ManualPaymentAllocation` with exact
+  obligation/reference/verified-decision chain, SQL-copied money,
+  one immutable allocation per evidence/decision, idempotency
+  request key, current School Super Admin author and reason.
+- [x] Authored owner-only no-store GET with scoped final SQL and
+  exact numeric-string charge/reviewed/allocated/unallocated/remaining
+  projections. A FULL_MANUAL_ALLOCATION is explicitly NOT paid/settled.
+- [x] Authored private default-OFF POST with strict actor/decision/
+  replay checking, serialized transactions and no client money input.
+- [x] Authored synthetic concurrent duplicate, foreign role, rejected
+  review, SQL actor tampering, history mutation, duplicate request,
+  default-disabled and preview arithmetic test cases; added Node
+  source guard to existing test and local guard scripts.
+- [ ] **NOT EXECUTED:** disposable PostgreSQL SQL migrations/
+  concurrency/tenant deletion, actual synthetic authenticated Vitest,
+  Prisma validation/generate, TypeScript, static lint/format/build,
+  browser/privacy checks and strict `npm audit --audit-level=high`.
+- [ ] Implement immutable adjustment/reversal/refund ledgers before
+  official outstanding balances. Distinguish banking settlement,
+  payment provider callbacks, receipts and independent reconciliation
+  from human-claimed references and manually allocated previews.
+- [ ] Phase 9 full requirements and security exit remains BLOCKED.
+  No production payments, receipt issue, parent/student finance views
+  or merge/deployment authorized.
+
+
+## Phase 9 — payment reference evidence and separate manual review (2026-10-16)
+
+- [x] Authored append-only `PaymentEvidence` for one issued school
+  obligation; `SUBMITTED` is not verified funds. Unique school
+  request and reference-digest keys, amount/currency bounds, explicit
+  submitter evidence, immutable history and tenant-composite foreign keys.
+- [x] Authored independent `PaymentVerificationDecision`: active
+  same-school SCHOOL_SUPER_ADMIN different from submitting SCHOOL_ADMIN,
+  one terminal VERIFIED/REJECTED event, explicit bank-funds attestation
+  only on verified, same bank reference digest and SQL school-locked
+  verified-amount cap. No silent UPDATE or second decision.
+- [x] Authored private no-store claim GET/POST and independent review
+  POST; role-based per-school school-admin own-only claim projection;
+  school-owner bounded queue. No file/provider/status spoofing,
+  student/parent read, payment record, receipt or actual settlement.
+- [x] Authored synthetic authenticated tests: duplicate idempotency,
+  changed request, wrong reference, excess verified amount, spoofed
+  actor/tenant, separated reviewer and immutable decisions.
+- [x] Added independent default-OFF evidence and review environment
+  flags in addition to existing Phase 9 master finance-write switch.
+- [ ] **NOT EXECUTED:** PostgreSQL migration and trigger acceptance,
+  Prisma validation/generation, database/role/replay/concurrent-approval
+  tests, Node/Vitest, lint/typecheck/build, full CI security audit and
+  browser/privacy review on a confirmed disposable environment.
+- [ ] Implement private file uploads only after malware/type/size,
+  secure tenant storage and scoped retrieval.
+- [ ] Next roadmap slice: append-only verified payment allocations,
+  reasoned reversals/refunds, arithmetic balance projection, verified
+  receipts and reconciliation with strict school relationship access.
+- [ ] Phase 9 FEE-REQ-001 exit remains BLOCKED; this is not live.
+
+
+## Phase 9 — exact student fee obligations (AUTHORED; 2026-10-16)
+
+- [x] Schema + additive migration: one immutable fee obligation per
+  school/pupil/session/term/category, reference exact immutable revision,
+  current school actor + active enrollment/section/period checked in SQL.
+- [x] SQL locks same School row as fee configuration, derives student,
+  class, period, price and currency from trusted rows, rejects stale
+  price version, prevents silent charge changes/deletions/truncations.
+- [x] Private no-store GET/POST, school-owner-only, with single UUID
+  idempotency key and same-payload replay; never accepts client money,
+  issuer, pupil, school period, or verification state.
+- [x] Default-OFF `PHASE9_FEE_WRITE_ENABLED` environment switch for
+  category, fee policy and charge POSTs; synthetic integration cases
+  stub ON only in test session.
+- [x] Source invariant guard extended with debt ledger; its **3
+  predicates passed** in GitHub-fetched isolated V8, not Node.
+- [ ] Run full Node test file and synthetic database integration suite
+  in an operator-confirmed disposable PostgreSQL environment, including
+  proper casefold/string issues, stale version, cross school, replay
+  collision race, revocation, invalid enrollment and triggers.
+- [ ] Inspect PostgreSQL migrations against Prisma generated schema,
+  audit previous trigger/deletion-cascade safety and concurrency races.
+- [ ] Run unchanged format, lint, typecheck, build, all tests and strict
+  `npm audit --audit-level=high`; no weakening security controls.
+- [ ] Design separate actual payment upload/evidence and independent
+  verification authorization, idempotent callbacks (simulation only),
+  refunds/reversals, verified receipt, allocation and reconciliation.
+- [ ] **Exit BLOCKED:** obligations not verified, no real collection.
+
+
+## Phase 9 — fee configuration foundation checkpoint (2026-10-16)
+
+- [x] Select a committed Phase 7 baseline independent of uncommitted
+  Phase 8 verification changes; create isolated `feature/phase9-fees-payments-foundation`.
+- [x] Author school-owned immutable FeeCategory and FeeStructureRevision:
+  explicit category/session/term/target/currency/positive minor-unit amount,
+  version and actor evidence; no payment or obligation side effects.
+- [x] Author additive PostgreSQL migration: active school and current
+  School Super Admin actor, exact live scope, nonclosed academic periods,
+  composite tenant FKs, school-lock revision serializing, immutable guards.
+- [x] Author private configuration-only GET/POST routes with actual auth
+  session, server-derived actor ID, strict request validation, bounded
+  school-authorized reads and no-store responses.
+- [x] Author synthetic authenticated integration tests and Node source guard;
+  register guard in full test commands without weakening prior tests.
+- [ ] Apply full cumulative Prisma SQL migrations to **only** operator-confirmed
+  disposable PostgreSQL, verify migration history/checksums, schema generate
+  and validate. Never migrate or reset a shared DB.
+- [ ] Execute Phase 9 node guards, synthetic Vitest DB tests, SQL direct
+  insert forged actor/foreign tenant checks, immutable UPDATE/DELETE/TRUNCATE,
+  exact school-deletion cascade and simultaneous version concurrency.
+- [ ] Execute unchanged format/lint/typecheck/build/CI-equivalent and strict
+  high-severity dependency audit; resolve actual failures before acceptance.
+- [ ] Validate school-only finance UI, identity, privacy, browser access,
+  keyboard/navigation and explicit class/term selection before enabling.
+- [ ] Next: pin each issued immutable student/enrollment fee obligation to
+  its exact fee-structure revision, deduplicate issue requests, preserve
+  historical charge amounts, create adjustment/reversal ledger and then
+  separate upload evidence/verification/reconciliation and receipt control.
+- [ ] Phase 9 FEE-REQ-001 exit gate: **BLOCKED / NOT VERIFIED**;
+  neither Phase 8 nor Phase 9 is accepted or deployed.
 
 
 ## Phase 7 reviewed-only manual academic gradebook foundation — AUTHORED, NOT VERIFIED

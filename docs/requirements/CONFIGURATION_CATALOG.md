@@ -1,5 +1,115 @@
 # Configuration Catalog
 
+## Phase 9 internal waiver application (AUTHORED / NOT VERIFIED)
+
+`PHASE9_EFFECTIVE_WAIVER_ENABLED=false` independently defaults
+OFF beside `PHASE9_FEE_WRITE_ENABLED=false`. When explicitly
+enabled in a verified disposable test environment, only a
+current School Super Admin can apply a distinct independently
+approved original WAIVER policy decision to the INTERNAL
+adjusted-charge preview. Non-waiver correction proposals remain
+advisory only. The full cumulative verified-claim total,
+even if allocations were reversed, and prior waiver sum may not
+exceed original debt. Real payment settlement, refunds,
+public student/guardian fee balances and receipts are out of
+scope. Do not enable until all tenant, financial, browser and
+strict dependency security gates pass. D-P9-007 / ADR-P9-007.
+
+
+## Phase 9 advisory fee adjustment review (NOT VERIFIED)
+
+`PHASE9_FEE_ADJUSTMENT_PROPOSALS_ENABLED=false` defaults OFF in
+addition to `PHASE9_FEE_WRITE_ENABLED=false`. It controls only
+School Administrator-submitted WAIVER/CORRECTION_PROPOSAL records
+and separate School Super Admin advisory decisions. The decision
+never applies to an original fee debt or internal manual balance
+preview, and cannot trigger payment, refund or receipt. A separately
+audited adjustment ledger and release validation will be required
+to make school fees legally/accountingly effective. D-P9-006.
+
+
+## Phase 9 manual allocation reversal controls — NOT VERIFIED
+
+`PHASE9_MANUAL_REVERSAL_ENABLED=false` is a new independent
+default-off switch for a reasoned School Administrator full-allocation
+correction request and separate School Super Admin APPROVED/REJECTED
+decision. It additionally requires `PHASE9_FEE_WRITE_ENABLED=true`;
+do not enable on shared or live schools. The school cannot configure a
+bypass. APPROVED only subtracts from INTERNAL net-manual-allocation
+preview, not a real payment, refund, financial receipt, or revised
+historical bank claim. One immutable request per original allocation
+is the initial strict development default; rejected claims cannot be
+re-opened without a future versioned review design.
+D-P9-005 / ADR-P9-005.
+
+
+## Phase 9 manual allocation preview — NOT VERIFIED
+
+`PHASE9_MANUAL_ALLOCATION_ENABLED=false` disables reasoned manual
+allocations unless explicitly enabled together with the existing
+`PHASE9_FEE_WRITE_ENABLED=true` in a confirmed disposable synthetic
+test environment. Read access to provisional aggregate finance metadata
+remains active-school School Super Admin only; no self-service fee
+balance/receipt permission is added. A VERIFIED decision plus external
+bank reconciliation attestation alone never creates a financial
+settlement; a separate immutable allocation is required for the
+arithmetic preview. Allocations cannot exceed the original charge,
+be repeated for a claim, or change the original debt/evidence.
+Production refund/reversal/receipt features require separate reviewed
+configuration and completion of all security gates.
+D-P9-004 / ADR-P9-004.
+
+
+## Phase 9 bank-reference evidence and review — unverified development defaults
+
+School Administrator may submit an **unverified** reference-only
+bank-transfer claim against a previously issued same-school
+`FeeObligation`. Only a different current same-school School Super
+Admin may independently verify or reject after personally confirming
+the bank statement. No automatic paid/receipt status or provider
+callback is inferred. Original claims and review decisions are
+immutable. One school-scoped bank-reference digest cannot be reused
+to claim a second debt. Verified claims may not cumulatively exceed
+the original charge; refunds/reversals require separate future audit
+events, never overwriting history. No raw bank reference, document
+upload or confidential account data is persisted.
+
+Two additional independent switches default to OFF:
+`PHASE9_PAYMENT_EVIDENCE_ENABLED=false` for reference claims and
+`PHASE9_PAYMENT_REVIEW_ENABLED=false` for reviewer attestations.
+Both also require `PHASE9_FEE_WRITE_ENABLED=true` in an approved
+disposable synthetic test environment. There is no school-facing
+option to bypass these environment security controls.
+D-P9-003 / ADR-P9-003; no provider choice or production approval.
+
+
+## Phase 9 fee configuration development contract (not verified)
+
+Each school explicitly defines durable fee category codes and reasoned
+revisions for an existing category/session/term and SCHOOL/SECTION/CLASS
+scope; only a current same-school SCHOOL_SUPER_ADMIN may write in this
+initial candidate. The editable business choice is a *new version*, never
+an UPDATE of prior price evidence or an automatic repricing of obligations.
+Amounts use positive BIGINT minor units (initial conservative maximum
+1,000,000,000,000) and explicit upper-case three-letter currency;
+there is no auto-charge, auto-assignment or automatic payment verification.
+Fees may be configured for PLANNED or ACTIVE, never CLOSED periods.
+No extra fee authority, provider or historic default is assumed.
+Explicit student charge issuance pins one immutable exact-scope fee revision
+and the enrolled pupil's school, class and academic term. No automatic issuance:
+only a reasoned same-school School Super Admin action with one UUID replay key;
+current scope/period/enrollment validated again in PostgreSQL. A later policy
+revision does not alter an issued amount. This is a development-only default.
+
+`PHASE9_FEE_WRITE_ENABLED=false` disables fee-category, fee-structure and
+student-obligation POSTs unless explicitly set to `true` in a strictly
+isolated synthetic test environment. It is not a school-level option or
+a production risk acceptance.
+
+D-P9-001 / D-P9-002; ADR-P9-001 / ADR-P9-002.
+Neither migration, runtime behavior nor production adoption is verified.
+
+
 ## Attendance school calendar policy (development-only implementation default)
 
 | Setting | Default (no revision) | Scope / editor | Constraints | Audit / enforcement |

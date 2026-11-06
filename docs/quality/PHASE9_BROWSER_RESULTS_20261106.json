@@ -1,0 +1,50 @@
+{
+  "checks": [
+    {
+      "name": "P9-BROWSER-ISSUE",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P9-BROWSER-PRIVATE-IMAGE",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P9-BROWSER-REVIEW-RECEIPT",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P9-BROWSER-WAIVER-REPORT",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P9-BROWSER-ACCESSIBILITY",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P9-BROWSER-NATIVE-PRIVACY",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P9-BROWSER-REVERSAL",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P9-BROWSER-WITHDRAWAL",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P9-BROWSER-LATE-RESPONSE-SIGNOUT",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P9-BROWSER-TERMINAL-REVOCATION",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P9-BROWSER-MEMBERSHIP-REVOCATION",
+      "outcome": "PASS"
+    }
+  ],
+  "completed": 11,
+  "source": "442f5678e9455e50ba17fc6e5af21b8fd5dd8060"
+}

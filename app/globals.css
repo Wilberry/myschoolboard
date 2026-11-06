@@ -603,3 +603,112 @@ h1 {
     display: none !important;
   }
 }
+
+.finance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: 1.5rem;
+  margin-block: 1rem 2rem;
+}
+.finance-form {
+  border: 1px solid var(--border, #d5dad8);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.finance-form label {
+  display: grid;
+  gap: 0.35rem;
+}
+.finance-form input,
+.finance-form select {
+  width: 100%;
+  min-width: 0;
+}
+.finance-form input[type="checkbox"] {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.finance-table {
+  overflow-x: auto;
+  margin-block: 1rem 2rem;
+}
+.finance-table table {
+  width: 100%;
+}
+.finance-table th,
+.finance-table td {
+  padding: 0.75rem;
+  text-align: left;
+}
+.finance-controls {
+  gap: 0.75rem;
+}
+.finance-receipt {
+  max-width: 48rem;
+}
+@media print {
+  .finance-controls {
+    display: none !important;
+  }
+  .finance-table {
+    overflow: visible;
+  }
+  .finance-receipt {
+    break-inside: avoid;
+  }
+}
+
+.financial-workspace {
+  line-height: 1.5;
+}
+.finance-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  margin-block: 1rem;
+}
+.financial-workspace button {
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--green);
+  border-radius: 0.25rem;
+  color: var(--green-dark);
+  background: var(--white);
+  cursor: pointer;
+}
+.financial-workspace button:hover {
+  background: var(--lime);
+}
+.financial-workspace button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.financial-workspace
+  :is(button, input, select, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--green);
+  outline-offset: 3px;
+}
+.finance-form :is(input, select) {
+  min-height: 44px;
+  padding: 0.5rem;
+  font: inherit;
+  border: 1px solid var(--muted);
+  border-radius: 0.25rem;
+  background: var(--white);
+  color: var(--ink);
+}
+.finance-form input[type="checkbox"] {
+  min-height: 24px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+}
+.financial-workspace summary {
+  cursor: pointer;
+  padding-block: 0.75rem;
+}
+.finance-table td {
+  font-variant-numeric: tabular-nums;
+}

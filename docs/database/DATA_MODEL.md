@@ -1,5 +1,33 @@
 # Data Model
 
+## Phase 9 applied internal waiver ledger (AUTHORED, NOT VERIFIED)
+
+`FeeWaiverApplication` stores one immutable, separately initiated
+application from an independently APPROVED same-school WAIVER
+proposal and its exact school-owned debt. Reason, actual active
+School Super Admin applier, request UUID, original proposal,
+decision, minor-unit money and UTC time are audit bound by school
+composite FKs, SQL school row lock and unique source keys.
+Money and currency are copied in database from approved proposal
+and original charge. The application participates only in the
+internal adjusted-charge preview and blocks future verification
+or allocation beyond the reduced cap. It is not a payment,
+bank refund, official invoice, receipt or settlement.
+A CORRECTION_PROPOSAL remains advisory only.
+
+
+## Phase 9 fee adjustment proposal schema (unverified)
+
+`FeeAdjustmentProposal` records immutable school/debt, actor,
+WAIVER/CORRECTION_PROPOSAL, requested positive minor-unit amount,
+original currency, reason, UUID request key and time.
+`FeeAdjustmentDecision` records one separate current School Super
+Admin advisory APPROVED/REJECTED outcome, reason and time.
+Neither table represents an effective credit, accounting adjustment,
+payment refund or school-issued receipt. Tenant-composite FKs and
+School-row-locked INSERT validators are authored but unexecuted.
+
+
 ## Logical domains
 
 ### Platform and tenancy
@@ -80,10 +108,40 @@
 
 ### Finance
 
-- FeeStructure
-- FeeObligation
-- PaymentRecord
-- PaymentEvidence
+- FeeCategory — authored, immutable school label/code; Phase 9 not verified
+- FeeStructureRevision — authored, immutable tenant/period/scope/version/
+  exact money policy; **configuration only**, not a pupil debt or payment
+- FeeStructure — logical grouping of later effective structures (not a
+  separate physical table in the initial Phase 9 foundation)
+- FeeObligation — **authored; unverified** immutable explicit per-student/category/
+  session/term charge referencing one school-owned current fee-structure revision
+  and exact ACTIVE pupil enrollment; trusted SQL snapshots minor-unit amount,
+  currency and academic identity with school-bound authorization. No payments
+  or verified balances are implied.
+- PaymentEvidence — **authored/unverified:** immutable school-obligation-bound
+  manual reference claim, bank reference digest, exact positive claimed amount,
+  submitter and UUID replay key; SUBMITTED is never verified funds
+- PaymentVerificationDecision — **authored/unverified:** independent current
+  school-owner VERIFIED/REJECTED attestation, bank confirmation bit and
+  reference digest check, unique claim decision and school-locked
+  over-credit prevention; not automatically a settlement or receipt
+- ManualPaymentAllocation — **authored/unverified** one-time same-school
+  allocation from an independently VERIFIED reference claim and its exact
+  obligation. PostgreSQL derives minor-unit money, locks School, rejects
+  repeated evidence/decision, over-allocated totals and fabricated actors;
+  this does **not** establish actual funds settlement or receipt.
+- ManualAllocationPreview — derived owner-only numeric-string view
+  (no physical table) of immutable charge, independently reviewed
+  claims, manual allocations and internal preview remainder; never
+  a publicly published fee balance
+- ManualAllocationReversalRequest — **AUTHORED/UNVERIFIED:** immutable
+  School Administrator's reasoned request against one full original
+  allocation with school-bound actor, timestamp and SQL-copied money;
+  never a refund or new payment
+- ManualAllocationReversalDecision — **AUTHORED/UNVERIFIED:** distinct
+  School Super Admin APPROVED/REJECTED outcome; only APPROVED changes
+  a derived internal manual allocation preview, without updating history
+- PaymentRecord — later actual paid ledger, **not implemented**
 - Receipt
 - AdjustmentRecord
 - ReconciliationRecord
