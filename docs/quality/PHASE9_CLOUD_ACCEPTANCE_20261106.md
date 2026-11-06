@@ -179,3 +179,21 @@ At the last remote verification, `main` remains
 See the final verification addendum for committed implementation and published
 branch SHAs. No GitHub Actions, forced push, existing-data reset or production
 operation occurred.
+
+## Final verification addendum
+
+Verified implementation committed as
+`87e2bb5c8b733773beefd6f80c43f0a7b2303b8e`.
+Both `83676cf9dcae2d416df991956e3dfa411b8ac6a0` and
+`f9f4ff3819c7b2f0fcc1bab47253b64e7ff5f9fd` are confirmed ancestors.
+The final full regression after the origin/accessibility fixes passed all
+207 guards and 414 application tests in 48 files. Final lint, type checking,
+format checking and diff whitespace checks passed. The browser summary's
+`source` field is the then-current pre-commit HEAD `442f567...`; the tested
+implementation was in the working tree and is now preserved in `87e2bb5...`.
+It is not represented as a browser execution against a previously nonexistent
+commit. Subsequent evidence/PR-description commits change documentation only.
+
+The branch is ready for the normal development PR workflow on local acceptance.
+The remaining integration step is external GitHub PR creation/review/merge;
+no Phase 9 main merge has been performed, and no merge SHA is claimed.
