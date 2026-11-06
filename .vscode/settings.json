@@ -1,0 +1,12 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^pwd; git rev-parse --show-toplevel; git status --short --branch; git worktree list --porcelain$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^git -C /home/wilberry/Desktop/project/myschoolboard-phase8-stack-after-pr105 rev-parse --show-toplevel; git -C /home/wilberry/Desktop/project/myschoolboard-phase8-stack-after-pr105 status --short --branch; git -C /home/wilberry/Desktop/project/myschoolboard-phase8-stack-after-pr105 rev-parse HEAD; git -C /home/wilberry/Desktop/project/myschoolboard-phase8-stack-after-pr105 rev-parse MERGE_HEAD; git -C /home/wilberry/Desktop/project/myschoolboard-phase8-stack-after-pr105 diff --name-only --diff-filter=U$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
