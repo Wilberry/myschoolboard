@@ -1,5 +1,19 @@
 # Assessments and CBT
 
+## Phase 8 private teacher result preparation preflight (AUTHORED; UNVERIFIED)
+
+The teacher-only private/no-store preparation read reconciles independently
+authorized CBT and reviewed written-mark sources for the exact school,
+class, subject, session and term. It fails closed for identity, roster or
+counter mismatches and reports source-readiness blockers. It never combines
+scores into grades, persists official results, exposes answer keys, approves
+or publishes results, or enables student/guardian result access.
+
+Pure readiness, authenticated source-review/role/tenant, and Node source
+invariant tests are authored. Full repository acceptance is pending.
+RES-REQ-001 remains partial under D-P8-001/ADR-037.
+
+
 ## Phase 7 returned-original-mark correction remediation — AUTHORED, UNVERIFIED
 
 `feature/phase7-returned-manual-mark-remediation` resolves the returned-proposal dead end in the original manual grade review workflow. A **terminally RETURNED initial manual mark** may now be amended only through a new immutable reasoned `AssessmentManualCorrectionRequest` by its current exact assigned teacher, followed by the same independently verified PRIMARY HEAD_OF_SECTION or SECONDARY PRINCIPAL academic decision. SQL requires the original initial review to exist (APPROVED or RETURNED), the same active original teacher/enrollment/school and mark limits, a changed bounded value, and no already pending correction. It does **not** change or overwrite the original mark or returned decision.

@@ -228,6 +228,9 @@ model Verification {
 }
 
 model School {
+  reportPublications ReportPublication[]
+  reportWithdrawals ReportPublicationWithdrawal[]
+  reportAcknowledgments ReportGuardianAcknowledgment[]
   id                                  String                               @id @default(cuid())
   name                                String
   slug                                String                               @unique
@@ -287,9 +290,20 @@ model School {
   assessmentManualMarkDecisions AssessmentManualMarkDecision[]
   assessmentManualCorrectionRequests AssessmentManualCorrectionRequest[]
   assessmentManualCorrectionDecisions AssessmentManualCorrectionDecision[]
+  resultGradingAdoptions ResultGradingAdoption[]
+  resultSheetEvidences ResultSheetEvidence[]
+  resultSheetReviews ResultSheetReview[]
+  resultFinalPublicationDecisions ResultFinalPublicationDecision[]
+  resultReportCardSourcePackets ResultReportCardSourcePacket[]
+  reportGradeScaleRevisions ReportGradeScaleRevision[]
+  reportAggregationRuleRevisions ReportAggregationRuleRevision[]
+  privateOfficialReportCompositions PrivateOfficialReportComposition[]
 }
 
 model Membership {
+  reportPublications ReportPublication[]
+  reportWithdrawals ReportPublicationWithdrawal[]
+  reportAcknowledgments ReportGuardianAcknowledgment[]
   id                             String                          @id @default(cuid())
   userId                         String
   schoolId                       String
@@ -334,6 +348,14 @@ model Membership {
   assessmentManualMarkDecisions AssessmentManualMarkDecision[]
   assessmentManualCorrectionRequests AssessmentManualCorrectionRequest[]
   assessmentManualCorrectionDecisions AssessmentManualCorrectionDecision[]
+  resultGradingAdoptions ResultGradingAdoption[]
+  resultSheetEvidences ResultSheetEvidence[]
+  resultSheetReviews ResultSheetReview[]
+  resultFinalPublicationDecisions ResultFinalPublicationDecision[]
+  resultReportCardSourcePackets ResultReportCardSourcePacket[]
+  reportGradeScaleRevisions ReportGradeScaleRevision[]
+  reportAggregationRuleRevisions ReportAggregationRuleRevision[]
+  privateOfficialReportCompositions PrivateOfficialReportComposition[]
 }
 
 model ScopeGrant {
@@ -439,6 +461,7 @@ model TeacherClassSubjectAssignment {
   assessmentQuestions AssessmentQuestion[]
   assessmentDrafts AssessmentDraft[]
   assessmentManualComponents AssessmentManualComponent[]
+  resultSheetEvidences ResultSheetEvidence[]
 }
 
 model TeacherClassSubjectAssignmentEvent {
@@ -731,6 +754,7 @@ model SchoolSection {
 }
 
 model StudentRecord {
+  reportAcknowledgments ReportGuardianAcknowledgment[]
   id              String                 @id @default(cuid())
   schoolId        String
   admissionNumber String
@@ -1014,6 +1038,7 @@ model StudentAccountLinkRevocation {
 /// StudentRecord to an existing active PARENT membership; no inferred links.
 /// Terminal revocation prevents accidental restoration of past access.
 model GuardianStudentLink {
+  reportAcknowledgments ReportGuardianAcknowledgment[]
   id String @id @default(cuid())
   schoolId String
   studentId String
@@ -1348,8 +1373,10 @@ model AssessmentGradingPolicyRevision {
   subject Subject @relation(fields: [schoolId, subjectId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentGradingPolicyRevision_subject_fkey")
   actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "AssessmentGradingPolicyRevision_actor_fkey")
 
+  @@unique([schoolId, id])
   @@unique([schoolId, sessionId, termId, classId, subjectId, version], map: "AssessmentGradingPolicyRevision_context_version_key")
   @@index([schoolId, classId, subjectId, termId])
+  resultGradingAdoptions ResultGradingAdoption[]
 }
 
 /** Immutable teacher-authored offline/written assessment definition. It is
@@ -1525,4 +1552,294 @@ model SchoolSubscriptionPeriod {
   @@unique([schoolId, id])
   @@index([schoolId, startsAt, endsAt])
   @@index([planRevisionId])
+}
+
+/** School Super Admin's explicit academic adoption of an immutable grading
+ * profile for exactly one class/subject/session/term. Never report publication.
+ * Later adoption changes do not silently rewrite previously frozen evidence. */
+model ResultGradingAdoption {
+  id String @id
+  schoolId String
+  policyId String
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  ordinal Int @default(1)
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  adoptedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  policy AssessmentGradingPolicyRevision @relation(fields: [schoolId, policyId], references: [schoolId, id], onDelete: NoAction, map: "ResultGradingAdoption_policy_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ResultGradingAdoption_actor_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, policyId])
+  @@unique([schoolId, sessionId, termId, classId, subjectId, ordinal], map: "ResultGradingAdoption_context_ordinal_key")
+  @@index([schoolId, classId, subjectId, termId])
+  resultSheetEvidences ResultSheetEvidence[]
+  resultFinalPublicationDecisions ResultFinalPublicationDecision[]
+  resultReportCardSourcePackets ResultReportCardSourcePacket[]
+}
+
+/** Teacher-prepared frozen evidence. SourceManifest is ALWAYS computed
+ * by SQL from reviewed scores, never accepted from the caller. This is not
+ * an approved gradebook, official report card or public result. */
+model ResultSheetEvidence {
+  id String @id
+  schoolId String
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  assignmentId String
+  teacherMembershipId String
+  teacherUserId String
+  adoptionId String
+  revision Int @default(1)
+  reason String @db.VarChar(500)
+  sourceManifest Json @default("[]")
+  studentCount Int @default(0)
+  preparedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teacher Membership @relation(fields: [schoolId, teacherMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ResultSheetEvidence_teacher_fkey")
+  assignment TeacherClassSubjectAssignment @relation(fields: [schoolId, assignmentId, teacherMembershipId, classId, subjectId, sessionId], references: [schoolId, id, membershipId, classId, subjectId, sessionId], onDelete: NoAction, map: "ResultSheetEvidence_assignment_fkey")
+  adoption ResultGradingAdoption @relation(fields: [schoolId, adoptionId], references: [schoolId, id], onDelete: NoAction, map: "ResultSheetEvidence_adoption_fkey")
+  review ResultSheetReview?
+  finalPublicationDecision ResultFinalPublicationDecision?
+  resultReportCardSourcePackets ResultReportCardSourcePacket[]
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, sessionId, termId, classId, subjectId, revision], map: "ResultSheetEvidence_context_revision_key")
+  @@index([schoolId, teacherMembershipId, preparedAt])
+}
+/** Independent exact-section HM/Principal academic review of immutable
+ * result evidence, not School Super Admin publication or student visibility. */
+model ResultSheetReview {
+  id String @id
+  schoolId String
+  evidenceId String
+  reviewerMembershipId String
+  reviewerUserId String
+  action ManualMarkReviewAction
+  reason String @db.VarChar(500)
+  reviewedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  evidence ResultSheetEvidence @relation(fields: [schoolId, evidenceId], references: [schoolId, id], onDelete: NoAction, map: "ResultSheetReview_evidence_fkey")
+  reviewer Membership @relation(fields: [schoolId, reviewerMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ResultSheetReview_reviewer_fkey")
+
+  @@unique([schoolId, evidenceId])
+  @@index([schoolId, reviewedAt])
+}
+
+/** Append-only final School Super Admin academic release authorization.
+ * Not a public report card, disclosure, grade computation or recipient access.
+ * The database trigger repeats current owner/section/source eligibility under
+ * the school lock and assigns its contextual ordinal/timestamp itself. */
+model ResultFinalPublicationDecision {
+  id String @id
+  schoolId String
+  evidenceId String
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  adoptionId String
+  evidenceRevision Int
+  ordinal Int @default(1)
+  status String @default("APPROVED_AWAITING_RELEASE") @db.VarChar(40)
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  decidedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  evidence ResultSheetEvidence @relation(fields: [schoolId, evidenceId], references: [schoolId, id], onDelete: NoAction, map: "ResultFinalPublicationDecision_evidence_fkey")
+  adoption ResultGradingAdoption @relation(fields: [schoolId, adoptionId], references: [schoolId, id], onDelete: NoAction, map: "ResultFinalPublicationDecision_adoption_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ResultFinalPublicationDecision_actor_fkey")
+  sourcePacket ResultReportCardSourcePacket?
+  privateOfficialReportCompositions PrivateOfficialReportComposition[]
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, evidenceId])
+  @@unique([schoolId, sessionId, termId, classId, subjectId, ordinal], map: "ResultFinalPublicationDecision_context_ordinal_key")
+  @@index([schoolId, decidedAt])
+}
+
+/** Frozen, internal ONLY, per-pupil report-card source evidence packet.
+ * NO calculated official grade, grade bands, downloadable document, public
+ * release or student/guardian access. The trigger builds studentSourceCards
+ * from the validated approved evidence, never caller-submitted pupil marks.
+ * Future official report versions and visibility require separate workflows. */
+model ResultReportCardSourcePacket {
+  id String @id
+  schoolId String
+  finalDecisionId String
+  evidenceId String
+  adoptionId String
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  evidenceRevision Int @default(1)
+  finalDecisionOrdinal Int @default(1)
+  studentCount Int @default(0)
+  studentSourceCards Json @default("[]")
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  preparedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  finalDecision ResultFinalPublicationDecision @relation(fields: [schoolId, finalDecisionId], references: [schoolId, id], onDelete: NoAction, map: "ResultReportCardSourcePacket_finalDecision_fkey")
+  evidence ResultSheetEvidence @relation(fields: [schoolId, evidenceId], references: [schoolId, id], onDelete: NoAction, map: "ResultReportCardSourcePacket_evidence_fkey")
+  adoption ResultGradingAdoption @relation(fields: [schoolId, adoptionId], references: [schoolId, id], onDelete: NoAction, map: "ResultReportCardSourcePacket_adoption_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ResultReportCardSourcePacket_actor_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, finalDecisionId])
+  @@index([schoolId, preparedAt])
+  privateOfficialReportComposition PrivateOfficialReportComposition?
+}
+
+/** School-specific, append-only report grade-label and display rounding adoption.
+ * Separate from assessment category weights and from report release. No default
+ * grade bands; owner must explicitly adopt an exhaustive scale. */
+model ReportGradeScaleRevision {
+  id String @id
+  schoolId String
+  version Int @default(1)
+  bands Json
+  decimalPlaces Int
+  roundingMode String @db.VarChar(16)
+  bandBasis String @db.VarChar(32)
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  adoptedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ReportGradeScaleRevision_actor_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, version])
+  @@index([schoolId, adoptedAt])
+  privateOfficialReportCompositions PrivateOfficialReportComposition[]
+}
+
+/** School-adopted, immutable assessment-category aggregation semantics.
+ * A report grading scale is a separate version and must be explicitly pinned
+ * when a later official private composition artifact is authored. Neither
+ * adopting this rule nor simulating its math publishes a pupil grade. */
+model ReportAggregationRuleRevision {
+  id String @id
+  schoolId String
+  version Int @default(1)
+  categoryMethod String @db.VarChar(32)
+  precisionMode String @db.VarChar(16)
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  adoptedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "ReportAggregationRuleRevision_actor_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, version])
+  @@index([schoolId, adoptedAt])
+  privateOfficialReportCompositions PrivateOfficialReportComposition[]
+}
+
+/** Per-class/subject/term immutable INTERNAL official-result composition
+ * evidence, built exclusively from DB-frozen reviewed source marks and exact
+ * adopted aggregation/grade scale revisions. NOT released to recipients.
+ * No API exposes composedStudentCards; public results remain disabled. */
+model PrivateOfficialReportComposition {
+  publication ReportPublication?
+  id String @id
+  schoolId String
+  sourcePacketId String
+  finalDecisionId String
+  evidenceId String
+  adoptionId String
+  sessionId String
+  termId String
+  classId String
+  subjectId String
+  evidenceRevision Int @default(1)
+  aggregationRuleId String
+  aggregationRuleVersion Int @default(1)
+  gradeScaleId String
+  gradeScaleVersion Int @default(1)
+  studentCount Int @default(0)
+  composedStudentCards Json @default("[]")
+  status String @default("INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED") @db.VarChar(64)
+  reason String @db.VarChar(500)
+  actorMembershipId String
+  actorUserId String
+  composedAt DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  sourcePacket ResultReportCardSourcePacket @relation(fields: [schoolId, sourcePacketId], references: [schoolId, id], onDelete: NoAction, map: "PrivateOfficialReportComposition_packet_fkey")
+  finalDecision ResultFinalPublicationDecision @relation(fields: [schoolId, finalDecisionId], references: [schoolId, id], onDelete: NoAction, map: "PrivateOfficialReportComposition_decision_fkey")
+  aggregationRule ReportAggregationRuleRevision @relation(fields: [schoolId, aggregationRuleId], references: [schoolId, id], onDelete: NoAction, map: "PrivateOfficialReportComposition_aggregation_fkey")
+  gradeScale ReportGradeScaleRevision @relation(fields: [schoolId, gradeScaleId], references: [schoolId, id], onDelete: NoAction, map: "PrivateOfficialReportComposition_scale_fkey")
+  actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction, map: "PrivateOfficialReportComposition_actor_fkey")
+
+  @@unique([schoolId, id])
+  @@unique([schoolId, sourcePacketId])
+  @@index([schoolId, composedAt])
+}
+
+/** Explicit versioned recipient release, distinct from academic approval. */
+model ReportPublication {
+ school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+ id String @id
+ schoolId String
+ compositionId String
+ visibility String @db.VarChar(32)
+ reason String @db.VarChar(500)
+ actorMembershipId String
+ actorUserId String
+ publishedAt DateTime @default(now())
+ composition PrivateOfficialReportComposition @relation(fields: [schoolId, compositionId], references: [schoolId, id], onDelete: NoAction)
+ actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction)
+ withdrawal ReportPublicationWithdrawal?
+ acknowledgments ReportGuardianAcknowledgment[]
+ @@unique([schoolId,id])
+ @@unique([schoolId,compositionId])
+}
+model ReportPublicationWithdrawal {
+ school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+ id String @id
+ schoolId String
+ publicationId String
+ actorMembershipId String
+ actorUserId String
+ reason String @db.VarChar(500)
+ createdAt DateTime @default(now())
+ publication ReportPublication @relation(fields: [schoolId,publicationId], references: [schoolId,id], onDelete: NoAction)
+ actor Membership @relation(fields: [schoolId,actorMembershipId], references: [schoolId,id], onDelete: NoAction)
+ @@unique([schoolId,publicationId])
+}
+model ReportGuardianAcknowledgment {
+ school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+ id String @id
+ schoolId String
+ publicationId String
+ studentId String
+ guardianLinkId String
+ actorMembershipId String
+ actorUserId String
+ createdAt DateTime @default(now())
+ publication ReportPublication @relation(fields: [schoolId,publicationId], references: [schoolId,id], onDelete: NoAction)
+ student StudentRecord @relation(fields: [schoolId,studentId], references: [schoolId,id], onDelete: NoAction)
+ guardianLink GuardianStudentLink @relation(fields: [schoolId,guardianLinkId], references: [schoolId,id], onDelete: NoAction)
+ actor Membership @relation(fields: [schoolId,actorMembershipId], references: [schoolId,id], onDelete: NoAction)
+ @@unique([schoolId,publicationId,studentId,guardianLinkId])
 }

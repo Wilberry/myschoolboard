@@ -6,6 +6,7 @@ import { SignOutButton } from "@/src/components/sign-out-button";
 import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
 import {
+  canShowResultPreparationLink,
   canShowSchoolDetailLink,
   canShowStudentLessonsLink,
 } from "@/src/modules/tenancy/school-navigation";
@@ -144,6 +145,22 @@ async function HomeContent() {
                       className="school-link"
                     >
                       My lesson notes
+                    </Link>
+                  )}
+                  {canShowResultPreparationLink(role) && (
+                    <Link
+                      href={`/schools/${school.id}/result-preparation`}
+                      className="school-link"
+                    >
+                      Result preparation readiness (Phase 8 development)
+                    </Link>
+                  )}
+                  {(role === "PARENT" || role === "STUDENT") && (
+                    <Link
+                      className="school-link"
+                      href={`/schools/${school.id}/reports`}
+                    >
+                      Published report cards
                     </Link>
                   )}
                   {canShowStudentLessonsLink(

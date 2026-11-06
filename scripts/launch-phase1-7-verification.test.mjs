@@ -18,18 +18,18 @@ test("requires a clean worktree without modifying it", () => {
   );
 });
 
-test("requires the expected complete 38-migration inventory", () => {
+test("requires the expected complete 49-migration inventory", () => {
   assert.doesNotThrow(() =>
-    assertExpectedMigrationCount(Array.from({ length: 38 })),
+    assertExpectedMigrationCount(Array.from({ length: 49 })),
   );
-  assert.throws(() => assertExpectedMigrationCount([]), /exactly 38/);
+  assert.throws(() => assertExpectedMigrationCount([]), /exactly 49/);
   assert.throws(
-    () => assertExpectedMigrationCount(Array.from({ length: 37 })),
-    /exactly 38/,
+    () => assertExpectedMigrationCount(Array.from({ length: 48 })),
+    /exactly 49/,
   );
   assert.throws(
-    () => assertExpectedMigrationCount(Array.from({ length: 39 })),
-    /exactly 38/,
+    () => assertExpectedMigrationCount(Array.from({ length: 50 })),
+    /exactly 49/,
   );
 });
 
@@ -62,17 +62,27 @@ test("refuses a non-empty database without Prisma migration history", () => {
   );
 });
 
-test("requires the local application origin on port 3000", () => {
+test("requires a loopback application origin on an explicit local port", () => {
   assert.doesNotThrow(() =>
     assertApplicationOrigin({ BETTER_AUTH_URL: "http://localhost:3000" }),
   );
   assert.doesNotThrow(() =>
     assertApplicationOrigin({ BETTER_AUTH_URL: "http://127.0.0.1:3000" }),
   );
-  assert.throws(
-    () => assertApplicationOrigin({ BETTER_AUTH_URL: "http://localhost:3001" }),
-    /localhost port 3000/,
+  assert.doesNotThrow(() =>
+    assertApplicationOrigin({ BETTER_AUTH_URL: "http://localhost:3001" }),
   );
+  for (const url of [
+    "https://localhost:3001",
+    "http://example.test:3001",
+    "http://localhost",
+    "http://localhost:3001/path",
+  ]) {
+    assert.throws(
+      () => assertApplicationOrigin({ BETTER_AUTH_URL: url }),
+      /loopback HTTP origin/,
+    );
+  }
 });
 
 test("detects an occupied app port before startup", async () => {

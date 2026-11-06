@@ -1,9 +1,27 @@
 import { describe, expect, it } from "vitest";
 import {
+  canShowResultPreparationLink,
   canShowSchoolDetailLink,
   canShowStudentLessonsLink,
 } from "./school-navigation";
 import type { MembershipRole } from "@/src/modules/authorization/policy";
+
+describe("teacher result-preparation navigation hint", () => {
+  it("offers the link only to teachers", () => {
+    expect(canShowResultPreparationLink("TEACHER")).toBe(true);
+    for (const role of [
+      "SCHOOL_SUPER_ADMIN",
+      "SCHOOL_ADMIN",
+      "HEAD_OF_SECTION",
+      "PRINCIPAL",
+      "FORM_TEACHER",
+      "PARENT",
+      "STUDENT",
+    ] satisfies MembershipRole[]) {
+      expect(canShowResultPreparationLink(role)).toBe(false);
+    }
+  });
+});
 
 describe("school detail navigation hint", () => {
   it.each([

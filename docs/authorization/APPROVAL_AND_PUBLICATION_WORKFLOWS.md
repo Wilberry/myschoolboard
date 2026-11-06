@@ -33,3 +33,12 @@ The platform must treat HM/Principal approval and School Super Admin publication
 ## Support override policy
 
 Exceptional support access, if approved, must require explicit authorizer, reason, limited scope, duration, audit log, and visibility to the relevant school or customer.
+
+
+## Phase 8 independent final school-owner approval foundation (development, not released)
+
+1. The original exact teacher prepares a frozen source-evidence revision from current approved/sealed/valid sources.
+2. Verified-section PRIMARY Head of Section or SECONDARY Principal independently approves that exact unchanged snapshot.
+3. The School Super Admin inspects metadata in a private prepublication reader. This read is advisory only.
+4. The School Super Admin may record a separate reasoned, irreversible `APPROVED_AWAITING_RELEASE` decision for the latest academically approved source; SQL rechecks owner/teacher/reviewer/section/school/policy/complete pupil sources under School lock and stores a separate audit ordinal/time. A second source version requires renewed independent academic approval and a new final owner record, never editing old history.
+5. **Not yet implemented:** School-approved official grading/report-card artifact, explicit recipient visibility policy, immutable recipient-release event, student/guardian result view, publication download/verification, and safe post-publication amendments. No final school approval alone exposes results; runtime migrations/tests/CI/security must pass before any release.

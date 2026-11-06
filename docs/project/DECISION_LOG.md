@@ -1,5 +1,70 @@
 # Decision Log
 
+## D-062 — Phase 8 development-integration scope for this cloud task
+
+The owner's 2026-11-06 task explicitly authorizes completing Phase 8, reconciling
+the two histories, using disposable local verification and integrating accepted
+work into development main. This supplements D-023 and D-051 for the tested
+Phase 8 source ce14d17. Actual local regression/static/build/audit and enrolled
+browser gates passed; see the cloud acceptance record. This is no production
+release, live-user access, hosted Actions authorization or security-risk waiver.
+Use the established PR workflow, preserve branch protection, never force-push,
+and keep main unchanged while that integration cannot be executed. The running
+instance currently denies GitHub API egress; configuration saving alone has not
+performed a PR or merge. No repeated development approval is required.
+
+
+## D-061 — Explicit recipient report publication and verified acknowledgment
+
+Adopt the four explicit per-release school visibility policies and exact-version
+guardian acknowledgment described in the Results module. Separate recipient
+publication and immutable withdrawal from academic approval/private composition.
+Retain terminal relationship/identity revocations. Current relationships and
+school enrollment are checked for every recipient request; no broad child grant.
+New subject report versions supersede earlier recipient rows without rewriting
+history. P-004's deferred acknowledgment semantics now have a conservative,
+configurable development implementation. Acceptance requires the local database,
+privacy/browser, print, grading and security gates; authorship is not acceptance.
+
+
+**Phase 8 decision-ID reconciliation:** The incoming branch's earlier D-051 (private result reconciliation) is retained under the accepted D-P8-001 identifier. The accepted D-051 remains the local verification and development integration gate.
+
+## D-060: Freeze internal official report composition, not recipient publication
+
+- **Status: authored, not accepted.** A current exact school owner may request one PRIVATE immutable official-grade composition for an already frozen, final-approved report-card source packet, explicitly choosing the school's **current** adopted aggregation revision and grading-scale revision. PostgreSQL independently locks the school, reruns complete current result readiness, verifies each selected exact school policy revision, independently calculates each pupil's score and grade band from frozen CBT/independently reviewed written points using school-adopted weights, then derives immutable evidence context, policy IDs/versions, count, timestamp and internal non-released status. No client scores, pupils or grade payload can be submitted. One composition per frozen packet prevents retroactive overwrites; academic corrections require fresh teacher/reviewer/owner approvals, new source packet and a new composition. Composed pupil-level grade evidence is **private JSONB, never returned by owner API**, and is not public result publication, report-card download or guardian/student visibility. Full PostgreSQL/CI/security acceptance and independently audited recipient-release decisions remain mandatory. ADR-046.
+
+## D-059: Adopt explicit aggregation rules before composing report-card grades
+
+- Status: AUTHORED, UNVERIFIED. The current active same-school School Super Admin explicitly adopts one immutable versioned method for combining assessment marks **within each QUIZ/TEST/EXAM category**: `EQUAL_ASSESSMENT_BPS` (each source's earned/possible is rounded to integer percent basis points, followed by an equally weighted category mean) or `POOLED_CATEGORY_POINTS` (sum earned and possible points, then normalize once). School also adopts a precision rule `HALF_UP`, `FLOOR` or `CEILING` for every intermediate integer-basis-point division and for applying the separate, already adopted QUIZ/TEST/EXAM category weights. Grade-band display uses a separately pinned school-adopted `ReportGradeScaleRevision` version. No implicit formula, national grading scale or pass mark. Pure private simulator rejects missing required category, corrupt/duplicate/unscored sources, mismatched frozen weight versions or scale. Future official composition must store immutable source packet ID, adopted aggregation rule ID/version, adopted grade scale ID/version and calculation evidence, with locked SQL revalidation; no student/guardian release or report mutation now. D-059 / ADR-045.
+
+## D-058: School-adopted immutable report grading scale with explicit score interpretation
+
+- Status: AUTHORED, UNVERIFIED. An active same-school School Super Admin explicitly adopts an append-only versioned grade-band and rounding policy. No seed/default grades: 1–20 ordered, labelled integer-basis-point grade bands must cover 0–10000 exactly, without gap, overlap, duplicate code or invalid label. Require owner-selected displayed precision (0–2 decimals), rounding mode (HALF_UP/FLOOR/CEILING) and band selection basis (RAW_BPS or DISPLAY_ROUNDED_BPS). PostgreSQL under school lock independently validates bands, owner identity and exact tenant, derives revision/timestamp, rejects identical re-adoption and preserves previous revisions by immutable triggers. A pure deterministic `simulateSchoolGradeScale` utility is PRIVATE POLICY SIMULATION ONLY. A grade scale does not itself calculate official report-card aggregate marks, select a historical scale for an old packet, perform School Super Admin recipient release or expose student/guardian grades. Official report composition must pin an explicit adopted scale version alongside the prior frozen source packet; no retroactive rewriting. D-058 / ADR-044.
+
+## D-057: Internal immutable report-card source packets, not assumed official grades
+
+- Status: Authored/unverified. After independently verified academic source review and immutable final School Super Admin approval, optionally freeze a **private per-pupil source packet** for that exact final-decision ID. Re-run current SQL final publication readiness under school lock, bind the active exact school owner, derive safe allowlisted CBT and reviewed manual points, frozen pupil identities, the exact adopted policy weight version, and source/evidence decision revisions in SQL. Never accept browser-supplied marks, student rosters, grade bands, thresholds or weighted official scores. Record one immutable packet per final owner decision; later amended marks or policy require new teacher/reviewer/owner decisions and a new packet without altering the old one. Server routes may expose only bounded school-owner packet metadata, **not studentSourceCards**, official result, export, student/guardian visibility or release. Grade scales and recipient visibility remain school-specific decisions; do not silently repurpose Phase 7 *preview* weighting as official report-card policy. ADR-043.
+
+## D-056: Preserve final School Super Admin approval as immutable evidence, separate from public release
+
+- Status: Authored, unverified. Once current independent PRIMARY Head of Section / SECONDARY Principal academic review is APPROVED, the active exact School Super Admin may record an immutable and reasoned **APPROVED_AWAITING_RELEASE** decision for the latest complete source revision. Database triggers lock the active school, invoke the complete final readiness recheck, derive the actual frozen context/revision and serialize per-context audit ordinal and timestamp; no actor-supplied marks/policies/revision/status/ordinal/clock accepted. One decision per frozen evidence; later corrections require new reviewed evidence and a new final decision, never overwrite prior history. This is final school authorization for a *future* controlled release, **not** a published report card, grade, download, or student/guardian visibility. Keep official public release disabled pending separate policy, quality, security and deployment gates. ADR-042.
+
+## D-055: Database-only final result publication readiness must precede any release
+
+- Status: Authored/unverified. Define a reusable PostgreSQL school-row-locked `assert_result_publication_readiness` predicate for the **future**, separate School Super Admin publication transaction. It checks an exact current same-school owner (membership plus server-derived user), current assigned teacher/class/section/session/term/subject, distinct independently APPROVED and still-verified correct-stage section reviewer, latest frozen result evidence and latest adopted grading policy, a freshly recomputed identical manifest, and complete per-pupil adopted positively weighted QUIZ/TEST/EXAM sources. Never treat a previous GET/preflight or true predicate result as enduring permission. This SQL-only milestone creates **no publication event, POST, report-card result or student/guardian visibility**. Later official publishing must append a separately audited, versioned final event in the **same** protected transaction as this recheck, after cumulative testing and school approval. ADR-041.
+
+## D-054: Inspect current approved source evidence before any future owner publication
+
+- Status: Authored; unverified. School Super Admin may **read** a bounded metadata-only list of latest independently APPROVED source snapshots in its own active school, only while original teacher, independent section reviewer's currently verified grant, academic period, policy adoption, and SQL-rebuilt source manifest remain current. Return no pupil identity, marks, manifests, totals or download, and expose no POST or publication event. Treat the list as ephemeral inspection evidence, **not** future authorization to publish. Any eventual publication must independently recheck under a school lock, preserve a versioned decision, and remain disabled until mandatory verification and school approval. ADR-040.
+
+## D-053: Freeze teacher evidence in SQL, then independent section review
+
+- Status: Authored/unverified. A teacher does not upload client-computed marks or declare a report ready. Under DB locks, freeze current sealed approved scored CBT and independently reviewed written marks per exact active enrolled pupil and current adopted grading version. Missing/mismatched source or category blocks preparation. A verified PRIMARY Head of Section / SECONDARY Principal reviews a separately immutable snapshot; only current unmodified evidence can receive APPROVED, stale evidence may be RETURNED and re-prepared after genuine change. School Super Admin final publication and student/guardian access remain separate later features. ADR-039.
+
+## D-052: School Super Admin separately adopts versioned grading policy before result preparation
+
+- Status: authored/unverified. Grading draft creation is not academic policy adoption, and adoption is not result-sheet review or official report release. Adoption is append-only, exact school/class/subject/session/term, actor and reason. Snapshot evidence later pins one adoption ID. No automatic cross-school defaults or historical rewriting. ADR-038.
+
 ## D-051: Local verification is the development-integration merge gate (2026-11-01)
 
 - **Owner decision:** GitHub Actions hosted job failures attributable to unreliable runner/build infrastructure are not an acceptance authority for MySchoolBoard. Use locally executed, reproducible CI-equivalent checks instead. The owner has explicitly authorized a `main` integration of the **locally tested Phase 1–7 development baseline**, without waiting for hosted Actions success.
@@ -7,6 +72,9 @@
 - **Meaning of acceptance:** Approval is for **integration of this verified implementation checkpoint into the development `main` branch**, not for declaring every Phase 1–7 functional requirement complete, billing operational, real student CBT exposed, full browser/accessibility requirements passed, or a production release authorized. SUB-REQ-001, PLAT-REQ-001, ADM-REQ-001, ASM-REQ-001 and the remaining browser matrix cases stay open in traceability and acceptance documentation. Deferred operations must remain fail-closed and cannot be described as implemented.
 - **Future procedure:** For each later change, obtain actual local DB/Node/Vitest/format/lint/typecheck/build/strict+full audit evidence at its own source SHA and scoped authenticated-browser evidence where relevant. Review changed-file scope and security/privacy. A failed hosted CI job may be annotated as infrastructure-only without replacing any local test or waiving a verified code/security defect.
 - **Release boundary:** Merging development code into `main` does **not** deploy to production, authorize live data/users, bypass role/tenant/audit controls, permit real financial processing, or waive accessibility/feature release exit gates. Phase 8 and Phase 9 branches are excluded. Owner approval for this specific development integration is recorded; distinct future production merges/releases require their own applicable authorization.
+## D-P8-001: Begin results with private reconciliation, not automatic grades or publication
+
+- Status: Authored/unverified. Phase 8 starts with a teacher-only, source-reconciled preflight; independently authorized CBT and written-mark sources must agree on each enrolled pupil. Missing marks/academic review and unadopted DRAFT grading rules block result readiness. No invented combined percentages, student report, HM/Principal approval or School Super Admin publication. Future result snapshot, verified section approval, policy adoption and final release require separate versioned immutable design. ADR-037.
 
 
 ## D-050: Enable correction-based remediation of returned initial manual marks
