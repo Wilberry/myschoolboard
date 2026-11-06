@@ -247,6 +247,21 @@ try {
         cache,
       });
     }
+    const denied = await actor("head");
+    for (const headers of [
+      { RSC: "1" },
+      {
+        RSC: "1",
+        "Next-Router-Prefetch": "1",
+        "Next-Router-Segment-Prefetch": "/_tree",
+      },
+    ]) {
+      const response = await denied.request.get(base + preparation, {
+        headers,
+      });
+      assert.ok(response.headers()["cache-control"]?.includes("no-store"));
+      assert.equal((await response.text()).includes(marker), false);
+    }
     return responses;
   });
   await check("P8-BR-05", async () => {
@@ -509,6 +524,8 @@ try {
     await page.goto(base + "/");
     await page.goBack();
     assert.equal(await visibleMarker(page), false);
+    const revokedPrint = await pdfText(page, "revoked-preparation");
+    assert.equal(revokedPrint.includes(marker), false);
     const lifecycle = await page.evaluate(() =>
       JSON.parse(sessionStorage.getItem("phase8-lifecycle") ?? "[]"),
     );
@@ -543,10 +560,34 @@ try {
     const c = await actor("report-student"),
       loaded = await c.newPage();
     await loadReports(loaded, c);
+    let release;
+    const gate = new Promise((resolve) => (release = resolve));
+    await c.route("**/api/auth/sign-out", async (route) => {
+      await gate;
+      await route.continue();
+    });
+    const signedout = loaded.waitForResponse(
+      (r) =>
+        r.url().endsWith("/api/auth/sign-out") &&
+        r.request().method() === "POST",
+    );
     await loaded.getByRole("button", { name: "Sign out", exact: true }).click();
     await loaded
       .getByText(marker, { exact: false })
       .waitFor({ state: "hidden" });
+    await loaded.waitForTimeout(11000);
+    assert.equal(
+      (await c.request.get(base + reportApi)).status(),
+      200,
+      "The delayed sign-out intentionally leaves the server session valid during this assertion",
+    );
+    assert.equal(
+      await visibleMarker(loaded),
+      false,
+      "A delayed sign-out must never let polling restore private rows",
+    );
+    release();
+    assert.equal((await signedout).status(), 200);
     assert.equal((await c.request.get(base + reportApi)).status(), 401);
   });
   await check("P8-RECIPIENT-REVOCATION", async () => {

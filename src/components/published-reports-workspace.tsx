@@ -16,6 +16,7 @@ export function PublishedReportsWorkspace({
   const epoch = useRef(0);
   const pending = useRef<AbortController | null>(null);
   const printPermit = useRef(false);
+  const sessionEnded = useRef(false);
   const conceal = useCallback(
     (text = "Reports concealed. Recheck access to continue.") => {
       ++epoch.current;
@@ -28,7 +29,11 @@ export function PublishedReportsWorkspace({
     [],
   );
   const load = useCallback(async () => {
-    if (document.visibilityState !== "visible" || !document.hasFocus())
+    if (
+      sessionEnded.current ||
+      document.visibilityState !== "visible" ||
+      !document.hasFocus()
+    )
       return false;
     const version = ++epoch.current;
     pending.current?.abort();
@@ -96,7 +101,10 @@ export function PublishedReportsWorkspace({
     window.addEventListener("beforeprint", beforeprint);
     window.addEventListener("afterprint", afterprint);
     document.addEventListener("visibilitychange", visibility);
-    const unsubscribe = listenForSessionSignOut(hide);
+    const unsubscribe = listenForSessionSignOut(() => {
+      sessionEnded.current = true;
+      hide();
+    });
     const initial = window.setTimeout(refresh, 0);
     return () => {
       window.clearTimeout(initial);
