@@ -2,7 +2,7 @@
 
 ## Current Phase 9 local acceptance — 6 November 2026
 
-**FEE-REQ-001: implemented and locally accepted for development PR integration.**
+**FEE-REQ-001: implemented, locally accepted, and merged into development `main` via PR #108.**
 Existing Phase 9 history is reconciled with accepted Phases 1–8 on
 `integration/phase9-after-phase8-cloud-20261106`. Exact balances, approved manual
 receipts, private image evidence, independent review/allocation, explicit waiver
@@ -13,8 +13,10 @@ migrations on independently verified disposable PostgreSQL, all 207 Node guards,
 financial concurrency, build/lint/types/format and zero-vulnerability audit.
 Official JS/WASM Prisma paths passed; Rust CLI downloads remain proxy-blocked.
 All finance flags default OFF. No live provider or production release.
-GitHub PR integration remains pending API access; main is still accepted Phase 8
-`83676cf9dcae2d416df991956e3dfa411b8ac6a0`, with no Phase 9 merge SHA.
+Remote integration completed on 6 November 2026 via [PR #108](https://github.com/Wilberry/myschoolboard/pull/108).
+Verified Phase 9 merge SHA: `a20108c347ae3772eb848cc28bd0f32edb2e88ad`.
+Pre-merge `main` was `83676cf9dcae2d416df991956e3dfa411b8ac6a0`.
+No production release, live payment provider, external refund or finance-feature activation.
 See [current acceptance and limitations](../quality/PHASE9_CLOUD_ACCEPTANCE_20261106.md).
 This current entry supersedes the historical authored/unverified Phase 9 notes below.
 
