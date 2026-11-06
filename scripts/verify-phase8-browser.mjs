@@ -341,6 +341,73 @@ try {
     );
     await teacherPage.setViewportSize({ width: 1280, height: 900 });
   });
+  await check("P8-OWNER-PUBLICATION", async () => {
+    assert.ok(
+      f.pendingCompositionId,
+      "Fresh fixture must stage an approved unpublished version",
+    );
+    const c = await actor("super"),
+      page = await c.newPage();
+    await page.goto(`${base}/schools/${f.schoolA}/report-publication`);
+    await page
+      .locator("#report-composition")
+      .selectOption(f.pendingCompositionId);
+    await page.locator("#report-visibility").selectOption("PARENT_FIRST");
+    await page
+      .locator("#report-release-reason")
+      .fill("Synthetic owner browser publication acceptance");
+    page.once("dialog", (dialog) => dialog.accept());
+    await page
+      .getByRole("button", { name: "Publish report version", exact: true })
+      .click();
+    await page
+      .getByRole("status")
+      .filter({ hasText: "Report version published" })
+      .waitFor({ state: "visible" });
+    const response = await c.request.get(
+      `${base}/api/schools/${f.schoolA}/report-publications`,
+    );
+    assert.equal(response.status(), 200);
+    const data = await response.json();
+    const publication = data.publications.find(
+      (p) => p.compositionId === f.pendingCompositionId,
+    );
+    assert.ok(publication);
+    f.publicationId = publication.id;
+    assert.equal(
+      (await (await student.request.get(base + reportApi)).json()).reports
+        .length,
+      0,
+      "Prior version acknowledgment must not unlock a new version",
+    );
+    await loadReports(parentPage, parent);
+    const acknowledged = parentPage.waitForResponse(
+      (r) =>
+        r.url().endsWith("/report-acknowledgments") &&
+        r.request().method() === "POST",
+    );
+    await parentPage
+      .getByRole("button", { name: "Acknowledge this report", exact: true })
+      .click();
+    assert.equal((await acknowledged).status(), 200);
+    await loadReports(studentPage, student);
+  });
+  await check("P8-RECIPIENT-LIFECYCLE", async () => {
+    const c = await nativeActor("browser-parent"),
+      page = await c.newPage();
+    await loadReports(page, c);
+    const tab = await c.newPage();
+    await tab.goto("about:blank");
+    await tab.bringToFront();
+    await page.getByText(marker, { exact: false }).waitFor({ state: "hidden" });
+    await page.waitForTimeout(10500);
+    assert.equal(await visibleMarker(page), false);
+    await page.bringToFront();
+    await page
+      .getByText(marker, { exact: false })
+      .waitFor({ state: "visible" });
+    await tab.close();
+  });
   await check("P8-RECIPIENT-01", async () => {
     await loadReports(parentPage, parent);
     await loadReports(studentPage, student);
@@ -517,6 +584,29 @@ try {
     const text = await pdfText(parentPage, "revoked-report");
     assert.equal(text.includes(marker), false);
     return { concealmentMs: Date.now() - start };
+  });
+  await check("P8-OWNER-WITHDRAWAL", async () => {
+    const c = await actor("super"),
+      page = await c.newPage();
+    await page.goto(`${base}/schools/${f.schoolA}/report-publication`);
+    await page
+      .locator("#report-release-reason")
+      .fill("Synthetic owner browser terminal publication withdrawal");
+    page.once("dialog", (dialog) => dialog.accept());
+    const row = page.getByRole("listitem").filter({ hasText: f.publicationId });
+    await row
+      .getByRole("button", { name: "Withdraw publication", exact: true })
+      .click();
+    await page
+      .getByRole("status")
+      .filter({ hasText: "Publication withdrawn" })
+      .waitFor({ state: "visible" });
+    assert.ok((await row.textContent()).includes("Withdrawn"));
+    assert.equal(
+      (await (await parent.request.get(base + reportApi)).json()).reports
+        .length,
+      0,
+    );
   });
 } finally {
   observations.results = results;

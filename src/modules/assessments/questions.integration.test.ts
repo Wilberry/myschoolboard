@@ -4168,6 +4168,81 @@ describe("Phase 7 exact-assignment private question bank", () => {
       const path = process.env.PHASE8_BROWSER_FIXTURE_FILE;
       if (!/^\/tmp\/phase8-[A-Za-z0-9_-]+\.json$/.test(path))
         throw Error("Private fixture path must be /tmp/phase8-<run>.json");
+      // Stage a NEW independently approved version for the actual browser
+      // owner-publication workflow. Prior published history remains intact.
+      const nextPolicy = await POLICIES_POST(
+        req("super", schoolA, "POST", {
+          sessionId,
+          termId,
+          classId,
+          subjectId: frozen.subjectId,
+          quizWeight: 0,
+          testWeight: 100,
+          examWeight: 0,
+          reason: "Synthetic explicit browser grading revision",
+        }),
+        parameters,
+      );
+      expect(nextPolicy.status).toBe(201);
+      const nextAdoption = await ADOPTIONS_POST(
+        req("super", schoolA, "POST", {
+          policyId: (await nextPolicy.json()).policy.id,
+          reason: "Synthetic browser grading adoption",
+        }),
+        parameters,
+      );
+      expect(nextAdoption.status).toBe(201);
+      const nextEvidence = await RESULT_EVIDENCE_POST(
+        req("teacher", schoolA, "POST", {
+          assignmentId: assignment.id,
+          termId,
+          reason: "Synthetic browser complete result revision",
+        }),
+        parameters,
+      );
+      expect(nextEvidence.status).toBe(201);
+      const nextEvidenceId = (await nextEvidence.json()).evidence.id;
+      const nextReview = await RESULT_REVIEW_POST(
+        req("head", schoolA, "POST", {
+          action: "APPROVED",
+          reason: "Synthetic independent browser academic review",
+        }),
+        {
+          params: Promise.resolve({
+            schoolId: schoolA,
+            evidenceId: nextEvidenceId,
+          }),
+        },
+      );
+      expect(nextReview.status).toBe(201);
+      const nextApproval = await FINAL_OWNER_POST(
+        req("super", schoolA, "POST", {
+          evidenceId: nextEvidenceId,
+          reason: "Synthetic final browser academic approval",
+        }),
+        parameters,
+      );
+      expect(nextApproval.status).toBe(201);
+      const nextPacket = await SOURCE_PACKET_POST(
+        req("super", schoolA, "POST", {
+          finalDecisionId: (await nextApproval.json()).decision.id,
+          reason: "Synthetic browser immutable source packet",
+        }),
+        parameters,
+      );
+      expect(nextPacket.status).toBe(201);
+      const nextComposition = await COMPOSITION_POST(
+        req("super", schoolA, "POST", {
+          sourcePacketId: (await nextPacket.json()).packet.id,
+          aggregationRuleId: frozen.aggregationRuleId,
+          gradeScaleId: frozen.gradeScaleId,
+          reason: "Synthetic browser approved composition",
+        }),
+        parameters,
+      );
+      expect(nextComposition.status).toBe(201);
+      const pendingCompositionId = (await nextComposition.json()).composition
+        .id;
       await writeFile(
         path,
         JSON.stringify({
@@ -4181,6 +4256,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
           assignmentId,
           pupilId,
           publicationId,
+          pendingCompositionId,
           users,
           members,
           cookies,
