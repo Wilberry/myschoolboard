@@ -155,6 +155,14 @@ async function HomeContent() {
                       Result preparation readiness (Phase 8 development)
                     </Link>
                   )}
+                  {(role === "PARENT" || role === "STUDENT") && (
+                    <Link
+                      className="school-link"
+                      href={`/schools/${school.id}/reports`}
+                    >
+                      Published report cards
+                    </Link>
+                  )}
                   {canShowStudentLessonsLink(
                     school.id,
                     role,

@@ -228,6 +228,9 @@ model Verification {
 }
 
 model School {
+  reportPublications ReportPublication[]
+  reportWithdrawals ReportPublicationWithdrawal[]
+  reportAcknowledgments ReportGuardianAcknowledgment[]
   id                                  String                               @id @default(cuid())
   name                                String
   slug                                String                               @unique
@@ -298,6 +301,9 @@ model School {
 }
 
 model Membership {
+  reportPublications ReportPublication[]
+  reportWithdrawals ReportPublicationWithdrawal[]
+  reportAcknowledgments ReportGuardianAcknowledgment[]
   id                             String                          @id @default(cuid())
   userId                         String
   schoolId                       String
@@ -748,6 +754,7 @@ model SchoolSection {
 }
 
 model StudentRecord {
+  reportAcknowledgments ReportGuardianAcknowledgment[]
   id              String                 @id @default(cuid())
   schoolId        String
   admissionNumber String
@@ -1031,6 +1038,7 @@ model StudentAccountLinkRevocation {
 /// StudentRecord to an existing active PARENT membership; no inferred links.
 /// Terminal revocation prevents accidental restoration of past access.
 model GuardianStudentLink {
+  reportAcknowledgments ReportGuardianAcknowledgment[]
   id String @id @default(cuid())
   schoolId String
   studentId String
@@ -1752,6 +1760,7 @@ model ReportAggregationRuleRevision {
  * adopted aggregation/grade scale revisions. NOT released to recipients.
  * No API exposes composedStudentCards; public results remain disabled. */
 model PrivateOfficialReportComposition {
+  publication ReportPublication?
   id String @id
   schoolId String
   sourcePacketId String
@@ -1785,4 +1794,52 @@ model PrivateOfficialReportComposition {
   @@unique([schoolId, id])
   @@unique([schoolId, sourcePacketId])
   @@index([schoolId, composedAt])
+}
+
+/** Explicit versioned recipient release, distinct from academic approval. */
+model ReportPublication {
+ school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+ id String @id
+ schoolId String
+ compositionId String
+ visibility String @db.VarChar(32)
+ reason String @db.VarChar(500)
+ actorMembershipId String
+ actorUserId String
+ publishedAt DateTime @default(now())
+ composition PrivateOfficialReportComposition @relation(fields: [schoolId, compositionId], references: [schoolId, id], onDelete: NoAction)
+ actor Membership @relation(fields: [schoolId, actorMembershipId], references: [schoolId, id], onDelete: NoAction)
+ withdrawal ReportPublicationWithdrawal?
+ acknowledgments ReportGuardianAcknowledgment[]
+ @@unique([schoolId,id])
+ @@unique([schoolId,compositionId])
+}
+model ReportPublicationWithdrawal {
+ school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+ id String @id
+ schoolId String
+ publicationId String
+ actorMembershipId String
+ actorUserId String
+ reason String @db.VarChar(500)
+ createdAt DateTime @default(now())
+ publication ReportPublication @relation(fields: [schoolId,publicationId], references: [schoolId,id], onDelete: NoAction)
+ actor Membership @relation(fields: [schoolId,actorMembershipId], references: [schoolId,id], onDelete: NoAction)
+ @@unique([schoolId,publicationId])
+}
+model ReportGuardianAcknowledgment {
+ school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+ id String @id
+ schoolId String
+ publicationId String
+ studentId String
+ guardianLinkId String
+ actorMembershipId String
+ actorUserId String
+ createdAt DateTime @default(now())
+ publication ReportPublication @relation(fields: [schoolId,publicationId], references: [schoolId,id], onDelete: NoAction)
+ student StudentRecord @relation(fields: [schoolId,studentId], references: [schoolId,id], onDelete: NoAction)
+ guardianLink GuardianStudentLink @relation(fields: [schoolId,guardianLinkId], references: [schoolId,id], onDelete: NoAction)
+ actor Membership @relation(fields: [schoolId,actorMembershipId], references: [schoolId,id], onDelete: NoAction)
+ @@unique([schoolId,publicationId,studentId,guardianLinkId])
 }

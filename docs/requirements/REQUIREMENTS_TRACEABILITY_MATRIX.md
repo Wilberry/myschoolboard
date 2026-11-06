@@ -1,5 +1,44 @@
 # Requirements Traceability Matrix
 
+## Phase 8 recipient publication — D-061 / ADR-047 (2026-11-06)
+
+RES-REQ-001 now includes a separate immutable `ReportPublication`, explicit
+School Super Admin release and terminal withdrawal, and verified recipient
+read/guardian acknowledgment APIs. Academic review, final academic approval
+and private composition alone still grant no recipient access. Publishing
+rechecks current source/reviewer/teacher and latest adopted policies under the
+school lock. Corrections require a new reviewed evidence revision, source
+packet, composition and publication; historical versions are never overwritten.
+The recipient list suppresses superseded versions.
+
+Each release explicitly versions the school's visibility choice:
+`ASSESSMENT_ONLY` denies all report-card reads; `PARENT_ONLY` permits current
+verified guardians; `PARENT_FIRST` permits those guardians and a linked student
+only after explicit acknowledgment by a still-current guardian of that exact
+pupil and publication; `PARENT_AND_STUDENT` permits both verified audiences.
+These four names and acknowledgment semantics resolve P-004 as a conservative,
+configurable development default under D-023. There is no automatic policy
+adoption, email inference, retroactive release or generic child permission.
+Revoked relationships, student identity bindings, inactive memberships,
+enrollment/class/section/period, withdrawn releases and foreign schools fail
+closed on every read. A revoked guardian's acknowledgment no longer unlocks
+student access. GET never acknowledges. Repeated explicit acknowledgment is
+idempotent after reauthorization.
+
+Recipient HTML/Flight/segments are private/no-store. Grades load only through
+an authenticated API, with abort/epoch stale-response protection, foreground
+polling, lifecycle concealment and cross-tab sign-out. Printing requires a
+fresh recipient access check; ordinary print initiation conceals the cards.
+The report view returns only frozen names and published display grades, never
+source marks, answer keys, another pupil's report or internal composition JSON.
+No production deployment or real pupil data is part of this work.
+
+Validation and acceptance evidence are recorded in
+`docs/quality/PHASE8_CLOUD_COMPLETION_20261106.md`; earlier historical sections
+below retain their original authored/unverified status and are not current
+claims of completion.
+
+
 ## Phase 8 immutable internal official report composition — RES-REQ-001 partial; TEN-REQ-001/SEC-REQ-001 partial (AUTHORED, UNVERIFIED)
 
 `feature/phase8-private-official-report-composition` adds a school-keyed append-only `PrivateOfficialReportComposition` linked to exact approved frozen pupil source packet, final School Super Admin decision, explicitly current adopted aggregation-rule revision and grading-scale revision. SQL rechecks complete original academic/owner authority under School lock and reconstructs all per-pupil official calculation evidence with integer basis points, exact adopted weighting, grade labels and immutable actor/context/version; rejects missing categories, stale policy or source, forged score content and duplicate/unreviewed marks. New strictly schema-validated current school-owner private POST and metadata-only GET/page; **no pupil-level grade payload leaves API** and no student/guardian result view or recipient release. Authored SQL parity tests, role/tenant/stale/immutable checks and structural guard, not run against PostgreSQL. Cumulative Phase 6–8 DB/CI/security gates and official recipient release and post-release amendment remain BLOCKED. D-060/ADR-046.

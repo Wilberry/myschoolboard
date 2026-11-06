@@ -1,5 +1,18 @@
 # Decision Log
 
+## D-061 — Explicit recipient report publication and verified acknowledgment
+
+Adopt the four explicit per-release school visibility policies and exact-version
+guardian acknowledgment described in the Results module. Separate recipient
+publication and immutable withdrawal from academic approval/private composition.
+Retain terminal relationship/identity revocations. Current relationships and
+school enrollment are checked for every recipient request; no broad child grant.
+New subject report versions supersede earlier recipient rows without rewriting
+history. P-004's deferred acknowledgment semantics now have a conservative,
+configurable development implementation. Acceptance requires the local database,
+privacy/browser, print, grading and security gates; authorship is not acceptance.
+
+
 **Phase 8 decision-ID reconciliation:** The incoming branch's earlier D-051 (private result reconciliation) is retained under the accepted D-P8-001 identifier. The accepted D-051 remains the local verification and development integration gate.
 
 ## D-060: Freeze internal official report composition, not recipient publication

@@ -1,5 +1,44 @@
 # Results and Report Cards
 
+## Phase 8 recipient publication — D-061 / ADR-047 (2026-11-06)
+
+RES-REQ-001 now includes a separate immutable `ReportPublication`, explicit
+School Super Admin release and terminal withdrawal, and verified recipient
+read/guardian acknowledgment APIs. Academic review, final academic approval
+and private composition alone still grant no recipient access. Publishing
+rechecks current source/reviewer/teacher and latest adopted policies under the
+school lock. Corrections require a new reviewed evidence revision, source
+packet, composition and publication; historical versions are never overwritten.
+The recipient list suppresses superseded versions.
+
+Each release explicitly versions the school's visibility choice:
+`ASSESSMENT_ONLY` denies all report-card reads; `PARENT_ONLY` permits current
+verified guardians; `PARENT_FIRST` permits those guardians and a linked student
+only after explicit acknowledgment by a still-current guardian of that exact
+pupil and publication; `PARENT_AND_STUDENT` permits both verified audiences.
+These four names and acknowledgment semantics resolve P-004 as a conservative,
+configurable development default under D-023. There is no automatic policy
+adoption, email inference, retroactive release or generic child permission.
+Revoked relationships, student identity bindings, inactive memberships,
+enrollment/class/section/period, withdrawn releases and foreign schools fail
+closed on every read. A revoked guardian's acknowledgment no longer unlocks
+student access. GET never acknowledges. Repeated explicit acknowledgment is
+idempotent after reauthorization.
+
+Recipient HTML/Flight/segments are private/no-store. Grades load only through
+an authenticated API, with abort/epoch stale-response protection, foreground
+polling, lifecycle concealment and cross-tab sign-out. Printing requires a
+fresh recipient access check; ordinary print initiation conceals the cards.
+The report view returns only frozen names and published display grades, never
+source marks, answer keys, another pupil's report or internal composition JSON.
+No production deployment or real pupil data is part of this work.
+
+Validation and acceptance evidence are recorded in
+`docs/quality/PHASE8_CLOUD_COMPLETION_20261106.md`; earlier historical sections
+below retain their original authored/unverified status and are not current
+claims of completion.
+
+
 ## Phase 8 private official report composition evidence — NOT RESULT PUBLICATION
 
 Once the original exact teacher's frozen result evidence is independently approved by the proper Head of Section (Primary) or Principal (Secondary), approved by the School Super Admin as `APPROVED_AWAITING_RELEASE`, and frozen into an immutable school-scoped per-pupil source packet, the current School Super Admin can create **private official-grade composition evidence**. The owner must explicitly select the **current** adopted `ReportAggregationRuleRevision` and `ReportGradeScaleRevision`; no policy is chosen automatically. PostgreSQL under the same School lock rechecks all current owner, teacher, academic reviewer/grant, latest grading adoption and byte-equivalent source evidence, then recomputes each enrolled student's scores from numeric CBT and corrected written points. SQL uses exact positive-integer basis-point ratio calculations and adopted HALF_UP/FLOOR/CEILING rounding, adopted QUIZ/TEST/EXAM category weights, school-defined grade bands and decimal display classification, rejecting missing categories, invalid/duplicate sources, stale versions and incomplete classes. The resulting `PrivateOfficialReportComposition` freezes the exact actor/context/source/policy version and internal pupil grade JSONB **as immutable evidence**. It is never returned by the owner-only metadata APIs and never accessible to students or guardians. Changing marks, permissions or grade policies does not overwrite historical composition; renewed academic approval and a new source packet are required for a later version. No official report delivery, student/guardian visibility, download, QR, transcript, file or recipient-release event exists yet. D-060/ADR-046. Entire Phase 8 database, CI and security gate remains BLOCKED.

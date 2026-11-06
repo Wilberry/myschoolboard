@@ -17,6 +17,14 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        source: "/schools/:schoolId/reports",
+        headers: privateSchoolRouteHeaders,
+      },
+      {
+        source: "/schools/:schoolId/reports.segments/:path*",
+        headers: privateSchoolRouteHeaders,
+      },
+      {
         source: "/schools/:schoolId/my-lessons",
         headers: privateSchoolRouteHeaders,
       },

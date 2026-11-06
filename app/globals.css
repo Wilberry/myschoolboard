@@ -568,3 +568,38 @@ h1 {
   max-width: 100%;
   min-width: 0;
 }
+
+.report-card {
+  border: 1px solid currentColor;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-block: 1.5rem;
+  overflow-wrap: anywhere;
+}
+.report-card dl {
+  display: grid;
+  grid-template-columns: minmax(5rem, 1fr) 2fr;
+  gap: 0.5rem 1rem;
+}
+.report-card dd {
+  margin: 0;
+}
+.report-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+@media print {
+  .report-actions,
+  .topbar {
+    display: none !important;
+  }
+  .report-card {
+    break-inside: avoid;
+    color: black;
+    background: white;
+  }
+  .recipient-report-cards[hidden] {
+    display: none !important;
+  }
+}

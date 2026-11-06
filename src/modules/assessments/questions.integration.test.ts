@@ -88,6 +88,19 @@ import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
 import { env } from "@/src/lib/env";
 
+import {
+  POST as REPORT_PUBLISH,
+  DELETE as REPORT_WITHDRAW,
+} from "@/app/api/schools/[schoolId]/report-publications/route";
+import { GET as RECIPIENT_REPORTS } from "@/app/api/schools/[schoolId]/published-reports/route";
+import { POST as REPORT_ACKNOWLEDGE } from "@/app/api/schools/[schoolId]/report-acknowledgments/route";
+import {
+  attestGuardianStudentLink,
+  revokeGuardianStudentLink,
+} from "@/src/modules/students/guardian-link-service";
+import * as objectiveReader from "@/src/modules/assessments/class-record-service";
+import { writeFile } from "node:fs/promises";
+
 const suffix = randomUUID();
 const schoolA = `asm-school-a-${suffix}`;
 const schoolB = `asm-school-b-${suffix}`;
@@ -309,6 +322,10 @@ describe("Phase 7 exact-assignment private question bank", () => {
     });
   }, 45_000);
   afterAll(async () => {
+    if (process.env.PHASE8_BROWSER_FIXTURE_FILE) {
+      await prisma.$disconnect();
+      return;
+    }
     await prisma.school.deleteMany({
       where: { id: { in: [schoolA, schoolB] } },
     });
@@ -3663,6 +3680,518 @@ describe("Phase 7 exact-assignment private question bank", () => {
           data: { status: "ACTIVE" },
         });
       }
+    }
+  });
+  it("publishes only approved versions and gates verified recipients, acknowledgment, withdrawal and revocation", async () => {
+    // The legacy CBT pupil has a TERMINALLY revoked account link. Preserve it;
+    // create a new enrolled pupil and complete a genuinely new review cycle.
+    const pupilId = `phase8-recipient-${suffix}`;
+    const email = `asm-report-student-${suffix}@example.test`;
+    const registered = await auth.api.signUpEmail({
+      body: { name: "Synthetic report pupil", email, password },
+    });
+    users["report-student"] = registered.user.id;
+    const login = await auth.api.signInEmail({
+      body: { email, password },
+      headers: new Headers({ origin: env.BETTER_AUTH_URL }),
+      returnHeaders: true,
+    });
+    cookies["report-student"] = login.headers
+      .getSetCookie()
+      .map((v) => v.split(";")[0])
+      .join("; ");
+    members["report-student"] = (
+      await prisma.membership.create({
+        data: {
+          schoolId: schoolA,
+          userId: users["report-student"],
+          role: "STUDENT",
+        },
+      })
+    ).id;
+    await prisma.studentRecord.create({
+      data: {
+        id: pupilId,
+        schoolId: schoolA,
+        admissionNumber: `P8-${suffix}`,
+        givenName: "CloudSynthetic",
+        familyName: "ReportPupil",
+        status: "ENROLLED",
+      },
+    });
+    await prisma.studentEnrollment.create({
+      data: { schoolId: schoolA, studentId: pupilId, classId, sessionId },
+    });
+    await prisma.studentAccountLink.create({
+      data: {
+        schoolId: schoolA,
+        studentId: pupilId,
+        studentMembershipId: members["report-student"],
+        attestedByMembershipId: members.admin,
+        attestedByUserId: users.admin,
+        attestationReason: "Synthetic independently verified pupil identity",
+      },
+    });
+    const previous =
+      await prisma.privateOfficialReportComposition.findFirstOrThrow({
+        where: { schoolId: schoolA },
+        orderBy: { composedAt: "desc" },
+      });
+    const assignment =
+      await prisma.teacherClassSubjectAssignment.findFirstOrThrow({
+        where: {
+          schoolId: schoolA,
+          classId,
+          sessionId,
+          subjectId: previous.subjectId,
+          membershipId: members.teacher,
+          status: "ACTIVE",
+        },
+      });
+    const parameters = { params: Promise.resolve({ schoolId: schoolA }) };
+    const components = await prisma.assessmentManualComponent.findMany({
+      where: {
+        schoolId: schoolA,
+        classId,
+        sessionId,
+        termId,
+        subjectId: previous.subjectId,
+      },
+    });
+    expect(components.length).toBeGreaterThan(0);
+    for (const component of components) {
+      const proposed = await MANUAL_PROPOSAL_POST(
+        req("teacher", schoolA, "POST", {
+          componentId: component.id,
+          studentId: pupilId,
+          earnedPoints: component.maxPoints - 1,
+          reason: "Synthetic new pupil written assessment",
+        }),
+        parameters,
+      );
+      expect(proposed.status).toBe(201);
+      const proposalId = (await proposed.json()).proposal.id;
+      const reviewed = await MANUAL_REVIEW_DECISION(
+        req("head", schoolA, "POST", {
+          action: "APPROVED",
+          reason: "Synthetic independent written assessment review",
+        }),
+        { params: Promise.resolve({ schoolId: schoolA, proposalId }) },
+      );
+      expect(reviewed.status).toBe(201);
+    }
+    const prepared = await RESULT_EVIDENCE_POST(
+      req("teacher", schoolA, "POST", {
+        assignmentId: assignment.id,
+        termId,
+        reason: "Synthetic fresh complete enrolled source snapshot",
+      }),
+      parameters,
+    );
+    expect(prepared.status).toBe(201);
+    const evidenceId = (await prepared.json()).evidence.id;
+    const academic = await RESULT_REVIEW_POST(
+      req("head", schoolA, "POST", {
+        action: "APPROVED",
+        reason: "Synthetic independent complete result review",
+      }),
+      { params: Promise.resolve({ schoolId: schoolA, evidenceId }) },
+    );
+    expect(academic.status).toBe(201);
+    const approved = await FINAL_OWNER_POST(
+      req("super", schoolA, "POST", {
+        evidenceId,
+        reason: "Synthetic final school report approval",
+      }),
+      parameters,
+    );
+    expect(approved.status).toBe(201);
+    const finalDecisionId = (await approved.json()).decision.id;
+    const packet = await SOURCE_PACKET_POST(
+      req("super", schoolA, "POST", {
+        finalDecisionId,
+        reason: "Synthetic new pupil frozen source packet",
+      }),
+      parameters,
+    );
+    expect(packet.status).toBe(201);
+    const sourcePacketId = (await packet.json()).packet.id;
+    const composed = await COMPOSITION_POST(
+      req("super", schoolA, "POST", {
+        sourcePacketId,
+        aggregationRuleId: previous.aggregationRuleId,
+        gradeScaleId: previous.gradeScaleId,
+        reason: "Synthetic complete recipient report composition",
+      }),
+      parameters,
+    );
+    expect(composed.status).toBe(201);
+    const frozen =
+      await prisma.privateOfficialReportComposition.findFirstOrThrow({
+        where: { schoolId: schoolA, sourcePacketId },
+      });
+    const releaseInput = {
+      compositionId: frozen.id,
+      visibility: "PARENT_FIRST",
+      reason: "Synthetic explicit parent-first recipient release",
+    };
+    const read = async (actor: string, target = schoolA) =>
+      RECIPIENT_REPORTS(req(actor, target, "GET"), {
+        params: Promise.resolve({ schoolId: target }),
+      });
+    for (const actor of [
+      "teacher",
+      "head",
+      "principal",
+      "admin",
+      "report-student",
+      "other",
+      "foreign",
+    ]) {
+      expect(
+        (
+          await REPORT_PUBLISH(
+            req(actor, schoolA, "POST", releaseInput),
+            parameters,
+          )
+        ).status,
+      ).toBe(404);
+    }
+    expect(
+      (
+        await REPORT_PUBLISH(
+          req("super", schoolA, "POST", {
+            ...releaseInput,
+            actorUserId: users.super,
+          }),
+          parameters,
+        )
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await REPORT_PUBLISH(req("super", schoolB, "POST", releaseInput), {
+          params: Promise.resolve({ schoolId: schoolB }),
+        })
+      ).status,
+    ).toBe(404);
+    expect((await read("report-student")).status).toBe(200);
+    expect((await (await read("report-student")).json()).reports).toHaveLength(
+      0,
+    );
+    const linked = await guardian("report-parent");
+    for (const [visibility, parentAllowed, studentAllowed] of [
+      ["ASSESSMENT_ONLY", false, false],
+      ["PARENT_ONLY", true, false],
+      ["PARENT_FIRST", true, false],
+      ["PARENT_AND_STUDENT", true, true],
+    ] as const) {
+      const rollback = Symbol("rollback explicit policy fixture");
+      await expect(
+        prisma.$transaction(async (tx) => {
+          const id = randomUUID();
+          await tx.reportPublication.create({
+            data: {
+              id,
+              schoolId: schoolA,
+              compositionId: frozen.id,
+              visibility,
+              reason: "Synthetic explicit visibility acceptance",
+              actorMembershipId: members.super,
+              actorUserId: users.super,
+            },
+          });
+          for (const [user, expected] of [
+            [users["report-parent"], parentAllowed],
+            [users["report-student"], studentAllowed],
+          ] as const) {
+            const rows = await tx.$queryRaw<
+              Array<{ allowed: boolean }>
+            >`SELECT "can_read_published_report"(${schoolA},${id},${pupilId},${user}) AS allowed`;
+            expect(rows[0].allowed).toBe(expected);
+          }
+          throw rollback;
+        }),
+      ).rejects.toBe(rollback);
+    }
+    const published = await REPORT_PUBLISH(
+      req("super", schoolA, "POST", releaseInput),
+      parameters,
+    );
+    expect(published.status).toBe(201);
+    const publicationId = (await published.json()).events[0].id;
+    expect(
+      (
+        await REPORT_PUBLISH(
+          req("super", schoolA, "POST", releaseInput),
+          parameters,
+        )
+      ).status,
+    ).toBe(409);
+    expect((await (await read("report-student")).json()).reports).toHaveLength(
+      0,
+    );
+    for (const actor of [
+      "",
+      "teacher",
+      "head",
+      "principal",
+      "admin",
+      "super",
+      "foreign",
+    ]) {
+      const response = await read(actor);
+      expect(response.status).toBe(actor ? 404 : 401);
+      expect(await response.text()).not.toContain(pupilId);
+    }
+    async function guardian(name: string) {
+      const email = `asm-${name}-${suffix}@example.test`;
+      const registered = await auth.api.signUpEmail({
+        body: { name: "Synthetic report guardian", email, password },
+      });
+      users[name] = registered.user.id;
+      const login = await auth.api.signInEmail({
+        body: { email, password },
+        headers: new Headers({ origin: env.BETTER_AUTH_URL }),
+        returnHeaders: true,
+      });
+      cookies[name] = login.headers
+        .getSetCookie()
+        .map((v) => v.split(";")[0])
+        .join("; ");
+      members[name] = (
+        await prisma.membership.create({
+          data: { schoolId: schoolA, userId: users[name], role: "PARENT" },
+        })
+      ).id;
+      context.headers = new Headers({ cookie: cookies.admin });
+      return attestGuardianStudentLink(schoolA, {
+        studentId: pupilId,
+        guardianMembershipId: members[name],
+        relationshipVerified: true,
+        reason: "Synthetic independently verified guardian relationship",
+      });
+    }
+    const guardianResponse = await read("report-parent");
+    expect(guardianResponse.status).toBe(200);
+    expect(guardianResponse.headers.get("cache-control")).toContain("no-store");
+    const reportBody = await guardianResponse.json();
+    expect(reportBody.reports).toHaveLength(1);
+    expect(reportBody.reports[0]).toMatchObject({
+      studentId: pupilId,
+      publicationId,
+    });
+    for (const field of [
+      "composedStudentCards",
+      "studentSourceCards",
+      "rawPercentBps",
+      "correctIndex",
+      "cbt",
+      "manual",
+    ])
+      expect(JSON.stringify(reportBody)).not.toContain(field);
+    expect((await read("report-parent", schoolB)).status).toBe(404);
+    const ackInput = { publicationId, studentId: pupilId };
+    expect(
+      (
+        await REPORT_ACKNOWLEDGE(
+          req("report-student", schoolA, "POST", ackInput),
+          parameters,
+        )
+      ).status,
+    ).toBe(404);
+    expect(
+      (
+        await REPORT_ACKNOWLEDGE(
+          req("report-parent", schoolA, "POST", {
+            ...ackInput,
+            studentId: "foreign-pupil",
+          }),
+          parameters,
+        )
+      ).status,
+    ).toBe(404);
+    expect(
+      (
+        await REPORT_ACKNOWLEDGE(
+          req("report-parent", schoolA, "POST", ackInput),
+          parameters,
+        )
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await REPORT_ACKNOWLEDGE(
+          req("report-parent", schoolA, "POST", ackInput),
+          parameters,
+        )
+      ).status,
+    ).toBe(200);
+    expect((await (await read("report-student")).json()).reports).toHaveLength(
+      1,
+    );
+    expect(
+      await prisma.reportGuardianAcknowledgment.count({
+        where: { schoolId: schoolA, publicationId },
+      }),
+    ).toBe(1);
+    await expect(
+      prisma.reportPublication.update({
+        where: { id: publicationId },
+        data: { visibility: "PARENT_AND_STUDENT" },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.reportPublication.delete({ where: { id: publicationId } }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.$executeRaw`TRUNCATE "ReportGuardianAcknowledgment"`,
+    ).rejects.toThrow();
+    const rollback = Symbol("rollback isolated revocation test");
+    await expect(
+      prisma.$transaction(async (tx) => {
+        await tx.reportPublicationWithdrawal.create({
+          data: {
+            id: randomUUID(),
+            schoolId: schoolA,
+            publicationId,
+            actorMembershipId: members.super,
+            actorUserId: users.super,
+            reason: "Synthetic isolated withdrawal",
+          },
+        });
+        const rows = await tx.$queryRaw<
+          Array<{ allowed: boolean }>
+        >`SELECT "can_read_published_report"(${schoolA},${publicationId},${pupilId},${users["report-student"]}) AS allowed`;
+        expect(rows[0].allowed).toBe(false);
+        throw rollback;
+      }),
+    ).rejects.toBe(rollback);
+    context.headers = new Headers({ cookie: cookies.admin });
+    await revokeGuardianStudentLink(schoolA, linked.id, {
+      reason: "Synthetic terminal guardian relationship revocation",
+    });
+    expect((await (await read("report-parent")).json()).reports).toHaveLength(
+      0,
+    );
+    expect((await (await read("report-student")).json()).reports).toHaveLength(
+      0,
+    );
+    expect(
+      (
+        await REPORT_ACKNOWLEDGE(
+          req("report-parent", schoolA, "POST", ackInput),
+          parameters,
+        )
+      ).status,
+    ).toBe(404);
+    await guardian("browser-parent");
+    expect(
+      (
+        await REPORT_ACKNOWLEDGE(
+          req("browser-parent", schoolA, "POST", ackInput),
+          parameters,
+        )
+      ).status,
+    ).toBe(200);
+    expect((await (await read("report-student")).json()).reports).toHaveLength(
+      1,
+    );
+    expect(
+      (
+        await REPORT_WITHDRAW(
+          req("teacher", schoolA, "POST", {
+            publicationId,
+            reason: "Unauthorized withdrawal",
+          }),
+          parameters,
+        )
+      ).status,
+    ).toBe(404);
+    if (process.env.PHASE8_BROWSER_FIXTURE_FILE) {
+      const path = process.env.PHASE8_BROWSER_FIXTURE_FILE;
+      if (!/^\/tmp\/phase8-[A-Za-z0-9_-]+\.json$/.test(path))
+        throw Error("Private fixture path must be /tmp/phase8-<run>.json");
+      await writeFile(
+        path,
+        JSON.stringify({
+          schoolA,
+          schoolB,
+          sectionId,
+          classId,
+          subjectId,
+          sessionId,
+          termId,
+          assignmentId,
+          pupilId,
+          publicationId,
+          users,
+          members,
+          cookies,
+          password,
+          suffix,
+        }),
+        { mode: 0o600, flag: "wx" },
+      );
+    }
+  }, 45_000);
+  it("conceals a real source roster mismatch committed between independent database readers", async () => {
+    const freshPupil = `phase8-source-race-${suffix}`;
+    const original = objectiveReader.readInternalTeacherClassRecord;
+    let enrollment: string | undefined;
+    const spy = vi
+      .spyOn(objectiveReader, "readInternalTeacherClassRecord")
+      .mockImplementationOnce(async (...args) => {
+        const before = await original(...args);
+        await prisma.studentRecord.create({
+          data: {
+            id: freshPupil,
+            schoolId: schoolA,
+            admissionNumber: `RACE-${suffix}`,
+            givenName: "SyntheticRace",
+            familyName: "PrivateSource",
+            status: "ENROLLED",
+          },
+        });
+        enrollment = (
+          await prisma.studentEnrollment.create({
+            data: {
+              schoolId: schoolA,
+              studentId: freshPupil,
+              classId,
+              sessionId,
+            },
+          })
+        ).id;
+        return before;
+      });
+    try {
+      context.headers = new Headers({ cookie: cookies.teacher });
+      const query = new URLSearchParams({
+        classId,
+        sessionId,
+        subjectId,
+        termId,
+      });
+      const response = await RESULT_PREP_GET(
+        new Request(
+          `http://localhost/api/schools/${schoolA}/result-preparation?${query}`,
+        ),
+        { params: Promise.resolve({ schoolId: schoolA }) },
+      );
+      expect(response.status).toBe(409);
+      const body = await response.text();
+      expect(body).not.toContain("SyntheticRace");
+      expect(body).not.toContain("CloudSynthetic");
+      expect(body).not.toContain(pupilId);
+      expect(spy).toHaveBeenCalledOnce();
+    } finally {
+      spy.mockRestore();
+      if (enrollment)
+        await prisma.studentEnrollment.update({
+          where: { id: enrollment },
+          data: { status: "ENDED", endedAt: new Date() },
+        });
     }
   });
 });

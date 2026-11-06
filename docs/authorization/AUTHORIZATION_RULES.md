@@ -1,5 +1,44 @@
 # Authorization Rules
 
+## Phase 8 recipient publication — D-061 / ADR-047 (2026-11-06)
+
+RES-REQ-001 now includes a separate immutable `ReportPublication`, explicit
+School Super Admin release and terminal withdrawal, and verified recipient
+read/guardian acknowledgment APIs. Academic review, final academic approval
+and private composition alone still grant no recipient access. Publishing
+rechecks current source/reviewer/teacher and latest adopted policies under the
+school lock. Corrections require a new reviewed evidence revision, source
+packet, composition and publication; historical versions are never overwritten.
+The recipient list suppresses superseded versions.
+
+Each release explicitly versions the school's visibility choice:
+`ASSESSMENT_ONLY` denies all report-card reads; `PARENT_ONLY` permits current
+verified guardians; `PARENT_FIRST` permits those guardians and a linked student
+only after explicit acknowledgment by a still-current guardian of that exact
+pupil and publication; `PARENT_AND_STUDENT` permits both verified audiences.
+These four names and acknowledgment semantics resolve P-004 as a conservative,
+configurable development default under D-023. There is no automatic policy
+adoption, email inference, retroactive release or generic child permission.
+Revoked relationships, student identity bindings, inactive memberships,
+enrollment/class/section/period, withdrawn releases and foreign schools fail
+closed on every read. A revoked guardian's acknowledgment no longer unlocks
+student access. GET never acknowledges. Repeated explicit acknowledgment is
+idempotent after reauthorization.
+
+Recipient HTML/Flight/segments are private/no-store. Grades load only through
+an authenticated API, with abort/epoch stale-response protection, foreground
+polling, lifecycle concealment and cross-tab sign-out. Printing requires a
+fresh recipient access check; ordinary print initiation conceals the cards.
+The report view returns only frozen names and published display grades, never
+source marks, answer keys, another pupil's report or internal composition JSON.
+No production deployment or real pupil data is part of this work.
+
+Validation and acceptance evidence are recorded in
+`docs/quality/PHASE8_CLOUD_COMPLETION_20261106.md`; earlier historical sections
+below retain their original authored/unverified status and are not current
+claims of completion.
+
+
 ## Phase 8 private official report evidence composition (AUTHORED, BLOCKED)
 
 `GET/POST /api/schools/[schoolId]/private-official-report-compositions`: authenticated current active exact same-school `SCHOOL_SUPER_ADMIN` only. The POST accepts **only** `sourcePacketId`, `aggregationRuleId`, `gradeScaleId` and reason. Server derives owner membership/user from session under SERIALIZABLE School lock; SQL trigger separately verifies active school owner and latest teacher/reviewer/grading evidence under lock, exact current separately adopted policy IDs/versions, and recomputes all pupil grades from immutable evidence. Student IDs, marks, grade labels, percentage JSON and release status are never client-selected. Owner GET repeats current same-school authorization in SQL and returns up to 100 metadata-only rows, with `Cache-Control: private, no-store`; it **never selects `composedStudentCards`**. No current or guardian/student grade read, result-release mutation, export or download path. D-060/ADR-046; runtime acceptance BLOCKED.

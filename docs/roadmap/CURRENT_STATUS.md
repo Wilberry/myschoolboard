@@ -1,5 +1,14 @@
 # Project Status
 
+## 2026-11-06 Phase 8 cloud implementation checkpoint
+
+Recipient publication/withdrawal, explicit four-mode school visibility, verified
+student/guardian report reads and guardian acknowledgment are implemented under
+D-061/ADR-047. New additive migration and enrolled synthetic integration fixture
+are present. Final acceptance is still being verified; do not mark Phase 8 done
+or merge main until the evidence in PHASE8_CLOUD_COMPLETION_20261106 passes.
+
+
 **Updated:** 3 November 2026
 
 **Status:** In development. MySchoolBoard has not yet launched.

@@ -1,5 +1,19 @@
 # Architecture Decision Records
 
+## ADR-047 — Immutable recipient release ledger and current relationship reader
+
+A new forward migration adds publication, withdrawal and guardian acknowledgment
+ledgers. SQL independently authenticates owner publication and guardian writes.
+Publication reruns the existing locked readiness predicate and latest grading
+policy checks. A single SQL predicate scopes every projected recipient row to
+the actual user, enrolled pupil, unrevoked binding/guardian relationship and
+explicit release policy. Private composition remains immutable and unexposed.
+Recipient names come from the frozen source packet, and only display grade fields
+are projected. Acknowledgment is explicit and idempotent, not a GET side effect.
+The client conceals sensitive DOM on lifecycle/sign-out events and rejects stale
+responses; printing requires fresh access. This preserves Phase 1–7 permissions.
+
+
 ## ADR-001: Modular domain design
 
 - Status: Approved
