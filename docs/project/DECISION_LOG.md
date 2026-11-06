@@ -1,5 +1,19 @@
 # Decision Log
 
+## D-062 — Phase 8 development-integration scope for this cloud task
+
+The owner's 2026-11-06 task explicitly authorizes completing Phase 8, reconciling
+the two histories, using disposable local verification and integrating accepted
+work into development main. This supplements D-023 and D-051 for the tested
+Phase 8 source ce14d17. Actual local regression/static/build/audit and enrolled
+browser gates passed; see the cloud acceptance record. This is no production
+release, live-user access, hosted Actions authorization or security-risk waiver.
+Use the established PR workflow, preserve branch protection, never force-push,
+and keep main unchanged while that integration cannot be executed. The running
+instance currently denies GitHub API egress; configuration saving alone has not
+performed a PR or merge. No repeated development approval is required.
+
+
 ## D-061 — Explicit recipient report publication and verified acknowledgment
 
 Adopt the four explicit per-release school visibility policies and exact-version

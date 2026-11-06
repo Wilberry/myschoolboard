@@ -1,5 +1,18 @@
 # Phase 8 PR #65 — authenticated browser acceptance (synthetic only)
 
+## Current cloud acceptance — 2026-11-06
+
+Source `ce14d17faf37c0c7a58ceac279b29b28d9729a1f`, Chromium 156.0.8078.79.
+19/19 browser checks passed with enrolled synthetic pupils and separately attested
+guardians, plus the real DB source-reader roster-race integration check.
+P8-BR-01–10, 12 and 13 have current passing evidence. P8-BR-11's genuine persisted
+BFCache restoration remains NOT EXERCISED because native navigation reported
+persisted=false. Its required no-stale-data safety behavior passed; no-store was
+preserved. See PHASE8_CLOUD_COMPLETION_20261106.md for the full matrix and limits.
+The historical OPEN/NOT ACCEPTED runs below remain historical and are superseded
+for this implementation source. No PR/main merge or production release is claimed.
+
+
 **Status: OPEN / NOT ACCEPTED.** This matrix separates the scoped local
 automated checks from the missing authenticated browser evidence for private
 teacher result-source preparation (RES-REQ-001, D-P8-001, ADR-037). It is

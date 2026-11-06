@@ -1,5 +1,36 @@
 # Requirements Traceability Matrix
 
+## Phase 8 local acceptance — 6 November 2026
+
+**RES-REQ-001: implemented and locally accepted for development integration.**
+Verified implementation source: `ce14d17faf37c0c7a58ceac279b29b28d9729a1f`. Later acceptance commits change
+documentation only. Recipient publication, withdrawal, four explicit visibility
+policies, verified student/guardian reads, exact-version guardian acknowledgment,
+versioned corrections, report display and guarded printing are implemented.
+
+Actual final results: **187/187 Node guards**, **385/385 Vitest tests in 45 files**,
+**19/19 Chromium acceptance checks**, formatting, lint, typecheck, production build,
+**49/49 exact migration checksums**, and strict/full plus production dependency
+audits (**zero vulnerabilities**). No tests were skipped or disabled in the Node
+or Vitest runs. All database writes used a confirmed disposable PostgreSQL service.
+
+P8-BR-11's conditional genuine BFCache restoration was not observed:
+`pagehide.persisted=false` and `pageshow.persisted=false`. Native Back/Forward,
+duplicate-tab and stale-data concealment checks passed with no-store preserved;
+this does not claim a genuine persisted restoration was tested. Printed reports
+were captured through Chromium's native PDF renderer after the explicit fresh
+access check; the headless window.print command was intercepted for capture.
+Preparation and revoked-report PDFs contained no pupil markers.
+
+The exact evidence and reproducible commands are in
+[PHASE8_CLOUD_COMPLETION_20261106.md](../quality/PHASE8_CLOUD_COMPLETION_20261106.md).
+Earlier authored/unverified Phase 8 checkpoints below are historical and are
+superseded by this acceptance record, not retroactively changed to passes.
+**Remote main integration is pending**: the running environment denies
+`api.github.com`, preventing the established PR workflow. Main remains
+`aa74a0f0265fe113ad8cb4fe9440cd7f51a1b27d`. No production release is authorized.
+
+
 ## Phase 8 recipient publication — D-061 / ADR-047 (2026-11-06)
 
 RES-REQ-001 now includes a separate immutable `ReportPublication`, explicit
@@ -467,7 +498,7 @@ The matrix below links requirements to the canonical domains and expected roadma
 | ATT-REQ-001 | Attendance | Form Teacher, HM, Principal | Submit/approve attendance | AttendanceRegister, AttendanceEntry, AttendanceEvent | Private POST only (no UI/read) | T-ATT-001 | Phase 6 | Partially authored — unverified |
 | LES-REQ-001 | Lesson notes | Teacher, HM, Principal | Approval and release | LessonNote | Academic planning | T-LES-001 | Phase 6 | Specified |
 | ASM-REQ-001 | Assessments | Teacher, HM, Principal | CBT and assessment scoring | Assessment, Score | Assessment UI | T-ASM-001 | Phase 7 | Specified |
-| RES-REQ-001 | Results and report cards | Teacher, HM, Principal, School Super Admin | Approve and publish report cards | ResultSheet, ReportCard | Results area | T-RES-001 | Phase 8 | Specified |
+| RES-REQ-001 | Results and report cards | Teacher, HM, Principal, School Super Admin, verified Student/Parent | Independently review, explicitly publish and enforce recipient visibility | ResultSheetEvidence, PrivateOfficialReportComposition, ReportPublication, ReportGuardianAcknowledgment | Results and report workspaces | T-RES-001; questions.integration.test.ts; verify-phase8-browser.mjs | Phase 8 | Implemented; local acceptance passed at ce14d17; main integration pending |
 | FEE-REQ-001 | Fees and payments | School admin, Parent | Payment and receipt workflow | FeeObligation, Payment | Finance portal | T-FEE-001 | Phase 9 | Specified |
 | COM-REQ-001 | Communication | School admin, Teacher, Parent | Notice board and class announcements | Notice, Announcement | Communication UI | T-COM-001 | Phase 10 | Specified |
 | LIB-REQ-001 | Library | Teacher, Student, Parent | Resource access | LibraryResource | Library portal | T-LIB-001 | Phase 10 | Specified |

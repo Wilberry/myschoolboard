@@ -1,5 +1,12 @@
 # Results and Report Cards
 
+**Current Phase 8 status (2026-11-06):** recipient report publication and verified
+student/guardian access are implemented and locally accepted at `ce14d17`.
+See [cloud acceptance evidence](../quality/PHASE8_CLOUD_COMPLETION_20261106.md).
+Earlier statements denying all recipient routes describe historical checkpoints;
+they do not grant or revoke the current explicit report-reader policy.
+
+
 ## Phase 8 recipient publication — D-061 / ADR-047 (2026-11-06)
 
 RES-REQ-001 now includes a separate immutable `ReportPublication`, explicit

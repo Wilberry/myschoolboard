@@ -1,13 +1,47 @@
 # Milestone Checklist
 
-## 2026-11-06 Phase 8 cloud implementation checkpoint
+## Phase 8 local acceptance — 6 November 2026
 
-Recipient publication/withdrawal, explicit four-mode school visibility, verified
-student/guardian report reads and guardian acknowledgment are implemented under
-D-061/ADR-047. New additive migration and enrolled synthetic integration fixture
-are present. Final acceptance is still being verified; do not mark Phase 8 done
-or merge main until the evidence in PHASE8_CLOUD_COMPLETION_20261106 passes.
+**RES-REQ-001: implemented and locally accepted for development integration.**
+Verified implementation source: `ce14d17faf37c0c7a58ceac279b29b28d9729a1f`. Later acceptance commits change
+documentation only. Recipient publication, withdrawal, four explicit visibility
+policies, verified student/guardian reads, exact-version guardian acknowledgment,
+versioned corrections, report display and guarded printing are implemented.
 
+Actual final results: **187/187 Node guards**, **385/385 Vitest tests in 45 files**,
+**19/19 Chromium acceptance checks**, formatting, lint, typecheck, production build,
+**49/49 exact migration checksums**, and strict/full plus production dependency
+audits (**zero vulnerabilities**). No tests were skipped or disabled in the Node
+or Vitest runs. All database writes used a confirmed disposable PostgreSQL service.
+
+P8-BR-11's conditional genuine BFCache restoration was not observed:
+`pagehide.persisted=false` and `pageshow.persisted=false`. Native Back/Forward,
+duplicate-tab and stale-data concealment checks passed with no-store preserved;
+this does not claim a genuine persisted restoration was tested. Printed reports
+were captured through Chromium's native PDF renderer after the explicit fresh
+access check; the headless window.print command was intercepted for capture.
+Preparation and revoked-report PDFs contained no pupil markers.
+
+The exact evidence and reproducible commands are in
+[PHASE8_CLOUD_COMPLETION_20261106.md](../quality/PHASE8_CLOUD_COMPLETION_20261106.md).
+Earlier authored/unverified Phase 8 checkpoints below are historical and are
+superseded by this acceptance record, not retroactively changed to passes.
+**Remote main integration is pending**: the running environment denies
+`api.github.com`, preventing the established PR workflow. Main remains
+`aa74a0f0265fe113ad8cb4fe9440cd7f51a1b27d`. No production release is authorized.
+
+
+
+- [x] Teacher preparation and source reconciliation, including a real DB roster race.
+- [x] Independent verified-section academic review and school owner approval.
+- [x] Explicit adopted grading/aggregation policy and immutable source/composition.
+- [x] Separate recipient publication and terminal audited withdrawal.
+- [x] All four visibility choices and current verified student/guardian access.
+- [x] Explicit version-bound acknowledgment; prior versions cannot unlock new reports.
+- [x] Membership, identity, guardian, enrollment, school and release revocation tests.
+- [x] Grading, printed output, role/tenant, lifecycle, delayed sign-out, keyboard and automated WCAG acceptance.
+- [x] Full local regression, static/build, checksum and dependency audit gates.
+- [ ] Complete remote PR/main integration after GitHub API network access applies.
 
 ## Phase 8 privately composed official-result evidence — [ ] AUTHORED / BLOCKED
 

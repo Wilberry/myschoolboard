@@ -1,27 +1,36 @@
 # Project Status
 
-## 2026-11-06 Phase 8 cloud implementation checkpoint
+## Phase 8 local acceptance — 6 November 2026
 
-Recipient publication/withdrawal, explicit four-mode school visibility, verified
-student/guardian report reads and guardian acknowledgment are implemented under
-D-061/ADR-047. New additive migration and enrolled synthetic integration fixture
-are present. Final acceptance is still being verified; do not mark Phase 8 done
-or merge main until the evidence in PHASE8_CLOUD_COMPLETION_20261106 passes.
+**RES-REQ-001: implemented and locally accepted for development integration.**
+Verified implementation source: `ce14d17faf37c0c7a58ceac279b29b28d9729a1f`. Later acceptance commits change
+documentation only. Recipient publication, withdrawal, four explicit visibility
+policies, verified student/guardian reads, exact-version guardian acknowledgment,
+versioned corrections, report display and guarded printing are implemented.
+
+Actual final results: **187/187 Node guards**, **385/385 Vitest tests in 45 files**,
+**19/19 Chromium acceptance checks**, formatting, lint, typecheck, production build,
+**49/49 exact migration checksums**, and strict/full plus production dependency
+audits (**zero vulnerabilities**). No tests were skipped or disabled in the Node
+or Vitest runs. All database writes used a confirmed disposable PostgreSQL service.
+
+P8-BR-11's conditional genuine BFCache restoration was not observed:
+`pagehide.persisted=false` and `pageshow.persisted=false`. Native Back/Forward,
+duplicate-tab and stale-data concealment checks passed with no-store preserved;
+this does not claim a genuine persisted restoration was tested. Printed reports
+were captured through Chromium's native PDF renderer after the explicit fresh
+access check; the headless window.print command was intercepted for capture.
+Preparation and revoked-report PDFs contained no pupil markers.
+
+The exact evidence and reproducible commands are in
+[PHASE8_CLOUD_COMPLETION_20261106.md](../quality/PHASE8_CLOUD_COMPLETION_20261106.md).
+Earlier authored/unverified Phase 8 checkpoints below are historical and are
+superseded by this acceptance record, not retroactively changed to passes.
+**Remote main integration is pending**: the running environment denies
+`api.github.com`, preventing the established PR workflow. Main remains
+`aa74a0f0265fe113ad8cb4fe9440cd7f51a1b27d`. No production release is authorized.
 
 
-**Updated:** 3 November 2026
-
-**Status:** In development. MySchoolBoard has not yet launched.
-
-**Current focus:** Phase 8 — Results and Report Cards. Phase 9 — Fees and Payments is also underway.
-
-**Progress:** The foundation for Phases 1–7 is in place. Some subscriptions, admissions, student examinations, and parent/student services are still being completed.
-
-**Phase 8 development:** A teacher-only private result-source preparation
-preflight has been authored for RES-REQ-001. It does not calculate official
-grades, approve or publish results, or enable student/parent result access.
-Local full-suite and authenticated acceptance remain pending; RES-REQ-001 is
-partial and no Phase 8 acceptance is claimed.
 
 ## Phase 8 immutable private official-result composition evidence (AUTHORED; NOT RUNTIME VERIFIED)
 
