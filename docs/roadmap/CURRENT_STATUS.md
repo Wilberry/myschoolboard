@@ -4,8 +4,8 @@
 
 **Status:** In development. MySchoolBoard has not yet launched.
 
-**Current focus:** Phase 8 is locally accepted and awaiting development-main
-integration. Phase 9 — Fees and Payments is also underway.
+**Current focus:** Phase 8 was locally accepted and merged into development
+`main` via PR #106 on 6 November 2026. Phase 9 — Fees and Payments is also underway.
 
 **Progress:** The foundation for Phases 1–7 is in place. Some subscriptions,
 admissions, student examinations, and broader parent/student services are still
@@ -38,9 +38,10 @@ The exact evidence and reproducible commands are in
 [PHASE8_CLOUD_COMPLETION_20261106.md](../quality/PHASE8_CLOUD_COMPLETION_20261106.md).
 Earlier authored/unverified Phase 8 checkpoints below are historical and are
 superseded by this acceptance record, not retroactively changed to passes.
-**Remote main integration is pending**: the running environment denies
-`api.github.com`, preventing the established PR workflow. Main remains
-`aa74a0f0265fe113ad8cb4fe9440cd7f51a1b27d`. No production release is authorized.
+**Remote main integration completed:** PR #106 was merged normally on
+6 November 2026 at `2e12f6098143816e529597ed97abcd268e00434c`.
+The pre-merge main SHA was `aa74a0f0265fe113ad8cb4fe9440cd7f51a1b27d`.
+No production release is authorized.
 
 ## Phase 8 immutable private official-result composition evidence (AUTHORED; NOT RUNTIME VERIFIED)
 
