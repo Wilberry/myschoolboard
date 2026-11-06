@@ -52,6 +52,12 @@ export async function allocateReviewedManualClaim(schoolId: string, input: unkno
             status: "MANUAL_ALLOCATION_PREVIEW_ONLY" as const, replay: true,
           };
         }
+        // A fresh request key cannot consume the same verified claim twice,
+        // including after terminal reversal. Exact replays returned above.
+        const consumed = await tx.manualPaymentAllocation.findFirst({
+          where: { schoolId, verificationId }, select: { id: true },
+        });
+        if (consumed) throw new FeeError("NOT_FOUND");
         const decision = await tx.paymentVerificationDecision.findFirst({
           where: { schoolId, id: verificationId, action: "VERIFIED",
             confirmedBankFunds: true },

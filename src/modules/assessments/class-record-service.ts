@@ -2,7 +2,9 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/src/lib/db";
 import { AssessmentError, assessmentUserId } from "./question-service";
 import {
-  calculateWeightedPreview, type GradingWeights, type WeightedPreview,
+  calculateWeightedPreview,
+  type GradingWeights,
+  type WeightedPreview,
 } from "./grading-policy";
 
 const valid = (s: string) => Boolean(s && s.length <= 128 && s.trim() === s);
@@ -55,11 +57,20 @@ export interface ClassRecordStudent {
  * attempts; never read raw student options or correctness keys.
  * Final SELECT rechecks exact current TEACHER assignment, not just role. */
 export async function readInternalTeacherClassRecord(
-  schoolId: string, sessionId: string, termId: string,
-  classId: string, subjectId: string,
-): Promise<{ classId: string; subjectId: string; sessionId: string;
-  termId: string; students: ClassRecordStudent[];
-  gradingPolicy: (GradingWeights & { version: number; status: "DRAFT_PREVIEW_ONLY" }) | null }> {
+  schoolId: string,
+  sessionId: string,
+  termId: string,
+  classId: string,
+  subjectId: string,
+): Promise<{
+  classId: string;
+  subjectId: string;
+  sessionId: string;
+  termId: string;
+  students: ClassRecordStudent[];
+  gradingPolicy:
+    (GradingWeights & { version: number; status: "DRAFT_PREVIEW_ONLY" }) | null;
+}> {
   if (![schoolId, sessionId, termId, classId, subjectId].every(valid)) {
     throw new AssessmentError("INVALID_INPUT");
   }
@@ -211,25 +222,35 @@ export async function readInternalTeacherClassRecord(
     let student = grouped.get(row.studentId);
     if (!student) {
       student = {
-        studentId: row.studentId, admissionNumber: row.admissionNumber,
-        givenName: row.givenName, familyName: row.familyName,
-        assessments: [], assessedPoints: 0, possiblePoints: 0,
-        pendingAssessments: 0, percentBps: null,
-      weightedPreview: null,
+        studentId: row.studentId,
+        admissionNumber: row.admissionNumber,
+        givenName: row.givenName,
+        familyName: row.familyName,
+        assessments: [],
+        assessedPoints: 0,
+        possiblePoints: 0,
+        pendingAssessments: 0,
+        percentBps: null,
+        weightedPreview: null,
       };
       grouped.set(row.studentId, student);
     }
     if (row.draftId && row.title && row.kind) {
-      if (student.assessments.some(a => a.draftId === row.draftId)) {
+      if (student.assessments.some((a) => a.draftId === row.draftId)) {
         throw new AssessmentError("CONFLICT");
       }
-      if (student.assessments.length >= 30) throw new AssessmentError("CONFLICT");
+      if (student.assessments.length >= 30)
+        throw new AssessmentError("CONFLICT");
       const possiblePoints = row.assessmentMaxPoints ?? 0;
       if (possiblePoints < 1) throw new AssessmentError("CONFLICT");
       student.assessments.push({
-        draftId: row.draftId, title: row.title, kind: row.kind,
-        possiblePoints, earnedPoints: row.earnedPoints,
-        percentBps: row.percentBps, passed: row.passed,
+        draftId: row.draftId,
+        title: row.title,
+        kind: row.kind,
+        possiblePoints,
+        earnedPoints: row.earnedPoints,
+        percentBps: row.percentBps,
+        passed: row.passed,
         attemptNumber: row.attemptNumber,
       });
       if (row.earnedPoints === null) student.pendingAssessments++;
@@ -241,30 +262,47 @@ export async function readInternalTeacherClassRecord(
     if (grouped.size > 500) throw new AssessmentError("CONFLICT");
   }
   const first = rows[0];
-  const gradingPolicy: (GradingWeights & {
-    version: number; status: "DRAFT_PREVIEW_ONLY";
-  }) | null = first?.gradingVersion !== null &&
+  const gradingPolicy:
+    | (GradingWeights & {
+        version: number;
+        status: "DRAFT_PREVIEW_ONLY";
+      })
+    | null =
+    first?.gradingVersion !== null &&
     first?.gradingVersion !== undefined &&
-    first.quizWeight !== null && first.testWeight !== null &&
+    first.quizWeight !== null &&
+    first.testWeight !== null &&
     first.examWeight !== null
-    ? {
-      version: first.gradingVersion, quizWeight: first.quizWeight,
-      testWeight: first.testWeight, examWeight: first.examWeight,
-      status: "DRAFT_PREVIEW_ONLY",
-    } : null;
+      ? {
+          version: first.gradingVersion,
+          quizWeight: first.quizWeight,
+          testWeight: first.testWeight,
+          examWeight: first.examWeight,
+          status: "DRAFT_PREVIEW_ONLY",
+        }
+      : null;
   for (const student of grouped.values()) {
     if (gradingPolicy) {
-      student.weightedPreview = calculateWeightedPreview(gradingPolicy,
-        student.assessments.map(a => ({
-          kind: a.kind, percentBps: a.percentBps,
-        })));
+      student.weightedPreview = calculateWeightedPreview(
+        gradingPolicy,
+        student.assessments.map((a) => ({
+          kind: a.kind,
+          percentBps: a.percentBps,
+        })),
+      );
     }
     if (student.possiblePoints > 0) {
       student.percentBps = Math.round(
-        student.assessedPoints * 10000 / student.possiblePoints,
+        (student.assessedPoints * 10000) / student.possiblePoints,
       );
     }
   }
-  return { sessionId, termId, classId, subjectId,
-    gradingPolicy, students: Array.from(grouped.values()) };
+  return {
+    sessionId,
+    termId,
+    classId,
+    subjectId,
+    gradingPolicy,
+    students: Array.from(grouped.values()),
+  };
 }

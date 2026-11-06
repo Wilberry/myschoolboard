@@ -57,10 +57,10 @@ BEGIN
       JOIN "Membership" reviewer
         ON reviewer."id" = NEW."actorMembershipId"
        AND reviewer."schoolId" = n."schoolId"
-      JOIN "ScopeGrant" grant
-        ON grant."membershipId" = reviewer."id"
-       AND grant."type" = 'SECTION'
-       AND grant."scopeId" = section."id"
+      JOIN "ScopeGrant" scope_grant
+        ON scope_grant."membershipId" = reviewer."id"
+       AND scope_grant."type" = 'SECTION'
+       AND scope_grant."scopeId" = section."id"
       WHERE n."id" = NEW."noteId"
         AND n."schoolId" = NEW."schoolId"
         AND n."currentRevision" = NEW."revisionNumber"
@@ -73,7 +73,7 @@ BEGIN
         AND school."isActive" = true
         AND c."isActive" = true
         AND section."isActive" = true
-        AND grant."verified" = true
+        AND scope_grant."verified" = true
         AND (
           (reviewer."role" = 'HEAD_OF_SECTION' AND section."stage" = 'PRIMARY')
           OR (reviewer."role" = 'PRINCIPAL' AND section."stage" = 'SECONDARY')

@@ -28,10 +28,12 @@ function failure(error: unknown) {
     return respond({ error: "Invalid request" }, 400);
   }
   try {
-    console.warn(JSON.stringify({
-      event: "school_section_mutation_failed",
-      requestId: randomUUID(),
-    }));
+    console.warn(
+      JSON.stringify({
+        event: "school_section_mutation_failed",
+        requestId: randomUUID(),
+      }),
+    );
   } catch {
     // Operational diagnostics must never reveal tenant IDs or stored data.
   }

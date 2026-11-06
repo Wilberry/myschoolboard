@@ -15,7 +15,7 @@ This document is the functional baseline for the specification. It is intentiona
 | ATT-REQ-001 | Attendance | Critical | Phase 6 | Specified |
 | LES-REQ-001 | Lesson notes | High | Phase 6 | Specified |
 | ASM-REQ-001 | Assessments and CBT | Critical | Phase 7 | Specified |
-| RES-REQ-001 | Results and reports | Critical | Phase 8 | Specified |
+| RES-REQ-001 | Results and reports | Critical | Phase 8 | Implemented; locally accepted at ce14d17; development integration pending |
 | FEE-REQ-001 | Fees and payments | High | Phase 9 | Specified |
 | COM-REQ-001 | Communications | High | Phase 10 | Specified |
 | LIB-REQ-001 | Library | Medium | Phase 10 | Specified |

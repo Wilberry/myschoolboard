@@ -16,7 +16,7 @@ const submitSchema = z.object({
   requestKey: z.string().uuid(),
   transferReference,
   claimedAmountMinor: z.string().regex(/^[1-9][0-9]{0,12}$/)
-    .refine(v => BigInt(v) <= 1000000000000n),
+    .refine(v => BigInt(v) <= BigInt("1000000000000")),
   reason: z.string().trim().min(5).max(500),
 }).strict();
 const verifySchema = z.discriminatedUnion("action", [

@@ -73,7 +73,15 @@ export function verifyPhase9DatabaseIdentity(environment, spawn = spawnSync) {
     // services, SSL negotiation, and connection defaults.
     if (/^PG[A-Z0-9_]+$/.test(key)) delete cleanEnvironment[key];
   }
-  cleanEnvironment.PGDATABASE = uri;
+  // libpq does not expand a URI supplied through the PGDATABASE default.
+  // Set each connection option from the independently validated target;
+  // no credentials are placed in argv or inherited from ambient PG* values.
+  const target = new URL(uri);
+  cleanEnvironment.PGHOST = target.hostname;
+  cleanEnvironment.PGPORT = target.port;
+  cleanEnvironment.PGDATABASE = decodeURIComponent(target.pathname.slice(1));
+  cleanEnvironment.PGUSER = decodeURIComponent(target.username);
+  cleanEnvironment.PGPASSWORD = decodeURIComponent(target.password);
   cleanEnvironment.PGCONNECT_TIMEOUT = "5";
   cleanEnvironment.PGOPTIONS =
     "-c default_transaction_read_only=on -c statement_timeout=5000";

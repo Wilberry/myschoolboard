@@ -19,7 +19,12 @@ export async function handleAcademicPeriodChange(
     }
     const { schoolId, sessionId, termId } = await params;
     const input = await request.json();
-    const result = await changeAcademicPeriod(schoolId, sessionId, termId, input);
+    const result = await changeAcademicPeriod(
+      schoolId,
+      sessionId,
+      termId,
+      input,
+    );
     return response(result, 200);
   } catch (error) {
     if (error instanceof AcademicConfigError) {

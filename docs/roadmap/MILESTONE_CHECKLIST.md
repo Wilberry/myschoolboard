@@ -1,5 +1,408 @@
 # Milestone Checklist
 
+## Phase 8 local acceptance — 6 November 2026
+
+**RES-REQ-001: implemented and locally accepted for development integration.**
+Verified implementation source: `ce14d17faf37c0c7a58ceac279b29b28d9729a1f`. Later acceptance commits change
+documentation only. Recipient publication, withdrawal, four explicit visibility
+policies, verified student/guardian reads, exact-version guardian acknowledgment,
+versioned corrections, report display and guarded printing are implemented.
+
+Actual final results: **187/187 Node guards**, **385/385 Vitest tests in 45 files**,
+**19/19 Chromium acceptance checks**, formatting, lint, typecheck, production build,
+**49/49 exact migration checksums**, and strict/full plus production dependency
+audits (**zero vulnerabilities**). No tests were skipped or disabled in the Node
+or Vitest runs. All database writes used a confirmed disposable PostgreSQL service.
+
+P8-BR-11's conditional genuine BFCache restoration was not observed:
+`pagehide.persisted=false` and `pageshow.persisted=false`. Native Back/Forward,
+duplicate-tab and stale-data concealment checks passed with no-store preserved;
+this does not claim a genuine persisted restoration was tested. Printed reports
+were captured through Chromium's native PDF renderer after the explicit fresh
+access check; the headless window.print command was intercepted for capture.
+Preparation and revoked-report PDFs contained no pupil markers.
+
+The exact evidence and reproducible commands are in
+[PHASE8_CLOUD_COMPLETION_20261106.md](../quality/PHASE8_CLOUD_COMPLETION_20261106.md).
+Earlier authored/unverified Phase 8 checkpoints below are historical and are
+superseded by this acceptance record, not retroactively changed to passes.
+**Remote main integration is pending**: the running environment denies
+`api.github.com`, preventing the established PR workflow. Main remains
+`aa74a0f0265fe113ad8cb4fe9440cd7f51a1b27d`. No production release is authorized.
+
+
+
+- [x] Teacher preparation and source reconciliation, including a real DB roster race.
+- [x] Independent verified-section academic review and school owner approval.
+- [x] Explicit adopted grading/aggregation policy and immutable source/composition.
+- [x] Separate recipient publication and terminal audited withdrawal.
+- [x] All four visibility choices and current verified student/guardian access.
+- [x] Explicit version-bound acknowledgment; prior versions cannot unlock new reports.
+- [x] Membership, identity, guardian, enrollment, school and release revocation tests.
+- [x] Grading, printed output, role/tenant, lifecycle, delayed sign-out, keyboard and automated WCAG acceptance.
+- [x] Full local regression, static/build, checksum and dependency audit gates.
+- [ ] Complete remote PR/main integration after GitHub API network access applies.
+
+## Phase 8 privately composed official-result evidence — [ ] AUTHORED / BLOCKED
+
+- [x] Append-only exact-school private `PrivateOfficialReportComposition`, with composite FK references to frozen packet, final owner approval and pinned adopted aggregation/grade scale.
+- [x] SQL row-locked reauthorization reuses full current review and source readiness; verify exact current adopted policy IDs, immutable weights and per-pupil source completeness.
+- [x] Database derives category scores, raw/displayed percentages and grade bands according to explicitly chosen adopted formula/rounding, no browser-supplied marks or grade fallback.
+- [x] Only one immutable composition per frozen source packet, preserving previous history for later independently reviewed revision/correction.
+- [x] Same-school current School Super Admin private no-store POST and metadata-only GET; no student-level grades, report files or release routes.
+- [x] Authored integration SQL parity/tenant/role/stale-packet/immutable mutation/privacy tests and Node guard without removing previous gates.
+- [ ] Run disposable PostgreSQL + Prisma schema/migration/SQL mathematical parity, concurrent revocation and rollback, Node/Vitest, lint/types/build, browser, strict audit and CI acceptance.
+- [ ] Define controlled **recipient release** and school visibility policy, verify student/guardian relationships, safe immutable amendments and official report-card export. Keep public result release DISABLED.
+
+## Phase 8 adopted aggregation and private report composition mathematics — [ ] AUTHORED, BLOCKED
+
+- [x] Owner-adopted, append-only, explicit per-school assessment-category aggregation semantics and integer precision, without fallback method.
+- [x] School-row-locked SQL owner authorization, duplicate exclusion, trusted version/timestamp, UPDATE/DELETE/TRUNCATE audit immutability.
+- [x] Private metadata GET and policy POST with strict validated inputs, no-store, same-school owner check and owner-only workspace/navigation.
+- [x] Private pure composition using explicit source packet, frozen adopted category weights and pinned aggregation/grade-scale revisions; rejects missing category, mismatched grades and corrupt marks; never publishes.
+- [x] Authored synthetic role/tenant/replay/immutable policy integration, pure arithmetic edge/unit tests and structural guard, added without reducing earlier suites.
+- [ ] Execute cumulative isolated PostgreSQL/Prisma, full Node/Vitest, format/lint/types/Next build, security audit and CI.
+- [ ] Next: SQL-revalidated immutable per-student official composition artifact pinning source packet + exact policy revisions, followed separately by authenticated audited recipient release and versioned correction/visibility safeguards.
+
+## Phase 8 adopted report grading-scale rules — [ ] AUTHORED, BLOCKED
+
+- [x] Immutable active School Super Admin grade-scale adoption, no school-wide hard-coded default.
+- [x] SQL checks complete ascending 0–10000 integer basis-point coverage; strictly non-overlapping bands and unique labels, selected rounding mode, decimal precision and band classification basis.
+- [x] Preserve successive per-school revisions, audit actor/reason/trusted timestamp; prevent UPDATE, DELETE and TRUNCATE.
+- [x] Private no-store owner-only API, page, navigation and private deterministic score/label simulation; no official report calculation or release.
+- [x] Authored malformed rule, duplicate, role, cross-tenant, history, immutability and unchanged-packet tests and registered new Node guard without removing gates.
+- [ ] Execute cumulative disposable PostgreSQL, Prisma, Node/Vitest, format/lint/typecheck/build/security audit and CI-equivalent tests and repair failures.
+- [ ] Implement explicit adopted formula/band version binding, frozen official report composition, independent release and configured guardian/student visibility; official publication DISABLED.
+
+## Phase 8 immutable private report-card source foundation — [ ] AUTHORED, BLOCKED
+
+- [x] Additive, server-built one-per-final-decision private pupil source snapshot with exact school/academic/policy/evidence version.
+- [x] PostgreSQL reruns locked final owner readiness; binds current owner and valid latest independent academic approval and marks before accepting preparation.
+- [x] Allowlist stored pupil/source marks and adopted QUIZ/TEST/EXAM weights; explicitly **do not** invent final grades, thresholds, rounding or visibility settings.
+- [x] Immutable, duplicate-proof packet history; private same-school School Super Admin GET/POST returns only bounded non-pupil metadata and prevents forged source inputs.
+- [x] Authored tests covering roles, tenant isolation, duplicate/revision change, tampering, no pupil data leakage and fresh owner approval requirement; registered structural guard.
+- [ ] Run cumulative disposable PostgreSQL migrations, authenticated Vitest, Node guards, Prisma, formatting, lint, typecheck, build, security audit and CI-equivalent.
+- [ ] Implement adopted grade-scale/rubric, frozen official report-card calculation/presentation, independently audited release and student/guardian relationship visibility. No official report is yet released.
+
+## Phase 8 final School Super Admin approval audit — [ ] AUTHORED, BLOCKED
+
+- [x] SQL-locked immutable per-evidence `APPROVED_AWAITING_RELEASE` record with exact frozen academic context and versioned per-context ordinal, actor/reason/trusted timestamp.
+- [x] Mandatory final readiness rerun, current exact school-owner user+membership and independently verified section review; immutable audit UPDATE/DELETE/TRUNCATE guards.
+- [x] School-owner private no-store approval POST (evidence ID + reason only), bounded metadata-only ledger GET, school-gated page and navigation.
+- [x] Tests authored for role/tenant denial, duplicate/replayed approval, reviewer revocation, later policy adoption, second independent approval and immutable history.
+- [ ] Apply/check migrations on disposable loopback PostgreSQL and execute full unchanged security, tests, quality and audit gates. CI failure cause unresolved.
+- [ ] Complete official report-card calculation, explicitly configured visibility, a separately audited *release* decision, and versioned corrections after verification. No student/guardian result exposure.
+
+## Phase 8 protected final publication readiness predicate — [ ] AUTHORED, BLOCKED
+
+- [x] Reusable additive SQL-only lock-and-recheck helper for future School Super Admin final release transaction.
+- [x] Strict current exact active owner/teacher/scope/academic review/latest adopted policy and latest frozen source revision invariants.
+- [x] SQL complete recomputed pupil source manifest and per-pupil mandatory weighted category rechecks; no release or result mutation.
+- [x] Register Node structural guard and extend synthetic database tests for valid owner, wrong owner, wrong school, superseded evidence, revoked HM grant, and changed adoption.
+- [ ] Apply cumulative migrations only to disposable PostgreSQL and run all Node/Vitest/Prisma/static/build/security acceptance gates.
+- [ ] Separately implement immutable final School Super Admin publication event and audited visibility controls after verification; publication **DISABLED**.
+
+## Phase 8 School Super Admin publication candidate inspection — [ ] AUTHORED, BLOCKED
+
+- [x] Private owner-only GET for bounded latest independently approved result evidence metadata; repeat active same-school owner and reviewer exact SECTION checks within query.
+- [x] Require latest evidence revision, latest explicit adopted grading policy, current exact teacher academic assignment and byte-equal recomputed pupil manifest; per-pupil positive-weight category recheck.
+- [x] Read-only School Super Admin screen and school navigation; no pupil/guardian results, official grades, publishing API, export, or mutation.
+- [x] Synthetic authenticated role/tenant/revocation/policy-change tests and Node structural guard authored and registered.
+- [ ] Run disposable PostgreSQL integration, Node/Vitest, Prisma, static, build, browser and security gates on complete cumulative Phase 6–8 tree; resolve outstanding CI and dependency audit.
+- [ ] Implement distinct immutable School Super Admin publication authority in a later, separately verified result release slice; remains DISABLED.
+
+## Phase 8 immutable result-sheet source evidence and independent academic review (AUTHORED; NOT VERIFIED)
+
+`feature/phase8-result-sheet-evidence-review` adds an additive **teacher-prepared frozen source-evidence snapshot** (`ResultSheetEvidence`) and separate **academic reviewer decision** (`ResultSheetReview`). It references one explicit current `ResultGradingAdoption` from the School Super Admin; the teacher may not supply marks, sourceManifest, enrollment counts, policy, actor ID or review outcome. A PostgreSQL BEFORE INSERT function acquires the current School row lock, validates the actual original active TEACHER's exact school/class/subject/session/term assignment, current enrolled roster and latest adopted school policy, and rebuilds a JSONB manifest of current sealed/independently approved/PUBLISHED-not-WITHDRAWN submitted+scored CBT and teacher-written effective marks from initial independently APPROVED decisions or latest independently APPROVED correction revisions. No answer keys, raw student options or speculative marks. Every pupil must have completed source evidence, no duplicate active enrollments, at most 500 pupils, and every positively weighted adopted QUIZ/TEST/EXAM category must have source evidence. This is a **frozen evidence manifest**, NOT a computed official report-card grade or published result.
+
+A snapshot gets a DB-generated per-class/subject/term revision, reason, actor, trusted timestamp and immutable original marks/sources. A second snapshot is permitted **only after prior independent review finishes** and the policy adoption or SQL-computed source manifest actually changed; unchanged duplicates and an outstanding undecided revision fail closed. Independent academic reviewer is a currently active **HEAD_OF_SECTION for PRIMARY** or **PRINCIPAL for SECONDARY**, with a VERIFIED SECTION ScopeGrant for the snapshot's actual active class section, and cannot be the teacher. At review INSERT, SQL repeats current teacher/academic/verified reviewer checks and accepts APPROVED only if the snapshot is the latest and the **current adopted policy and recomputed source manifest still match exactly**. A stale snapshot can be RETURNED so the teacher may prepare a new revision; stale or superseded material cannot be approved. A decision is one-time append-only APPROVED/RETURNED, **not final School Super Admin publication**. No pupil/guardian endpoint, result export, official report-card generation, School Super Admin release or official weighted grade is introduced.
+
+Private no-store exact teacher evidence GET/POST, currently verified-section reviewer queue GET and decision POST, school-gated teacher and academic reviewer screens/navigation, synthetic role/tenant/forged-mark/unapproved/evidence-freeze/return/approved-correction/revision and immutable-history integration tests, and Node structural guards are AUTHORED, NOT EXECUTED. Migration `20261013100000_phase8_result_sheet_evidence_review` NOT APPLIED. D-053/ADR-039. RES-REQ-001 partial; Phase 6–7/full local CI/strict dependency audit BLOCKED.
+
+## Phase 8 school grading-policy adoption (AUTHORED; NOT VERIFIED)
+
+`feature/phase8-adopted-grading-policy` introduces `ResultGradingAdoption` as an append-only, versioned School Super Admin decision to **adopt** a specific immutable `AssessmentGradingPolicyRevision` for one exact school/session/term/class/subject. The PostgreSQL INSERT trigger independently verifies active same-school School Super Admin member+user, exact current policy context, active academic session/term/class/section/subject, 100% explicit QUIZ/TEST/EXAM weights and serializes per-context adoption ordinals under the school row lock. Earlier draft revisions and adoptions are never rewritten. Adopting a profile only establishes the academic rule available to later result-sheet preparation; it does NOT approve or publish any result or authorize student/guardian visibility.
+
+Private no-store school-super-admin-only GET adoption history and POST, authenticated school-gated owner workspace and navigation added. Synthetic real-session correct/foreign/role denied, duplicate-adoption, no spoofed user, immutability assertions and Node source guard authored but NOT EXECUTED. Additive migration `20261013090000_phase8_result_grading_adoption` NOT applied. D-052/ADR-038. RES-REQ-001 partial, Phase 6/7 and local CI/security/audit gate BLOCKED.
+
+## Phase 8 private teacher result preparation preflight (AUTHORED; NOT PRODUCTION-VERIFIED)
+
+`feature/phase8-result-preparation-readiness` starts the documented RES-REQ-001 result flow at **teacher source preparation**, without skipping HM/Principal academic review or School Super Admin final publication. A private no-store GET and school-gated teacher page use the **existing** independently authenticated exact school/class/subject/session/term CBT score and academically reviewed written-mark readers. The pure reconciliation function compares both active pupil rosters by immutable studentId plus admission number/given/family names; different, extra, missing or duplicate students and invalid counts fail closed instead of joining mismatched records. It reports missing CBT scores, initial manual academic-review gaps, outstanding correction reviews, absence of any source, and the fact that the current grading revision is merely DRAFT_PREVIEW_ONLY, not formally adopted.
+
+All results remain `PRIVATE_PREPARATION_ONLY`, even if the source marks are otherwise complete. No combined mark formula, automatic grade, result-sheet snapshot, report-card table, teacher/HM/Principal approval, publication event, student/parent result route, file download, correct answer or answer key is authored in this slice. Phase 8 must later specify a **versioned adopted grading policy**, approved result sheet snapshots, independent verified SECTION reviews, independent final School Super Admin release and server-validated parent/student visibility, including post-publication correction amendments. Current Phase 6/7 acceptance remains blocked.
+
+Tests added: pure readiness Vitest, synthetic authenticated teacher/wrong-role/foreign-school response and pre/post academic source review cases, Node source invariant guard registered without removing prior suites. **Executed:** 8/8 ad hoc Node smoke tests on byte-identical `result-readiness.ts` Git blob `14194e365a7387f9515a23c764f0d0b544383809`, isolated `tsc --noEmit` on same file, plus previous 5/5 standalone grading smoke on Git blob `1c16de05cbf7cee6e8b369b099c1b46b3798ad7f`. This is NOT full repository CI or actual Vitest. No migration applied or live data used. D-P8-001/ADR-037; RES-REQ-001 partial.
+
+## Owner-approved Phase 1–7 development integration — 2026-11-01
+
+- [x] Locally verify candidate application SHA `55dab6cd659d0200a3db86babbc274c9e5e5d8a8`: **37/37 migration checksums, 122/122 Node, 327/327 Vitest, formatting, lint, typecheck, Next build, strict and full npm audit (0 vulnerabilities)**.
+- [x] Review target `main...verify/pr97-integrated-pupil-workflow` rather than relying only on stacked PR #98's 51-file diff; exclude Phase 8/9 implementation and production deployment.
+- [x] Owner D-051 authorizes a **development integration checkpoint** into `main` using reproducible local acceptance evidence; failing hosted GitHub Actions infrastructure is not a gate. This is not a waiver of any local security/audit failure.
+- [ ] Finish genuine 200% Chrome zoom, other Phase 1–7 browser/privacy/accessibility cases, and outstanding full feature requirements (subscriptions, admissions lifecycle and student CBT) with targeted tests.
+- [ ] Declare full functional Phase 1–7 acceptance and production readiness **only** after their separately documented criteria have actual evidence. Merging the tested development baseline does not tick this box.
+
+
+## Phase 3 subscription status visibility — source only, 2026-10-31
+
+- [x] Author platform-only, no-store subscription status and operator
+  aggregate pupil/staff usage visibility with no personal records.
+- [x] Preserve NOT_TRACKED billing and NOT_ENABLED entitlements.
+- [ ] Execute current-SHA DB and browser role/tenant/suspended-school tests.
+- [ ] Complete entitlement policy and full Phase 3 acceptance.
+
+## Phase 3 subscription foundation — 2026-10-31 (UNVERIFIED)
+
+- [x] Author additive platform plan and non-overlapping school subscription
+  period models, SQL constraints/triggers, platform-only no-store routes,
+  independent actor and tenant checks, and tests.
+- [x] Update the browser session's migration inventory constant to 37
+  while retaining the exact applied checksum audit.
+- [ ] In the verified disposable PostgreSQL worktree, apply only the new
+  additive migration after exact Docker/URL checks; verify all 37 checksums.
+- [ ] Run Prisma generation, new policy/SQL/route integration tests including
+  concurrent overlap; all cumulative Node/Vitest, lint, format, typecheck,
+  build, strict and full audit. Verify append-only and role guards at the
+  precise candidate commit SHA.
+- [ ] Verify the newly authored `/platform` console in a production-compiled
+  synthetic browser: Platform Super Admin positive access, ordinary school
+  role/anonymous denial, private HTML/RSC, form validation, keyboard, print,
+  and 200% zoom.
+- [ ] Complete subscription lifecycle policy, historical renewal visibility,
+  large-campus pagination, entitlement/quota enforcement and operational audit views
+  without automatic billing or school activation.
+- [ ] Continue other mandatory Phase 1–7 acceptance items; no merge or
+  production deployment on this authored-only evidence.
+
+## Phase 1–7 authenticated pupil browser checkpoint — 2026-10-31 (SCOPED; NOT ACCEPTED)
+
+- [x] Confirm exact branch and application commit
+  `verify/pr97-integrated-pupil-workflow` /
+  `686891dac5887601df401d35acc4b222159bd403`; preserve the existing
+  uncommitted documentation and workflow edits.
+- [x] Confirm the private configuration exists without displaying it;
+  pass protected disposable-target preflight and 36/36 read-only migration
+  checksums.
+- [x] Execute the synthetic positive pupil workflow and production-browser
+  list/detail, wrong-school, unlinked-student and unlinked-parent probes.
+- [x] Persist positive student evidence before separately guarded
+  `BROWSER_PUPIL_REVOKE=1` revocation.
+- [x] Verify same-session API denial and clean fresh-browser post-revocation
+  page/API/Flight, Back/Forward, duplicate-tab and print-after-navigation
+  results.
+- [x] Pass final focused workflow tests (9/9), local guards (108/108),
+  configured formatting, ESLint, TypeScript and `git diff --check`.
+- [x] Pass protected disposable-target preflight and all 36 exact migration
+  checksum comparisons.
+- [ ] Resolve the unattributed positive Flight responses with no cache header
+  and `s-maxage=31536000`; the captured route is unavailable, so do not
+  infer that either response was private lesson data or conclude its cache
+  policy is safe.
+- [ ] Capture stale snapshot and print behavior in the original already-open
+  browser tab after revocation; fresh navigation does not establish erasure
+  of prior browser content.
+- [ ] Complete remaining BR-01..BR-10 and BR-13 subcases, broader BR-11 and
+  BR-12, full BR-14/15 and positive guardian relationship acceptance.
+- [ ] Complete all Phase 1–7 exit gates. BR-16 positive guardian access
+  remains NOT IMPLEMENTED; do not claim full acceptance.
+
+No migration, production/shared database, reset, deletion, push, deployment,
+or GitHub Actions operation occurred. See the
+[browser acceptance evidence](../quality/PHASE1_7_BROWSER_SECURITY_ACCEPTANCE.md)
+and [local checkpoint](../quality/PHASE1_7_PR97_LOCAL_CHECKPOINT.md).
+
+## Phase 1–7 authenticated-browser attempt — 2026-10-31 (BLOCKED)
+
+- [x] Confirm clean exact checkout `686891dac5887601df401d35acc4b222159bd403`.
+- [x] Verify this worktree's PostgreSQL 17 `postgres-test` Docker target:
+  healthy, tmpfs-backed, no host bind, loopback-only port 5434.
+- [x] Run guarded local preflight; it failed closed before database access
+  because required test configuration is absent.
+- [ ] Restore private synthetic-only test configuration locally; do not share
+  credentials or borrow another worktree's environment.
+- [ ] Run migration checksum verification and the production-compiled
+  authenticated browser scenarios; capture positive pupil access before
+  considering explicit guarded revocation.
+- [ ] Complete BR-01..BR-16. BR-16 positive guardian portal remains
+  NOT IMPLEMENTED; negative parent access was not tested in this attempt.
+
+No database access, application request, fixture mutation, revocation, browser
+status capture or code change occurred. See the
+[browser acceptance record](../quality/PHASE1_7_BROWSER_SECURITY_ACCEPTANCE.md)
+and [local checkpoint](../quality/PHASE1_7_PR97_LOCAL_CHECKPOINT.md).
+
+## Phase 1–7 minimatch remediation — 2026-10-31 (ISOLATED CANDIDATE)
+
+- [x] Identify the 16 moderate audit entries as one minimatch globparts DoS
+  advisory in seven development-only ESLint/TypeScript-ESLint consumers.
+- [x] Resolve consumers to patched `minimatch@11.0.3` in isolated branch
+  `verify/minimatch-ghsa-20261031`; reviewed dependency-only commit:
+  `5ca6f63643fc646db1bd3084138751ef632ffbbe`.
+- [x] Pass clean `npm ci`, both audits (zero findings), 106/106 local guards,
+  formatting, ESLint, TypeScript, and configured production build.
+- [ ] Integrate and revalidate the override on the active Phase 1–7 branch.
+- [ ] Run disposable-DB regression/migration checks and automated browser
+  security acceptance (private HTML/RSC, history, print, revocation).
+- [ ] Complete guardian relationship workflows and full BR-01..BR-16 matrix.
+
+The candidate uses a deliberate semver override because current dependents
+declare minimatch 3.x/10.x, while patched 11.0.1+ is outside those ranges.
+Compatibility was checked against the lint toolchain and representative glob
+patterns; full database-backed regression was unavailable. See the
+[dependency advisory assessment](../security/DEPENDENCY_ADVISORY_ASSESSMENT.md).
+
+## Phase 1–7 follow-up verification — 2026-10-30 (PARTIAL; NOT ACCEPTED)
+
+- [x] Record owner-reported linked-pupil Chromium access, lesson list/detail,
+  Back/Forward, duplicate tabs, authorized print preview and basic keyboard
+  focus/navigation at `d8e80e0`.
+- [x] Distinguish the streamed School B not-found UI (document HTTP 200) from
+  the private student-lessons API denial (HTTP 404, `private, no-store`).
+- [x] Verify an isolated dependency candidate removes the reported Next.js,
+  Zod and fast-uri advisories; strict and full npm audits return zero findings.
+- [ ] Execute automated browser assertions for private HTML/RSC, browser
+  history, duplicate tabs, print and authorized post-revocation denial.
+- [ ] Complete positive/revoked guardian relationship acceptance. Guardian
+  relationship and portal implementation are currently NOT IMPLEMENTED.
+- [ ] Execute final disposable-database integration and exact-commit
+  Phase 1–7 exit gates; integrate/review the dependency candidate before
+  considering the base branch's dependency blocker resolved.
+
+Evidence and constraints:
+[Phase 1–7 local checkpoint](../quality/PHASE1_7_PR97_LOCAL_CHECKPOINT.md);
+[dependency assessment](../security/DEPENDENCY_ADVISORY_ASSESSMENT.md).
+
+## PR #97 fixture verification — 2026-10-22
+
+- [x] Execute nine fixture safety tests and synthetic fixture generator.
+- [x] Verify 36 exact migration hashes after restoring the empty local tmpfs schema.
+- [x] Pass formatting after two local corrections, lint, TypeScript and build.
+- [x] Observe production-browser cross-school denial and synthetic teacher
+  assignment option removal after authorized revocation.
+- [ ] Complete BR-01..BR-16 including populated academic/student workflows,
+  section boundaries/revocation, history, print and accessibility.
+- [ ] Resolve audit gate and complete integrated review against main.
+
+Scope, limitations and actual command results:
+[PR #97 local checkpoint](../quality/PHASE1_7_PR97_LOCAL_CHECKPOINT.md).
+
+## Phase 1–7 local regression success — 2026-10-21
+
+- [x] Exact `5fc40e2`: clean, isolated worktree and
+  verified local disposable PostgreSQL 17, 36 migrations.
+- [x] `npm test`: **59/59 source guards** and **302/302
+  Vitest tests** passed (37/37 files; zero skipped).
+- [x] Format, ESLint, TypeScript, production build
+  and production-only audit (zero findings) passed.
+- [ ] Run the newly authored **read-only migration
+  checksum verifier**, including six pure Node unit
+  cases and actual comparison against the disposable
+  database; no deployment/migration changes.
+- [ ] Resolve, safely replace, or obtain an **explicit
+  owner-approved scoped and expiring security
+  disposition** for the five high development-tooling
+  package findings derived from unpatched
+  `GHSA-vfj7-8cjw-p6xm`. The unchanged strict
+  audit continues failing; neither an exception nor
+  a repaired dependency is currently verified.
+- [ ] Run authenticated browser/print/privacy/a11y
+  checks for exact school, class, section, teacher,
+  student/guardian, revocation and history isolation.
+- [ ] Complete the final merge review, including
+  stacked PR base/head reconciliation and actual
+  current-`main` change boundaries. **Do not merge
+  into `main` or deploy before release gates
+  and distinct owner approval.**
+
+
+## Phase 1–7 cumulative matrix 2026-10-20 — active blocker
+
+- [x] On exact `fa4eb78`, local format, lint, TypeScript,
+  synthetic-target preflight and the six repaired integration
+  fixture suites **42/42** passed.
+- [x] The complete `npm test` command passed **59/59** source
+  guards; Vitest **284 passed, 18 skipped** (37 files:
+  **34 passed, three failed**). The 18 skipped cases are NOT
+  verified: the remaining three suites stopped in their default
+  10-second `beforeAll` fixtures.
+- [ ] Verify `fix/phase1-7-remaining-auth-setup-hooks`: six
+  synthetic authentication/tenant fixture `beforeAll` hooks
+  now have **45-second per-hook** budgets; test assertions,
+  global config, app authorization and DB schema are unchanged.
+- [ ] Re-run the complete `npm test`, production build,
+  `npm audit --audit-level=high`, and
+  `npm audit --omit=dev --audit-level=high` on the same
+  exact commit, retaining nonzero audit results.
+- [ ] Resolve or formally disposition the unpatched
+  `braces` security advisory before any merge/release,
+  review historical migrations, and complete authenticated
+  browser school-role/revocation, student/guardian, privacy,
+  printing and accessibility checks.
+- [ ] **Do not merge Phase 1–7 to `main` before the complete
+  security and release verification exit gates pass.**
+
+
+## Phase 1–7 full-matrix follow-up — 2026-10-20
+
+- [x] Earlier exact commit `1404636`: 24/24 targeted assessment
+  questions and lesson-review integration tests passed, with validated
+  local tmpfs PostgreSQL 17, 36 migrated schema revisions.
+- [x] Cumulative `npm test` run at `1404636` completed **59/59**
+  source guards; Vitest **260 passed, 42 skipped; 6 of 37 suites failed**
+  in their 10-second synthetic `beforeAll` fixtures. The 42 skipped
+  cases are **not passed evidence**.
+- [ ] Locally validate the six isolated, per-hook **45-second** fixture
+  budget amendments on `fix/phase1-7-full-suite-fixture-hooks`;
+  no test assertion, business rule, or global timeout changed.
+- [ ] Rerun the complete `npm test` matrix on the exact new commit
+  against the verified disposable PostgreSQL target; capture actual
+  pass/fail/skip totals.
+- [ ] Rerun `npm run build`, unchanged strict
+  `npm audit --audit-level=high`, and
+  `npm audit --omit=dev --audit-level=high` with correct exit codes.
+- [ ] Complete browser authentication, cross-tenant/revoked student and
+  staff privacy, print/a11y, historical migration checksum, and
+  release-readiness gates. Audit and release acceptance **BLOCKED**;
+  no merge to `main` or deployment.
+
+
+## Cumulative Phase 1–7 verification checkpoint — 2026-10-19
+
+- [x] Local developer-run Prettier, ESLint, TypeScript, Prisma Client
+  generation and Next.js production build on experimental commit
+  `2b361ed`; the reported build generated 31 static pages.
+- [x] Local source guards `6/6` on `2b361ed`.
+- [x] Targeted teacher-assignment/concurrency Vitest `58/58` on earlier
+  experimental commit `7c30263` using the verified local disposable
+  PostgreSQL 17 tmpfs service. This is NOT proof of complete full-stack
+  integration on the later commit.
+- [ ] Execute the full `npm test` including attendance correction,
+  question-bank and lesson-review authentication fixtures against the
+  previously verified disposable database. The narrowly scoped fixture
+  `beforeAll` 45-second change is **authored only**, not verified.
+- [ ] Resolve or formally disposition the five previously reported
+  high-severity dev-tooling package audit entries from `braces`
+  without disabling `npm audit --audit-level=high`. Upstream patched
+  release not available as of 2026-10-19.
+- [ ] Complete role/tenant isolation browser checks, migration checksum
+  safety review, and all cumulative release/security exit criteria.
+  **Phase 1–7 acceptance BLOCKED; no merge to `main` or deployment.**
+## Phase 8 teacher result-source preparation — AUTHORED; ACCEPTANCE PENDING
+
+- [x] Add teacher-only private/no-store source-preparation page and GET route using the existing independently authorized CBT and reviewed-written-mark readers.
+- [x] Add fail-closed exact-roster reconciliation and private status/blockers; preserve teacher-only scope and exclude official grading/publication and student/parent result access.
+- [x] Add pure readiness, authenticated source-review/role/tenant integration, and Node source-invariant tests; retain all existing guards and assessment integration tests.
+- [ ] Run the conflict audit and review the complete integration diff for answer-key, official-grade, publication, guardian, student and cross-tenant exposure.
+- [ ] Run the exact-SHA full local CI-equivalent suite on the guarded disposable PostgreSQL 17 tmpfs service; record migrations/checksums, test totals, lint/type/build and both audits.
+- [ ] Verify authenticated teacher positive access, wrong-role/cross-school denials, exact academic scope, roster mismatch, assignment revocation and browser privacy after access changes.
+- [ ] Complete Phase 8 acceptance and RES-REQ-001 only after all documented workflow stages have actual evidence; this preflight does not approve or publish results.
+
+
+## Phase 7 returned-original-mark correction remediation — AUTHORED, UNVERIFIED
+
+`feature/phase7-returned-manual-mark-remediation` resolves the returned-proposal dead end in the original manual grade review workflow. A **terminally RETURNED initial manual mark** may now be amended only through a new immutable reasoned `AssessmentManualCorrectionRequest` by its current exact assigned teacher, followed by the same independently verified PRIMARY HEAD_OF_SECTION or SECONDARY PRINCIPAL academic decision. SQL requires the original initial review to exist (APPROVED or RETURNED), the same active original teacher/enrollment/school and mark limits, a changed bounded value, and no already pending correction. It does **not** change or overwrite the original mark or returned decision.
+
+Current teacher correction context shows a returned original's approved value as **not yet approved**; the verified reviewer queue includes its correction request. The approved-only gradebook remains incomplete while returned initial marks or correction requests lack approval; when the first correction is independently APPROVED, its points become the reviewed effective mark even if the immutable initial decision remains RETURNED. New `RETURNED_CORRECTION_PENDING` status makes the interim state explicit. Synthetic returned-first/reviewed-correction flow authored; Node regression guard updated. No official/student result, CBT key or report publication. Actual SQL/Node/Vitest/full CI checks NOT RUN, Phase 6/7 acceptance BLOCKED. D-050/ADR-036.
+
 ## Phase 9 — cumulative verification and database target attestation (2026-10-18)
 
 - [x] Audited the existing loopback-only local runner and
@@ -541,3 +944,23 @@ Cumulative `feature/phase7-cbt-private-resume-reader` implements `readInternalCb
 ## Future phases
 
 All subsequent phases remain pending until their entry criteria and required product decisions are satisfied. The completed local Phase 1 foundation does not imply that Phase 2 or later requirements are implemented or complete.
+
+## Phase 8 verification/remediation first — [ ] BLOCKED
+
+- [x] Found missing/null JSON status fail-closed bug in the SQL private result composer and authored a **new forward-only** `20261013170000_phase8_private_composition_source_status_hardening` migration, without editing prior migration.
+- [x] Authored PostgreSQL negative scenarios for missing, JSON-null, empty and changed source status, plus registered Node source guard; exact source-diff checks 10/10 passed (NOT database/runtime tested).
+- [x] Inspected failed CI run `38391897336`: about two seconds, zero step details, log blob 404, two check annotations inaccessible. Root cause NOT verified.
+- [ ] Obtain CI check annotation/root cause and successful full job evidence without weakening the workflow.
+- [ ] Run all cumulative migrations and DB identity/approval/policy/score tests against confirmed disposable loopback PostgreSQL, then Prisma, Node/Vitest, Prettier, lint, typecheck, build and strict dependency audit.
+- [ ] Implement recipient publication only after verification and separate current School Super Admin release/relationship/visibility safeguards.
+
+## Phase 6–8 cumulative PL/pgSQL source-preflight hardening — [ ] BLOCKED
+
+- [x] Added a cross-migration parser-shape guard across the 13 currently authored late Phase 7–8 migration files (23 PL/pgSQL function declarations), registered in both existing test commands.
+- [x] Isolated GitHub-source V8 guard replay passed 2/2; introduced repeated-`DECLARE` and unpaired-dollar-delimiter synthetic mutations were both rejected.
+- [ ] Run the **actual** registered Node test, full PostgreSQL migrations and grading/authorization regression, Prisma validate/generate, format/lint/types/build, dependency audit and full CI; no recipient release until accepted.
+
+- [ ] Phase 8 merged SQL compatibility repair: verify PostgreSQL-safe reviewer
+  aliases, apply forward-only grading-scale `bandBasis` width migration 48 to a
+  protected disposable test DB, and rerun full local integration and browser
+  privacy gates. Authored; **NOT YET ACCEPTED** (2026-11-05).

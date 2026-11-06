@@ -44,7 +44,9 @@ export function LessonNoteEditor({
 }) {
   const base = `/api/schools/${encodeURIComponent(schoolId)}/lesson-notes`;
   const [termsId, setTermsId] = useState("");
-  const [kind, setKind] = useState<"LESSON_NOTE" | "SCHEME_OF_WORK">("LESSON_NOTE");
+  const [kind, setKind] = useState<"LESSON_NOTE" | "SCHEME_OF_WORK">(
+    "LESSON_NOTE",
+  );
   const [notes, setNotes] = useState<NoteSummary[]>([]);
   const [activeNote, setActiveNote] = useState<NoteDetail | null>(null);
   const [pending, setPending] = useState(false);
@@ -80,7 +82,9 @@ export function LessonNoteEditor({
         if (active) setNotes(data.notes);
       } catch {
         if (active) {
-          setError("The lesson-note list could not be loaded. Refresh or sign in again.");
+          setError(
+            "The lesson-note list could not be loaded. Refresh or sign in again.",
+          );
         }
       } finally {
         if (active) setLoading(false);
@@ -160,16 +164,20 @@ export function LessonNoteEditor({
         objectives: String(values.get("objectives") ?? ""),
         content: String(values.get("content") ?? ""),
         kind,
-        ...(kind === "SCHEME_OF_WORK" ? {
-          weekStart: Number(values.get("weekStart")),
-          weekEnd: Number(values.get("weekEnd")),
-        } : {}),
+        ...(kind === "SCHEME_OF_WORK"
+          ? {
+              weekStart: Number(values.get("weekStart")),
+              weekEnd: Number(values.get("weekEnd")),
+            }
+          : {}),
       });
       if (!result) return;
       form.reset();
       setTermsId("");
       setKind("LESSON_NOTE");
-      setSuccess("Draft saved. Only you can access it while your teaching assignment is active.");
+      setSuccess(
+        "Draft saved. Only you can access it while your teaching assignment is active.",
+      );
       await loadList();
       setActiveNote(null);
     } catch {
@@ -181,7 +189,12 @@ export function LessonNoteEditor({
 
   async function revise(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!activeNote || (activeNote.status !== "DRAFT" && activeNote.status !== "RETURNED") || pending) return;
+    if (
+      !activeNote ||
+      (activeNote.status !== "DRAFT" && activeNote.status !== "RETURNED") ||
+      pending
+    )
+      return;
     const values = new FormData(event.currentTarget);
     const id = activeNote.id;
     setError(null);
@@ -220,7 +233,8 @@ export function LessonNoteEditor({
       !window.confirm(
         "Submit this revision for review? It cannot be edited unless the section reviewer returns it for revision.",
       )
-    ) return;
+    )
+      return;
     const id = activeNote.id;
     setError(null);
     setSuccess(null);
@@ -230,7 +244,9 @@ export function LessonNoteEditor({
         expectedRevision: activeNote.currentRevision,
       });
       if (!result) return;
-      setSuccess("Submitted for review. This note is NOT approved or released to students.");
+      setSuccess(
+        "Submitted for review. This note is NOT approved or released to students.",
+      );
       await loadList();
       setActiveNote((previous) =>
         previous && previous.id === id
@@ -238,7 +254,9 @@ export function LessonNoteEditor({
           : previous,
       );
     } catch {
-      setError("The submission could not be confirmed. Please check the note status.");
+      setError(
+        "The submission could not be confirmed. Please check the note status.",
+      );
     } finally {
       setPending(false);
     }
@@ -246,8 +264,16 @@ export function LessonNoteEditor({
 
   return (
     <div className="setup-workspace lesson-workspace">
-      {error && <p className="form-error" role="alert">{error}</p>}
-      {success && <p className="setup-success" role="status">{success}</p>}
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
+      {success && (
+        <p className="setup-success" role="status">
+          {success}
+        </p>
+      )}
       <section className="setup-panel" aria-labelledby="new-lesson-heading">
         <h2 id="new-lesson-heading">Create an academic planning draft</h2>
         <p>Choose an active academic term and an exact teaching assignment.</p>
@@ -262,7 +288,9 @@ export function LessonNoteEditor({
             >
               <option value="">Choose a term</option>
               {options.terms.map((term) => (
-                <option value={term.id} key={term.id}>{term.name}</option>
+                <option value={term.id} key={term.id}>
+                  {term.name}
+                </option>
               ))}
             </select>
           </label>
@@ -279,31 +307,58 @@ export function LessonNoteEditor({
           </label>
           <label>
             Document type
-            <select name="kind" value={kind} onChange={event =>
-              setKind(event.target.value as "LESSON_NOTE" | "SCHEME_OF_WORK")}>
+            <select
+              name="kind"
+              value={kind}
+              onChange={(event) =>
+                setKind(event.target.value as "LESSON_NOTE" | "SCHEME_OF_WORK")
+              }
+            >
               <option value="LESSON_NOTE">Lesson note</option>
               <option value="SCHEME_OF_WORK">Scheme of work</option>
             </select>
           </label>
-          {kind === "SCHEME_OF_WORK" && <>
-            <label>First teaching week
-              <input name="weekStart" type="number" min={1} max={53} required />
-            </label>
-            <label>Last teaching week
-              <input name="weekEnd" type="number" min={1} max={53} required />
-            </label>
-          </>}
+          {kind === "SCHEME_OF_WORK" && (
+            <>
+              <label>
+                First teaching week
+                <input
+                  name="weekStart"
+                  type="number"
+                  min={1}
+                  max={53}
+                  required
+                />
+              </label>
+              <label>
+                Last teaching week
+                <input name="weekEnd" type="number" min={1} max={53} required />
+              </label>
+            </>
+          )}
           <label>
             Topic
             <input name="topic" minLength={2} maxLength={180} required />
           </label>
           <label>
             Learning objectives
-            <textarea name="objectives" minLength={5} maxLength={4000} required rows={3} />
+            <textarea
+              name="objectives"
+              minLength={5}
+              maxLength={4000}
+              required
+              rows={3}
+            />
           </label>
           <label>
             Lesson content
-            <textarea name="content" minLength={10} maxLength={20000} required rows={8} />
+            <textarea
+              name="content"
+              minLength={10}
+              maxLength={20000}
+              required
+              rows={8}
+            />
           </label>
           <button
             type="submit"
@@ -316,81 +371,119 @@ export function LessonNoteEditor({
 
       <section className="setup-panel" aria-labelledby="my-lesson-heading">
         <h2 id="my-lesson-heading">My notes</h2>
-        <p>Drafts remain private to the author. Submissions await a separate reviewer.</p>
+        <p>
+          Drafts remain private to the author. Submissions await a separate
+          reviewer.
+        </p>
         {loading && <p role="status">Loading your notes…</p>}
         <ul className="setup-records">
           {notes.map((note) => (
             <li key={note.id}>
               <strong>{note.topic}</strong>
-              <span>{note.status} · Revision {note.currentRevision}</span>
-              <button type="button" disabled={pending} onClick={() => void loadNote(note.id)}>
+              <span>
+                {note.status} · Revision {note.currentRevision}
+              </span>
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => void loadNote(note.id)}
+              >
                 Open note and history
               </button>
             </li>
           ))}
-          {!loading && notes.length === 0 && <li>No eligible lesson notes yet.</li>}
+          {!loading && notes.length === 0 && (
+            <li>No eligible lesson notes yet.</li>
+          )}
         </ul>
       </section>
 
       {activeNote && (
-        <section className="setup-panel lesson-detail" aria-labelledby="lesson-detail-heading">
+        <section
+          className="setup-panel lesson-detail"
+          aria-labelledby="lesson-detail-heading"
+        >
           <h2 id="lesson-detail-heading">{activeNote.topic}</h2>
           <p>
             {activeNote.status} · Latest revision {activeNote.currentRevision}
           </p>
-          {(activeNote.status === "DRAFT" || activeNote.status === "RETURNED") &&
+          {(activeNote.status === "DRAFT" ||
+            activeNote.status === "RETURNED") &&
             activeNote.revisions[0] && (
-            <form
-              key={`${activeNote.id}-${activeNote.currentRevision}`}
-              onSubmit={(event) => void revise(event)}
-            >
-              <label>
-                Topic
-                <input
-                  name="topic"
-                  required minLength={2} maxLength={180}
-                  defaultValue={activeNote.revisions[0].topic}
-                />
-              </label>
-              <label>
-                Learning objectives
-                <textarea
-                  name="objectives"
-                  required minLength={5} maxLength={4000} rows={3}
-                  defaultValue={activeNote.revisions[0].objectives}
-                />
-              </label>
-              <label>
-                Lesson content
-                <textarea
-                  name="content"
-                  required minLength={10} maxLength={20000} rows={8}
-                  defaultValue={activeNote.revisions[0].content}
-                />
-              </label>
-              <button type="submit" disabled={pending}>Save new revision</button>
-              {activeNote.status === "DRAFT" && (
-                <button type="button" disabled={pending} onClick={() => void submitNote()}>
-                  Submit for review
+              <form
+                key={`${activeNote.id}-${activeNote.currentRevision}`}
+                onSubmit={(event) => void revise(event)}
+              >
+                <label>
+                  Topic
+                  <input
+                    name="topic"
+                    required
+                    minLength={2}
+                    maxLength={180}
+                    defaultValue={activeNote.revisions[0].topic}
+                  />
+                </label>
+                <label>
+                  Learning objectives
+                  <textarea
+                    name="objectives"
+                    required
+                    minLength={5}
+                    maxLength={4000}
+                    rows={3}
+                    defaultValue={activeNote.revisions[0].objectives}
+                  />
+                </label>
+                <label>
+                  Lesson content
+                  <textarea
+                    name="content"
+                    required
+                    minLength={10}
+                    maxLength={20000}
+                    rows={8}
+                    defaultValue={activeNote.revisions[0].content}
+                  />
+                </label>
+                <button type="submit" disabled={pending}>
+                  Save new revision
                 </button>
-              )}
-            </form>
-          )}
+                {activeNote.status === "DRAFT" && (
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => void submitNote()}
+                  >
+                    Submit for review
+                  </button>
+                )}
+              </form>
+            )}
           {activeNote.status === "RETURNED" && (
-            <p role="status">Returned for revision. Save a new revision before resubmitting.</p>
+            <p role="status">
+              Returned for revision. Save a new revision before resubmitting.
+            </p>
           )}
           {activeNote.status === "APPROVED" && (
-            <p role="status">Approved by a section reviewer; not released to students.</p>
+            <p role="status">
+              Approved by a section reviewer; not released to students.
+            </p>
           )}
           {activeNote.events.some((event) => event.reason) && (
             <div>
               <h3>Review decisions</h3>
               <ul>
-                {activeNote.events.filter((event) => event.reason).map((event, index) => (
-                  <li key={`${event.eventType}-${event.revisionNumber}-${index}`}>
-                    {event.eventType} · Revision {event.revisionNumber}: {event.reason}
-                  </li>
-                ))}
+                {activeNote.events
+                  .filter((event) => event.reason)
+                  .map((event, index) => (
+                    <li
+                      key={`${event.eventType}-${event.revisionNumber}-${index}`}
+                    >
+                      {event.eventType} · Revision {event.revisionNumber}:{" "}
+                      {event.reason}
+                    </li>
+                  ))}
               </ul>
             </div>
           )}
@@ -398,8 +491,12 @@ export function LessonNoteEditor({
           <ol className="lesson-revisions">
             {activeNote.revisions.map((rev) => (
               <li key={rev.id}>
-                <strong>Revision {rev.revisionNumber}: {rev.topic}</strong>
-                <p><strong>Objectives:</strong> {rev.objectives}</p>
+                <strong>
+                  Revision {rev.revisionNumber}: {rev.topic}
+                </strong>
+                <p>
+                  <strong>Objectives:</strong> {rev.objectives}
+                </p>
                 <p className="lesson-revision-content">{rev.content}</p>
               </li>
             ))}

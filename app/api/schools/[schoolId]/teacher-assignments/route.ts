@@ -2,12 +2,8 @@ import {
   createAssignmentBody,
   handleTeacherAssignmentMutation,
 } from "@/src/modules/teacher-assignments/http";
-import {
-  createTeacherClassSubjectAssignment,
-} from "@/src/modules/teacher-assignments/service";
-import {
-  handleTeacherAssignmentRead,
-} from "@/src/modules/teacher-assignments/read-http";
+import { createTeacherClassSubjectAssignment } from "@/src/modules/teacher-assignments/service";
+import { handleTeacherAssignmentRead } from "@/src/modules/teacher-assignments/read-http";
 
 export async function POST(
   request: Request,

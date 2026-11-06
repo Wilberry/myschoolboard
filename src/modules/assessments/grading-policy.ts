@@ -23,19 +23,27 @@ export interface WeightedPreview {
   }>;
 }
 export function validateGradingWeights(value: GradingWeights): boolean {
-  return [value.quizWeight, value.testWeight, value.examWeight]
-    .every(n => Number.isInteger(n) && n >= 0 && n <= 100) &&
-    value.quizWeight + value.testWeight + value.examWeight === 100;
+  return (
+    [value.quizWeight, value.testWeight, value.examWeight].every(
+      (n) => Number.isInteger(n) && n >= 0 && n <= 100,
+    ) && value.quizWeight + value.testWeight + value.examWeight === 100
+  );
 }
 export function calculateWeightedPreview(
   weights: GradingWeights,
   assessments: readonly ProvisionalAssessment[],
 ): WeightedPreview {
-  if (!validateGradingWeights(weights) ||
-    assessments.some(a => !["QUIZ","TEST","EXAM"].includes(a.kind) ||
-      (a.percentBps !== null &&
-        (!Number.isInteger(a.percentBps) || a.percentBps < 0 ||
-         a.percentBps > 10000)))) {
+  if (
+    !validateGradingWeights(weights) ||
+    assessments.some(
+      (a) =>
+        !["QUIZ", "TEST", "EXAM"].includes(a.kind) ||
+        (a.percentBps !== null &&
+          (!Number.isInteger(a.percentBps) ||
+            a.percentBps < 0 ||
+            a.percentBps > 10000)),
+    )
+  ) {
     throw new Error("Invalid provisional grade preview inputs");
   }
   const categories: WeightedPreview["categories"] = [];
@@ -46,19 +54,25 @@ export function calculateWeightedPreview(
     ["TEST", weights.testWeight],
     ["EXAM", weights.examWeight],
   ] as const) {
-    const entries = assessments.filter(a => a.kind === kind);
-    const pending = entries.filter(a => a.percentBps === null).length;
+    const entries = assessments.filter((a) => a.kind === kind);
+    const pending = entries.filter((a) => a.percentBps === null).length;
     const complete = entries.length > 0 && pending === 0;
     const averagePercentBps = complete
-      ? entries.reduce((sum, a) => sum + (a.percentBps ?? 0), 0) / entries.length
+      ? entries.reduce((sum, a) => sum + (a.percentBps ?? 0), 0) /
+        entries.length
       : null;
     if (weight > 0 && !complete) pendingRequired = true;
     if (weight > 0 && averagePercentBps !== null) {
       weightedSum += weight * averagePercentBps;
     }
-    categories.push({ kind, weight, total: entries.length,
-      pending, averagePercentBps: averagePercentBps === null
-        ? null : Math.round(averagePercentBps) });
+    categories.push({
+      kind,
+      weight,
+      total: entries.length,
+      pending,
+      averagePercentBps:
+        averagePercentBps === null ? null : Math.round(averagePercentBps),
+    });
   }
   return {
     status: pendingRequired ? "PENDING" : "READY",

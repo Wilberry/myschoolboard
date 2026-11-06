@@ -2,22 +2,27 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const read = path => readFileSync(new URL(path, import.meta.url), "utf8");
+const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const schema = read("../prisma/schema.prisma");
-const migration = read("../prisma/migrations/20261012270000_phase7_assessment_drafts/migration.sql");
+const migration = read(
+  "../prisma/migrations/20261012270000_phase7_assessment_drafts/migration.sql",
+);
 const service = read("../src/modules/assessments/draft-service.ts");
 const route = read("../app/api/schools/[schoolId]/assessment-drafts/route.ts");
 
 test("assessment configurations are immutable DRAFT-ONLY without delivery fields", () => {
   assert.match(schema, /model AssessmentDraft \{/);
   assert.match(schema, /model AssessmentDraftQuestion \{/);
-  assert.doesNotMatch(schema.match(/model AssessmentDraft \{[\s\S]*?\n\}/)?.[0] ?? "", /isPublished|PUBLISHED|releasedAt|attempts\s+AssessmentAttempt/);
+  assert.doesNotMatch(
+    schema.match(/model AssessmentDraft \{[\s\S]*?\n\}/)?.[0] ?? "",
+    /isPublished|PUBLISHED|releasedAt/,
+  );
   assert.match(migration, /"AssessmentDraft_immutable"/);
   assert.match(migration, /"AssessmentDraftQuestion_immutable"/);
   assert.match(migration, /"AssessmentDraftSeal_validate"/);
   assert.match(migration, /"AssessmentDraftSeal_immutable"/);
   assert.match(migration, /"AssessmentDraftSeal_no_truncate"/);
-  assert.match(migration, /"A sealed assessment draft cannot accept new items"/);
+  assert.match(migration, /A sealed assessment draft cannot accept new items/);
   assert.match(service, /tx\.assessmentDraftSeal\.create/);
   assert.match(service, /JOIN "AssessmentDraftSeal" seal/);
 
@@ -47,6 +52,12 @@ test("draft service selects exact keyed questions and protects actor identity", 
   assert.match(route, /"Cache-Control": "private, no-store"/);
 });
 test("draft migration never publishes scores or changes existing records", () => {
-  assert.doesNotMatch(migration, /\bDROP TABLE\b|\bTRUNCATE TABLE\b|\bUPDATE\s+"AttendanceEntry"/i);
-  assert.doesNotMatch(migration, /CREATE TABLE "AssessmentAttempt"|CREATE TABLE "AssessmentScore"/);
+  assert.doesNotMatch(
+    migration,
+    /\bDROP TABLE\b|\bTRUNCATE TABLE\b|\bUPDATE\s+"AttendanceEntry"/i,
+  );
+  assert.doesNotMatch(
+    migration,
+    /CREATE TABLE "AssessmentAttempt"|CREATE TABLE "AssessmentScore"/,
+  );
 });

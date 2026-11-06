@@ -5,8 +5,13 @@ import { useState, type FormEvent } from "react";
 import type { TimetableSnapshot } from "@/src/modules/timetable/read-setup";
 
 const weekdays = [
-  "Monday", "Tuesday", "Wednesday", "Thursday",
-  "Friday", "Saturday", "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
 ];
 
 function minuteValue(value: string): number | null {
@@ -31,7 +36,9 @@ export function TimetableEditor({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const selectedTerm = snapshot.terms.find((term) => term.id === selectedTermId);
+  const selectedTerm = snapshot.terms.find(
+    (term) => term.id === selectedTermId,
+  );
   const validAssignments = snapshot.assignments.filter(
     (assignment) => assignment.sessionId === selectedTerm?.sessionId,
   );
@@ -73,7 +80,9 @@ export function TimetableEditor({
       setSuccess(successMessage);
       router.refresh();
     } catch {
-      setError("Network connection failed. No successful change was confirmed.");
+      setError(
+        "Network connection failed. No successful change was confirmed.",
+      );
     } finally {
       setPending(false);
     }
@@ -100,7 +109,11 @@ export function TimetableEditor({
     const data = new FormData(form);
     const startMinute = minuteValue(String(data.get("startTime") ?? ""));
     const endMinute = minuteValue(String(data.get("endTime") ?? ""));
-    if (startMinute === null || endMinute === null || startMinute >= endMinute) {
+    if (
+      startMinute === null ||
+      endMinute === null ||
+      startMinute >= endMinute
+    ) {
       setError("Choose a valid start time before the end time.");
       return;
     }
@@ -120,12 +133,10 @@ export function TimetableEditor({
     );
   }
 
-  function cancelSlot(
-    event: FormEvent<HTMLFormElement>,
-    slotId: string,
-  ) {
+  function cancelSlot(event: FormEvent<HTMLFormElement>, slotId: string) {
     event.preventDefault();
-    if (!window.confirm("Cancel this slot? Its history will be preserved.")) return;
+    if (!window.confirm("Cancel this slot? Its history will be preserved."))
+      return;
     const form = event.currentTarget;
     const reason = String(new FormData(form).get("reason") ?? "").trim();
     void submit(
@@ -138,15 +149,31 @@ export function TimetableEditor({
 
   return (
     <div className="setup-workspace">
-      {error && <p className="form-error" role="alert">{error}</p>}
-      {success && <p className="setup-success" role="status">{success}</p>}
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
+      {success && (
+        <p className="setup-success" role="status">
+          {success}
+        </p>
+      )}
       <section className="setup-panel" aria-labelledby="timetable-room-title">
         <h2 id="timetable-room-title">Rooms</h2>
-        <p>Rooms have school-specific names. An unassigned room is also allowed.</p>
+        <p>
+          Rooms have school-specific names. An unassigned room is also allowed.
+        </p>
         <form onSubmit={createRoom}>
           <label>
             Room name
-            <input name="name" minLength={2} maxLength={32} required placeholder="Science Lab" />
+            <input
+              name="name"
+              minLength={2}
+              maxLength={32}
+              required
+              placeholder="Science Lab"
+            />
           </label>
           <label>
             Reason
@@ -166,7 +193,9 @@ export function TimetableEditor({
 
       <section className="setup-panel" aria-labelledby="timetable-slot-title">
         <h2 id="timetable-slot-title">Schedule a lesson</h2>
-        <p>Choose an active term and a teacher assigned to that academic session.</p>
+        <p>
+          Choose an active term and a teacher assigned to that academic session.
+        </p>
         <form onSubmit={createSlot}>
           <label>
             Active term
@@ -178,13 +207,20 @@ export function TimetableEditor({
             >
               <option value="">Select a term</option>
               {snapshot.terms.map((term) => (
-                <option key={term.id} value={term.id}>{term.label}</option>
+                <option key={term.id} value={term.id}>
+                  {term.label}
+                </option>
               ))}
             </select>
           </label>
           <label>
             Class, subject and teacher
-            <select key={selectedTermId} name="assignmentId" required defaultValue="">
+            <select
+              key={selectedTermId}
+              name="assignmentId"
+              required
+              defaultValue=""
+            >
               <option value="">Select an assignment</option>
               {validAssignments.map((assignment) => (
                 <option key={assignment.id} value={assignment.id}>
@@ -198,7 +234,9 @@ export function TimetableEditor({
             <select name="roomId" defaultValue="">
               <option value="">No assigned room</option>
               {snapshot.rooms.map((room) => (
-                <option key={room.id} value={room.id}>{room.name}</option>
+                <option key={room.id} value={room.id}>
+                  {room.name}
+                </option>
               ))}
             </select>
           </label>
@@ -206,7 +244,9 @@ export function TimetableEditor({
             Weekday
             <select name="weekday" required defaultValue="1">
               {weekdays.map((day, index) => (
-                <option value={index + 1} key={day}>{day}</option>
+                <option value={index + 1} key={day}>
+                  {day}
+                </option>
               ))}
             </select>
           </label>
@@ -222,7 +262,10 @@ export function TimetableEditor({
             Reason
             <input name="reason" minLength={5} maxLength={500} required />
           </label>
-          <button type="submit" disabled={pending || validAssignments.length === 0}>
+          <button
+            type="submit"
+            disabled={pending || validAssignments.length === 0}
+          >
             {pending ? "Saving…" : "Schedule lesson"}
           </button>
         </form>
@@ -238,16 +281,18 @@ export function TimetableEditor({
           {snapshot.slots.map((slot) => (
             <li key={slot.id}>
               <strong>
-                {weekdays[slot.weekday - 1]} · {localClock(slot.startMinute)}
-                –{localClock(slot.endMinute)}
+                {weekdays[slot.weekday - 1]} · {localClock(slot.startMinute)}–
+                {localClock(slot.endMinute)}
               </strong>
               <span>
-                {snapshot.assignments.find((item) => item.id === slot.assignmentId)?.label ??
+                {snapshot.assignments.find(
+                  (item) => item.id === slot.assignmentId,
+                )?.label ??
                   "Teacher assignment unavailable — cancel if obsolete"}
               </span>
               <span>
-                {snapshot.terms.find((term) => term.id === slot.termId)?.label ??
-                  "Term unavailable"}
+                {snapshot.terms.find((term) => term.id === slot.termId)
+                  ?.label ?? "Term unavailable"}
                 {" · "}
                 {snapshot.rooms.find((room) => room.id === slot.roomId)?.name ??
                   "No room"}
@@ -260,11 +305,15 @@ export function TimetableEditor({
                   Cancellation reason
                   <input name="reason" minLength={5} maxLength={500} required />
                 </label>
-                <button type="submit" disabled={pending}>Cancel slot</button>
+                <button type="submit" disabled={pending}>
+                  Cancel slot
+                </button>
               </form>
             </li>
           ))}
-          {snapshot.slots.length === 0 && <li>No active timetable slots yet.</li>}
+          {snapshot.slots.length === 0 && (
+            <li>No active timetable slots yet.</li>
+          )}
         </ul>
       </section>
       <p className="workspace-note">

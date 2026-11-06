@@ -48,9 +48,9 @@ export async function listAdminAssignments(
   if (cursor) {
     const accessibleCursor =
       await prisma.teacherClassSubjectAssignment.findFirst({
-      where: { ...where, id: cursor },
-      select: { id: true },
-    });
+        where: { ...where, id: cursor },
+        select: { id: true },
+      });
     if (!accessibleCursor) return null;
   }
 

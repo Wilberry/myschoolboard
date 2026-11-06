@@ -97,6 +97,7 @@ This folder is the canonical documentation set for the MySchoolBoard project.
 - [security/INCIDENT_RESPONSE.md](security/INCIDENT_RESPONSE.md)
 
 - [quality/LOCAL_CI_RUNBOOK.md](quality/LOCAL_CI_RUNBOOK.md) — locally execute the unchanged GitHub CI workflow using the disposable test database when hosted runners are unavailable
+- [quality/PHASE8_PR65_AUTHENTICATED_BROWSER_ACCEPTANCE.md](quality/PHASE8_PR65_AUTHENTICATED_BROWSER_ACCEPTANCE.md) — Phase 8 authenticated-browser matrix and dated execution evidence
 - [quality/TEST_STRATEGY.md](quality/TEST_STRATEGY.md)
 - [quality/TEST_CASE_CATALOG.md](quality/TEST_CASE_CATALOG.md)
 - [quality/SECURITY_TESTING.md](quality/SECURITY_TESTING.md)

@@ -1,6 +1,4 @@
-import {
-  handleAcademicPeriodChange,
-} from "@/src/modules/academics/period-lifecycle-http";
+import { handleAcademicPeriodChange } from "@/src/modules/academics/period-lifecycle-http";
 
 export async function POST(
   request: Request,

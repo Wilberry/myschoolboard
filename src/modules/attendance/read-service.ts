@@ -5,9 +5,14 @@ import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
 import { AttendanceError } from "./service";
 
-const identifier = z.string().min(1).max(128).refine(v => v.trim() === v);
+const identifier = z
+  .string()
+  .min(1)
+  .max(128)
+  .refine((v) => v.trim() === v);
 function validateId(value: string) {
-  if (!identifier.safeParse(value).success) throw new AttendanceError("INVALID_INPUT");
+  if (!identifier.safeParse(value).success)
+    throw new AttendanceError("INVALID_INPUT");
 }
 async function currentUser() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -133,15 +138,17 @@ export async function readPendingAttendanceReviews(
   const userId = await currentUser();
   // A reviewer with no currently verified in-school section is denied even
   // when the queue is empty. The main query still independently scopes rows.
-  const permitted = await prisma.$queryRaw<Array<{ allowed: boolean }>>(Prisma.sql`
+  const permitted = await prisma.$queryRaw<
+    Array<{ allowed: boolean }>
+  >(Prisma.sql`
     SELECT true AS "allowed" FROM "School" school
     JOIN "Membership" reviewer ON reviewer."schoolId" = school."id"
       AND reviewer."userId" = ${userId} AND reviewer."isActive" = true
       AND reviewer."role" IN ('HEAD_OF_SECTION', 'PRINCIPAL')
-    JOIN "ScopeGrant" grant ON grant."membershipId" = reviewer."id"
-      AND grant."type" = 'SECTION' AND grant."verified" = true
+    JOIN "ScopeGrant" scope_grant ON scope_grant."membershipId" = reviewer."id"
+      AND scope_grant."type" = 'SECTION' AND scope_grant."verified" = true
     JOIN "SchoolSection" section ON section."schoolId" = school."id"
-      AND section."id" = grant."scopeId" AND section."isActive" = true
+      AND section."id" = scope_grant."scopeId" AND section."isActive" = true
     WHERE school."id" = ${schoolId} AND school."isActive" = true
       AND (
         (reviewer."role" = 'HEAD_OF_SECTION' AND section."stage" = 'PRIMARY')
@@ -196,10 +203,10 @@ export async function readPendingAttendanceReviews(
     JOIN "Membership" reviewer ON reviewer."schoolId" = register."schoolId"
       AND reviewer."userId" = ${userId} AND reviewer."isActive" = true
       AND reviewer."role" IN ('HEAD_OF_SECTION', 'PRINCIPAL')
-    JOIN "ScopeGrant" grant ON grant."membershipId" = reviewer."id"
-      AND grant."type" = 'SECTION'
-      AND grant."scopeId" = section."id"
-      AND grant."verified" = true
+    JOIN "ScopeGrant" scope_grant ON scope_grant."membershipId" = reviewer."id"
+      AND scope_grant."type" = 'SECTION'
+      AND scope_grant."scopeId" = section."id"
+      AND scope_grant."verified" = true
     WHERE register."schoolId" = ${schoolId}
       AND register."status" = 'SUBMITTED'
       AND (
@@ -212,8 +219,9 @@ export async function readPendingAttendanceReviews(
     LIMIT ${registerId ? 1 : 100}
   `);
   if (registerId && rows.length === 0) throw new AttendanceError("NOT_FOUND");
-  if (rows.some(row => row.entries.length > 500)) throw new AttendanceError("CONFLICT");
-  return rows.map(row => ({
+  if (rows.some((row) => row.entries.length > 500))
+    throw new AttendanceError("CONFLICT");
+  return rows.map((row) => ({
     ...row,
     attendanceDate: row.attendanceDate.toISOString().slice(0, 10),
     submittedAt: row.submittedAt.toISOString(),

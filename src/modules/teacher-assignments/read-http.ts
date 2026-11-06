@@ -105,7 +105,10 @@ export async function handleTeacherAssignmentRead({
       return respond(page);
     }
 
-    const assignment = await getAdminAssignment(reader, path.data.assignmentId!);
+    const assignment = await getAdminAssignment(
+      reader,
+      path.data.assignmentId!,
+    );
     if (!assignment) {
       safeReadLog("teacher_assignment_read_denied");
       return respond({ error: "Not found" }, 404);

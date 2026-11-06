@@ -28,10 +28,12 @@ function failure(error: unknown): Response {
     return reply({ error: "Invalid request" }, 400);
   }
   try {
-    console.warn(JSON.stringify({
-      event: "lesson_note_review_failed",
-      requestId: randomUUID(),
-    }));
+    console.warn(
+      JSON.stringify({
+        event: "lesson_note_review_failed",
+        requestId: randomUUID(),
+      }),
+    );
   } catch {
     // Do not log student/staff identifiers or content.
   }
@@ -56,7 +58,11 @@ export async function handleReview(
       const [note] = await readSubmittedLessonNotes(schoolId, noteId);
       return reply({ note });
     }
-    const decided = await decideLessonNote(schoolId, noteId, await request.json());
+    const decided = await decideLessonNote(
+      schoolId,
+      noteId,
+      await request.json(),
+    );
     return reply({ note: decided });
   } catch (error) {
     return failure(error);

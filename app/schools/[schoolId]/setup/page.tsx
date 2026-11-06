@@ -42,7 +42,10 @@ export default async function SchoolSetupPage({
           </Link>
         </div>
         <p className="setup-navigation">
-          <Link href={`/schools/${schoolId}/attendance-policy`} className="secondary-link">
+          <Link
+            href={`/schools/${schoolId}/attendance-policy`}
+            className="secondary-link"
+          >
             Configure school attendance calendar and correction windows
           </Link>
         </p>

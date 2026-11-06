@@ -1,5 +1,121 @@
 # Authorization Rules
 
+**Current Phase 8 status (2026-11-06):** recipient report publication and verified
+student/guardian access are implemented and locally accepted at `ce14d17`.
+See [cloud acceptance evidence](../quality/PHASE8_CLOUD_COMPLETION_20261106.md).
+Earlier statements denying all recipient routes describe historical checkpoints;
+they do not grant or revoke the current explicit report-reader policy.
+
+
+## Phase 8 recipient publication — D-061 / ADR-047 (2026-11-06)
+
+RES-REQ-001 now includes a separate immutable `ReportPublication`, explicit
+School Super Admin release and terminal withdrawal, and verified recipient
+read/guardian acknowledgment APIs. Academic review, final academic approval
+and private composition alone still grant no recipient access. Publishing
+rechecks current source/reviewer/teacher and latest adopted policies under the
+school lock. Corrections require a new reviewed evidence revision, source
+packet, composition and publication; historical versions are never overwritten.
+The recipient list suppresses superseded versions.
+
+Each release explicitly versions the school's visibility choice:
+`ASSESSMENT_ONLY` denies all report-card reads; `PARENT_ONLY` permits current
+verified guardians; `PARENT_FIRST` permits those guardians and a linked student
+only after explicit acknowledgment by a still-current guardian of that exact
+pupil and publication; `PARENT_AND_STUDENT` permits both verified audiences.
+These four names and acknowledgment semantics resolve P-004 as a conservative,
+configurable development default under D-023. There is no automatic policy
+adoption, email inference, retroactive release or generic child permission.
+Revoked relationships, student identity bindings, inactive memberships,
+enrollment/class/section/period, withdrawn releases and foreign schools fail
+closed on every read. A revoked guardian's acknowledgment no longer unlocks
+student access. GET never acknowledges. Repeated explicit acknowledgment is
+idempotent after reauthorization.
+
+Recipient HTML/Flight/segments are private/no-store. Grades load only through
+an authenticated API, with abort/epoch stale-response protection, foreground
+polling, lifecycle concealment and cross-tab sign-out. Printing requires a
+fresh recipient access check; ordinary print initiation conceals the cards.
+The report view returns only frozen names and published display grades, never
+source marks, answer keys, another pupil's report or internal composition JSON.
+No production deployment or real pupil data is part of this work.
+
+Validation and acceptance evidence are recorded in
+`docs/quality/PHASE8_CLOUD_COMPLETION_20261106.md`; earlier historical sections
+below retain their original authored/unverified status and are not current
+claims of completion.
+
+
+## Phase 8 private official report evidence composition (AUTHORED, BLOCKED)
+
+`GET/POST /api/schools/[schoolId]/private-official-report-compositions`: authenticated current active exact same-school `SCHOOL_SUPER_ADMIN` only. The POST accepts **only** `sourcePacketId`, `aggregationRuleId`, `gradeScaleId` and reason. Server derives owner membership/user from session under SERIALIZABLE School lock; SQL trigger separately verifies active school owner and latest teacher/reviewer/grading evidence under lock, exact current separately adopted policy IDs/versions, and recomputes all pupil grades from immutable evidence. Student IDs, marks, grade labels, percentage JSON and release status are never client-selected. Owner GET repeats current same-school authorization in SQL and returns up to 100 metadata-only rows, with `Cache-Control: private, no-store`; it **never selects `composedStudentCards`**. No current or guardian/student grade read, result-release mutation, export or download path. D-060/ADR-046; runtime acceptance BLOCKED.
+
+## Phase 8 school-owned report aggregation rule (AUTHORED; NOT VERIFIED)
+
+`GET/POST /api/schools/[schoolId]/report-aggregation-rules` requires an active same-school authenticated `SCHOOL_SUPER_ADMIN`; only `categoryMethod`, `precisionMode` and 5–500 char reason are accepted on POST. The same authorization is rechecked by PostgreSQL INSERT under active School row lock and the private bounded GET SQL tenant+owner join. Policy revisions are immutable and not a report release. Pure `simulatePrivateReportComposition` has no route and must never be called with browser-supplied pupil marks as trusted official inputs; a future official writer must load frozen packet and pinned adopted rules server-side, confirm authorization and revalidate under the School lock. Neither school owners nor pupils/guardians gain report-card grade access by adopting a rule. D-059/ADR-045.
+
+## Phase 8 school-adopted report grading-scale history (AUTHORED; NOT VERIFIED)
+
+Private `GET/POST /api/schools/[schoolId]/report-grade-scales` checks the authenticated currently active same-school `SCHOOL_SUPER_ADMIN`. Only exact owner can POST full specified grade bands, selected decimal precision/rounding/band basis and audit reason, never actor/version/timestamp. SERIALIZABLE transaction locks School, and PostgreSQL INSERT trigger independently revalidates current School and actor membership/user, mandatory full grade bands and immutable version ordinal under the same School lock. Read history SQL repeats active school/owner joins, is bounded to 100 and private no-store; other roles and foreign school concealed. Scale history contains school policy labels only; no student marks or disclosure, release, export or parent/student report API. Any future report uses an explicitly pinned adopted version, not silently the latest after it changes. D-058/ADR-044; tests not locally executed, publication disabled.
+
+## Phase 8 private report-card source preparation (AUTHORED; NOT VERIFIED)
+
+`GET/POST /api/schools/[schoolId]/report-card-source-packets`: the POST accepts only `finalDecisionId` and an audited reason from an authenticated current active same-school `SCHOOL_SUPER_ADMIN`. A SERIALIZABLE transaction locks School, retrieves only its own final decision and writes through a SQL trigger that repeats final school-owner/teacher/verified section reviewer/latest adoption/complete unchanged per-pupil source readiness. SQL replaces source packet contents, academic context, evidence revision, final owner decision ordinal and timestamp with DB-trusted data. The source JSONB includes sensitive student evidence and is **never included in API response or owner metadata GET**, whose final SQL also rechecks active same-school owner and limits history to 100. Non-owners and foreign school records are concealed. Triggers forbid packet UPDATE/DELETE/TRUNCATE; new policy/marks require a new academic/owner decision and separate packet. No actual student/guardian report access, grade calculation, release or export. D-057/ADR-043; runtime/security acceptance BLOCKED.
+
+## Phase 8 final owner approval evidence (AUTHORED; NOT VERIFIED)
+
+POST `/api/schools/[schoolId]/result-final-publication-decisions` accepts only `evidenceId` and a 5–500 character audit reason, with authenticated active exact same-school `SCHOOL_SUPER_ADMIN` membership determined server-side, SERIALIZABLE transaction and active school row lock. A PostgreSQL INSERT trigger independently invokes `assert_result_publication_readiness`, thereby rechecking current independent HM/Principal verified actual SECTION approval, latest evidence/policy and byte-equivalent complete assessment sources, and sets trusted context/version/ordinal/time. Other roles and schools concealed. GET is owner-only metadata history with repeated SQL owner joins, `Cache-Control: private, no-store`, 100 record limit; no pupil data, grade/export, student/guardian access or report release. Immovable evidence can only be superseded with a new audited source/approval version. Status is `APPROVED_AWAITING_RELEASE`, NOT public. D-056/ADR-042; exit BLOCKED.
+
+## Phase 8 SQL final publication readiness authorization (AUTHORED; NOT VERIFIED)
+
+A **future final owner publication transaction** must repeat `assert_result_publication_readiness` under school lock and SERIALIZABLE isolation. The SQL-only function requires exact active same-school `SCHOOL_SUPER_ADMIN` user and membership, original exact active teacher and academic scope, independently APPROVED result evidence by current verified PRIMARY Head of Section or SECONDARY Principal distinct from the teacher, latest school-adopted grading policy and immutable evidence revision, unchanged currently rebuilt pupil source, and positive-weight per-pupil assessment completeness. A previous private owner preflight GET or direct predicate success alone is never a release decision. No API, publication event, official grade, pupil/guardian visibility or production permission is implemented. D-055/ADR-041.
+
+## Phase 8 owner-only result snapshot inspection (AUTHORED; NOT VERIFIED)
+
+`GET /api/schools/[schoolId]/result-publication-candidates`: only current same-school active `SCHOOL_SUPER_ADMIN`, independently authenticated and rechecked by SQL with active School. A candidate additionally requires independently APPROVED result evidence by a currently active PRIMARY Head of Section or SECONDARY Principal with verified grant on the actual class SECTION, distinct from the teacher; active original teacher assignment, session/term/class/section/subject; latest frozen source and adopted policy; source freshness and per-pupil required grading categories. Response is metadata only, bounded to 100, with `Cache-Control: private, no-store`; forbidden roles/schools concealed. No POST, grade release, report export or pupil/guardian access. D-054/ADR-040; full verification BLOCKED.
+
+## Phase 8 immutable result-sheet source evidence and independent academic review (AUTHORED; NOT VERIFIED)
+
+`feature/phase8-result-sheet-evidence-review` adds an additive **teacher-prepared frozen source-evidence snapshot** (`ResultSheetEvidence`) and separate **academic reviewer decision** (`ResultSheetReview`). It references one explicit current `ResultGradingAdoption` from the School Super Admin; the teacher may not supply marks, sourceManifest, enrollment counts, policy, actor ID or review outcome. A PostgreSQL BEFORE INSERT function acquires the current School row lock, validates the actual original active TEACHER's exact school/class/subject/session/term assignment, current enrolled roster and latest adopted school policy, and rebuilds a JSONB manifest of current sealed/independently approved/PUBLISHED-not-WITHDRAWN submitted+scored CBT and teacher-written effective marks from initial independently APPROVED decisions or latest independently APPROVED correction revisions. No answer keys, raw student options or speculative marks. Every pupil must have completed source evidence, no duplicate active enrollments, at most 500 pupils, and every positively weighted adopted QUIZ/TEST/EXAM category must have source evidence. This is a **frozen evidence manifest**, NOT a computed official report-card grade or published result.
+
+A snapshot gets a DB-generated per-class/subject/term revision, reason, actor, trusted timestamp and immutable original marks/sources. A second snapshot is permitted **only after prior independent review finishes** and the policy adoption or SQL-computed source manifest actually changed; unchanged duplicates and an outstanding undecided revision fail closed. Independent academic reviewer is a currently active **HEAD_OF_SECTION for PRIMARY** or **PRINCIPAL for SECONDARY**, with a VERIFIED SECTION ScopeGrant for the snapshot's actual active class section, and cannot be the teacher. At review INSERT, SQL repeats current teacher/academic/verified reviewer checks and accepts APPROVED only if the snapshot is the latest and the **current adopted policy and recomputed source manifest still match exactly**. A stale snapshot can be RETURNED so the teacher may prepare a new revision; stale or superseded material cannot be approved. A decision is one-time append-only APPROVED/RETURNED, **not final School Super Admin publication**. No pupil/guardian endpoint, result export, official report-card generation, School Super Admin release or official weighted grade is introduced.
+
+Private no-store exact teacher evidence GET/POST, currently verified-section reviewer queue GET and decision POST, school-gated teacher and academic reviewer screens/navigation, synthetic role/tenant/forged-mark/unapproved/evidence-freeze/return/approved-correction/revision and immutable-history integration tests, and Node structural guards are AUTHORED, NOT EXECUTED. Migration `20261013100000_phase8_result_sheet_evidence_review` NOT APPLIED. D-053/ADR-039. RES-REQ-001 partial; Phase 6–7/full local CI/strict dependency audit BLOCKED.
+
+## Phase 8 school grading-policy adoption (AUTHORED; NOT VERIFIED)
+
+`feature/phase8-adopted-grading-policy` introduces `ResultGradingAdoption` as an append-only, versioned School Super Admin decision to **adopt** a specific immutable `AssessmentGradingPolicyRevision` for one exact school/session/term/class/subject. The PostgreSQL INSERT trigger independently verifies active same-school School Super Admin member+user, exact current policy context, active academic session/term/class/section/subject, 100% explicit QUIZ/TEST/EXAM weights and serializes per-context adoption ordinals under the school row lock. Earlier draft revisions and adoptions are never rewritten. Adopting a profile only establishes the academic rule available to later result-sheet preparation; it does NOT approve or publish any result or authorize student/guardian visibility.
+
+Private no-store school-super-admin-only GET adoption history and POST, authenticated school-gated owner workspace and navigation added. Synthetic real-session correct/foreign/role denied, duplicate-adoption, no spoofed user, immutability assertions and Node source guard authored but NOT EXECUTED. Additive migration `20261013090000_phase8_result_grading_adoption` NOT applied. D-052/ADR-038. RES-REQ-001 partial, Phase 6/7 and local CI/security/audit gate BLOCKED.
+
+## Phase 8 private teacher result preparation preflight (AUTHORED; NOT PRODUCTION-VERIFIED)
+
+`feature/phase8-result-preparation-readiness` starts the documented RES-REQ-001 result flow at **teacher source preparation**, without skipping HM/Principal academic review or School Super Admin final publication. A private no-store GET and school-gated teacher page use the **existing** independently authenticated exact school/class/subject/session/term CBT score and academically reviewed written-mark readers. The pure reconciliation function compares both active pupil rosters by immutable studentId plus admission number/given/family names; different, extra, missing or duplicate students and invalid counts fail closed instead of joining mismatched records. It reports missing CBT scores, initial manual academic-review gaps, outstanding correction reviews, absence of any source, and the fact that the current grading revision is merely DRAFT_PREVIEW_ONLY, not formally adopted.
+
+All results remain `PRIVATE_PREPARATION_ONLY`, even if the source marks are otherwise complete. No combined mark formula, automatic grade, result-sheet snapshot, report-card table, teacher/HM/Principal approval, publication event, student/parent result route, file download, correct answer or answer key is authored in this slice. Phase 8 must later specify a **versioned adopted grading policy**, approved result sheet snapshots, independent verified SECTION reviews, independent final School Super Admin release and server-validated parent/student visibility, including post-publication correction amendments. Current Phase 6/7 acceptance remains blocked.
+
+Tests added: pure readiness Vitest, synthetic authenticated teacher/wrong-role/foreign-school response and pre/post academic source review cases, Node source invariant guard registered without removing prior suites. **Executed:** 8/8 ad hoc Node smoke tests on byte-identical `result-readiness.ts` Git blob `14194e365a7387f9515a23c764f0d0b544383809`, isolated `tsc --noEmit` on same file, plus previous 5/5 standalone grading smoke on Git blob `1c16de05cbf7cee6e8b369b099c1b46b3798ad7f`. This is NOT full repository CI or actual Vitest. No migration applied or live data used. D-P8-001/ADR-037; RES-REQ-001 partial.
+
+## Issue #20 — explicit guardian attestation (authored; not accepted)
+
+`GuardianStudentLink` is an append-only, administrator-attested, composite school-owned mapping between an active `PARENT` membership and an enrolled `StudentRecord`, with separate terminal revocation history. School administrators alone can attest, revoke and inspect minimal link metadata. The generic `child:read` permission remains **denied to every caller** and `resolveSchoolPrincipal` filters out unbound CHILD grants. The presence of a row is not permission to access grades, fees, attendance, or a report. Every future recipient route must separately enforce current school, membership, relationship, enrollment, publication and browser privacy constraints. No parent data read/portal is implemented.
+
+## Issue #20 — unbound CHILD grants fail closed (authored; local verification pending)
+
+Before a school-verified guardian-to-student relationship, active enrollment, and terminal revocation model are implemented, `child:read` is denied even for a PARENT with a stored verified CHILD scope or a STUDENT with a matching user ID. `resolveSchoolPrincipal` does not export CHILD grants. These IDs are not proof of a current school-owned relationship. Existing independently authorized student lesson/assessment services are unchanged. No parent portal, result publication, or access expansion is enabled. Negative policy and disposable-DB regression tests are authored but must be executed locally before merging; issue #20 remains open for the complete relationship workflow.
+
+## Phase 8 teacher result-source preparation (RES-REQ-001; authored, unverified)
+
+Only an active TEACHER with the current exact school/class/subject/session/term assignment may read the private preparation checklist. Each source reader must independently reauthorize the teacher, active enrollment and academic scope; source rosters must reconcile by immutable student ID and matching admission number/name, otherwise deny the combined response. The route is private and no-store.
+
+This preparation data is not an approved result. It must not combine marks into grades, persist report-card snapshots, disclose answer keys/correct answers, or enable guardian/student result access. It does not replace the independently reviewed HM/Principal stage or the School Super Admin’s final publication decision. Existing guardian and Issue #20 restrictions remain unchanged. D-P8-001/ADR-037; RES-REQ-001 remains partial.
+
+## Phase 7 returned-original-mark correction remediation — AUTHORED, UNVERIFIED
+
+`feature/phase7-returned-manual-mark-remediation` resolves the returned-proposal dead end in the original manual grade review workflow. A **terminally RETURNED initial manual mark** may now be amended only through a new immutable reasoned `AssessmentManualCorrectionRequest` by its current exact assigned teacher, followed by the same independently verified PRIMARY HEAD_OF_SECTION or SECONDARY PRINCIPAL academic decision. SQL requires the original initial review to exist (APPROVED or RETURNED), the same active original teacher/enrollment/school and mark limits, a changed bounded value, and no already pending correction. It does **not** change or overwrite the original mark or returned decision.
+
+Current teacher correction context shows a returned original's approved value as **not yet approved**; the verified reviewer queue includes its correction request. The approved-only gradebook remains incomplete while returned initial marks or correction requests lack approval; when the first correction is independently APPROVED, its points become the reviewed effective mark even if the immutable initial decision remains RETURNED. New `RETURNED_CORRECTION_PENDING` status makes the interim state explicit. Synthetic returned-first/reviewed-correction flow authored; Node regression guard updated. No official/student result, CBT key or report publication. Actual SQL/Node/Vitest/full CI checks NOT RUN, Phase 6/7 acceptance BLOCKED. D-050/ADR-036.
+
 ## Phase 9 waiver application guard (AUTHORED / NOT VERIFIED)
 
 Only a signed-in active same-school School Super Admin can
@@ -183,7 +299,7 @@ When two rules conflict, the safe default is the more restrictive rule. For rout
 - All exports and file downloads must check the same conditions as read access.
 - Background jobs and scheduled tasks must use the same authorization policy context as user requests.
 - Teacher academic read, edit, and submit actions for a class and subject require an active assignment matching the exact school, membership, class, and subject tuple.
-- Section, class, and subject `ScopeGrant` records must have `verified: true` before they authorize access to that resource. In the current DB-backed principal resolver, CLASS and SUBJECT grants must additionally refer to **active** class/subject records owned by the requested school, regardless of the stored `verified` flag. Scope identifiers are not foreign keys; matching strings alone are insufficient cross-tenant authorization. SECTION and CHILD require their own model/relationship checks before any future school-data routes are exposed. A matching but unverified scope is not permission. Teacher academic operations still require an exact, active class-subject assignment independently of these grants.
+- Section, class, and subject `ScopeGrant` records must have `verified: true` before they authorize access to that resource. In the current DB-backed principal resolver, CLASS and SUBJECT grants must additionally refer to **active** class/subject records owned by the requested school, regardless of the stored `verified` flag. Scope identifiers are not foreign keys; matching strings alone are insufficient cross-tenant authorization. SECTION is already checked against active same-school sections. CHILD scopes are excluded from the resolved principal, and the generic `child:read` action denies all callers until an independently verified guardian/student relationship is implemented. A matching but unverified scope is not permission. Teacher academic operations still require an exact, active class-subject assignment independently of these grants.
 - Independent class and subject `ScopeGrant` records must never be combined to infer a teacher assignment. The policy helper enforces the assignment check, but protected academic routes must still load the principal through the assignment-aware resolver and pass the requested class and subject.
 - Assignment lifecycle mutations use `school:configure`, currently limited by the policy to active School Administrator and School Super Admin memberships. The four implemented assignment mutation routes authenticate with Better Auth, check the school principal at the route boundary, and call the internal service, which repeats authorization transactionally. Platform Super Admin status does not independently grant school mutation authority. Client-supplied actor identifiers are not accepted. Future academic routes must use the same server-side tenant and service checks; D-020 authorizes a development-only default for assignment **administration** reads: active same-school membership with `school:configure`, minimal necessary fields and concealed cross-tenant IDs. No assignment read handler is implemented yet; teacher self-service reads require exact-resource scoping, not a general `academic:read` grant.
 

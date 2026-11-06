@@ -93,7 +93,10 @@ function errorResponse(
         return assignmentResponse({ error: "Conflict" }, 409);
       case "INTERNAL":
         safeLog("teacher_assignment_mutation_failed", requestId, context);
-        return assignmentResponse({ error: "Request could not be completed" }, 500);
+        return assignmentResponse(
+          { error: "Request could not be completed" },
+          500,
+        );
     }
   }
 

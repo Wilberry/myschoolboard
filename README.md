@@ -1,93 +1,40 @@
-# MySchoolBoard Local Phase 1 Foundation
+# MySchoolBoard
 
-This repository now includes a verified local Phase 1 foundation for a multi-tenant school system. The implementation is intentionally local-first and is not a production deployment. It is designed to prove the architecture, tenant scoping, session handling, database migration flow, and security boundaries before any production or hosting decisions are made.
+MySchoolBoard is a school management platform for primary and secondary schools. Designed with Nigerian schools in mind, it brings academic, administrative, financial, and communication activities together in one adaptable system.
 
-## Purpose
+## Vision
 
-The repository remains the canonical product and engineering source of truth for MySchoolBoard. It captures:
+To make school management simpler, more connected, and more transparent for school leaders, teachers, parents, and students.
 
-- Product and security requirements
-- Authorization and tenant-isolation rules
-- Architecture decisions and implementation notes
-- Local environment setup and database workflow
-- Verified local validation results for the Phase 1 foundation
+MySchoolBoard aims to help schools run efficiently, support teaching and learning, and give families better access to relevant information—while respecting each school's policies and protecting school records.
 
-## Documentation entry point
+## Features
 
-- [docs/README.md](docs/README.md) — full documentation navigation
-- [AGENTS.md](AGENTS.md) — required workflow for future agents
-- [CHANGELOG.md](CHANGELOG.md) — project history and verification notes
-- [docs/roadmap/CURRENT_STATUS.md](docs/roadmap/CURRENT_STATUS.md) — current implementation status
-- [docs/roadmap/IMPLEMENTATION_ROADMAP.md](docs/roadmap/IMPLEMENTATION_ROADMAP.md) — roadmap and Phase 1 status
+MySchoolBoard's features are at different stages of development. The platform is designed to cover:
 
-## Current verified repository state
+- **School administration:** School profiles, academic sessions and terms, classes, subjects, timetables, and staff roles.
+- **Admissions and student records:** Applications, enrolment, class history, promotions, transfers, and graduation.
+- **Teaching and learning:** Teacher assignments, attendance, lesson notes, schemes of work, and learning resources.
+- **Assessments and results:** Question banks, computer-based tests (CBT), grading, academic approvals, results, and report cards.
+- **Fees and payments:** Fee schedules, balances, payment verification, receipts, and reconciliation.
+- **Communication:** Notices, announcements, notifications, and parent and student portals.
+- **Platform management:** School subscriptions, access permissions, reporting, and record recovery.
 
-As of the latest verification pass:
+## Technology Stack
 
-- Repository branch: `checkpoint/phase1-tenant-safe-foundation` (development review branch); `main` remains unchanged
-- GitHub checkpoint: commit `2c7c6b9a905272ac5f9cc70d06b67367b2c1c791` is published in [draft PR #1](https://github.com/Wilberry/myschoolboard/pull/1); the excluded prototype and starter assets remain untracked on the original local workspace
-- Application stack: Next.js 16, React 19, TypeScript, Better Auth, Prisma, PostgreSQL
-- Approved local architecture direction: TypeScript modular monolith, Next.js, PostgreSQL
-- Database: PostgreSQL local dev database on port 5433
-- Auth: Better Auth is implemented locally; external identity-provider strategy remains open
-- Tenant model: active school membership is required for any authorized school access
-- Local app: sign-in flow, workspace view, and protected school detail page implemented
-- Tests: the full working-tree validation on 2026-10-11 passed 83 tests across 8 files, including the private-storage prototype. The exact reduced candidate reconstructed from HEAD and the selected manifest passed 78 tests across 7 files against a tmpfs-backed disposable test database.
-- Build: production build passed in recorded isolated local validation; no production deployment exists
-- Local workflow: Prisma generation, all 6 migrations, guarded seed, tests, lint, typecheck, formatting, schema validation, and production build passed in the recorded local validation
-- Dependency audit: `npm audit --audit-level=high` fails with 8 high findings; `npm audit --omit=dev --audit-level=high` still reports 3 high Prisma-config/deepmerge findings. The first GitHub draft-PR CI run failed; its individual failing steps must be verified rather than assuming audit was the only failure
+| Area | Technology |
+| --- | --- |
+| Application | Next.js 16, React 19, TypeScript |
+| Database | PostgreSQL, Prisma |
+| Authentication | Better Auth |
+| Data validation | Zod |
 
-## Current status
+## Project Status
 
-The project has moved beyond the documentation-only baseline and has a local Phase 1 foundation with the listed local checks verified. The broader Phase 1 engineering-plan definition of done is not fully met, and this is not a production deployment. External identity selection, PostgreSQL RLS, and hosting configuration remain open or deferred.
+**Updated:** 1 November 2026
 
-## Canonical rule
+**Status:** In development. MySchoolBoard has not yet launched.
 
-All implementation work must continue to read and follow:
+**Current focus:** Phase 8 — Results and Report Cards. Phase 9 — Fees and Payments is also underway.
 
-- [AGENTS.md](AGENTS.md)
-- [docs/README.md](docs/README.md)
-- the current roadmap phase and relevant requirement documents
-- the approved decision records and authorization rules
-
-## Important unresolved decisions
-
-The following remain explicitly unresolved or intentionally deferred:
-
-- external identity-provider selection
-- PostgreSQL RLS implementation
-- high-severity dependency advisories in the Prisma config and Next.js lint dependency chains; compatible fixes were not available from the current dependency metadata
-- hosting provider, domain, and deployment model until local development/testing is complete
-- exceptional support-access approval mechanism; unrestricted routine access is not allowed
-- payment-provider selection, parent-first report visibility, and QR disclosure in their relevant phases
-
-## Standing development authorization
-
-The Project Owner has approved [D-023: Standing Development Mandate](docs/project/STANDING_DEVELOPMENT_MANDATE.md). The product charter and implementation roadmap authorize routine non-production implementation, commits, reviewed development branches, and draft pull requests without repeated per-feature approval. Continue to enforce tenant isolation, academic publication controls, security audit gates, and recorded test evidence. The historical D-022 development-publication exception review date is **not** a stop-work date for ordinary engineering; it does not authorize merging into `main` or releasing with unresolved security findings.
-
-## Local CI verification while GitHub Actions is unavailable
-
-GitHub-hosted runners are currently unavailable under the owner-reported billing restriction. The development follow-up provides a guarded local runner, documented in [Local CI Verification Runbook](docs/quality/LOCAL_CI_RUNBOOK.md). With the explicitly disposable `postgres-test` service and test-only environment, run `npm run verify:local:guards`, then `npm run verify:local:preflight`, and finally `npm run verify:local` **only when ready for database-writing verification**. The runner mirrors `.github/workflows/ci.yml` and keeps the high-severity audit step. A public dependency-free liveness route is added at `GET /api/health/live`; it is not a database readiness probe. These additions remain unverified against the full project until the planned local CI run.
-
-## Local validation summary
-
-The verified local workflow includes:
-
-- Postgres startup via Docker Compose
-- Prisma generate and migrate deploy
-- seed script execution
-- Vitest suite execution
-- ESLint, TypeScript, Prettier checks
-- Next.js production build
-
-This is a local-development ready state, not a production host-ready state.
-
-## Local database safety
-
-Demo seeding is limited to the local development database or the explicitly disposable test database. Set `ALLOW_DEMO_SEED=1` only when intentionally running `npm run db:seed`. The test target additionally requires `NODE_ENV=test`, matching `DATABASE_URL` and `TEST_DATABASE_URL`, and `TEST_DATABASE_DISPOSABLE=1`.
-
-`npm run db:reset` is restricted to the local development database and requires `ALLOW_LOCAL_DB_RESET=1`. Never point it at a shared or production database. Docker Compose binds its PostgreSQL ports to loopback.
-
-## Note on branding
-
-The provisional product name MySchoolBoard remains a working project label. Public branding should remain configurable and should not be treated as a fixed product identity until product-owner approval is recorded.
+**Progress:** The foundation for Phases 1–7 is in place. Some subscriptions, admissions, student examinations, and parent/student services are still being completed.

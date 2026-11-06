@@ -2,14 +2,22 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/src/lib/db";
 import {
-  AssessmentError, assessmentFailure, assessmentUserId,
+  AssessmentError,
+  assessmentFailure,
+  assessmentUserId,
 } from "./question-service";
 
-const id = z.string().min(1).max(128).refine(v => v.trim() === v);
-const moderationInput = z.object({
-  decision: z.enum(["APPROVED", "RETURNED"]),
-  reason: z.string().trim().min(5).max(500),
-}).strict();
+const id = z
+  .string()
+  .min(1)
+  .max(128)
+  .refine((v) => v.trim() === v);
+const moderationInput = z
+  .object({
+    decision: z.enum(["APPROVED", "RETURNED"]),
+    reason: z.string().trim().min(5).max(500),
+  })
+  .strict();
 
 interface AssessmentReviewItem {
   id: string;
@@ -32,9 +40,12 @@ interface AssessmentReviewItem {
  * SECTION grant together in the query; it never exposes questions or keys.
  * An empty queue is NOT proof of an authorized reviewer. */
 export async function listAssessmentReviewQueue(schoolId: string) {
-  if (!id.safeParse(schoolId).success) throw new AssessmentError("INVALID_INPUT");
+  if (!id.safeParse(schoolId).success)
+    throw new AssessmentError("INVALID_INPUT");
   const userId = await assessmentUserId();
-  const allowed = await prisma.$queryRaw<Array<{ allowed: boolean }>>(Prisma.sql`
+  const allowed = await prisma.$queryRaw<
+    Array<{ allowed: boolean }>
+  >(Prisma.sql`
     SELECT true AS "allowed" FROM "School" school
     JOIN "Membership" reviewer ON reviewer."schoolId"=school."id"
       AND reviewer."userId"=${userId} AND reviewer."isActive"=true
@@ -110,15 +121,23 @@ export async function listAssessmentReviewQueue(schoolId: string) {
 /** Reviewer-only item preview. Authorization is re-evaluated in one exact
  * school/section/assignment/term SQL query. No key table is selected or
  * joined and no student/user answer material is present in the response. */
-export async function readAssessmentReviewItems(schoolId: string, draftId: string) {
+export async function readAssessmentReviewItems(
+  schoolId: string,
+  draftId: string,
+) {
   if (!id.safeParse(schoolId).success || !id.safeParse(draftId).success) {
     throw new AssessmentError("INVALID_INPUT");
   }
   const userId = await assessmentUserId();
-  const rows = await prisma.$queryRaw<Array<{
-    questionId: string; position: number; points: number;
-    prompt: string; options: unknown;
-  }>>(Prisma.sql`
+  const rows = await prisma.$queryRaw<
+    Array<{
+      questionId: string;
+      position: number;
+      points: number;
+      prompt: string;
+      options: unknown;
+    }>
+  >(Prisma.sql`
     SELECT q."id" AS "questionId", item."position", item."points",
       q."prompt", q."options"
     FROM "AssessmentDraft" draft
@@ -179,7 +198,9 @@ export async function readAssessmentReviewItems(schoolId: string, draftId: strin
 /** HM PRIMARY / Principal SECONDARY verified-section decision is terminal
  * for this immutable draft. It never publishes a CBT to students. */
 export async function decideAssessmentReview(
-  schoolId: string, draftId: string, input: unknown,
+  schoolId: string,
+  draftId: string,
+  input: unknown,
 ) {
   if (!id.safeParse(schoolId).success || !id.safeParse(draftId).success) {
     throw new AssessmentError("INVALID_INPUT");
@@ -188,70 +209,99 @@ export async function decideAssessmentReview(
   if (!parsed.success) throw new AssessmentError("INVALID_INPUT");
   const userId = await assessmentUserId();
   try {
-    return await prisma.$transaction(async tx => {
-      await tx.$queryRaw`SELECT "id" FROM "School"
+    return await prisma.$transaction(
+      async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "School"
         WHERE "id"=${schoolId} FOR UPDATE`;
-      await tx.$queryRaw`SELECT "id" FROM "Membership"
+        await tx.$queryRaw`SELECT "id" FROM "Membership"
         WHERE "schoolId"=${schoolId} AND "userId"=${userId} FOR UPDATE`;
-      const reviewer = await tx.membership.findFirst({
-        where: { schoolId, userId, isActive: true,
-          role: { in: ["HEAD_OF_SECTION","PRINCIPAL"] },
-          school: { isActive: true } },
-        select: { id: true, role: true },
-      });
-      if (!reviewer) throw new AssessmentError("FORBIDDEN");
-      await tx.$queryRaw`SELECT "id" FROM "AssessmentDraft"
+        const reviewer = await tx.membership.findFirst({
+          where: {
+            schoolId,
+            userId,
+            isActive: true,
+            role: { in: ["HEAD_OF_SECTION", "PRINCIPAL"] },
+            school: { isActive: true },
+          },
+          select: { id: true, role: true },
+        });
+        if (!reviewer) throw new AssessmentError("FORBIDDEN");
+        await tx.$queryRaw`SELECT "id" FROM "AssessmentDraft"
         WHERE "schoolId"=${schoolId} AND "id"=${draftId} FOR UPDATE`;
-      const draft = await tx.assessmentDraft.findFirst({
-        where: {
-          id: draftId, schoolId,
-          seal: { isNot: null },
-          reviews: { none: {} },
-          session: { status: "ACTIVE" },
-          term: { status: "ACTIVE" },
-          schoolClass: { isActive: true, section: { isActive: true, schoolId } },
-          subject: { isActive: true },
-          assignment: { status: "ACTIVE",
-            membership: { isActive: true, role: "TEACHER" } },
-          questions: { some: {} },
-        },
-        select: {
-          id: true, schoolClass: { select: { sectionId: true,
-            section: { select: { stage: true } } } },
-        },
-      });
-      if (!draft?.schoolClass.sectionId || !draft.schoolClass.section) {
-        throw new AssessmentError("NOT_FOUND");
-      }
-      const sectionId = draft.schoolClass.sectionId;
-      await tx.$queryRaw`SELECT "id" FROM "SchoolSection"
+        const draft = await tx.assessmentDraft.findFirst({
+          where: {
+            id: draftId,
+            schoolId,
+            seal: { isNot: null },
+            reviews: { none: {} },
+            session: { status: "ACTIVE" },
+            term: { status: "ACTIVE" },
+            schoolClass: {
+              isActive: true,
+              section: { isActive: true, schoolId },
+            },
+            subject: { isActive: true },
+            assignment: {
+              status: "ACTIVE",
+              membership: { isActive: true, role: "TEACHER" },
+            },
+            questions: { some: {} },
+          },
+          select: {
+            id: true,
+            schoolClass: {
+              select: { sectionId: true, section: { select: { stage: true } } },
+            },
+          },
+        });
+        if (!draft?.schoolClass.sectionId || !draft.schoolClass.section) {
+          throw new AssessmentError("NOT_FOUND");
+        }
+        const sectionId = draft.schoolClass.sectionId;
+        await tx.$queryRaw`SELECT "id" FROM "SchoolSection"
         WHERE "schoolId"=${schoolId} AND "id"=${sectionId} FOR UPDATE`;
-      await tx.$queryRaw`SELECT "id" FROM "ScopeGrant"
+        await tx.$queryRaw`SELECT "id" FROM "ScopeGrant"
         WHERE "membershipId"=${reviewer.id}
           AND "type"='SECTION' AND "scopeId"=${sectionId}
         FOR UPDATE`;
-      if (!((reviewer.role === "HEAD_OF_SECTION" &&
-               draft.schoolClass.section.stage === "PRIMARY") ||
-            (reviewer.role === "PRINCIPAL" &&
-               draft.schoolClass.section.stage === "SECONDARY"))) {
-        throw new AssessmentError("NOT_FOUND");
-      }
-      const scope = await tx.scopeGrant.findFirst({
-        where: { membershipId: reviewer.id, type: "SECTION",
-          scopeId: sectionId, verified: true },
-        select: { id: true },
-      });
-      if (!scope) throw new AssessmentError("NOT_FOUND");
-      return tx.assessmentReviewEvent.create({
-        data: {
-          schoolId, draftId, decision: parsed.data.decision,
-          reason: parsed.data.reason,
-          reviewerMembershipId: reviewer.id, reviewerUserId: userId,
-        },
-        select: {
-          id: true, draftId: true, decision: true, createdAt: true,
-        },
-      });
-    }, { isolationLevel: "Serializable" });
-  } catch (error) { assessmentFailure(error); }
+        if (!(
+          (reviewer.role === "HEAD_OF_SECTION" &&
+            draft.schoolClass.section.stage === "PRIMARY") ||
+          (reviewer.role === "PRINCIPAL" &&
+            draft.schoolClass.section.stage === "SECONDARY")
+        )) {
+          throw new AssessmentError("NOT_FOUND");
+        }
+        const scope = await tx.scopeGrant.findFirst({
+          where: {
+            membershipId: reviewer.id,
+            type: "SECTION",
+            scopeId: sectionId,
+            verified: true,
+          },
+          select: { id: true },
+        });
+        if (!scope) throw new AssessmentError("NOT_FOUND");
+        return tx.assessmentReviewEvent.create({
+          data: {
+            schoolId,
+            draftId,
+            decision: parsed.data.decision,
+            reason: parsed.data.reason,
+            reviewerMembershipId: reviewer.id,
+            reviewerUserId: userId,
+          },
+          select: {
+            id: true,
+            draftId: true,
+            decision: true,
+            createdAt: true,
+          },
+        });
+      },
+      { isolationLevel: "Serializable" },
+    );
+  } catch (error) {
+    assessmentFailure(error);
+  }
 }

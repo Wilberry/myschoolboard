@@ -12,7 +12,10 @@ interface ClassOption {
  * Form Teacher class/session options require the exact active PRIMARY
  * responsibility, current active school and class classification.
  */
-export async function readFormTeacherAttendanceOptions(userId: string, schoolId: string) {
+export async function readFormTeacherAttendanceOptions(
+  userId: string,
+  schoolId: string,
+) {
   if (!userId || !schoolId) return null;
   const classes = await prisma.$queryRaw<ClassOption[]>`
     SELECT school."name" AS "schoolName", c."id" AS "classId",
@@ -41,7 +44,10 @@ export async function readFormTeacherAttendanceOptions(userId: string, schoolId:
   return {
     schoolName: classes[0].schoolName,
     classes: classes.map(({ classId, className, sessionId, sessionName }) => ({
-      classId, className, sessionId, sessionName,
+      classId,
+      className,
+      sessionId,
+      sessionName,
     })),
   };
 }
@@ -54,7 +60,10 @@ interface ReviewerSectionRow {
 /** Separate reviewer navigation; the pending-reader and decision service both
  * repeat authorization over exact current section resources independently.
  */
-export async function readAttendanceReviewerOptions(userId: string, schoolId: string) {
+export async function readAttendanceReviewerOptions(
+  userId: string,
+  schoolId: string,
+) {
   if (!userId || !schoolId) return null;
   const sections = await prisma.$queryRaw<ReviewerSectionRow[]>`
     SELECT school."name" AS "schoolName", section."name" AS "sectionName"
@@ -62,10 +71,10 @@ export async function readAttendanceReviewerOptions(userId: string, schoolId: st
     JOIN "Membership" reviewer ON reviewer."schoolId" = school."id"
       AND reviewer."userId" = ${userId} AND reviewer."isActive" = true
       AND reviewer."role" IN ('HEAD_OF_SECTION', 'PRINCIPAL')
-    JOIN "ScopeGrant" grant ON grant."membershipId" = reviewer."id"
-      AND grant."type" = 'SECTION' AND grant."verified" = true
+    JOIN "ScopeGrant" scope_grant ON scope_grant."membershipId" = reviewer."id"
+      AND scope_grant."type" = 'SECTION' AND scope_grant."verified" = true
     JOIN "SchoolSection" section ON section."schoolId" = school."id"
-      AND section."id" = grant."scopeId" AND section."isActive" = true
+      AND section."id" = scope_grant."scopeId" AND section."isActive" = true
     WHERE school."id" = ${schoolId} AND school."isActive" = true
       AND (
         (reviewer."role" = 'HEAD_OF_SECTION' AND section."stage" = 'PRIMARY')
@@ -75,5 +84,8 @@ export async function readAttendanceReviewerOptions(userId: string, schoolId: st
     LIMIT 30
   `;
   if (sections.length === 0) return null;
-  return { schoolName: sections[0].schoolName, sectionNames: sections.map(x => x.sectionName) };
+  return {
+    schoolName: sections[0].schoolName,
+    sectionNames: sections.map((x) => x.sectionName),
+  };
 }

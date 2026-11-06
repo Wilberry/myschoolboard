@@ -68,12 +68,13 @@ test("read-only psql attests true DB marker without touching schema or exposing 
   assert.ok(args.includes("-c"));
   assert.equal(args.some(a => a.includes("synthetic_ci_password")), false);
   assert.equal(args.some(a => a.includes(nonce)), false);
-  assert.ok(options.env.PGDATABASE.startsWith("postgresql://"));
+  assert.equal(options.env.PGDATABASE, "myschoolboard_test");
   assert.equal(options.env.PGDATABASE.includes("schema=public"), false);
-  assert.equal(options.env.PGHOST, undefined);
-  assert.equal(options.env.PGPORT, undefined);
+  assert.equal(options.env.PGHOST, "localhost");
+  assert.equal(options.env.PGPORT, "5434");
   assert.equal(options.env.PGSERVICE, undefined);
-  assert.equal(options.env.PGPASSWORD, undefined);
+  assert.equal(options.env.PGPASSWORD, new URL(base.TEST_DATABASE_URL).password);
+  assert.equal(options.env.PGUSER, "myschoolboard");
   assert.ok(options.env.PGOPTIONS.includes("default_transaction_read_only=on"));
   assert.ok(args.join(" ").includes('myschoolboard_disposable_verification_marker'));
 });

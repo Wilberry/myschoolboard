@@ -1,0 +1,736 @@
+import "dotenv/config";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { prisma } from "../src/lib/db";
+import { browserFixtureEmail } from "./browser-fixture-email.mjs";
+import { getSessionCookieHeader } from "./browser-pupil-workflow-auth.mjs";
+import {
+  assertBrowserFixtureEnvironment,
+  assertLocalDockerFixtureTarget,
+} from "./browser-fixture-safety.mjs";
+import { runMigrationChecksumVerification } from "./verify-migration-checksums.mjs";
+import { assertBrowserPupilWorkflowPolicy } from "./browser-pupil-workflow-policy.mjs";
+
+/**
+ * Test-only, authenticated HTTP workflow for the existing browser fixtures.
+ * Only real application routes create admission, lesson and audit records.
+ * Browser UI/history/printing acceptance must still be performed separately.
+ */
+const root = fileURLToPath(new URL("../", import.meta.url));
+const origin = new URL(process.env.BETTER_AUTH_URL ?? "http://127.0.0.1:3000")
+  .origin;
+const phase = process.argv
+  .find((part) => part.startsWith("--phase="))
+  ?.slice(8);
+
+assertBrowserPupilWorkflowPolicy(phase);
+
+function docker(args: string[]) {
+  const result = spawnSync("docker", args, {
+    cwd: root,
+    encoding: "utf8",
+    timeout: 10_000,
+    maxBuffer: 1_048_576,
+  });
+  if (result.status !== 0 || result.error) {
+    throw new Error("Local Docker verification command failed");
+  }
+  return result.stdout.trim();
+}
+
+function verifyDocker() {
+  const context = docker(["context", "show"]);
+  const endpoint = docker([
+    "context",
+    "inspect",
+    context,
+    "--format",
+    "{{.Endpoints.docker.Host}}",
+  ]);
+  const isolatedContainer =
+    process.env.BROWSER_FIXTURE_DOCKER_CONTAINER?.trim();
+  const namespaceOwnerName =
+    process.env.BROWSER_FIXTURE_DOCKER_NAMESPACE_OWNER?.trim();
+  const namespaceNetworkName =
+    process.env.BROWSER_FIXTURE_DOCKER_NETWORK?.trim();
+  if (
+    Boolean(isolatedContainer || namespaceOwnerName || namespaceNetworkName) &&
+    !(isolatedContainer && namespaceOwnerName && namespaceNetworkName)
+  ) {
+    throw new Error(
+      "Namespaced Docker verification requires the DB, owner and network names",
+    );
+  }
+  for (const name of [
+    isolatedContainer,
+    namespaceOwnerName,
+    namespaceNetworkName,
+  ]) {
+    if (name && !/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/.test(name)) {
+      throw new Error("Namespaced Docker target contains an invalid name");
+    }
+  }
+  const containers = isolatedContainer
+    ? [isolatedContainer]
+    : docker([
+        "compose",
+        "--profile",
+        "test",
+        "ps",
+        "-q",
+        "postgres-test",
+      ]).split("\n");
+  if (containers.length !== 1 || !containers[0]) {
+    throw new Error("Expected one verified Compose test container");
+  }
+  const inspection = JSON.parse(docker(["inspect", containers[0]]));
+  if (!Array.isArray(inspection) || inspection.length !== 1) {
+    throw new Error("Could not inspect test container");
+  }
+  const ownerInspection = namespaceOwnerName
+    ? JSON.parse(docker(["inspect", namespaceOwnerName]))
+    : null;
+  const networkInspection = namespaceNetworkName
+    ? JSON.parse(docker(["network", "inspect", namespaceNetworkName]))
+    : null;
+  if (
+    ownerInspection !== null &&
+    (!Array.isArray(ownerInspection) || ownerInspection.length !== 1)
+  ) {
+    throw new Error("Could not inspect the test network namespace owner");
+  }
+  if (
+    networkInspection !== null &&
+    (!Array.isArray(networkInspection) || networkInspection.length !== 1)
+  ) {
+    throw new Error("Could not inspect the isolated test network");
+  }
+  assertLocalDockerFixtureTarget(
+    endpoint,
+    inspection[0],
+    root,
+    ownerInspection?.[0] ?? null,
+    networkInspection?.[0] ?? null,
+  );
+}
+
+function requireRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Unexpected API response shape");
+  }
+  return value as Record<string, unknown>;
+}
+
+function requireId(value: unknown): string {
+  if (typeof value !== "string" || !value || value.length > 128) {
+    throw new Error("Missing synthetic resource identifier");
+  }
+  return value;
+}
+
+function resourceId(body: unknown, key: string) {
+  return requireId(requireRecord(requireRecord(body)[key]).id);
+}
+
+function list(body: unknown, key: string) {
+  const value = requireRecord(body)[key];
+  if (!Array.isArray(value)) {
+    throw new Error("Unexpected API list response");
+  }
+  return value.map(requireRecord);
+}
+
+function containsId(rows: Record<string, unknown>[], id: string) {
+  return rows.some((row) => row.id === id);
+}
+
+class BrowserWorkflowAssertion extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "BrowserWorkflowAssertion";
+  }
+}
+
+function assert(condition: unknown, description: string): asserts condition {
+  if (!condition) throw new BrowserWorkflowAssertion(description);
+}
+
+type ActorKey =
+  | "adminA"
+  | "teacherA"
+  | "headA"
+  | "principalA"
+  | "studentA"
+  | "unlinkedA"
+  | "parentA"
+  | "adminB";
+type Login = { cookie: string; userId: string };
+
+async function signIn(key: ActorKey, runId: string): Promise<Login> {
+  const email = browserFixtureEmail(runId, key);
+  const signInResponse = await fetch(`${origin}/api/auth/sign-in/email`, {
+    method: "POST",
+    headers: {
+      origin: process.env.BETTER_AUTH_URL!,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      password: process.env.BROWSER_FIXTURE_PASSWORD!,
+    }),
+    redirect: "manual",
+    signal: AbortSignal.timeout(10_000),
+  });
+  assert(
+    signInResponse.status === 200,
+    `Synthetic HTTP sign-in returned ${signInResponse.status}`,
+  );
+  const cookie = getSessionCookieHeader(signInResponse.headers);
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+  assert(user, "Expected existing synthetic browser actor");
+  const sessionResponse = await fetch(origin + "/api/auth/get-session", {
+    headers: { cookie },
+    redirect: "manual",
+    signal: AbortSignal.timeout(10_000),
+  });
+  assert(
+    sessionResponse.status === 200,
+    "Synthetic cookie could not authenticate through the Next HTTP server",
+  );
+  const session = requireRecord(await sessionResponse.json());
+  assert(
+    requireRecord(session.user).id === user.id,
+    "Session user does not match the exact synthetic fixture account",
+  );
+  return { cookie, userId: user.id };
+}
+
+async function api(
+  actor: Login,
+  path: string,
+  status: number,
+  method: "GET" | "POST" = "GET",
+  payload?: Record<string, unknown>,
+) {
+  assert(path.startsWith("/api/schools/"), "Only school API paths allowed");
+  const response = await fetch(origin + path, {
+    method,
+    headers: {
+      cookie: actor.cookie,
+      origin: process.env.BETTER_AUTH_URL!,
+      ...(method === "POST" ? { "content-type": "application/json" } : {}),
+    },
+    body: method === "POST" ? JSON.stringify(payload) : undefined,
+    redirect: "manual",
+    signal: AbortSignal.timeout(20_000),
+  });
+  assert(
+    response.status === status,
+    `Unexpected school API ${method} status ${response.status}`,
+  );
+  assert(
+    response.headers.get("cache-control") === "private, no-store",
+    "Missing private/no-store response cache policy",
+  );
+  // Do not log response text: it may contain synthetic student details.
+  const body: unknown = await response.json();
+  const data = requireRecord(body);
+  if (status === 404) {
+    assert(
+      Object.keys(data).length === 1 && data.error === "Not found",
+      "Denied school API must return only a generic not-found error",
+    );
+  }
+  return data;
+}
+
+async function environment() {
+  assertBrowserFixtureEnvironment();
+  assertBrowserPupilWorkflowPolicy(phase);
+  verifyDocker();
+  await runMigrationChecksumVerification();
+  const home = await fetch(origin + "/", {
+    redirect: "manual",
+    signal: AbortSignal.timeout(10_000),
+  });
+  assert(home.status === 200, "Local production application unavailable");
+  await home.body?.cancel();
+
+  const runId = process.env.BROWSER_FIXTURE_RUN_ID!;
+  const [schoolA, schoolB] = await Promise.all(
+    ["a", "b"].map((side) =>
+      prisma.school.findUnique({
+        where: { slug: `browser-${runId}-${side}` },
+        select: { id: true, name: true, isActive: true },
+      }),
+    ),
+  );
+  assert(
+    schoolA?.isActive && schoolB?.isActive,
+    "Both synthetic test schools must be active",
+  );
+  const expectedRoles: Record<ActorKey, string> = {
+    adminA: "SCHOOL_ADMIN",
+    teacherA: "TEACHER",
+    headA: "HEAD_OF_SECTION",
+    principalA: "PRINCIPAL",
+    studentA: "STUDENT",
+    unlinkedA: "STUDENT",
+    parentA: "PARENT",
+    adminB: "SCHOOL_ADMIN",
+  };
+  const keys: ActorKey[] = [
+    "adminA",
+    "teacherA",
+    "headA",
+    "principalA",
+    "studentA",
+    "unlinkedA",
+    "parentA",
+    "adminB",
+  ];
+  const members = await Promise.all(
+    keys.map(async (key) => {
+      const email = browserFixtureEmail(runId, key);
+      const user = await prisma.user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          memberships: {
+            select: { id: true, schoolId: true, role: true, isActive: true },
+          },
+        },
+      });
+      const member = user?.memberships[0];
+      assert(
+        user &&
+          user.memberships.length === 1 &&
+          member?.isActive &&
+          member.role === expectedRoles[key] &&
+          member.schoolId === (key === "adminB" ? schoolB.id : schoolA.id),
+        "Synthetic account/school relationship mismatch",
+      );
+      return { key, memberId: member.id };
+    }),
+  );
+  const member = Object.fromEntries(members.map((m) => [m.key, m.memberId]));
+  const secondaryClass = await prisma.schoolClass.findFirst({
+    where: {
+      schoolId: schoolA.id,
+      isActive: true,
+      section: { is: { stage: "SECONDARY", isActive: true } },
+    },
+    select: { id: true, sectionId: true },
+  });
+  assert(
+    secondaryClass && secondaryClass.sectionId,
+    "Active secondary class with section is required",
+  );
+  const assignment = await prisma.teacherClassSubjectAssignment.findFirst({
+    where: {
+      schoolId: schoolA.id,
+      membershipId: member.teacherA,
+      classId: secondaryClass.id,
+      status: "ACTIVE",
+    },
+    select: { id: true, classId: true, sessionId: true },
+  });
+  assert(
+    assignment && assignment.sessionId,
+    "Active secondary teacher assignment is required",
+  );
+  const term = await prisma.academicTerm.findFirst({
+    where: {
+      schoolId: schoolA.id,
+      sessionId: assignment.sessionId,
+      status: "ACTIVE",
+    },
+    select: { id: true },
+  });
+  assert(term, "Active academic term is required");
+  const principalGrant = await prisma.scopeGrant.count({
+    where: {
+      membershipId: member.principalA,
+      type: "SECTION",
+      verified: true,
+      scopeId: secondaryClass.sectionId,
+    },
+  });
+  assert(principalGrant === 1, "Verified Principal SECTION grant required");
+
+  const logins = {} as Record<ActorKey, Login>;
+  for (const [index, key] of keys.entries()) {
+    if (index > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 10_500));
+    }
+    logins[key] = await signIn(key, runId);
+  }
+  return {
+    runId,
+    schoolA: schoolA.id,
+    schoolB: schoolB.id,
+    member,
+    assignment,
+    termId: term.id,
+    logins,
+  };
+}
+
+async function stored(ctx: Awaited<ReturnType<typeof environment>>) {
+  const admissionNumber = `BROWSER-${ctx.runId.toUpperCase()}`;
+  const topic = `Synthetic Browser Lesson ${ctx.runId}`;
+  const [student, note] = await Promise.all([
+    prisma.studentRecord.findFirst({
+      where: { schoolId: ctx.schoolA, admissionNumber },
+      select: { id: true, status: true },
+    }),
+    prisma.lessonNote.findFirst({
+      where: { schoolId: ctx.schoolA, topic },
+      select: { id: true, status: true, currentRevision: true },
+    }),
+  ]);
+  return { admissionNumber, topic, student, note };
+}
+
+async function assertStudentPrivacy(
+  ctx: Awaited<ReturnType<typeof environment>>,
+  noteId: string,
+) {
+  const base = `/api/schools/${ctx.schoolA}/student-lessons`;
+  const linked = await api(ctx.logins.studentA, base, 200);
+  const rows = list(linked, "lessons");
+  assert(containsId(rows, noteId), "Expected only released synthetic lesson");
+  const row = rows.find((item) => item.id === noteId)!;
+  assert(
+    !Object.hasOwn(row, "content") && !Object.hasOwn(row, "objectives"),
+    "Student list must omit private revision text",
+  );
+  const detail = await api(ctx.logins.studentA, `${base}/${noteId}`, 200);
+  const lesson = requireRecord(detail.lesson);
+  assert(lesson.id === noteId, "Exact student lesson detail mismatch");
+  assert(
+    typeof lesson.content === "string" && lesson.content.includes(ctx.runId),
+    "Student detail missing released synthetic content",
+  );
+  for (const actor of ["unlinkedA", "parentA", "adminB"] as const) {
+    await api(ctx.logins[actor], base, 404);
+    await api(ctx.logins[actor], `${base}/${noteId}`, 404);
+  }
+  await api(
+    ctx.logins.studentA,
+    `/api/schools/${ctx.schoolB}/student-lessons`,
+    404,
+  );
+}
+
+async function prepare(ctx: Awaited<ReturnType<typeof environment>>) {
+  const initial = await stored(ctx);
+  assert(
+    !initial.student && !initial.note,
+    "Synthetic pupil workflow already started; do not replay writes",
+  );
+  const [studentCount, noteCount, foreignStudents, foreignNotes] =
+    await Promise.all([
+      prisma.studentRecord.count({ where: { schoolId: ctx.schoolA } }),
+      prisma.lessonNote.count({ where: { schoolId: ctx.schoolA } }),
+      prisma.studentRecord.count({ where: { schoolId: ctx.schoolB } }),
+      prisma.lessonNote.count({ where: { schoolId: ctx.schoolB } }),
+    ]);
+  assert(
+    studentCount === 0 &&
+      noteCount === 0 &&
+      foreignStudents === 0 &&
+      foreignNotes === 0,
+    "Browser fixture schools must have no prior pupil/lesson records",
+  );
+  const path = `/api/schools/${ctx.schoolA}`;
+  await api(ctx.logins.studentA, `${path}/student-lessons`, 404);
+  await api(ctx.logins.unlinkedA, `${path}/student-lessons`, 404);
+
+  const registration = await api(
+    ctx.logins.adminA,
+    `${path}/students`,
+    201,
+    "POST",
+    {
+      admissionNumber: initial.admissionNumber,
+      givenName: "Synthetic",
+      familyName: "BrowserPupil",
+      reason: "Synthetic browser registration for privacy checks",
+    },
+  );
+  const studentId = resourceId(registration, "student");
+  const enrollment = await api(
+    ctx.logins.adminA,
+    `${path}/students/${studentId}/enrollments`,
+    201,
+    "POST",
+    {
+      sessionId: ctx.assignment.sessionId,
+      classId: ctx.assignment.classId,
+      reason: "Synthetic browser pupil enrollment for privacy checks",
+    },
+  );
+  requireId(requireRecord(enrollment.enrollment).id);
+
+  const link = await api(
+    ctx.logins.adminA,
+    `${path}/student-links`,
+    201,
+    "POST",
+    {
+      studentId,
+      studentMembershipId: ctx.member.studentA,
+      reason: "Administrator verifies this synthetic pupil account",
+      identityVerified: true,
+    },
+  );
+  const linkId = resourceId(link, "link");
+  const beforeRelease = await api(
+    ctx.logins.studentA,
+    `${path}/student-lessons`,
+    200,
+  );
+  assert(list(beforeRelease, "lessons").length === 0, "Premature lesson leak");
+
+  const note = await api(
+    ctx.logins.teacherA,
+    `${path}/lesson-notes`,
+    201,
+    "POST",
+    {
+      termId: ctx.termId,
+      assignmentId: ctx.assignment.id,
+      topic: initial.topic,
+      objectives: `Synthetic objectives for exact pupil ${ctx.runId}`,
+      content: `Synthetic browser-only released lesson content ${ctx.runId}`,
+    },
+  );
+  const noteId = resourceId(note, "note");
+  await api(
+    ctx.logins.teacherA,
+    `${path}/lesson-notes/${noteId}/submit`,
+    200,
+    "POST",
+    { expectedRevision: 1 },
+  );
+  const principalQueue = await api(
+    ctx.logins.principalA,
+    `${path}/lesson-note-reviews`,
+    200,
+  );
+  assert(
+    containsId(list(principalQueue, "notes"), noteId),
+    "Secondary Principal review queue missing submitted note",
+  );
+  const headQueue = await api(
+    ctx.logins.headA,
+    `${path}/lesson-note-reviews`,
+    200,
+  );
+  assert(
+    !containsId(list(headQueue, "notes"), noteId),
+    "Primary Head must not see secondary note",
+  );
+  await api(ctx.logins.headA, `${path}/lesson-note-reviews/${noteId}`, 404);
+  await api(
+    ctx.logins.headA,
+    `${path}/lesson-note-reviews/${noteId}/decision`,
+    404,
+    "POST",
+    {
+      action: "APPROVE",
+      expectedRevision: 1,
+      reason: "Synthetic wrong-section reviewer must be denied",
+    },
+  );
+  const afterDeniedReview = await prisma.lessonNote.findUnique({
+    where: { id: noteId },
+    select: { status: true },
+  });
+  assert(
+    afterDeniedReview?.status === "SUBMITTED",
+    "Denied reviewer must not approve a secondary lesson",
+  );
+
+  await api(
+    ctx.logins.principalA,
+    `${path}/lesson-note-reviews/${noteId}/decision`,
+    200,
+    "POST",
+    {
+      action: "APPROVE",
+      expectedRevision: 1,
+      reason: "Synthetic Principal exact-section academic approval",
+    },
+  );
+  const afterApproval = await api(
+    ctx.logins.studentA,
+    `${path}/student-lessons`,
+    200,
+  );
+  assert(
+    list(afterApproval, "lessons").length === 0,
+    "Approved but unreleased note must remain private",
+  );
+  await api(ctx.logins.studentA, `${path}/student-lessons/${noteId}`, 404);
+
+  const releaseQueue = await api(
+    ctx.logins.principalA,
+    `${path}/lesson-releases`,
+    200,
+  );
+  assert(
+    containsId(list(releaseQueue, "notes"), noteId),
+    "Principal release queue missing approved revision",
+  );
+  const headReleaseQueue = await api(
+    ctx.logins.headA,
+    `${path}/lesson-releases`,
+    200,
+  );
+  assert(
+    !containsId(list(headReleaseQueue, "notes"), noteId),
+    "Primary Head cannot release secondary note",
+  );
+  await api(
+    ctx.logins.headA,
+    `${path}/lesson-releases/${noteId}/decision`,
+    404,
+    "POST",
+    {
+      action: "RELEASE",
+      expectedRevision: 1,
+      reason: "Synthetic wrong-section release must be denied",
+    },
+  );
+  const beforeReleaseEvents = await prisma.lessonReleaseEvent.count({
+    where: { schoolId: ctx.schoolA, noteId },
+  });
+  assert(
+    beforeReleaseEvents === 0,
+    "Denied section release must not create an audit event",
+  );
+  await api(
+    ctx.logins.principalA,
+    `${path}/lesson-releases/${noteId}/decision`,
+    201,
+    "POST",
+    {
+      action: "RELEASE",
+      expectedRevision: 1,
+      reason: "Synthetic Principal explicit release for student visibility",
+    },
+  );
+  await assertStudentPrivacy(ctx, noteId);
+  console.info(
+    JSON.stringify({
+      event: "synthetic_pupil_browser_ready",
+      runId: ctx.runId,
+      schoolId: ctx.schoolA,
+      studentId,
+      linkId,
+      noteId,
+      pending: "Verify positive student UI/Back/print before revoking",
+    }),
+  );
+}
+
+async function verify(ctx: Awaited<ReturnType<typeof environment>>) {
+  const data = await stored(ctx);
+  assert(
+    data.student?.status === "ENROLLED" && data.note?.status === "APPROVED",
+    "Synthetic pupil/approved lesson not prepared",
+  );
+  const noteId = data.note.id;
+  const release = await prisma.lessonReleaseEvent.count({
+    where: {
+      schoolId: ctx.schoolA,
+      noteId,
+      eventType: "RELEASED",
+    },
+  });
+  assert(release === 1, "Expected one immutable release event");
+  const link = await prisma.studentAccountLink.findFirst({
+    where: {
+      schoolId: ctx.schoolA,
+      studentId: data.student.id,
+    },
+    select: { id: true, revocation: { select: { id: true } } },
+  });
+  assert(link && !link.revocation, "Synthetic student link not active");
+  await assertStudentPrivacy(ctx, noteId);
+  console.info(
+    JSON.stringify({
+      event: "synthetic_pupil_http_verified",
+      runId: ctx.runId,
+      schoolId: ctx.schoolA,
+      noteId,
+      linkId: link.id,
+      status: "Released note visible only to linked student",
+    }),
+  );
+}
+
+async function revoke(ctx: Awaited<ReturnType<typeof environment>>) {
+  await verify(ctx);
+  const data = await stored(ctx);
+  const link = await prisma.studentAccountLink.findFirst({
+    where: {
+      schoolId: ctx.schoolA,
+      studentId: data.student!.id,
+    },
+    select: { id: true, revocation: { select: { id: true } } },
+  });
+  assert(link && !link.revocation, "Link already revoked");
+  const path = `/api/schools/${ctx.schoolA}/student-links/${link.id}/revoke`;
+  await api(ctx.logins.adminA, path, 201, "POST", {
+    reason: "Synthetic browser student-link revocation after positive check",
+  });
+  const studentBase = `/api/schools/${ctx.schoolA}/student-lessons`;
+  await api(ctx.logins.studentA, studentBase, 404);
+  await api(ctx.logins.studentA, `${studentBase}/${data.note!.id}`, 404);
+  const revocations = await prisma.studentAccountLinkRevocation.count({
+    where: { schoolId: ctx.schoolA, linkId: link.id },
+  });
+  assert(revocations === 1, "Expected one immutable link revocation");
+  console.info(
+    JSON.stringify({
+      event: "synthetic_pupil_revocation_verified",
+      runId: ctx.runId,
+      schoolId: ctx.schoolA,
+      noteId: data.note!.id,
+      deniedStatus: 404,
+      pending: "Check old student browser Back/Reload/RSC/print for leakage",
+    }),
+  );
+}
+
+async function main() {
+  const ctx = await environment();
+  if (phase === "prepare") await prepare(ctx);
+  else if (phase === "verify") await verify(ctx);
+  else await revoke(ctx);
+}
+
+main()
+  .catch((error: unknown) => {
+    // Do not print error messages: HTTP/auth errors may include credentials.
+    console.error(
+      JSON.stringify({
+        event: "synthetic_pupil_workflow_failed",
+        phase,
+        errorType: error instanceof Error ? error.name : "unknown",
+        reason:
+          error instanceof BrowserWorkflowAssertion
+            ? error.message
+            : "Check sanitized local server logs; do not expose credentials",
+        note: "Inspect this run's synthetic records before retrying",
+      }),
+    );
+    process.exitCode = 1;
+  })
+  .finally(async () => prisma.$disconnect());

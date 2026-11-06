@@ -1,6 +1,4 @@
-import {
-  handleSchoolLifecycleChange,
-} from "@/src/modules/platform/school-lifecycle-http";
+import { handleSchoolLifecycleChange } from "@/src/modules/platform/school-lifecycle-http";
 
 export async function POST(
   request: Request,

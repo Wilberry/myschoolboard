@@ -2,9 +2,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const read = p => readFileSync(new URL(p, import.meta.url), "utf8");
+const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 const schema = read("../prisma/schema.prisma");
-const sql = read("../prisma/migrations/20261012310000_phase7_cbt_answer_submission/migration.sql");
+const sql = read(
+  "../prisma/migrations/20261012310000_phase7_cbt_answer_submission/migration.sql",
+);
 const service = read("../src/modules/assessments/attempt-answer-service.ts");
 const tests = read("../src/modules/assessments/questions.integration.test.ts");
 
@@ -12,7 +14,10 @@ test("separate append-only answer revisions and final submissions retain tenant 
   assert.match(schema, /model AssessmentAttemptAnswerEvent \{/);
   assert.match(schema, /model AssessmentAttemptSubmission \{/);
   assert.match(schema, /@@unique\(\[schoolId, attemptId, requestKey\]\)/);
-  assert.match(schema, /@@unique\(\[schoolId, attemptId, questionId, revision\]\)/);
+  assert.match(
+    schema,
+    /@@unique\(\[schoolId, attemptId, questionId, revision\]\)/,
+  );
   assert.match(schema, /@@unique\(\[schoolId, attemptId\]\)/);
   for (const name of [
     "AssessmentAttemptAnswerEvent_attempt_fkey",
@@ -20,8 +25,11 @@ test("separate append-only answer revisions and final submissions retain tenant 
     "AssessmentAttemptAnswerEvent_actor_fkey",
     "AssessmentAttemptSubmission_attempt_fkey",
     "AssessmentAttemptSubmission_actor_fkey",
-  ]) assert.ok(schema.includes('map: "' + name + '"') &&
-    sql.includes('"' + name + '"'), name);
+  ])
+    assert.ok(
+      schema.includes('map: "' + name + '"') && sql.includes('"' + name + '"'),
+      name,
+    );
   for (const name of [
     "AssessmentAttemptAnswerEvent_validate",
     "AssessmentAttemptSubmission_validate",
@@ -29,7 +37,8 @@ test("separate append-only answer revisions and final submissions retain tenant 
     "AssessmentAttemptSubmission_immutable",
     "AssessmentAttemptAnswerEvent_no_truncate",
     "AssessmentAttemptSubmission_no_truncate",
-  ]) assert.ok(sql.includes('"' + name + '"'), name);
+  ])
+    assert.ok(sql.includes('"' + name + '"'), name);
 });
 test("two insert triggers share exact active student, publisher and deadline guard", () => {
   assert.equal((sql.match(/RETURNS trigger AS \$\$/g) ?? []).length, 2);
@@ -61,8 +70,14 @@ test("internal authenticated and idempotent services do not reveal answer keys",
   assert.match(service, /assessmentUserId\(\)/);
   assert.match(service, /"Serializable"/);
   assert.match(service, /saved\.selectedIndex !== selectedIndex/);
-  assert.match(service, /previous\.requestKey !== parsed\.data\.idempotencyKey/);
-  assert.doesNotMatch(service, /"AssessmentQuestionKey"|correctIndex|answerKey/);
+  assert.match(
+    service,
+    /previous\.requestKey !== parsed\.data\.idempotencyKey/,
+  );
+  assert.doesNotMatch(
+    service,
+    /"AssessmentQuestionKey"|correctIndex|answerKey/,
+  );
   assert.doesNotMatch(sql, /JOIN "AssessmentQuestionKey"/);
   assert.match(tests, /assessmentAttemptSubmission\.delete/);
   assert.match(tests, /assessmentAttemptAnswerEvent\.update/);

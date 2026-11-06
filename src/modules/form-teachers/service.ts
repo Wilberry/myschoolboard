@@ -9,7 +9,11 @@ import {
   requireSchoolConfigActor,
 } from "@/src/modules/academics/config-service";
 
-const id = z.string().min(1).max(128).refine((v) => v === v.trim());
+const id = z
+  .string()
+  .min(1)
+  .max(128)
+  .refine((v) => v === v.trim());
 const reason = z.string().trim().min(5).max(500);
 const assignSchema = z
   .object({
@@ -87,10 +91,7 @@ export async function assignFormTeacher(schoolId: string, input: unknown) {
           where: { id: schoolId },
           select: { allowCoFormTeachers: true },
         });
-        if (
-          parsed.data.kind === "SUPPORT" &&
-          !school.allowCoFormTeachers
-        ) {
+        if (parsed.data.kind === "SUPPORT" && !school.allowCoFormTeachers) {
           throw new AcademicConfigError("CONFLICT");
         }
         await requireTarget(

@@ -24,7 +24,8 @@ interface PupilLesson {
  * active class/session/term, then approved + released, not withdrawn, revision.
  */
 export async function readPupilReleasedLessons(
-  schoolId: string, noteId?: string,
+  schoolId: string,
+  noteId?: string,
 ): Promise<PupilLesson[]> {
   if (!validId(schoolId) || (noteId !== undefined && !validId(noteId))) {
     throw new LessonNoteError("INVALID_INPUT");
@@ -36,16 +37,24 @@ export async function readPupilReleasedLessons(
   // sensitive row so a revoked identity cannot survive between queries.
   const linked = await prisma.membership.findFirst({
     where: {
-      schoolId, userId, role: "STUDENT", isActive: true,
+      schoolId,
+      userId,
+      role: "STUDENT",
+      isActive: true,
       school: { isActive: true },
       studentAccountLink: {
         revocation: null,
         student: {
-          schoolId, status: "ENROLLED",
-          enrollments: { some: { schoolId, status: "ACTIVE",
-            session: { status: "ACTIVE" },
-            schoolClass: { isActive: true, section: { isActive: true } },
-          } },
+          schoolId,
+          status: "ENROLLED",
+          enrollments: {
+            some: {
+              schoolId,
+              status: "ACTIVE",
+              session: { status: "ACTIVE" },
+              schoolClass: { isActive: true, section: { isActive: true } },
+            },
+          },
         },
       },
     },

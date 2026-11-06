@@ -22,9 +22,21 @@ describe("role/stage-aligned lesson-note reviewer navigation", () => {
   beforeAll(async () => {
     await prisma.user.createMany({
       data: [
-        { id: headUser, name: "Synthetic Head", email: `${headUser}@example.test` },
-        { id: principalUser, name: "Synthetic Principal", email: `${principalUser}@example.test` },
-        { id: teacherUser, name: "Synthetic Teacher", email: `${teacherUser}@example.test` },
+        {
+          id: headUser,
+          name: "Synthetic Head",
+          email: `${headUser}@example.test`,
+        },
+        {
+          id: principalUser,
+          name: "Synthetic Principal",
+          email: `${principalUser}@example.test`,
+        },
+        {
+          id: teacherUser,
+          name: "Synthetic Teacher",
+          email: `${teacherUser}@example.test`,
+        },
       ],
     });
     await prisma.school.createMany({
@@ -35,39 +47,80 @@ describe("role/stage-aligned lesson-note reviewer navigation", () => {
     });
     await prisma.schoolSection.createMany({
       data: [
-        { id: sectionPrimary, schoolId: schoolA, name: "Primary", stage: "PRIMARY" },
-        { id: sectionSecondary, schoolId: schoolA, name: "Secondary", stage: "SECONDARY" },
-        { id: sectionForeign, schoolId: schoolB, name: "Foreign", stage: "PRIMARY" },
+        {
+          id: sectionPrimary,
+          schoolId: schoolA,
+          name: "Primary",
+          stage: "PRIMARY",
+        },
+        {
+          id: sectionSecondary,
+          schoolId: schoolA,
+          name: "Secondary",
+          stage: "SECONDARY",
+        },
+        {
+          id: sectionForeign,
+          schoolId: schoolB,
+          name: "Foreign",
+          stage: "PRIMARY",
+        },
       ],
     });
     await prisma.membership.createMany({
       data: [
-        { id: headMember, schoolId: schoolA, userId: headUser, role: "HEAD_OF_SECTION" },
-        { id: principalMember, schoolId: schoolA, userId: principalUser, role: "PRINCIPAL" },
+        {
+          id: headMember,
+          schoolId: schoolA,
+          userId: headUser,
+          role: "HEAD_OF_SECTION",
+        },
+        {
+          id: principalMember,
+          schoolId: schoolA,
+          userId: principalUser,
+          role: "PRINCIPAL",
+        },
         { schoolId: schoolA, userId: teacherUser, role: "TEACHER" },
       ],
     });
     const grant = await prisma.scopeGrant.create({
       data: {
-        membershipId: headMember, type: "SECTION",
-        scopeId: sectionPrimary, verified: true,
+        membershipId: headMember,
+        type: "SECTION",
+        scopeId: sectionPrimary,
+        verified: true,
       },
     });
     headGrant = grant.id;
     await prisma.scopeGrant.createMany({
       data: [
-        { membershipId: headMember, type: "SECTION",
-          scopeId: sectionForeign, verified: true },
-        { membershipId: principalMember, type: "SECTION",
-          scopeId: sectionSecondary, verified: true },
-        { membershipId: principalMember, type: "SECTION",
-          scopeId: sectionPrimary, verified: false },
+        {
+          membershipId: headMember,
+          type: "SECTION",
+          scopeId: sectionForeign,
+          verified: true,
+        },
+        {
+          membershipId: principalMember,
+          type: "SECTION",
+          scopeId: sectionSecondary,
+          verified: true,
+        },
+        {
+          membershipId: principalMember,
+          type: "SECTION",
+          scopeId: sectionPrimary,
+          verified: false,
+        },
       ],
     });
   });
 
   afterAll(async () => {
-    await prisma.school.deleteMany({ where: { id: { in: [schoolA, schoolB] } } });
+    await prisma.school.deleteMany({
+      where: { id: { in: [schoolA, schoolB] } },
+    });
     await prisma.user.deleteMany({
       where: { id: { in: [headUser, principalUser, teacherUser] } },
     });
@@ -91,14 +144,16 @@ describe("role/stage-aligned lesson-note reviewer navigation", () => {
 
   it("loses navigation permission when the only matching grant is unverified", async () => {
     await prisma.scopeGrant.update({
-      where: { id: headGrant }, data: { verified: false },
+      where: { id: headGrant },
+      data: { verified: false },
     });
     try {
       const head = await resolveSchoolPrincipal(headUser, schoolA);
       expect(await hasLessonReviewWorkspace(head)).toBe(false);
     } finally {
       await prisma.scopeGrant.update({
-        where: { id: headGrant }, data: { verified: true },
+        where: { id: headGrant },
+        data: { verified: true },
       });
     }
   });
@@ -108,35 +163,39 @@ describe("role/stage-aligned lesson-note reviewer navigation", () => {
     const spy = vi.spyOn(prisma.schoolSection, "findFirst");
     try {
       expect(await hasLessonReviewWorkspace(principal)).toBe(true);
-      expect(spy).toHaveBeenCalledWith(expect.objectContaining({
-        where: expect.objectContaining({
-          schoolId: schoolA,
-          isActive: true,
-          stage: "SECONDARY",
-          school: {
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            schoolId: schoolA,
             isActive: true,
-            memberships: {
-              some: expect.objectContaining({
-                userId: principalUser,
-                isActive: true,
-                role: "PRINCIPAL",
-              }),
+            stage: "SECONDARY",
+            school: {
+              isActive: true,
+              memberships: {
+                some: expect.objectContaining({
+                  userId: principalUser,
+                  isActive: true,
+                  role: "PRINCIPAL",
+                }),
+              },
             },
-          },
+          }),
         }),
-      }));
+      );
     } finally {
       spy.mockRestore();
     }
     await prisma.schoolSection.update({
-      where: { id: sectionSecondary }, data: { isActive: false },
+      where: { id: sectionSecondary },
+      data: { isActive: false },
     });
     try {
       const after = await resolveSchoolPrincipal(principalUser, schoolA);
       expect(await hasLessonReviewWorkspace(after)).toBe(false);
     } finally {
       await prisma.schoolSection.update({
-        where: { id: sectionSecondary }, data: { isActive: true },
+        where: { id: sectionSecondary },
+        data: { isActive: true },
       });
     }
   });

@@ -2,21 +2,36 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const load = path => readFileSync(new URL(path, import.meta.url), "utf8");
+const load = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const schema = load("../prisma/schema.prisma");
-const migration = load("../prisma/migrations/20261012300000_phase7_cbt_attempt_admission/migration.sql");
-const service = load("../src/modules/assessments/attempt-reservation-service.ts");
-const testSource = load("../src/modules/assessments/questions.integration.test.ts");
+const migration = load(
+  "../prisma/migrations/20261012300000_phase7_cbt_attempt_admission/migration.sql",
+);
+const service = load(
+  "../src/modules/assessments/attempt-reservation-service.ts",
+);
+const testSource = load(
+  "../src/modules/assessments/questions.integration.test.ts",
+);
 
 test("attempt admission enforces exact student enrollment and 1-3 immutable attempts", () => {
   assert.match(schema, /model AssessmentAttempt \{/);
-  assert.match(schema, /@@unique\(\[schoolId, draftId, studentId, attemptNumber\]\)/);
+  assert.match(
+    schema,
+    /@@unique\(\[schoolId, draftId, studentId, attemptNumber\]\)/,
+  );
   for (const name of [
-    "AssessmentAttempt_draft_fkey", "AssessmentAttempt_student_fkey",
-    "AssessmentAttempt_enrollment_fkey", "AssessmentAttempt_membership_fkey",
+    "AssessmentAttempt_draft_fkey",
+    "AssessmentAttempt_student_fkey",
+    "AssessmentAttempt_enrollment_fkey",
+    "AssessmentAttempt_membership_fkey",
     "AssessmentAttempt_link_fkey",
-  ]) assert.ok(schema.includes('map: "' + name + '"') &&
-    migration.includes('CONSTRAINT "' + name + '"'), name);
+  ])
+    assert.ok(
+      schema.includes('map: "' + name + '"') &&
+        migration.includes('CONSTRAINT "' + name + '"'),
+      name,
+    );
   assert.match(migration, /"AssessmentAttempt_validate"/);
   assert.match(migration, /"AssessmentAttempt_immutable"/);
   assert.match(migration, /"AssessmentAttempt_no_truncate"/);
@@ -46,7 +61,10 @@ test("admission is internal only; no early keys, submissions or scoring", () => 
   assert.match(service, /export async function reserveInternalCbtAttempt/);
   assert.match(service, /assessmentUserId\(\)/);
   assert.match(service, /isolationLevel: "Serializable"/);
-  assert.doesNotMatch(service, /"AssessmentQuestionKey"|correctIndex|answerKey/);
+  assert.doesNotMatch(
+    service,
+    /"AssessmentQuestionKey"|correctIndex|answerKey/,
+  );
   assert.doesNotMatch(migration, /CREATE TABLE "AssessmentScore"/);
   assert.doesNotMatch(migration, /CREATE TABLE "AssessmentAnswer"/);
   assert.doesNotMatch(migration, /CREATE TABLE "AssessmentAttemptSubmission"/);

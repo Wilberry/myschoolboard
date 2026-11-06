@@ -49,7 +49,7 @@ export async function resolveSchoolPrincipal(
   }
 
   // ScopeGrant stores an untyped resource ID rather than a foreign key.
-  // Resolve class/subject grants against active resources in this school,
+  // Resolve section/class/subject grants against active resources in this school,
   // so even a verified ID belonging to another tenant is not authority.
   const sectionIds = membership.scopes
     .filter((scope) => scope.type === "SECTION")
@@ -101,8 +101,10 @@ export async function resolveSchoolPrincipal(
     if (scope.type === "SECTION") return allowedSectionIds.has(scope.scopeId);
     if (scope.type === "CLASS") return allowedClassIds.has(scope.scopeId);
     if (scope.type === "SUBJECT") return allowedSubjectIds.has(scope.scopeId);
-    // CHILD remains governed by a separate, unimplemented enrollment model.
-    return true;
+    // Even a verified CHILD scope is only an unbound string, not an attested
+    // guardian-child relationship. Fail closed until a school-owned verified
+    // relationship with current enrollment and revocation is implemented.
+    return false;
   });
 
   return {

@@ -7,7 +7,11 @@ import {
   requireSchoolConfigActor,
 } from "@/src/modules/academics/config-service";
 
-const id = z.string().min(1).max(128).refine((value) => value === value.trim());
+const id = z
+  .string()
+  .min(1)
+  .max(128)
+  .refine((value) => value === value.trim());
 const reason = z.string().trim().min(5).max(500);
 const roomSchema = z
   .object({
@@ -36,7 +40,8 @@ const slotSchema = z
 const cancelSchema = z.object({ reason }).strict();
 
 export async function createTimetableRoom(schoolId: string, input: unknown) {
-  if (!id.safeParse(schoolId).success) throw new AcademicConfigError("INVALID_INPUT");
+  if (!id.safeParse(schoolId).success)
+    throw new AcademicConfigError("INVALID_INPUT");
   const parsed = roomSchema.safeParse(input);
   if (!parsed.success) throw new AcademicConfigError("INVALID_INPUT");
   const userId = await actorId();
@@ -84,7 +89,8 @@ function timetableWriteError(error: unknown): never {
 
 /** Schedule only exact, active, same-school and same-session teacher assignments. */
 export async function createTimetableSlot(schoolId: string, input: unknown) {
-  if (!id.safeParse(schoolId).success) throw new AcademicConfigError("INVALID_INPUT");
+  if (!id.safeParse(schoolId).success)
+    throw new AcademicConfigError("INVALID_INPUT");
   const parsed = slotSchema.safeParse(input);
   if (!parsed.success) throw new AcademicConfigError("INVALID_INPUT");
   const userId = await actorId();
@@ -154,9 +160,7 @@ export async function createTimetableSlot(schoolId: string, input: unknown) {
             OR: [
               { membershipId: assignment.membershipId },
               { classId: assignment.classId },
-              ...(parsed.data.roomId
-                ? [{ roomId: parsed.data.roomId }]
-                : []),
+              ...(parsed.data.roomId ? [{ roomId: parsed.data.roomId }] : []),
             ],
           },
         });

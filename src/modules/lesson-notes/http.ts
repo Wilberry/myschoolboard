@@ -32,10 +32,12 @@ function failure(error: unknown) {
     return respond({ error: "Invalid request" }, 400);
   }
   try {
-    console.warn(JSON.stringify({
-      event: "lesson_note_request_failed",
-      requestId: randomUUID(),
-    }));
+    console.warn(
+      JSON.stringify({
+        event: "lesson_note_request_failed",
+        requestId: randomUUID(),
+      }),
+    );
   } catch {
     // Do not leak content or actor details via diagnostics.
   }
@@ -56,7 +58,9 @@ export async function handleLessonNoteRequest(
       return respond({ notes: await readOwnLessonNotes(schoolId) });
     }
     if (operation === "detail") {
-      return respond({ note: await readOwnLessonNotes(schoolId, noteId ?? "") });
+      return respond({
+        note: await readOwnLessonNotes(schoolId, noteId ?? ""),
+      });
     }
     const input = await request.json();
     if (operation === "create") {

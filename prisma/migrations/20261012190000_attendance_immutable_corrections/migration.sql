@@ -210,11 +210,11 @@ BEGIN
       AND reviewer."id" = NEW."reviewerMembershipId"
       AND reviewer."userId" = NEW."reviewerUserId"
       AND reviewer."isActive" = true
-    JOIN "ScopeGrant" grant
-      ON grant."membershipId" = reviewer."id"
-      AND grant."type" = 'SECTION'
-      AND grant."scopeId" = section."id"
-      AND grant."verified" = true
+    JOIN "ScopeGrant" scope_grant
+      ON scope_grant."membershipId" = reviewer."id"
+      AND scope_grant."type" = 'SECTION'
+      AND scope_grant."scopeId" = section."id"
+      AND scope_grant."verified" = true
     WHERE correction."id" = NEW."requestId"
       AND correction."schoolId" = NEW."schoolId"
       AND correction."registerId" = NEW."registerId"

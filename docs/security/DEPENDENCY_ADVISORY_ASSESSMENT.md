@@ -1,5 +1,186 @@
 # Dependency Advisory Assessment
 
+## Minimatch advisory remediation — 2026-10-31
+
+At base `de14ead0bb35ec625c8ba488fe18f63d135804a7`, full `npm audit`
+reported 16 moderate affected-package entries, all attributable to
+**GHSA-g3hv-75wg-m249** (`minimatch` potential denial of service through
+globparts amplification). The audit had zero high/critical findings. The
+single advisory affected two installed versions: root `minimatch@3.1.5`
+through ESLint and related lint plugins, and nested `minimatch@10.2.6`
+through `@typescript-eslint/typescript-estree@8.71.1`. The seven declaring
+parents are all development-only in the lockfile: `eslint`,
+`@eslint/config-array`, `@eslint/eslintrc`, `@typescript-eslint/typescript-estree`,
+`eslint-plugin-import`, `eslint-plugin-jsx-a11y`, and `eslint-plugin-react`.
+Their published ranges accept 3.x or 10.x; npm identifies **11.0.1+** as
+patched and offers no semver-compatible upgrade for the existing ranges.
+
+The safe-replacement candidate is isolated on branch
+`verify/minimatch-ghsa-20261031`, based on `de14ead`. Its dependency-only
+commit is `5ca6f63643fc646db1bd3084138751ef632ffbbe`. It adds the npm override
+`minimatch: 11.0.3`, resolving all seven dev-tool consumers to the patched
+version. No direct package major upgrade or application dependency change was
+made. This is a deliberate semver override because upstream dependents have
+not yet widened their declared ranges; the patched library documents the
+same CommonJS/ESM function and `Minimatch` APIs these consumers call, but v11
+changes the matching engine. The compatibility risk is recorded rather than
+treated as eliminated by version resolution alone.
+
+Compatibility checks compared nine representative glob cases and the
+`Minimatch` class against the prior 3.1.5 implementation with no result
+differences. `npm ls minimatch --all` resolved all seven consumers to 11.0.3
+without invalid dependencies. A clean `npm ci`, `npm run lint`, all 106
+security guards, format check, TypeScript, and a production build passed.
+Both `npm audit --audit-level=high` and full `npm audit` report zero
+vulnerabilities. Build/Prisma generation used only dummy loopback configuration;
+no database was contacted or changed. Full database-backed Vitest, migration
+integrity, and browser acceptance were not run.
+
+**Status:** the moderate advisory is resolved on this isolated candidate,
+not on `de14ead` or any other branch until the candidate is integrated and
+revalidated. Residual risk is limited to semver-override glob behavior in
+development tooling; the lint command and representative patterns pass, but
+the full database-backed and browser acceptance gates remain open.
+
+## Isolated Phase 1–7 dependency remediation — 2026-10-30
+
+At base `d8e80e0`, a fresh `npm audit --json` reported three affected
+packages: `next@16.4.0` (critical, three Next.js advisories), `zod@4.6.5`
+(high), and transitive `fast-uri@3.1.8` (moderate). The audit identifies
+Next.js 16.4.3, Zod 4.6.6 or later, and fast-uri 3.1.9 as patched
+versions. The base worktree and its active browser environment were not
+modified.
+
+The Next.js findings are GHSA-2464-fhr4-w9xw (SVG image-optimization RCE),
+GHSA-p3m5-59mp-jv5r (App Router Server Actions denial of service), and
+GHSA-673q-mjm6-r5xr (typed-array `use cache` RCE). Zod is GHSA-mrhx-c7xc-m3w5.
+The four fast-uri findings are GHSA-w74x-v6f9-j3xg, GHSA-xhq7-xmqj-769h,
+GHSA-wjr9-j795-jxcr, and GHSA-333x-w4r6-6crp.
+
+The isolated branch `verify/dependency-security-20261030`, created from
+`d8e80e0`, committed the narrow dependency update as
+`b20c40dfc0b752b4bbc85e9128051fae0f2503ed`: Next.js and
+`eslint-config-next` 16.4.3, Zod `^4.6.7` (resolved to 4.6.7), and
+transitive fast-uri 3.1.9. No override, telemetry upgrade command,
+schema/migration, or application source change was used. This is a
+verification candidate only; it has not been merged or copied into the
+active Phase 1–7 worktree.
+
+On that candidate, `npm audit --audit-level=high` and full `npm audit`
+both exited 0 with zero findings. `npm run verify:local:guards` passed
+106/106; formatting, ESLint, TypeScript, and a production build passed.
+Prisma Client generation used a dummy URL on loopback port 1, and the
+build used a dummy auth secret and loopback URL with telemetry disabled;
+no database connection or write was made. The full database-backed
+`npm test` was attempted and exited 1 because the current process has no
+disposable-database configuration; all 37 Vitest files stopped at their
+required environment guard before any test case ran. The migration
+checksum command also exited 1 before comparing against a database.
+Browser acceptance and production startup were not run on the dependency
+candidate.
+
+The dependency advisory blocker is therefore resolved **on the isolated
+candidate only**. The base branch still has its audited vulnerable lockfile
+until the candidate is integrated and revalidated.
+
+## Current Phase 1–7 release-audit checkpoint (2026-10-21)
+
+The owner's separate, clean local verification of the Phase 1–7
+experimental head `5fc40e2` reported **59/59** Node source guards
+and **302/302** Vitest tests passing, with **zero skipped tests**.
+Format, lint, typecheck, Prisma 7.10.1 generation and the Next.js
+production build passed at that exact commit. The test service was
+confirmed as local PostgreSQL 17 with a loopback-only 5434 binding and
+tmpfs data; **36/36** reviewed migrations were applied successfully.
+Neither `main` nor any shared/production database was changed.
+
+The strict `npm audit --audit-level=high` continues to report
+**five high affected-package entries**, all resulting from the single
+reviewed advisory **GHSA-vfj7-8cjw-p6xm /
+CVE-2026-93687**. `npm audit --omit=dev --audit-level=high`
+passed with **zero vulnerabilities** on the same commit. The
+recorded five-entry chain is `eslint-config-next@16.4.0` ->
+`@next/eslint-plugin-next@16.4.0` -> `fast-glob@3.3.1` ->
+`micromatch@4.0.8` -> `braces@3.0.3`. These are all marked
+development-only in the checked-in lockfile. The existing lint
+configuration imports Next's recommended core web vitals and
+TypeScript rules and defines **no externally supplied**
+`settings.next.rootDir`. This is a reachability assessment of
+the *current source and lockfile*, not a guarantee against all
+future build inputs or developer-tool usage.
+
+On 2026-10-21, the reviewed GitHub advisory still declares
+**affected `braces <=3.0.3`, patched versions: none**.
+The upstream author disputes aspects of the advisory and has closed
+the relevant maintainer issue; the advisory is nevertheless
+published and npm's unchanged strict audit still fails.
+There is therefore no honest patched-version update to apply
+today. Pinning or overriding to the already affected version
+is not a fix, and replacing Next's lint tooling or disabling
+`npm audit` solely to manufacture a green result would
+remove existing protection. Do **not** do either.
+
+**Review options, neither pre-approved as a release exception:**
+
+1. Retain the existing hard block while waiting for a
+   *genuinely verified* compatible patched upstream release
+   or safe replacement, then refresh the lockfile and rerun
+   format/lint/typecheck, all tests, build, both audits,
+   and authenticated-browser access checks.
+2. Request an **explicit, separately documented and
+   time-limited security-risk disposition** from the project
+   owner/security authority that includes exact package,
+   version, advisory, dev-only exposure, no-untrusted-glob
+   controls, review/expiration date and criteria for withdrawal.
+   This must not be inferred from D-023, the expired D-022
+   publication exception or the clean production-only audit.
+   Unless governance deliberately authorizes a separate
+   narrowly-scoped exception gate, the unchanged strict
+   `npm audit --audit-level=high` command remains **red**.
+
+At present, **neither a patched release nor a new risk
+disposition has been recorded**. The original full-audit
+gate is still failing and Phase 1–7 cannot be called
+security-approved or merged to `main`.
+
+Sources: [GitHub GHSA](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm),
+[upstream maintainer discussion](https://github.com/micromatch/braces/issues/84),
+[Prisma migration checksum storage](https://github.com/prisma/prisma-engines/blob/main/schema-engine/ARCHITECTURE.md).
+
+
+## Prisma 7 experimental lockfile checkpoint (2026-10-19)
+
+This is **additional current experimental evidence**, not a retroactive
+change to the 2026-10-11 Prisma 6 checkpoint or its historical decisions.
+
+The local experimental stack now pins Prisma / `@prisma/client` /
+`@prisma/adapter-pg` **7.10.1** and Next.js **16.4.0**.
+The tracked `package-lock.json` on
+`fix/phase1-7-school-private-suspense-layout` contains
+`braces@3.0.3`, `micromatch@4.0.8`,
+`fast-glob@3.3.1`, and a development-only ESLint plugin chain.
+Those inspected lockfile entries are marked `dev: true`.
+The previous experimental local verification reported **five high**
+findings in `npm audit --audit-level=high` and **zero production**
+findings in `npm audit --omit=dev --audit-level=high`; neither audit
+has been rerun on the latest validated commit `2b361ed`.
+The package count is not the advisory count.
+
+GitHub's reviewed `GHSA-vfj7-8cjw-p6xm` still affects
+`braces <=3.0.3`, lists **no patched version**, and the npm latest
+version inspected on October 19 remains 3.0.3. The exact source
+reachability/configuration is bounded as assessed above and must be
+reconfirmed for changes in tooling. Do not claim that the package is
+safe, pin the same vulnerable version as a "fix", or disable the
+strict audit. Await a compatible published patch/upstream dependency
+change, or obtain a distinct future security-risk disposition before
+any merge/release, under the governing project policies.
+
+Evidence links:
+[GHSA advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm),
+[npm braces versions](https://www.npmjs.com/package/braces?activeTab=versions).
+
+
 ## Development governance clarification (2026-10-12)
 
 The Project Owner's [Standing Development Mandate](../project/STANDING_DEVELOPMENT_MANDATE.md), recorded as D-023, authorizes ongoing **non-production** roadmap implementation, reviewed development feature-branch pushes, and draft PRs without repeated per-feature approval. This document records the actual security findings and **historical scope** of the original D-022 exception; its 2026-10-18 review/expiry is **not** a project development deadline, does not stop normal coding, and is neither renewed nor expanded by D-023. The current findings remain unresolved and block any claim of passing security audit, production readiness, or release. **Keep `npm audit --audit-level=high` enabled and report its actual local results without suppression.** Merging to `main`, deploying, and accepting a failing production gate still require distinct review and authorization.

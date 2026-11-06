@@ -10,17 +10,25 @@ function reply(body: unknown, status: number) {
 
 function failed(error: unknown): Response {
   if (error instanceof AttendanceError) {
-    if (error.code === "UNAUTHENTICATED") return reply({ error: "Unauthorized" }, 401);
+    if (error.code === "UNAUTHENTICATED")
+      return reply({ error: "Unauthorized" }, 401);
     if (error.code === "NOT_FOUND" || error.code === "FORBIDDEN") {
       return reply({ error: "Not found" }, 404);
     }
-    if (error.code === "INVALID_INPUT") return reply({ error: "Invalid request" }, 400);
+    if (error.code === "INVALID_INPUT")
+      return reply({ error: "Invalid request" }, 400);
     if (error.code === "CONFLICT") return reply({ error: "Conflict" }, 409);
   }
-  if (error instanceof SyntaxError) return reply({ error: "Invalid request" }, 400);
+  if (error instanceof SyntaxError)
+    return reply({ error: "Invalid request" }, 400);
   // Never log a minor's name, attendance mark, admission number or class ID.
   try {
-    console.warn(JSON.stringify({ event: "attendance_mutation_failed", requestId: randomUUID() }));
+    console.warn(
+      JSON.stringify({
+        event: "attendance_mutation_failed",
+        requestId: randomUUID(),
+      }),
+    );
   } catch {
     // Logging itself must not expose sensitive request data.
   }
@@ -42,7 +50,10 @@ export async function handleAttendancePost(
       return reply({ register: await submitAttendance(schoolId, body) }, 201);
     }
     if (!registerId) return reply({ error: "Invalid request" }, 400);
-    return reply({ register: await decideAttendance(schoolId, registerId, body) }, 200);
+    return reply(
+      { register: await decideAttendance(schoolId, registerId, body) },
+      200,
+    );
   } catch (error) {
     return failed(error);
   }

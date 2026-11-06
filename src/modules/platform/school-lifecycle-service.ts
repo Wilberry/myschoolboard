@@ -117,10 +117,7 @@ export async function onboardSchool(input: unknown) {
  * same serializable transaction. Existing unclassified schools cannot be
  * silently reclassified by this operation.
  */
-export async function changeSchoolLifecycle(
-  schoolId: string,
-  input: unknown,
-) {
+export async function changeSchoolLifecycle(schoolId: string, input: unknown) {
   if (!z.string().trim().min(1).max(128).safeParse(schoolId).success) {
     throw new PlatformSchoolError("INVALID_INPUT");
   }

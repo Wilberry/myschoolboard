@@ -5,7 +5,11 @@ import { SignInForm } from "@/src/components/sign-in-form";
 import { SignOutButton } from "@/src/components/sign-out-button";
 import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
-import { canShowSchoolDetailLink } from "@/src/modules/tenancy/school-navigation";
+import {
+  canShowResultPreparationLink,
+  canShowSchoolDetailLink,
+  canShowStudentLessonsLink,
+} from "@/src/modules/tenancy/school-navigation";
 
 export default async function Home() {
   return (
@@ -43,6 +47,11 @@ async function HomeContent() {
     );
   }
 
+  const platformActor = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { platformRole: true },
+  });
+
   const memberships = await prisma.membership.findMany({
     where: {
       userId: session.user.id,
@@ -52,6 +61,28 @@ async function HomeContent() {
     select: {
       role: true,
       school: { select: { id: true, name: true, slug: true } },
+      studentAccountLink: {
+        select: {
+          schoolId: true,
+          revocation: { select: { id: true } },
+          student: {
+            select: {
+              status: true,
+              enrollments: {
+                where: {
+                  status: "ACTIVE",
+                  session: { status: "ACTIVE" },
+                  schoolClass: {
+                    isActive: true,
+                    section: { isActive: true },
+                  },
+                },
+                select: { schoolId: true },
+              },
+            },
+          },
+        },
+      },
     },
     orderBy: { school: { name: "asc" } },
   });
@@ -84,13 +115,20 @@ async function HomeContent() {
             LOCAL ENVIRONMENT
           </span>
         </div>
+        {platformActor?.platformRole === "SUPER_ADMIN" && (
+          <p className="setup-navigation">
+            <Link className="secondary-link" href="/platform">
+              Platform administration — subscription catalog and school periods
+            </Link>
+          </p>
+        )}
         <div className="section-heading">
           <h2>Schools</h2>
           <span>{memberships.length.toString().padStart(2, "0")}</span>
         </div>
         {memberships.length ? (
           <ul className="school-list">
-            {memberships.map(({ school, role }) => (
+            {memberships.map(({ school, role, studentAccountLink }) => (
               <li key={school.id}>
                 <div className="school-monogram" aria-hidden="true">
                   {school.name.slice(0, 1)}
@@ -109,8 +147,39 @@ async function HomeContent() {
                       My lesson notes
                     </Link>
                   )}
+                  {canShowResultPreparationLink(role) && (
+                    <Link
+                      href={`/schools/${school.id}/result-preparation`}
+                      className="school-link"
+                    >
+                      Result preparation readiness (Phase 8 development)
+                    </Link>
+                  )}
+                  {(role === "PARENT" || role === "STUDENT") && (
+                    <Link
+                      className="school-link"
+                      href={`/schools/${school.id}/reports`}
+                    >
+                      Published report cards
+                    </Link>
+                  )}
+                  {canShowStudentLessonsLink(
+                    school.id,
+                    role,
+                    studentAccountLink,
+                  ) && (
+                    <Link
+                      href={`/schools/${school.id}/my-lessons`}
+                      className="school-link"
+                    >
+                      My released lessons and schemes of work
+                    </Link>
+                  )}
                   {canShowSchoolDetailLink(session.user.id, school.id, role) ? (
-                    <Link href={`/schools/${school.id}`} className="school-link">
+                    <Link
+                      href={`/schools/${school.id}`}
+                      className="school-link"
+                    >
                       View details
                     </Link>
                   ) : (

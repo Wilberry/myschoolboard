@@ -123,7 +123,9 @@ export function SchoolSetupEditor({
       setSuccess("Academic period updated and audit record saved.");
       router.refresh();
     } catch {
-      setError("Network connection failed. No status change has been confirmed.");
+      setError(
+        "Network connection failed. No status change has been confirmed.",
+      );
     } finally {
       setPending(false);
     }
@@ -143,16 +145,18 @@ export function SchoolSetupEditor({
     setPending(true);
     setError(null);
     setSuccess(null);
-    const route = operation === "create"
-      ? `sections`
-      : `classes/${encodeURIComponent(classId)}/section`;
-    const body = operation === "create"
-      ? {
-          name: String(values.get("name") ?? "").trim(),
-          stage: String(values.get("stage") ?? ""),
-          reason,
-        }
-      : { sectionId, reason };
+    const route =
+      operation === "create"
+        ? `sections`
+        : `classes/${encodeURIComponent(classId)}/section`;
+    const body =
+      operation === "create"
+        ? {
+            name: String(values.get("name") ?? "").trim(),
+            stage: String(values.get("stage") ?? ""),
+            reason,
+          }
+        : { sectionId, reason };
     try {
       const response = await fetch(
         `/api/schools/${encodeURIComponent(schoolId)}/${route}`,
@@ -192,15 +196,32 @@ export function SchoolSetupEditor({
 
   return (
     <div className="setup-workspace">
-      {error && <p className="form-error" role="alert">{error}</p>}
-      {success && <p className="setup-success" role="status">{success}</p>}
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
+      {success && (
+        <p className="setup-success" role="status">
+          {success}
+        </p>
+      )}
       <section className="setup-panel" aria-labelledby="sessions-title">
         <h2 id="sessions-title">Academic sessions</h2>
-        <p>New sessions are planned until a future activation workflow is approved.</p>
+        <p>
+          New sessions are planned until a future activation workflow is
+          approved.
+        </p>
         <form onSubmit={(event) => void submit(event, "session")}>
           <label>
             Session name
-            <input name="name" required minLength={2} maxLength={120} placeholder="2026/2027" />
+            <input
+              name="name"
+              required
+              minLength={2}
+              maxLength={120}
+              placeholder="2026/2027"
+            />
           </label>
           <label>
             Starts on
@@ -218,7 +239,9 @@ export function SchoolSetupEditor({
           {snapshot.sessions.map((item) => (
             <li key={item.id}>
               <strong>{item.name}</strong>
-              <span>{item.startsOn} – {item.endsOn} · {item.status}</span>
+              <span>
+                {item.startsOn} – {item.endsOn} · {item.status}
+              </span>
               {item.status !== "CLOSED" && (
                 <form
                   className="setup-status-form"
@@ -232,7 +255,12 @@ export function SchoolSetupEditor({
                 >
                   <label>
                     Reason
-                    <input name="reason" minLength={5} maxLength={500} required />
+                    <input
+                      name="reason"
+                      minLength={5}
+                      maxLength={500}
+                      required
+                    />
                   </label>
                   <button
                     type="submit"
@@ -241,17 +269,22 @@ export function SchoolSetupEditor({
                       (item.status === "ACTIVE" &&
                         snapshot.terms.some(
                           (term) =>
-                            term.sessionId === item.id && term.status !== "CLOSED",
+                            term.sessionId === item.id &&
+                            term.status !== "CLOSED",
                         ))
                     }
                   >
-                    {item.status === "PLANNED" ? "Activate session" : "Close session"}
+                    {item.status === "PLANNED"
+                      ? "Activate session"
+                      : "Close session"}
                   </button>
                 </form>
               )}
             </li>
           ))}
-          {snapshot.sessions.length === 0 && <li>No sessions configured yet.</li>}
+          {snapshot.sessions.length === 0 && (
+            <li>No sessions configured yet.</li>
+          )}
         </ul>
       </section>
 
@@ -262,15 +295,27 @@ export function SchoolSetupEditor({
           <label>
             Academic session
             <select name="sessionId" required defaultValue="">
-              <option value="" disabled>Choose a session</option>
-              {snapshot.sessions.filter((item) => item.status !== "CLOSED").map((item) => (
-                <option key={item.id} value={item.id}>{item.name}</option>
-              ))}
+              <option value="" disabled>
+                Choose a session
+              </option>
+              {snapshot.sessions
+                .filter((item) => item.status !== "CLOSED")
+                .map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
             </select>
           </label>
           <label>
             Term name
-            <input name="name" minLength={2} maxLength={120} required placeholder="First Term" />
+            <input
+              name="name"
+              minLength={2}
+              maxLength={120}
+              required
+              placeholder="First Term"
+            />
           </label>
           <label>
             Term order
@@ -291,8 +336,12 @@ export function SchoolSetupEditor({
         <ul className="setup-records">
           {snapshot.terms.map((term) => (
             <li key={term.id}>
-              <strong>{term.name} · Term {term.position}</strong>
-              <span>{term.startsOn} – {term.endsOn} · {term.status}</span>
+              <strong>
+                {term.name} · Term {term.position}
+              </strong>
+              <span>
+                {term.startsOn} – {term.endsOn} · {term.status}
+              </span>
               {term.status !== "CLOSED" && (
                 <form
                   className="setup-status-form"
@@ -307,7 +356,12 @@ export function SchoolSetupEditor({
                 >
                   <label>
                     Reason
-                    <input name="reason" minLength={5} maxLength={500} required />
+                    <input
+                      name="reason"
+                      minLength={5}
+                      maxLength={500}
+                      required
+                    />
                   </label>
                   <button
                     type="submit"
@@ -316,7 +370,8 @@ export function SchoolSetupEditor({
                       (term.status === "PLANNED" &&
                         !snapshot.sessions.some(
                           (session) =>
-                            session.id === term.sessionId && session.status === "ACTIVE",
+                            session.id === term.sessionId &&
+                            session.status === "ACTIVE",
                         ))
                     }
                   >
@@ -332,12 +387,18 @@ export function SchoolSetupEditor({
 
       <section className="setup-panel" aria-labelledby="sections-title">
         <h2 id="sections-title">Primary and secondary sections</h2>
-        <p>Sections are school-owned. Existing classes remain unclassified until assigned.</p>
+        <p>
+          Sections are school-owned. Existing classes remain unclassified until
+          assigned.
+        </p>
         <form onSubmit={(event) => void submitSection(event, "create")}>
           <label>
             Section name
             <input
-              name="name" required minLength={2} maxLength={120}
+              name="name"
+              required
+              minLength={2}
+              maxLength={120}
               placeholder="Primary Department"
             />
           </label>
@@ -360,37 +421,52 @@ export function SchoolSetupEditor({
           {snapshot.sections.map((section) => (
             <li key={section.id}>
               <strong>{section.name}</strong>
-              <span>{section.stage} · {section.isActive ? "Active" : "Inactive"}</span>
+              <span>
+                {section.stage} · {section.isActive ? "Active" : "Inactive"}
+              </span>
             </li>
           ))}
-          {snapshot.sections.length === 0 && <li>No sections configured yet.</li>}
+          {snapshot.sections.length === 0 && (
+            <li>No sections configured yet.</li>
+          )}
         </ul>
       </section>
 
       <section className="setup-panel" aria-labelledby="class-section-title">
         <h2 id="class-section-title">Class section placement</h2>
-        <p>A class can be placed once. Moving it later requires a separate reviewed transfer workflow.</p>
+        <p>
+          A class can be placed once. Moving it later requires a separate
+          reviewed transfer workflow.
+        </p>
         <form onSubmit={(event) => void submitSection(event, "assign")}>
           <label>
             Unclassified class
             <select name="classId" required defaultValue="">
-              <option value="" disabled>Choose a class</option>
+              <option value="" disabled>
+                Choose a class
+              </option>
               {snapshot.classes
                 .filter((item) => item.isActive && !item.sectionId)
                 .map((item) => (
-                  <option key={item.id} value={item.id}>{item.name}</option>
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
                 ))}
             </select>
           </label>
           <label>
             Active section
             <select name="sectionId" required defaultValue="">
-              <option value="" disabled>Choose a section</option>
-              {snapshot.sections.filter((item) => item.isActive).map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name} ({item.stage})
-                </option>
-              ))}
+              <option value="" disabled>
+                Choose a section
+              </option>
+              {snapshot.sections
+                .filter((item) => item.isActive)
+                .map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name} ({item.stage})
+                  </option>
+                ))}
             </select>
           </label>
           <label>
@@ -415,7 +491,13 @@ export function SchoolSetupEditor({
         <form onSubmit={(event) => void submit(event, "class")}>
           <label>
             Class name
-            <input name="name" required minLength={2} maxLength={120} placeholder="Primary One" />
+            <input
+              name="name"
+              required
+              minLength={2}
+              maxLength={120}
+              placeholder="Primary One"
+            />
           </label>
           <button type="submit" disabled={pending}>
             {pending ? "Saving…" : "Create class"}
@@ -427,8 +509,10 @@ export function SchoolSetupEditor({
               <strong>{item.name}</strong>
               <span>{item.isActive ? "Active" : "Inactive"}</span>
               <span>
-                Section: {snapshot.sections.find((section) => section.id === item.sectionId)?.name ??
-                  "Unclassified"}
+                Section:{" "}
+                {snapshot.sections.find(
+                  (section) => section.id === item.sectionId,
+                )?.name ?? "Unclassified"}
               </span>
             </li>
           ))}
@@ -441,7 +525,13 @@ export function SchoolSetupEditor({
         <form onSubmit={(event) => void submit(event, "subject")}>
           <label>
             Subject name
-            <input name="name" required minLength={2} maxLength={120} placeholder="Mathematics" />
+            <input
+              name="name"
+              required
+              minLength={2}
+              maxLength={120}
+              placeholder="Mathematics"
+            />
           </label>
           <button type="submit" disabled={pending}>
             {pending ? "Saving…" : "Create subject"}
@@ -454,12 +544,14 @@ export function SchoolSetupEditor({
               <span>{item.isActive ? "Active" : "Inactive"}</span>
             </li>
           ))}
-          {snapshot.subjects.length === 0 && <li>No subjects configured yet.</li>}
+          {snapshot.subjects.length === 0 && (
+            <li>No subjects configured yet.</li>
+          )}
         </ul>
       </section>
       <p className="workspace-note">
-        For each category, up to 100 records are shown. This view does not publish
-        academic records or alter historical teacher assignments.
+        For each category, up to 100 records are shown. This view does not
+        publish academic records or alter historical teacher assignments.
       </p>
     </div>
   );

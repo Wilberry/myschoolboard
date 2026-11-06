@@ -7,22 +7,35 @@ import {
   requireSchoolConfigActor,
 } from "@/src/modules/academics/config-service";
 
-const id = z.string().min(1).max(128).refine((value) => value.trim() === value);
+const id = z
+  .string()
+  .min(1)
+  .max(128)
+  .refine((value) => value.trim() === value);
 const reason = z.string().trim().min(5).max(500);
-const admissionNumber = z.string().trim().toUpperCase()
-  .min(3).max(40).regex(/^[A-Z0-9][A-Z0-9/-]*$/);
+const admissionNumber = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .min(3)
+  .max(40)
+  .regex(/^[A-Z0-9][A-Z0-9/-]*$/);
 
-const registerSchema = z.object({
-  admissionNumber,
-  givenName: z.string().trim().min(2).max(100),
-  familyName: z.string().trim().min(2).max(100),
-  reason,
-}).strict();
-const enrollSchema = z.object({
-  sessionId: id,
-  classId: id,
-  reason,
-}).strict();
+const registerSchema = z
+  .object({
+    admissionNumber,
+    givenName: z.string().trim().min(2).max(100),
+    familyName: z.string().trim().min(2).max(100),
+    reason,
+  })
+  .strict();
+const enrollSchema = z
+  .object({
+    sessionId: id,
+    classId: id,
+    reason,
+  })
+  .strict();
 const withdrawSchema = z.object({ reason }).strict();
 
 function requireId(value: string) {

@@ -16,7 +16,7 @@ const proposalInput = z.object({
   obligationId: id, requestKey: z.string().uuid(),
   kind: z.enum(["WAIVER", "CORRECTION_PROPOSAL"]),
   proposedAmountMinor: z.string().regex(/^[1-9][0-9]{0,12}$/)
-    .refine(v => BigInt(v) <= 1000000000000n),
+    .refine(v => BigInt(v) <= BigInt("1000000000000")),
   reason,
 }).strict();
 const decisionInput = z.object({

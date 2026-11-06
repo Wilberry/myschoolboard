@@ -6,8 +6,11 @@ import { resolveSchoolPrincipal } from "@/src/modules/tenancy/context";
 export async function readStudentWorkspace(userId: string, schoolId: string) {
   if (!userId || !schoolId) return null;
   const principal = await resolveSchoolPrincipal(userId, schoolId);
-  if (!principal?.membership ||
-      !authorize(principal, "school:configure", { schoolId }).allowed) return null;
+  if (
+    !principal?.membership ||
+    !authorize(principal, "school:configure", { schoolId }).allowed
+  )
+    return null;
 
   // Repeat active tenant + exact administrator membership in EVERY final query.
   const scope = {
@@ -27,9 +30,13 @@ export async function readStudentWorkspace(userId: string, schoolId: string) {
     where: {
       id: schoolId,
       isActive: true,
-      memberships: { some: {
-        userId, role: principal.membership.role, isActive: true,
-      } },
+      memberships: {
+        some: {
+          userId,
+          role: principal.membership.role,
+          isActive: true,
+        },
+      },
     },
     select: { id: true, name: true },
   });
@@ -39,13 +46,20 @@ export async function readStudentWorkspace(userId: string, schoolId: string) {
     prisma.studentRecord.findMany({
       where: scope,
       select: {
-        id: true, admissionNumber: true, givenName: true,
-        familyName: true, status: true,
+        id: true,
+        admissionNumber: true,
+        givenName: true,
+        familyName: true,
+        status: true,
         enrollments: {
           where: { schoolId },
           select: {
-            id: true, sessionId: true, classId: true,
-            status: true, startedAt: true, endedAt: true,
+            id: true,
+            sessionId: true,
+            classId: true,
+            status: true,
+            startedAt: true,
+            endedAt: true,
           },
           take: 30,
           orderBy: [{ startedAt: "desc" }, { id: "desc" }],
@@ -62,7 +76,8 @@ export async function readStudentWorkspace(userId: string, schoolId: string) {
     }),
     prisma.schoolClass.findMany({
       where: {
-        ...scope, isActive: true,
+        ...scope,
+        isActive: true,
         section: { schoolId, isActive: true },
       },
       select: { id: true, name: true, section: { select: { name: true } } },
@@ -72,21 +87,23 @@ export async function readStudentWorkspace(userId: string, schoolId: string) {
   ]);
   return {
     school,
-    students: students.map(student => ({
+    students: students.map((student) => ({
       ...student,
-      enrollments: student.enrollments.map(enrollment => ({
+      enrollments: student.enrollments.map((enrollment) => ({
         ...enrollment,
         startedAt: enrollment.startedAt.toISOString(),
         endedAt: enrollment.endedAt?.toISOString() ?? null,
       })),
     })),
     sessions,
-    classes: classes.map(item => ({
-      id: item.id, name: item.name,
+    classes: classes.map((item) => ({
+      id: item.id,
+      name: item.name,
       sectionName: item.section?.name ?? "",
     })),
   };
 }
 
-export type StudentWorkspaceSnapshot =
-  NonNullable<Awaited<ReturnType<typeof readStudentWorkspace>>>;
+export type StudentWorkspaceSnapshot = NonNullable<
+  Awaited<ReturnType<typeof readStudentWorkspace>>
+>;

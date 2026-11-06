@@ -3,9 +3,9 @@ import { authRequestSucceeded } from "./auth-action";
 
 describe("client authentication request handling", () => {
   it("accepts a successful response without an error", async () => {
-    expect(
-      await authRequestSucceeded(async () => ({ error: null })),
-    ).toBe(true);
+    expect(await authRequestSucceeded(async () => ({ error: null }))).toBe(
+      true,
+    );
     expect(await authRequestSucceeded(async () => ({}))).toBe(true);
   });
 
