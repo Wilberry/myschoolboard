@@ -63,6 +63,76 @@ async function SchoolDetailContent({
         {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
           <p className="setup-navigation">
             <Link
+              href={`/schools/${schoolId}/private-report-compositions`}
+              className="secondary-link"
+            >
+              Private official report evidence (not released)
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
+          <p className="setup-navigation">
+            <Link
+              href={`/schools/${schoolId}/report-aggregation-rules`}
+              className="secondary-link"
+            >
+              Adopt report aggregation rule (no grade release)
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
+          <p className="setup-navigation">
+            <Link
+              href={`/schools/${schoolId}/report-grade-scales`}
+              className="secondary-link"
+            >
+              Adopt school report grade bands (not published)
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
+          <p className="setup-navigation">
+            <Link
+              href={`/schools/${schoolId}/report-card-sources`}
+              className="secondary-link"
+            >
+              Private report-card source packets (not graded or released)
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
+          <p className="setup-navigation">
+            <Link
+              href={`/schools/${schoolId}/result-final-approvals`}
+              className="secondary-link"
+            >
+              Final school result approval ledger (release disabled)
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
+          <p className="setup-navigation">
+            <Link
+              href={`/schools/${schoolId}/result-publication-preflight`}
+              className="secondary-link"
+            >
+              Inspect independently reviewed result evidence (not published)
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
+          <p className="setup-navigation">
+            <Link
+              href={`/schools/${schoolId}/result-grading-adoptions`}
+              className="secondary-link"
+            >
+              Adopt grading policy revision (Phase 8 development)
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" && (
+          <p className="setup-navigation">
+            <Link
               href={`/schools/${schoolId}/assessment-grading-policies`}
               className="secondary-link"
             >
@@ -120,6 +190,26 @@ async function SchoolDetailContent({
               className="secondary-link"
             >
               My released lessons and schemes of work
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "TEACHER" && (
+          <p className="setup-navigation">
+            <Link
+              href={`/schools/${schoolId}/result-sheet-evidence`}
+              className="secondary-link"
+            >
+              Prepare frozen result evidence (Phase 8 development)
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "TEACHER" && (
+          <p className="setup-navigation">
+            <Link
+              href={`/schools/${schoolId}/result-preparation`}
+              className="secondary-link"
+            >
+              Result preparation readiness (Phase 8 development)
             </Link>
           </p>
         )}
@@ -212,6 +302,16 @@ async function SchoolDetailContent({
               className="secondary-link"
             >
               Request attendance correction
+            </Link>
+          </p>
+        )}
+        {canReviewLessonNotes && (
+          <p className="setup-navigation">
+            <Link
+              href={`/schools/${schoolId}/result-sheet-reviews`}
+              className="secondary-link"
+            >
+              Review prepared result evidence (Phase 8 development)
             </Link>
           </p>
         )}

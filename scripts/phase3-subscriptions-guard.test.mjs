@@ -166,12 +166,12 @@ test("rechecks real platform roles and never changes school lifecycle", () => {
   assert.match(http, /\{ error: "Not found" \}/);
 });
 
-test("tracks the current 38-migration browser inventory without weakening checksum gate", () => {
-  assert.match(launcher, /expectedMigrationCount = 38/);
+test("tracks the current 48-migration browser inventory without weakening checksum gate", () => {
+  assert.match(launcher, /expectedMigrationCount = 48/);
   assert.match(
     launcherTests,
-    /requires the expected complete 38-migration inventory/,
+    /requires the expected complete 48-migration inventory/,
   );
-  assert.doesNotMatch(launcherTests, /exactly 37/);
+  assert.doesNotMatch(launcherTests, /exactly 47/);
   assert.match(launcher, /runMigrationChecksumVerification\(environment\)/);
 });

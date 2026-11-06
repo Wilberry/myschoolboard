@@ -73,7 +73,20 @@ test("teacher-only result preparation is linked from the reachable dashboard", (
   assert.ok(
     dashboard.includes("href={`/schools/${school.id}/result-preparation`}"),
   );
-  assert.equal(schoolPage.includes("result-preparation"), false);
+  // Phase 8 adds this second reachable entry; it must remain TEACHER-only.
+  // Match the immediately enclosing conditional, not a distant role mention.
+  assert.match(
+    schoolPage,
+    /\{access\.principal\.membership\?\.role === "TEACHER" && \(\s*<p className="setup-navigation">\s*<Link\s+href=\{`\/schools\/\$\{schoolId\}\/result-preparation`\}/,
+  );
+  assert.equal(
+    (
+      schoolPage.match(
+        /href=\{`\/schools\/\$\{schoolId\}\/result-preparation`\}/g,
+      ) ?? []
+    ).length,
+    1,
+  );
 });
 test("workspace conceals data and rejects stale authorization responses", () => {
   for (const event of [

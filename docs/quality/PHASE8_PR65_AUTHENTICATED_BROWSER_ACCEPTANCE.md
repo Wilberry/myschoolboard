@@ -119,3 +119,41 @@ evaluated against privacy-preserving acceptance requirements. Only then
 propose a Phase 8 integration PR into development `main` under D-051.
 No GitHub Actions, production migration, real-school data or deployment is
 part of this acceptance matrix.
+
+## Dated browser execution checkpoint — 2026-11-05
+
+**Outcome: NOT ACCEPTED; exit gate remains BLOCKED.** The following was
+observed in local Chromium against the guarded synthetic fixture, run
+`p8b-1105-812b190b`. Browser: Chromium 150.0.7871.250 (Electron 43.7.7).
+The app process was confirmed to originate from the dedicated Phase 8
+worktree, whose observed HEAD was
+`1b5b89b83bdb8d57068752b6b4df93f3c5636614`; the running build did not embed
+an independently verifiable source SHA, so this is worktree evidence, not
+clean exact-SHA certification. The fixture had two available teacher
+assignments, both with zero enrolled pupils. Synthetic fixture account
+passwords were rotated and prior sessions revoked before the checks.
+No credentials, session tokens or student records are recorded here.
+
+| ID | Outcome | Actual observation and remaining limitation |
+| --- | --- | --- |
+| P8-BR-01 | NOT EXERCISED | The teacher-only result-preparation page loaded and its exact-scope API returned `200` JSON with `PRIVATE_PREPARATION_ONLY` and `Cache-Control: private, no-store`. The page response was `200` with `Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate`. Both assignments had zero pupils, so exact enrolled-roster filtering and private pupil-source boundaries were not exercised. |
+| P8-BR-02 | PASS | Direct page requests as Head of Section, Principal, same-school School Admin, Student, Parent, foreign-school administrator and School Super Admin returned streamed not-found UI (document status `200`, no private preparation or pupil-data markers). Corresponding APIs returned generic `404` with private/no-store caching. Anonymous page access redirected to sign-in; its API returned `401` private/no-store. A `200` streamed shell was treated as not-found, not as authorization. |
+| P8-BR-03 | NOT EXERCISED | A foreign-school administrator was denied as recorded in P8-BR-02. Class, subject, session, term and inactive-period mismatch cases were not exercised because no suitable synthetic assignment/roster existed. |
+| P8-BR-04 | NOT EXERCISED | The authorized HTML/API and authorized teacher RSC/Flight response (`200 text/x-component`, private/no-store) were inspected. Replaying a captured Flight request as Head returned a not-found Flight response (`200 text/x-component`) without private markers. Partial-segment prefetch was not exercised; the empty roster also precluded pupil-payload boundary testing. |
+| P8-BR-05 | NOT EXERCISED | Changing the exact assignment/term while an old request was in flight could not be meaningfully tested without a non-empty authorized roster. |
+| P8-BR-06 | NOT EXERCISED | Blur/focus concealed and re-fetched the page; opening a second tab caused the original tab to conceal. Because the fixture had no pupils, the required stale pupil-row concealment could not be tested. |
+| P8-BR-07 | NOT EXERCISED | No non-empty active assignment was available for a server-revocation-to-denial or revocation-to-DOM-concealment measurement. |
+| P8-BR-08 | NOT EXERCISED | Cross-tab sign-out concealed the original view, and subsequent protected-page access returned to sign-in. Same-tab sign-out and stale pupil-row behavior were not independently exercised; no pupil rows were present. |
+| P8-BR-09 | NOT EXERCISED | Dispatching `beforeprint` concealed the page and `afterprint` re-fetched it. Real print preview/PDF could not be generated because Chromium reported `Page.printToPDF` unavailable; printable-output behavior remains unverified. |
+| P8-BR-10 | NOT EXERCISED | Back/Forward navigation and duplicate-tab behavior were exercised, but the empty-roster fixture could not establish that stale pupil markers are absent. `pagehide.persisted` was `false`; `pageshow.persisted` was not observed. |
+| P8-BR-11 | NOT EXERCISED | Genuine BFCache restoration was not observed; no-store behavior was preserved. |
+| P8-BR-12 | NOT EXERCISED | No suitable independent synthetic source rosters were available to exercise a real mismatched-roster request. |
+| P8-BR-13 | NOT EXERCISED | Keyboard focus indication passed and Chromium 200% zoom showed no horizontal overflow. Assistive-technology announcement behavior was not tested; empty-roster limitations also apply. |
+
+Guardian-child relationship/permission revocation, stale pupil rows after
+revocation, student-row visibility and mismatched source rosters remain
+pending; the fixture had zero pupils and no verified guardian-child
+relationship. No data or audit history was fabricated. The attempted real
+print-preview/PDF check was blocked by the browser protocol limitation above.
+These observations do not accept guardian acknowledgment or official
+student/parent report-card publication, neither of which is implemented.

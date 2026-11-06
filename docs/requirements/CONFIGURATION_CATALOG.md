@@ -32,3 +32,7 @@ This catalog lists the major configurable policies that must be supported at the
 ## Policy governance
 
 School and platform policies must remain explicit, auditable, and configurable rather than hidden in code. Any policy change that affects historical records must be versioned or applied with effective-date logic.
+
+## Phase 8 grading-scale adoption development detail (AUTHORED, NOT VERIFIED)
+
+The `Grading scale` tenant configuration is explicitly versioned and School Super Admin-adopted: grade band `minBps`/`maxBps` ranges are inclusive, ascending, gap/overlap-free from 0 through 10000; each band has school-defined code and remark. School must choose one rounding mode (HALF_UP/FLOOR/CEILING), 0/1/2 decimal places for display, and whether raw or displayed rounded scores determine grade-label thresholds. No national/school default grade bands, pass mark or implicit parent access. This does NOT define the official report aggregation formula; later computed reports must pin an exact adopted scale revision without changing history. D-058/ADR-044.

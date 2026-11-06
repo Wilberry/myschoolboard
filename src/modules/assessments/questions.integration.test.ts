@@ -24,6 +24,41 @@ import { POST as MANUAL_REVIEW_DECISION } from "@/app/api/schools/[schoolId]/ass
 import { GET as REVIEWED_MANUAL_GRADEBOOK_GET } from "@/app/api/schools/[schoolId]/assessment-reviewed-manual-gradebook/route";
 import { GET as RESULT_PREP_GET } from "@/app/api/schools/[schoolId]/result-preparation/route";
 import {
+  GET as RESULT_EVIDENCE_GET,
+  POST as RESULT_EVIDENCE_POST,
+} from "@/app/api/schools/[schoolId]/result-sheet-evidence/route";
+import { GET as RESULT_REVIEW_QUEUE } from "@/app/api/schools/[schoolId]/result-sheet-reviews/route";
+import { GET as RESULT_OWNER_PREFLIGHT } from "@/app/api/schools/[schoolId]/result-publication-candidates/route";
+import {
+  GET as FINAL_OWNER_GET,
+  POST as FINAL_OWNER_POST,
+} from "@/app/api/schools/[schoolId]/result-final-publication-decisions/route";
+import {
+  GET as SOURCE_PACKET_GET,
+  POST as SOURCE_PACKET_POST,
+} from "@/app/api/schools/[schoolId]/report-card-source-packets/route";
+import {
+  GET as REPORT_SCALE_GET,
+  POST as REPORT_SCALE_POST,
+} from "@/app/api/schools/[schoolId]/report-grade-scales/route";
+import {
+  GET as AGGREGATION_RULE_GET,
+  POST as AGGREGATION_RULE_POST,
+} from "@/app/api/schools/[schoolId]/report-aggregation-rules/route";
+import {
+  GET as COMPOSITION_GET,
+  POST as COMPOSITION_POST,
+} from "@/app/api/schools/[schoolId]/private-official-report-compositions/route";
+import {
+  simulatePrivateReportComposition,
+  type PrivatePacketStudent,
+} from "@/src/modules/results/report-composition-simulation";
+import { POST as RESULT_REVIEW_POST } from "@/app/api/schools/[schoolId]/result-sheet-reviews/[evidenceId]/decision/route";
+import {
+  GET as ADOPTIONS_GET,
+  POST as ADOPTIONS_POST,
+} from "@/app/api/schools/[schoolId]/result-grading-adoptions/route";
+import {
   GET as CORRECTIONS_GET,
   POST as CORRECTIONS_POST,
 } from "@/app/api/schools/[schoolId]/assessment-manual-corrections/route";
@@ -1227,6 +1262,92 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect(revision2.status).toBe(201);
     const policy2 = (await revision2.json()).policy;
     expect(policy2.version).toBe(2);
+    const adoption = (actor: string, data: unknown, id = schoolA) =>
+      ADOPTIONS_POST(req(actor, id, "POST", data), {
+        params: Promise.resolve({ schoolId: id }),
+      });
+    for (const actor of [
+      "teacher",
+      "student",
+      "admin",
+      "head",
+      "principal",
+      "foreign",
+    ]) {
+      expect(
+        (
+          await adoption(actor, {
+            policyId: policy2.id,
+            reason: "Only owner may adopt",
+          })
+        ).status,
+      ).toBe(404);
+    }
+    expect(
+      (
+        await adoption(
+          "super",
+          {
+            policyId: policy2.id,
+            reason: "Wrong school adoption attempt",
+          },
+          schoolB,
+        )
+      ).status,
+    ).toBe(404);
+    expect((await adoption("super", { policyId: policy2.id })).status).toBe(
+      400,
+    );
+    const adopted = await adoption("super", {
+      policyId: policy2.id,
+      reason: "Synthetic initial official grading policy adoption",
+    });
+    expect(adopted.status).toBe(201);
+    expect((await adopted.json()).adoption).toMatchObject({
+      policyId: policy2.id,
+      ordinal: 1,
+      sessionId,
+      termId,
+      classId,
+      subjectId,
+    });
+    expect(
+      (
+        await adoption("super", {
+          policyId: policy2.id,
+          reason: "Duplicate adoption should not rewrite history",
+        })
+      ).status,
+    ).toBe(409);
+    expect(
+      (
+        await ADOPTIONS_GET(req("super", schoolA, "GET"), {
+          params: Promise.resolve({ schoolId: schoolA }),
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await ADOPTIONS_GET(req("teacher", schoolA, "GET"), {
+          params: Promise.resolve({ schoolId: schoolA }),
+        })
+      ).status,
+    ).toBe(404);
+    const firstAdoption = await prisma.resultGradingAdoption.findFirstOrThrow({
+      where: { schoolId: schoolA, policyId: policy2.id },
+    });
+    await expect(
+      prisma.resultGradingAdoption.update({
+        where: { id: firstAdoption.id },
+        data: { reason: "Tampered grading policy" },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.resultGradingAdoption.delete({
+        where: { id: firstAdoption.id },
+      }),
+    ).rejects.toThrow();
+
     expect((await getPolicies("super")).status).toBe(200);
     const history = await prisma.assessmentGradingPolicyRevision.findMany({
       where: { schoolId: schoolA, sessionId, termId, classId, subjectId },
@@ -1878,6 +1999,41 @@ describe("Phase 7 exact-assignment private question bank", () => {
       latestRevision: 3,
       pending: false,
     });
+    // Phase 8 requires a separately adopted school policy, immutable source
+    // manifest and independent section review. The exam-only adoption above
+    // cannot satisfy the absence of EXAM evidence in this synthetic case.
+    const createFrozen = (actor: string, input: unknown, id = schoolA) =>
+      RESULT_EVIDENCE_POST(req(actor, id, "POST", input), {
+        params: Promise.resolve({ schoolId: id }),
+      });
+    const freezeInput = {
+      assignmentId,
+      termId,
+      reason: "Synthetic immutable result source preparation",
+    };
+    for (const actor of [
+      "student",
+      "admin",
+      "head",
+      "principal",
+      "super",
+      "other",
+    ]) {
+      expect((await createFrozen(actor, freezeInput)).status).toBe(404);
+    }
+    expect((await createFrozen("teacher", freezeInput, schoolB)).status).toBe(
+      404,
+    );
+    expect(
+      (
+        await createFrozen("teacher", {
+          ...freezeInput,
+          sourceManifest: [{ studentId: pupilId, earnedPoints: 100 }],
+        })
+      ).status,
+    ).toBe(400);
+    const frozenUnderExamOnly = await createFrozen("teacher", freezeInput);
+    expect(frozenUnderExamOnly.status).not.toBe(201);
     const finalGradebookResponse = await reviewedGradebook("teacher");
     expect(finalGradebookResponse.status).toBe(200);
     expect(finalGradebookResponse.headers.get("cache-control")).toBe(
@@ -2134,11 +2290,1320 @@ describe("Phase 7 exact-assignment private question bank", () => {
     ).toMatchObject({ action: "RETURNED" });
   }, 25_000);
 
+  it("rejects partial per-pupil coverage even when the class has every adopted category", async () => {
+    // The original class-wide check incorrectly accepted a QUIZ-only pupil and
+    // an EXAM-only pupil for a 50/50 QUIZ/EXAM policy. Exercise actual PG code.
+    const disjoint = JSON.stringify([
+      { studentId: "quiz-only", cbt: [{ kind: "QUIZ" }], manual: [] },
+      { studentId: "exam-only", cbt: [], manual: [{ kind: "EXAM" }] },
+    ]);
+    await expect(prisma.$queryRaw`
+      SELECT "assert_result_sheet_weighted_categories"(
+        ${disjoint}::jsonb, ${50}::integer, ${0}::integer, ${50}::integer)
+        AS "valid"
+    `).rejects.toThrow();
+    const complete = JSON.stringify([
+      {
+        studentId: "pupil-one",
+        cbt: [{ kind: "QUIZ" }],
+        manual: [{ kind: "EXAM" }],
+      },
+      {
+        studentId: "pupil-two",
+        cbt: [{ kind: "EXAM" }],
+        manual: [{ kind: "QUIZ" }],
+      },
+    ]);
+    const passed = await prisma.$queryRaw<Array<{ valid: boolean }>>`
+      SELECT "assert_result_sheet_weighted_categories"(
+        ${complete}::jsonb, ${50}::integer, ${0}::integer, ${50}::integer)
+        AS "valid"
+    `;
+    expect(passed).toEqual([{ valid: true }]);
+    const quizOnly = JSON.stringify([
+      { studentId: "pupil-one", cbt: [{ kind: "QUIZ" }], manual: [] },
+      { studentId: "pupil-two", cbt: [{ kind: "QUIZ" }], manual: [] },
+    ]);
+    const zeroWeighted = await prisma.$queryRaw<Array<{ valid: boolean }>>`
+      SELECT "assert_result_sheet_weighted_categories"(
+        ${quizOnly}::jsonb, ${100}::integer, ${0}::integer, ${0}::integer)
+        AS "valid"
+    `;
+    expect(zeroWeighted).toEqual([{ valid: true }]);
+  });
+
+  it("prepares DB-frozen single-subject evidence, independently reviews it and versions later changes", async () => {
+    // Dedicated exact subject avoids relying on unrelated CBT attempt state.
+    const newSubjectId = "res-review-subject-" + suffix;
+    const newAssignmentId = "res-review-assignment-" + suffix;
+    await prisma.subject.create({
+      data: {
+        id: newSubjectId,
+        schoolId: schoolA,
+        name: "Synthetic Result Review Subject",
+      },
+    });
+    await prisma.teacherClassSubjectAssignment.create({
+      data: {
+        id: newAssignmentId,
+        schoolId: schoolA,
+        membershipId: members.teacher,
+        classId,
+        subjectId: newSubjectId,
+        sessionId,
+        status: "ACTIVE",
+      },
+    });
+    const draftPolicy = await POLICIES_POST(
+      req("super", schoolA, "POST", {
+        sessionId,
+        termId,
+        classId,
+        subjectId: newSubjectId,
+        quizWeight: 0,
+        testWeight: 100,
+        examWeight: 0,
+        reason: "Synthetic adopted written-only subject policy",
+      }),
+      { params: Promise.resolve({ schoolId: schoolA }) },
+    );
+    expect(draftPolicy.status).toBe(201);
+    const policy = (await draftPolicy.json()).policy;
+    const adopted = await ADOPTIONS_POST(
+      req("super", schoolA, "POST", {
+        policyId: policy.id,
+        reason: "Synthetic approved school grading policy version",
+      }),
+      { params: Promise.resolve({ schoolId: schoolA }) },
+    );
+    expect(adopted.status).toBe(201);
+    const adoptionId = (await adopted.json()).adoption.id;
+    const componentResponse = await MANUAL_COMPONENTS_POST(
+      req("teacher", schoolA, "POST", {
+        assignmentId: newAssignmentId,
+        termId,
+        kind: "TEST",
+        title: "Synthetic reviewed algebra essay",
+        maxPoints: 10,
+      }),
+      { params: Promise.resolve({ schoolId: schoolA }) },
+    );
+    expect(componentResponse.status).toBe(201);
+    const componentId = (await componentResponse.json()).component.id;
+    const proposalResponse = await MANUAL_PROPOSAL_POST(
+      req("teacher", schoolA, "POST", {
+        componentId,
+        studentId: pupilId,
+        earnedPoints: 8,
+        reason: "Synthetic initial marking evidence",
+      }),
+      { params: Promise.resolve({ schoolId: schoolA }) },
+    );
+    expect(proposalResponse.status).toBe(201);
+    const proposalId = (await proposalResponse.json()).proposal.id;
+    const input = {
+      assignmentId: newAssignmentId,
+      termId,
+      reason: "Synthetic complete and teacher-prepared source snapshot",
+    };
+    const prepare = (actor: string, value: unknown) =>
+      RESULT_EVIDENCE_POST(req(actor, schoolA, "POST", value), {
+        params: Promise.resolve({ schoolId: schoolA }),
+      });
+    expect((await prepare("teacher", input)).status).not.toBe(201); // still unapproved
+    const originalApproval = await MANUAL_REVIEW_DECISION(
+      req("head", schoolA, "POST", {
+        action: "APPROVED",
+        reason: "Synthetic independently reviewed essay mark",
+      }),
+      { params: Promise.resolve({ schoolId: schoolA, proposalId }) },
+    );
+    expect(originalApproval.status).toBe(201);
+    for (const actor of [
+      "student",
+      "admin",
+      "super",
+      "head",
+      "principal",
+      "other",
+    ]) {
+      expect((await prepare(actor, input)).status).toBe(404);
+    }
+    const first = await prepare("teacher", input);
+    expect(first.status).toBe(201);
+    expect(first.headers.get("cache-control")).toBe("private, no-store");
+    const firstId = (await first.json()).evidence.id;
+    const firstRow = await prisma.resultSheetEvidence.findFirstOrThrow({
+      where: { schoolId: schoolA, id: firstId },
+    });
+    expect(firstRow).toMatchObject({
+      revision: 1,
+      studentCount: 1,
+      adoptionId,
+    });
+    const manifest = firstRow.sourceManifest as Array<{
+      studentId: string;
+      cbt: unknown[];
+      manual: Array<{
+        kind: string;
+        effectivePoints: number;
+        maxPoints: number;
+      }>;
+    }>;
+    expect(manifest).toMatchObject([
+      {
+        studentId: pupilId,
+        cbt: [],
+        manual: [{ kind: "TEST", effectivePoints: 8, maxPoints: 10 }],
+      },
+    ]);
+    expect((await prepare("teacher", input)).status).toBe(409);
+    const queue = (actor: string) =>
+      RESULT_REVIEW_QUEUE(req(actor, schoolA, "GET"), {
+        params: Promise.resolve({ schoolId: schoolA }),
+      });
+    const headQueue = await queue("head");
+    expect(headQueue.status).toBe(200);
+    expect(
+      (await headQueue.json()).candidates.some(
+        (x: { id: string }) => x.id === firstId,
+      ),
+    ).toBe(true);
+    const principalQueue = await queue("principal");
+    expect(principalQueue.status).toBe(200);
+    expect(
+      (await principalQueue.json()).candidates.some(
+        (x: { id: string }) => x.id === firstId,
+      ),
+    ).toBe(false);
+    const decide = (actor: string, evidenceId: string, action: string) =>
+      RESULT_REVIEW_POST(
+        req(actor, schoolA, "POST", {
+          action,
+          reason: "Synthetic verified independent academic decision",
+        }),
+        { params: Promise.resolve({ schoolId: schoolA, evidenceId }) },
+      );
+    // A previously eligible reviewer loses BOTH list and decision access
+    // immediately when the verified SECTION grant is revoked.
+    const reviewerGrant = await prisma.scopeGrant.findFirstOrThrow({
+      where: {
+        membershipId: members.head,
+        type: "SECTION",
+        scopeId: sectionId,
+      },
+    });
+    await prisma.scopeGrant.update({
+      where: { id: reviewerGrant.id },
+      data: { verified: false },
+    });
+    try {
+      expect((await queue("head")).status).toBe(404);
+      expect((await decide("head", firstId, "APPROVED")).status).toBe(404);
+    } finally {
+      await prisma.scopeGrant.update({
+        where: { id: reviewerGrant.id },
+        data: { verified: true },
+      });
+    }
+    expect((await decide("principal", firstId, "APPROVED")).status).toBe(404);
+    expect((await decide("teacher", firstId, "APPROVED")).status).toBe(404);
+    const approved = await decide("head", firstId, "APPROVED");
+    expect(approved.status).toBe(201);
+    expect((await approved.json()).status).toBe(
+      "ACADEMIC_REVIEW_ONLY_NOT_PUBLISHED",
+    );
+    expect((await decide("head", firstId, "RETURNED")).status).toBe(409);
+    const oldReview = await prisma.resultSheetReview.findFirstOrThrow({
+      where: { schoolId: schoolA, evidenceId: firstId },
+    });
+    await expect(
+      prisma.resultSheetEvidence.update({
+        where: { id: firstId },
+        data: { reason: "Altered teacher evidence" },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.resultSheetReview.update({
+        where: { id: oldReview.id },
+        data: { action: "RETURNED" },
+      }),
+    ).rejects.toThrow();
+    // A later independently approved mark correction requires a NEW sheet.
+    const correction = await CORRECTIONS_POST(
+      req("teacher", schoolA, "POST", {
+        proposalId,
+        proposedPoints: 9,
+        reason: "Synthetic evidence-based algebra marking correction",
+      }),
+      { params: Promise.resolve({ schoolId: schoolA }) },
+    );
+    expect(correction.status).toBe(201);
+    const correctedId = (await correction.json()).request.id;
+    const review = await CORRECTION_REVIEW(
+      req("head", schoolA, "POST", {
+        action: "APPROVED",
+        reason: "Synthetic approved changed algebra mark",
+      }),
+      {
+        params: Promise.resolve({ schoolId: schoolA, requestId: correctedId }),
+      },
+    );
+    expect(review.status).toBe(201);
+    const second = await prepare("teacher", {
+      ...input,
+      reason: "Synthetic amended source marks after academic correction",
+    });
+    expect(second.status).toBe(201);
+    const secondId = (await second.json()).evidence.id;
+    const newer = await prisma.resultSheetEvidence.findFirstOrThrow({
+      where: { schoolId: schoolA, id: secondId },
+    });
+    expect(newer.revision).toBe(2);
+    expect(newer.sourceManifest).not.toEqual(firstRow.sourceManifest);
+    // An adoption made AFTER teacher preparation invalidates that exact
+    // revision. Reviewer may RETURN it, but must not approve stale policy.
+    const changedPolicy = await POLICIES_POST(
+      req("super", schoolA, "POST", {
+        sessionId,
+        termId,
+        classId,
+        subjectId: newSubjectId,
+        quizWeight: 0,
+        testWeight: 100,
+        examWeight: 0,
+        reason: "Synthetic later adopted grading policy revision",
+      }),
+      { params: Promise.resolve({ schoolId: schoolA }) },
+    );
+    expect(changedPolicy.status).toBe(201);
+    const adoptedNext = await ADOPTIONS_POST(
+      req("super", schoolA, "POST", {
+        policyId: (await changedPolicy.json()).policy.id,
+        reason: "Synthetic explicit subsequent grading policy adoption",
+      }),
+      { params: Promise.resolve({ schoolId: schoolA }) },
+    );
+    expect(adoptedNext.status).toBe(201);
+    const adoptionNextId = (await adoptedNext.json()).adoption.id;
+    expect(adoptionNextId).not.toBe(adoptionId);
+    expect((await decide("head", secondId, "APPROVED")).status).toBe(409);
+    expect((await decide("head", secondId, "RETURNED")).status).toBe(201);
+    const preparedAgain = await prepare("teacher", {
+      ...input,
+      reason: "Synthetic refreshed source evidence after adoption change",
+    });
+    expect(preparedAgain.status).toBe(201);
+    const thirdId = (await preparedAgain.json()).evidence.id;
+    const thirdRow = await prisma.resultSheetEvidence.findFirstOrThrow({
+      where: { schoolId: schoolA, id: thirdId },
+    });
+    expect(thirdRow.revision).toBe(3);
+    expect(thirdRow.adoptionId).toBe(adoptionNextId);
+    expect(thirdRow.sourceManifest).toEqual(newer.sourceManifest);
+    expect((await decide("head", thirdId, "APPROVED")).status).toBe(201);
+    // Server-only future publication readiness predicate: validates active
+    // original assignment, distinct current academic reviewer, exact policy,
+    // frozen source and the current School Super Admin under a school lock.
+    // It creates NO publication or student-visible result.
+    const finalReady = (
+      targetSchool: string,
+      targetEvidence: string,
+      actorMembership: string,
+      actorUser: string,
+    ) => prisma.$queryRaw<
+      Array<{ ready: boolean }>
+    >`SELECT "assert_result_publication_readiness"(
+      ${targetSchool}, ${targetEvidence}, ${actorMembership}, ${actorUser})
+      AS "ready"`;
+    expect(
+      await finalReady(schoolA, thirdId, members.super, users.super),
+    ).toEqual([{ ready: true }]);
+    const finalDecisionInput = {
+      evidenceId: thirdId,
+      reason: "Synthetic final school academic evidence approval",
+    };
+    const finalDecision = (
+      actor: string,
+      input: unknown,
+      targetSchool = schoolA,
+    ) =>
+      FINAL_OWNER_POST(req(actor, targetSchool, "POST", input), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    for (const actor of [
+      "teacher",
+      "head",
+      "principal",
+      "admin",
+      "student",
+      "other",
+    ]) {
+      expect((await finalDecision(actor, finalDecisionInput)).status).toBe(404);
+    }
+    expect(
+      (await finalDecision("super", finalDecisionInput, schoolB)).status,
+    ).toBe(404);
+    expect(
+      (
+        await finalDecision("super", {
+          ...finalDecisionInput,
+          actorUserId: users.super,
+        })
+      ).status,
+    ).toBe(400);
+    const approvedForLater = await finalDecision("super", finalDecisionInput);
+    expect(approvedForLater.status).toBe(201);
+    expect(approvedForLater.headers.get("cache-control")).toBe(
+      "private, no-store",
+    );
+    expect((await approvedForLater.json()).status).toBe(
+      "FINAL_OWNER_APPROVED_AWAITING_RELEASE_NOT_PUBLIC",
+    );
+    const recorded =
+      await prisma.resultFinalPublicationDecision.findFirstOrThrow({
+        where: { schoolId: schoolA, evidenceId: thirdId },
+      });
+    expect(recorded).toMatchObject({
+      ordinal: 1,
+      evidenceRevision: 3,
+      adoptionId: adoptionNextId,
+      actorMembershipId: members.super,
+      actorUserId: users.super,
+      status: "APPROVED_AWAITING_RELEASE",
+    });
+    expect((await finalDecision("super", finalDecisionInput)).status).toBe(409);
+    const freezeSource = (
+      actor: string,
+      input: unknown,
+      targetSchool = schoolA,
+    ) =>
+      SOURCE_PACKET_POST(req(actor, targetSchool, "POST", input), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const packetHistory = (actor: string, targetSchool = schoolA) =>
+      SOURCE_PACKET_GET(req(actor, targetSchool, "GET"), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const sourceInput = {
+      finalDecisionId: recorded.id,
+      reason: "Synthetic private frozen report-card source evidence packet",
+    };
+    for (const actor of [
+      "teacher",
+      "head",
+      "principal",
+      "admin",
+      "student",
+      "other",
+    ]) {
+      expect((await freezeSource(actor, sourceInput)).status).toBe(404);
+      expect((await packetHistory(actor)).status).toBe(404);
+    }
+    expect((await freezeSource("super", sourceInput, schoolB)).status).toBe(
+      404,
+    );
+    expect((await packetHistory("super", schoolB)).status).toBe(404);
+    expect(
+      (await freezeSource("super", { ...sourceInput, studentCount: 25 }))
+        .status,
+    ).toBe(400);
+    expect(
+      (await freezeSource("super", { ...sourceInput, studentSourceCards: [] }))
+        .status,
+    ).toBe(400);
+    const sourceCreated = await freezeSource("super", sourceInput);
+    expect(sourceCreated.status).toBe(201);
+    expect(sourceCreated.headers.get("cache-control")).toBe(
+      "private, no-store",
+    );
+    expect((await sourceCreated.json()).status).toBe(
+      "PRIVATE_SOURCE_PREPARED_NOT_GRADED_NOT_RELEASED",
+    );
+    const originalPacket =
+      await prisma.resultReportCardSourcePacket.findFirstOrThrow({
+        where: { schoolId: schoolA, finalDecisionId: recorded.id },
+      });
+    expect(originalPacket).toMatchObject({
+      evidenceId: thirdId,
+      adoptionId: adoptionNextId,
+      evidenceRevision: 3,
+      finalDecisionOrdinal: 1,
+      studentCount: 1,
+      actorMembershipId: members.super,
+      actorUserId: users.super,
+    });
+    const sourceCards = originalPacket.studentSourceCards as Array<{
+      studentId: string;
+      manual: Array<{ effectivePoints: number }>;
+      reportStatus: string;
+      adoptedWeightVersion: number;
+    }>;
+    expect(sourceCards).toMatchObject([
+      {
+        studentId: pupilId,
+        reportStatus: "INTERNAL_SOURCE_ONLY_NOT_RELEASED",
+        manual: [{ effectivePoints: 9 }],
+      },
+    ]);
+    expect(JSON.stringify(sourceCards)).not.toContain("correctIndex");
+    expect(JSON.stringify(sourceCards)).not.toContain("officialGrade");
+    const publicPayload = JSON.stringify(
+      await (await packetHistory("super")).json(),
+    );
+    expect(publicPayload).not.toContain(pupilId);
+    expect(publicPayload).not.toContain(proposalId);
+    expect(publicPayload).not.toContain("studentSourceCards");
+    expect((await freezeSource("super", sourceInput)).status).toBe(409);
+    await expect(
+      prisma.resultReportCardSourcePacket.update({
+        where: { id: originalPacket.id },
+        data: { reason: "Forged packet reason" },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.resultReportCardSourcePacket.delete({
+        where: { id: originalPacket.id },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.$executeRaw`TRUNCATE "ResultReportCardSourcePacket"`,
+    ).rejects.toThrow();
+    const finalHistory = (actor: string, targetSchool = schoolA) =>
+      FINAL_OWNER_GET(req(actor, targetSchool, "GET"), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    for (const actor of [
+      "teacher",
+      "head",
+      "principal",
+      "admin",
+      "student",
+      "other",
+    ]) {
+      expect((await finalHistory(actor)).status).toBe(404);
+    }
+    expect((await finalHistory("super", schoolB)).status).toBe(404);
+    const ownerDecisions = await finalHistory("super");
+    expect(ownerDecisions.status).toBe(200);
+    expect(ownerDecisions.headers.get("cache-control")).toBe(
+      "private, no-store",
+    );
+    const historyBody = await ownerDecisions.json();
+    expect(
+      historyBody.decisions.some(
+        (item: { evidenceId: string }) => item.evidenceId === thirdId,
+      ),
+    ).toBe(true);
+    const historyJSON = JSON.stringify(historyBody);
+    expect(historyJSON).not.toContain(pupilId);
+    expect(historyJSON).not.toContain(proposalId);
+    expect(historyJSON).not.toContain("sourceManifest");
+    await expect(
+      prisma.resultFinalPublicationDecision.update({
+        where: { id: recorded.id },
+        data: { reason: "Forged altered final school approval" },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.resultFinalPublicationDecision.delete({
+        where: { id: recorded.id },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.$executeRaw`TRUNCATE "ResultFinalPublicationDecision"`,
+    ).rejects.toThrow();
+
+    await expect(
+      finalReady(schoolA, thirdId, members.head, users.head),
+    ).rejects.toThrow();
+    await expect(
+      finalReady(schoolA, thirdId, members.super, users.head),
+    ).rejects.toThrow();
+    await expect(
+      finalReady(schoolB, thirdId, members.super, users.super),
+    ).rejects.toThrow();
+    await expect(
+      finalReady(schoolA, firstId, members.super, users.super),
+    ).rejects.toThrow();
+    await expect(
+      finalReady(schoolA, secondId, members.super, users.super),
+    ).rejects.toThrow();
+    const ownerPreflight = (actor: string, inspectedSchool = schoolA) =>
+      RESULT_OWNER_PREFLIGHT(req(actor, inspectedSchool, "GET"), {
+        params: Promise.resolve({ schoolId: inspectedSchool }),
+      });
+    for (const actor of [
+      "teacher",
+      "student",
+      "head",
+      "admin",
+      "principal",
+      "other",
+    ]) {
+      expect((await ownerPreflight(actor)).status).toBe(404);
+    }
+    expect((await ownerPreflight("super", schoolB)).status).toBe(404);
+    const eligible = await ownerPreflight("super");
+    expect(eligible.status).toBe(200);
+    expect(eligible.headers.get("cache-control")).toBe("private, no-store");
+    const ownerBody = await eligible.json();
+    expect(ownerBody.status).toBe("INTERNAL_PREFLIGHT_ONLY_NOT_PUBLISHED");
+    const current = ownerBody.candidates.find(
+      (item: { evidenceId: string }) => item.evidenceId === thirdId,
+    );
+    expect(current).toMatchObject({
+      revision: 3,
+      studentCount: 1,
+      adoptionId: adoptionNextId,
+    });
+    expect(
+      ownerBody.candidates.some(
+        (item: { evidenceId: string }) => item.evidenceId === secondId,
+      ),
+    ).toBe(false);
+    expect(
+      ownerBody.candidates.some(
+        (item: { evidenceId: string }) => item.evidenceId === firstId,
+      ),
+    ).toBe(false);
+    const ownerPayload = JSON.stringify(ownerBody);
+    expect(ownerPayload).not.toContain(pupilId);
+    expect(ownerPayload).not.toContain(proposalId);
+    expect(ownerPayload).not.toContain("sourceManifest");
+    // Changes in the current reviewer grant must hide the candidate,
+    // even though its immutable historic academic approval remains.
+    const scope = await prisma.scopeGrant.findFirstOrThrow({
+      where: {
+        membershipId: members.head,
+        type: "SECTION",
+        scopeId: sectionId,
+      },
+    });
+    await prisma.scopeGrant.update({
+      where: { id: scope.id },
+      data: { verified: false },
+    });
+    try {
+      await expect(
+        finalReady(schoolA, thirdId, members.super, users.super),
+      ).rejects.toThrow();
+      const revoked = await ownerPreflight("super");
+      expect(revoked.status).toBe(200);
+      expect(
+        (await revoked.json()).candidates.some(
+          (item: { evidenceId: string }) => item.evidenceId === thirdId,
+        ),
+      ).toBe(false);
+    } finally {
+      await prisma.scopeGrant.update({
+        where: { id: scope.id },
+        data: { verified: true },
+      });
+    }
+    const newerAdoption = await POLICIES_POST(
+      req("super", schoolA, "POST", {
+        sessionId,
+        termId,
+        classId,
+        subjectId: newSubjectId,
+        quizWeight: 0,
+        testWeight: 100,
+        examWeight: 0,
+        reason: "Synthetic adoption invalidates owner result candidate",
+      }),
+      { params: Promise.resolve({ schoolId: schoolA }) },
+    );
+    expect(newerAdoption.status).toBe(201);
+    expect(
+      (
+        await ADOPTIONS_POST(
+          req("super", schoolA, "POST", {
+            policyId: (await newerAdoption.json()).policy.id,
+            reason: "Synthetic subsequent owner preflight policy adoption",
+          }),
+          { params: Promise.resolve({ schoolId: schoolA }) },
+        )
+      ).status,
+    ).toBe(201);
+    await expect(
+      finalReady(schoolA, thirdId, members.super, users.super),
+    ).rejects.toThrow();
+    expect(
+      await prisma.resultFinalPublicationDecision.findFirstOrThrow({
+        where: { schoolId: schoolA, evidenceId: thirdId },
+      }),
+    ).toMatchObject({ status: "APPROVED_AWAITING_RELEASE" });
+    expect((await freezeSource("super", sourceInput)).status).toBe(409);
+    const staleOwnerList = await ownerPreflight("super");
+    expect(staleOwnerList.status).toBe(200);
+    expect(
+      (await staleOwnerList.json()).candidates.some(
+        (item: { evidenceId: string }) => item.evidenceId === thirdId,
+      ),
+    ).toBe(false);
+    // A newer authorized version cannot rewrite or delete historical owner
+    // approval. It must follow new teacher evidence and new HM approval.
+    const fourthPrepared = await prepare("teacher", {
+      ...input,
+      reason: "Synthetic fourth frozen evidence after new adopted policy",
+    });
+    expect(fourthPrepared.status).toBe(201);
+    const fourthId = (await fourthPrepared.json()).evidence.id;
+    const fourthEvidence = await prisma.resultSheetEvidence.findFirstOrThrow({
+      where: { schoolId: schoolA, id: fourthId },
+    });
+    expect(fourthEvidence.revision).toBe(4);
+    expect((await decide("head", fourthId, "APPROVED")).status).toBe(201);
+    const finalScope = await prisma.scopeGrant.findFirstOrThrow({
+      where: {
+        membershipId: members.head,
+        type: "SECTION",
+        scopeId: sectionId,
+      },
+    });
+    await prisma.scopeGrant.update({
+      where: { id: finalScope.id },
+      data: { verified: false },
+    });
+    try {
+      expect(
+        (
+          await finalDecision("super", {
+            evidenceId: fourthId,
+            reason: "Unauthorized final approval after section grant revoked",
+          })
+        ).status,
+      ).toBe(404);
+      // A revoked independent reviewer must not authorize final owner approval.
+      // The SQL readiness predicate rejects missing authority (23503 / 404).
+      // The denied request must not persist an owner decision for this evidence.
+      expect(
+        await prisma.resultFinalPublicationDecision.count({
+          where: { schoolId: schoolA, evidenceId: fourthId },
+        }),
+      ).toBe(0);
+    } finally {
+      await prisma.scopeGrant.update({
+        where: { id: finalScope.id },
+        data: { verified: true },
+      });
+    }
+    expect(
+      (
+        await freezeSource("super", {
+          finalDecisionId: recorded.id,
+          reason: "Stale original source after new grading adoption",
+        })
+      ).status,
+    ).toBe(409);
+    const subsequentApproval = await finalDecision("super", {
+      evidenceId: fourthId,
+      reason: "Synthetic renewed independently reviewed final approval",
+    });
+    expect(subsequentApproval.status).toBe(201);
+    const laterDecision =
+      await prisma.resultFinalPublicationDecision.findFirstOrThrow({
+        where: { schoolId: schoolA, evidenceId: fourthId },
+      });
+    expect(laterDecision).toMatchObject({
+      ordinal: 2,
+      evidenceRevision: 4,
+      status: "APPROVED_AWAITING_RELEASE",
+    });
+    const laterPacketResponse = await freezeSource("super", {
+      finalDecisionId: laterDecision.id,
+      reason: "Synthetic new internal report packet after renewed approval",
+    });
+    expect(laterPacketResponse.status).toBe(201);
+    const laterPacket =
+      await prisma.resultReportCardSourcePacket.findFirstOrThrow({
+        where: { schoolId: schoolA, finalDecisionId: laterDecision.id },
+      });
+    expect(laterPacket).toMatchObject({
+      evidenceRevision: 4,
+      finalDecisionOrdinal: 2,
+      studentCount: 1,
+    });
+    expect(
+      (
+        await prisma.resultReportCardSourcePacket.findFirstOrThrow({
+          where: { id: originalPacket.id },
+        })
+      ).studentSourceCards,
+    ).toEqual(originalPacket.studentSourceCards);
+
+    expect(
+      await prisma.resultFinalPublicationDecision.findFirstOrThrow({
+        where: { schoolId: schoolA, evidenceId: thirdId },
+      }),
+    ).toMatchObject({
+      ordinal: 1,
+      evidenceRevision: 3,
+      status: "APPROVED_AWAITING_RELEASE",
+    });
+    const teacherHistory = await RESULT_EVIDENCE_GET(
+      req("teacher", schoolA, "GET"),
+      { params: Promise.resolve({ schoolId: schoolA }) },
+    );
+    expect(teacherHistory.status).toBe(200);
+    expect((await teacherHistory.json()).snapshots).toHaveLength(4);
+    expect(
+      (
+        await RESULT_EVIDENCE_GET(req("student", schoolA, "GET"), {
+          params: Promise.resolve({ schoolId: schoolA }),
+        })
+      ).status,
+    ).toBe(404);
+  });
+
+  it("adopts versioned school report grade scales without touching old report sources", async () => {
+    const scaleRequest = (
+      actor: string,
+      body: unknown,
+      targetSchool = schoolA,
+    ) =>
+      REPORT_SCALE_POST(req(actor, targetSchool, "POST", body), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const scaleHistory = (actor: string, targetSchool = schoolA) =>
+      REPORT_SCALE_GET(req(actor, targetSchool, "GET"), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const bands = [
+      { code: "F", remark: "Synthetic low band", minBps: 0, maxBps: 5999 },
+      { code: "A", remark: "Synthetic high band", minBps: 6000, maxBps: 10000 },
+    ];
+    const valid = {
+      bands,
+      decimalPlaces: 0,
+      roundingMode: "HALF_UP",
+      bandBasis: "RAW_BPS",
+      reason: "Synthetic school grading scale adoption",
+    };
+    for (const actor of [
+      "teacher",
+      "head",
+      "principal",
+      "admin",
+      "student",
+      "other",
+    ]) {
+      expect((await scaleRequest(actor, valid)).status).toBe(404);
+      expect((await scaleHistory(actor)).status).toBe(404);
+    }
+    expect((await scaleRequest("super", valid, schoolB)).status).toBe(404);
+    expect((await scaleHistory("super", schoolB)).status).toBe(404);
+    for (const invalid of [
+      { ...valid, version: 99 },
+      { ...valid, actorMembershipId: members.super },
+      { ...valid, decimalPlaces: 3 },
+      { ...valid, bands: [{ ...bands[0], maxBps: 6000 }, bands[1]] },
+      { ...valid, bands: [{ ...bands[0], maxBps: 5998 }, bands[1]] },
+      {
+        ...valid,
+        bands: [
+          { ...bands[0], maxBps: 5999 },
+          { ...bands[1], code: "f" },
+        ],
+      },
+    ])
+      expect((await scaleRequest("super", invalid)).status).toBe(400);
+
+    const savedPacket = await prisma.resultReportCardSourcePacket.findFirst({
+      where: { schoolId: schoolA },
+      orderBy: { preparedAt: "asc" },
+      select: { id: true, studentSourceCards: true },
+    });
+    const adoptedOne = await scaleRequest("super", valid);
+    expect(adoptedOne.status).toBe(201);
+    expect(adoptedOne.headers.get("cache-control")).toBe("private, no-store");
+    const first = (await adoptedOne.json()).scale;
+    expect(first.version).toBe(1);
+    expect(first.bands).toEqual(bands);
+    expect((await scaleRequest("super", valid)).status).toBe(409);
+    const updated = await scaleRequest("super", {
+      ...valid,
+      decimalPlaces: 1,
+      bandBasis: "DISPLAY_ROUNDED_BPS",
+      reason: "Synthetic amended displayed-score school grading policy",
+    });
+    expect(updated.status).toBe(201);
+    const second = (await updated.json()).scale;
+    expect(second.version).toBe(2);
+    const ownerHistory = await scaleHistory("super");
+    expect(ownerHistory.status).toBe(200);
+    expect(ownerHistory.headers.get("cache-control")).toBe("private, no-store");
+    const observed = (await ownerHistory.json()).scales;
+    expect(
+      observed.slice(0, 2).map((item: { version: number }) => item.version),
+    ).toEqual([2, 1]);
+    expect(JSON.stringify(observed)).not.toContain(pupilId);
+    expect(JSON.stringify(observed)).not.toContain("studentSourceCards");
+    await expect(
+      prisma.reportGradeScaleRevision.update({
+        where: { id: first.id },
+        data: { reason: "Forged policy correction" },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.reportGradeScaleRevision.delete({
+        where: { id: first.id },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.$executeRaw`TRUNCATE "ReportGradeScaleRevision"`,
+    ).rejects.toThrow();
+    await expect(prisma.$queryRaw`SELECT "assert_report_grade_scale_bands"(
+      ${JSON.stringify([
+        { ...bands[0], maxBps: 7000 },
+        bands[1],
+      ])}::jsonb)`).rejects.toThrow();
+    if (savedPacket) {
+      const original =
+        await prisma.resultReportCardSourcePacket.findFirstOrThrow({
+          where: { id: savedPacket.id },
+          select: { studentSourceCards: true },
+        });
+      expect(original.studentSourceCards).toEqual(
+        savedPacket.studentSourceCards,
+      );
+    }
+  });
+
+  it("adopts immutable school calculation policies without rewriting frozen pupils", async () => {
+    const adoptRule = (actor: string, input: unknown, targetSchool = schoolA) =>
+      AGGREGATION_RULE_POST(req(actor, targetSchool, "POST", input), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const ruleHistory = (actor: string, targetSchool = schoolA) =>
+      AGGREGATION_RULE_GET(req(actor, targetSchool, "GET"), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const first = {
+      categoryMethod: "EQUAL_ASSESSMENT_BPS",
+      precisionMode: "HALF_UP",
+      reason: "Synthetic school-adopted equal-assessment grade aggregation",
+    };
+    for (const actor of [
+      "teacher",
+      "head",
+      "principal",
+      "admin",
+      "student",
+      "other",
+    ]) {
+      expect((await adoptRule(actor, first)).status).toBe(404);
+      expect((await ruleHistory(actor)).status).toBe(404);
+    }
+    expect((await adoptRule("super", first, schoolB)).status).toBe(404);
+    expect((await ruleHistory("super", schoolB)).status).toBe(404);
+    for (const input of [
+      { ...first, actorUserId: users.super },
+      { ...first, version: 25 },
+      { ...first, precisionMode: "BANKERS" },
+      { ...first, categoryMethod: "AUTO" },
+      { ...first, reason: "x" },
+    ])
+      expect((await adoptRule("super", input)).status).toBe(400);
+
+    const sourceBefore = await prisma.resultReportCardSourcePacket.findFirst({
+      where: { schoolId: schoolA },
+      orderBy: { preparedAt: "asc" },
+      select: { id: true, studentSourceCards: true },
+    });
+    const saved = await adoptRule("super", first);
+    expect(saved.status).toBe(201);
+    expect(saved.headers.get("cache-control")).toBe("private, no-store");
+    expect((await saved.json()).rule.version).toBe(1);
+    expect((await adoptRule("super", first)).status).toBe(409);
+    const revised = await adoptRule("super", {
+      ...first,
+      categoryMethod: "POOLED_CATEGORY_POINTS",
+      precisionMode: "CEILING",
+      reason: "Synthetic changed adopted category-aggregation rule",
+    });
+    expect(revised.status).toBe(201);
+    const second = (await revised.json()).rule;
+    expect(second.version).toBe(2);
+    const history = await ruleHistory("super");
+    expect(history.status).toBe(200);
+    expect(history.headers.get("cache-control")).toBe("private, no-store");
+    const data = (await history.json()).rules;
+    expect(
+      data.slice(0, 2).map((row: { version: number }) => row.version),
+    ).toEqual([2, 1]);
+    expect(JSON.stringify(data)).not.toContain(pupilId);
+    expect(JSON.stringify(data)).not.toContain("studentSourceCards");
+    await expect(
+      prisma.reportAggregationRuleRevision.update({
+        where: { id: second.id },
+        data: { precisionMode: "FLOOR" },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.reportAggregationRuleRevision.delete({
+        where: { id: second.id },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.$executeRaw`TRUNCATE "ReportAggregationRuleRevision"`,
+    ).rejects.toThrow();
+    if (sourceBefore) {
+      const unchanged =
+        await prisma.resultReportCardSourcePacket.findFirstOrThrow({
+          where: { id: sourceBefore.id },
+          select: { studentSourceCards: true },
+        });
+      expect(unchanged.studentSourceCards).toEqual(
+        sourceBefore.studentSourceCards,
+      );
+    }
+  });
+
+  it("freezes private official composition with DB-recomputed pinned grade evidence, never releases", async () => {
+    const compose = (actor: string, input: unknown, targetSchool = schoolA) =>
+      COMPOSITION_POST(req(actor, targetSchool, "POST", input), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const history = (actor: string, targetSchool = schoolA) =>
+      COMPOSITION_GET(req(actor, targetSchool, "GET"), {
+        params: Promise.resolve({ schoolId: targetSchool }),
+      });
+    const source = await prisma.resultReportCardSourcePacket.findFirstOrThrow({
+      where: { schoolId: schoolA },
+      orderBy: { preparedAt: "desc" },
+    });
+    const aggregation =
+      await prisma.reportAggregationRuleRevision.findFirstOrThrow({
+        where: { schoolId: schoolA },
+        orderBy: { version: "desc" },
+      });
+    const scale = await prisma.reportGradeScaleRevision.findFirstOrThrow({
+      where: { schoolId: schoolA },
+      orderBy: { version: "desc" },
+    });
+    const payload = {
+      sourcePacketId: source.id,
+      aggregationRuleId: aggregation.id,
+      gradeScaleId: scale.id,
+      reason: "Synthetic immutable private official result evidence",
+    };
+    for (const actor of [
+      "teacher",
+      "student",
+      "head",
+      "principal",
+      "admin",
+      "other",
+    ]) {
+      expect((await compose(actor, payload)).status).toBe(404);
+      expect((await history(actor)).status).toBe(404);
+    }
+    expect((await compose("super", payload, schoolB)).status).toBe(404);
+    expect((await history("super", schoolB)).status).toBe(404);
+    for (const injected of [
+      { ...payload, studentId: pupilId },
+      { ...payload, composedStudentCards: [] },
+      { ...payload, actorUserId: users.super },
+      { ...payload, gradeScaleVersion: 500 },
+      { ...payload, studentCount: 0 },
+    ])
+      expect((await compose("super", injected)).status).toBe(400);
+    const older = await prisma.resultReportCardSourcePacket.findFirstOrThrow({
+      where: { schoolId: schoolA },
+      orderBy: { preparedAt: "asc" },
+    });
+    if (older.id !== source.id) {
+      expect(
+        (
+          await compose("super", {
+            ...payload,
+            sourcePacketId: older.id,
+          })
+        ).status,
+      ).toBe(409);
+    }
+    const olderScale = await prisma.reportGradeScaleRevision.findFirst({
+      where: { schoolId: schoolA, version: { lt: scale.version } },
+      orderBy: { version: "desc" },
+    });
+    if (olderScale)
+      expect(
+        (
+          await compose("super", {
+            ...payload,
+            gradeScaleId: olderScale.id,
+          })
+        ).status,
+      ).toBe(409);
+    const olderRule = await prisma.reportAggregationRuleRevision.findFirst({
+      where: { schoolId: schoolA, version: { lt: aggregation.version } },
+      orderBy: { version: "desc" },
+    });
+    if (olderRule)
+      expect(
+        (
+          await compose("super", {
+            ...payload,
+            aggregationRuleId: olderRule.id,
+          })
+        ).status,
+      ).toBe(409);
+    const reviewerScope = await prisma.scopeGrant.findFirstOrThrow({
+      where: {
+        membershipId: members.head,
+        type: "SECTION",
+        scopeId: sectionId,
+      },
+    });
+    await prisma.scopeGrant.update({
+      where: { id: reviewerScope.id },
+      data: { verified: false },
+    });
+    try {
+      // An unverified academic reviewer no longer provides current authority.
+      // The trusted readiness predicate raises SQLSTATE 23503, which the
+      // private service conceals as 404; this is not a policy-revision 409.
+      expect((await compose("super", payload)).status).toBe(404);
+      // A denied owner request must not freeze any per-pupil private evidence.
+      expect(
+        await prisma.privateOfficialReportComposition.count({
+          where: { schoolId: schoolA, sourcePacketId: source.id },
+        }),
+      ).toBe(0);
+    } finally {
+      await prisma.scopeGrant.update({
+        where: { id: reviewerScope.id },
+        data: { verified: true },
+      });
+    }
+    const accepted = await compose("super", payload);
+    expect(accepted.status).toBe(201);
+    expect(accepted.headers.get("cache-control")).toBe("private, no-store");
+    expect((await accepted.json()).status).toBe(
+      "PRIVATE_COMPOSITION_FROZEN_NOT_PUBLISHED",
+    );
+    const frozen =
+      await prisma.privateOfficialReportComposition.findFirstOrThrow({
+        where: { schoolId: schoolA, sourcePacketId: source.id },
+      });
+    expect(frozen).toMatchObject({
+      aggregationRuleId: aggregation.id,
+      gradeScaleId: scale.id,
+      aggregationRuleVersion: aggregation.version,
+      gradeScaleVersion: scale.version,
+      studentCount: source.studentCount,
+      evidenceRevision: source.evidenceRevision,
+      status: "INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED",
+    });
+    const composed = frozen.composedStudentCards as Array<{
+      studentId: string;
+      rawPercentBps: number;
+      gradeCode: string;
+      remark: string;
+      displayPercent: string;
+      categoryPercentBps: unknown;
+      reportStatus: string;
+    }>;
+    const expected = simulatePrivateReportComposition({
+      sourcePacketId: source.id,
+      expectedStudentCount: source.studentCount,
+      students: source.studentSourceCards as unknown as PrivatePacketStudent[],
+      aggregation: {
+        id: aggregation.id,
+        version: aggregation.version,
+        categoryMethod: aggregation.categoryMethod as
+          "EQUAL_ASSESSMENT_BPS" | "POOLED_CATEGORY_POINTS",
+        precisionMode: aggregation.precisionMode as
+          "HALF_UP" | "FLOOR" | "CEILING",
+      },
+      scale: {
+        id: scale.id,
+        version: scale.version,
+        bands: scale.bands as unknown as Array<{
+          code: string;
+          remark: string;
+          minBps: number;
+          maxBps: number;
+        }>,
+        decimalPlaces: scale.decimalPlaces as 0 | 1 | 2,
+        roundingMode: scale.roundingMode as "HALF_UP" | "FLOOR" | "CEILING",
+        bandBasis: scale.bandBasis as "RAW_BPS" | "DISPLAY_ROUNDED_BPS",
+      },
+    });
+    expect(composed).toHaveLength(source.studentCount);
+    for (const row of expected.students) {
+      expect(
+        composed.find((item) => item.studentId === row.studentId),
+      ).toMatchObject({
+        ...row,
+        reportStatus: "INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED",
+      });
+    }
+    expect(JSON.stringify(composed)).not.toContain("correctIndex");
+    const privateResponse = await history("super");
+    expect(privateResponse.status).toBe(200);
+    expect(privateResponse.headers.get("cache-control")).toBe(
+      "private, no-store",
+    );
+    const metadata = JSON.stringify(await privateResponse.json());
+    expect(metadata).not.toContain(pupilId);
+    expect(metadata).not.toContain("composedStudentCards");
+    expect(metadata).not.toContain("rawPercentBps");
+    expect((await compose("super", payload)).status).toBe(409);
+    await expect(
+      prisma.privateOfficialReportComposition.update({
+        where: { id: frozen.id },
+        data: { reason: "Forged grade revision" },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.privateOfficialReportComposition.delete({
+        where: { id: frozen.id },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.$executeRaw`TRUNCATE "PrivateOfficialReportComposition"`,
+    ).rejects.toThrow();
+    // Independently compare PostgreSQL category aggregation, both modes,
+    // and display-label rounding against the deterministic TypeScript engine.
+    const synthetic = [
+      {
+        studentId: pupilId,
+        adoptedWeightVersion: 7,
+        reportStatus: "INTERNAL_SOURCE_ONLY_NOT_RELEASED",
+        quizWeight: 20,
+        testWeight: 30,
+        examWeight: 50,
+        cbt: [
+          {
+            draftId: "quiz-1",
+            attemptId: "attempt-1",
+            kind: "QUIZ",
+            earnedPoints: 1,
+            maxPoints: 2,
+          },
+          {
+            draftId: "quiz-2",
+            attemptId: "attempt-2",
+            kind: "QUIZ",
+            earnedPoints: 1,
+            maxPoints: 4,
+          },
+          {
+            draftId: "exam-1",
+            attemptId: "attempt-3",
+            kind: "EXAM",
+            earnedPoints: 8,
+            maxPoints: 10,
+          },
+        ],
+        manual: [
+          {
+            componentId: "test-1",
+            markId: "approved-mark-1",
+            kind: "TEST",
+            effectivePoints: 6,
+            maxPoints: 10,
+          },
+        ],
+      },
+    ];
+    for (const mode of [
+      "EQUAL_ASSESSMENT_BPS",
+      "POOLED_CATEGORY_POINTS",
+    ] as const) {
+      const pg = await prisma.$queryRaw<Array<{ cards: Array<unknown> }>>`
+        SELECT "build_private_official_report_cards"(
+          ${JSON.stringify(synthetic)}::jsonb, ${1}::integer,
+          ${7}::integer, ${20}::integer, ${30}::integer, ${50}::integer,
+          ${mode}, ${"HALF_UP"}, ${JSON.stringify(scale.bands)}::jsonb,
+          ${scale.decimalPlaces}::integer, ${scale.roundingMode},
+          ${scale.bandBasis}) AS "cards"`;
+      const simulated = simulatePrivateReportComposition({
+        sourcePacketId: source.id,
+        expectedStudentCount: 1,
+        students: synthetic as unknown as PrivatePacketStudent[],
+        aggregation: {
+          id: aggregation.id,
+          version: aggregation.version,
+          categoryMethod: mode,
+          precisionMode: "HALF_UP",
+        },
+        scale: {
+          id: scale.id,
+          version: scale.version,
+          bands: scale.bands as unknown as Array<{
+            code: string;
+            remark: string;
+            minBps: number;
+            maxBps: number;
+          }>,
+          decimalPlaces: scale.decimalPlaces as 0 | 1 | 2,
+          roundingMode: scale.roundingMode as "HALF_UP" | "FLOOR" | "CEILING",
+          bandBasis: scale.bandBasis as "RAW_BPS" | "DISPLAY_ROUNDED_BPS",
+        },
+      });
+      expect(pg[0]?.cards).toMatchObject(
+        simulated.students.map((item) => ({
+          ...item,
+          reportStatus: "INTERNAL_OFFICIAL_EVIDENCE_NOT_RELEASED",
+        })),
+      );
+    }
+    // A missing JSON status previously made SQL "<>" evaluate to NULL;
+    // the forward-only composer migration must reject all such variants.
+    for (const statusVariant of [undefined, null, "", "PUBLISHED"]) {
+      const malformed = [{ ...synthetic[0], reportStatus: statusVariant }];
+      await expect(prisma.$queryRaw`
+        SELECT "build_private_official_report_cards"(
+          ${JSON.stringify(malformed)}::jsonb, ${1}::integer,
+          ${7}::integer, ${20}::integer, ${30}::integer, ${50}::integer,
+          ${"POOLED_CATEGORY_POINTS"}, ${"HALF_UP"},
+          ${JSON.stringify(scale.bands)}::jsonb,
+          ${scale.decimalPlaces}::integer,
+          ${scale.roundingMode}, ${scale.bandBasis})`).rejects.toThrow();
+    }
+    await expect(prisma.$queryRaw`
+      SELECT "build_private_official_report_cards"(
+        ${"[]"}::jsonb, ${null}::integer,
+        ${7}::integer, ${20}::integer, ${30}::integer, ${50}::integer,
+        ${"POOLED_CATEGORY_POINTS"}, ${"HALF_UP"},
+        ${JSON.stringify(scale.bands)}::jsonb, ${scale.decimalPlaces}::integer,
+        ${scale.roundingMode}, ${scale.bandBasis})`).rejects.toThrow();
+    await expect(prisma.$queryRaw`
+      SELECT "round_report_fraction"(${1}::numeric, ${0}::numeric,
+        ${"HALF_UP"})`).rejects.toThrow();
+    await expect(prisma.$queryRaw`
+      SELECT "round_report_fraction"(${1}::numeric, ${3}::numeric,
+        ${null}::text)`).rejects.toThrow();
+    const bogus = [
+      {
+        studentId: pupilId,
+        reportStatus: "INTERNAL_SOURCE_ONLY_NOT_RELEASED",
+        adoptedWeightVersion: 3,
+        quizWeight: 50,
+        testWeight: 50,
+        examWeight: 0,
+        cbt: [],
+        manual: [],
+      },
+    ];
+    await expect(prisma.$queryRaw`SELECT "build_private_official_report_cards"(
+      ${JSON.stringify(bogus)}::jsonb, ${1}::integer,
+      ${3}::integer, ${50}::integer, ${50}::integer, ${0}::integer,
+      ${"POOLED_CATEGORY_POINTS"}, ${"HALF_UP"},
+      ${JSON.stringify(scale.bands)}::jsonb, ${scale.decimalPlaces}::integer,
+      ${scale.roundingMode}, ${scale.bandBasis})`).rejects.toThrow();
+  });
+
   it("revokes teacher question access when the exact assignment becomes inactive", async () => {
     await prisma.teacherClassSubjectAssignment.update({
       where: { id: assignmentId },
       data: { status: "REVOKED" },
     });
+    const additionalActiveAssignmentIds: string[] = [];
     try {
       // The teacher retains a SECOND independent exact assignment. The
       // collection remains authorized but may reveal no revoked tuple.
@@ -2159,6 +3624,28 @@ describe("Phase 7 exact-assignment private question bank", () => {
         where: { id: secondaryAssignmentId },
         data: { status: "REVOKED" },
       });
+      // Phase 8 also creates a third exact teacher assignment for frozen result
+      // evidence. Revoke every remaining active assignment for THIS synthetic
+      // school's teacher before testing collection-level loss of access.
+      const additionalActiveAssignments =
+        await prisma.teacherClassSubjectAssignment.findMany({
+          where: {
+            schoolId: schoolA,
+            membershipId: members.teacher,
+            status: "ACTIVE",
+          },
+          select: { id: true },
+        });
+      expect(additionalActiveAssignments.map(({ id }) => id)).toContain(
+        `res-review-assignment-${suffix}`,
+      );
+      for (const { id } of additionalActiveAssignments) {
+        await prisma.teacherClassSubjectAssignment.update({
+          where: { id },
+          data: { status: "REVOKED" },
+        });
+        additionalActiveAssignmentIds.push(id);
+      }
       // Removing the final exact assignment revokes the collection too.
       expect((await list("teacher")).status).toBe(404);
     } finally {
@@ -2170,6 +3657,12 @@ describe("Phase 7 exact-assignment private question bank", () => {
         where: { id: secondaryAssignmentId },
         data: { status: "ACTIVE" },
       });
+      for (const id of additionalActiveAssignmentIds) {
+        await prisma.teacherClassSubjectAssignment.update({
+          where: { id },
+          data: { status: "ACTIVE" },
+        });
+      }
     }
   });
 });

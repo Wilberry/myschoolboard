@@ -237,3 +237,19 @@ at its draft PR head. A passing checksum check
 does not validate all migration business semantics
 or replace real browser privacy/security tests.
 
+## Additional Phase 8 result-evidence migration preflight (2026-10-13)
+
+Before `npm run verify:local` on the previously specified **disposable loopback-only** test service, inspect `_prisma_migrations` for `20261013100000_phase8_result_sheet_evidence_review`. The unmerged branch corrected three invalid repeated PL/pgSQL `DECLARE` sections in this draft migration, leaving all nine variable names/types intact. An already-applied migration with a different checksum **must not be silently rewritten or replayed**. If the disposable DB was used with earlier branch artifacts, stop and inspect migration history/failed attempts first; a fresh disposable-only test instance may be provisioned according to the documented operator-controlled procedure, never by resetting a shared database.
+
+Run the newly registered structural guard in the normal `npm test`/`verify:local:guards` path before declaring local acceptance. This guard does not replace actual PostgreSQL syntax checking, data/tenant audit tests, Vitest, Prisma migration status or strict `npm audit --audit-level=high`. The existing `npm run verify:local` command order and CI workflow remain unchanged. This checkpoint did **not** execute migrations or seeding.
+
+## Phase 8 forward-only grading-scale width repair (2026-11-05)
+
+The original 47 applied migration files and SHA-256 checksums must stay
+unchanged. The proposed migration
+`20261105000000_phase8_grade_scale_band_basis_width` is migration **48**;
+only the verified disposable localhost:5434 PostgreSQL database may receive
+it during this development checkpoint. Verify the prior 47 exact applied
+checksums first, take a private synthetic DB backup, apply the new migration
+forward-only, then verify all 48 exact hashes. Do not reset or rebase existing
+migrations, treat this as fresh-bootstrap proof, or publish student results.
