@@ -1,5 +1,20 @@
 # Project Status
 
+## Phase 10 engineering analysis — 6 November 2026
+
+**COM-REQ-001 / LIB-REQ-001 / AUD-REQ-001: analysis prepared; implementation and
+Phase 10 acceptance remain outstanding.** Verified starting main:
+`d4459d827e8529ea8daddb73f7e842d8c47c12ab`, including accepted Phases 8 and 9.
+The isolated analysis records actual implementation gaps, separate notice/class
+permissions, resource rights/quarantine/storage, transactional in-app notification
+and audit architecture, additive schema sequence and work packages P10-01–08.
+First safe implementation milestone: owner-published official notices plus
+current verified recipient access and deduplicated in-app delivery (P10-01/02).
+No runtime/schema/migration/dependency changes, database writes, external sends,
+main merge or deployment are part of this analysis. Historical Phase 9 acceptance
+below remains unchanged. See
+[Phase 10 analysis and verification](../quality/PHASE10_ENGINEERING_ANALYSIS_20261106.md).
+
 ## Current Phase 9 local acceptance — 6 November 2026
 
 **FEE-REQ-001: implemented, locally accepted, and merged into development `main` via PR #108.**

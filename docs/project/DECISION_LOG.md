@@ -1,5 +1,25 @@
 # Decision Log
 
+## D-P10-001 — Isolated Phase 10 analysis and development architecture
+
+**Date:** 2026-11-06. **Status:** analysis/design decision, not implemented permission.
+Under D-023 and the owner's explicit analysis-only task, start from verified main
+`d4459d827e8529ea8daddb73f7e842d8c47c12ab` and preserve accepted Phases 1–9.
+Select separate school-notice and class-announcement authorization aggregates;
+parents never receive class announcements. Use current verified relationships,
+exact teaching/Form Teacher authority, explicit review/release and withdrawal.
+Keep catalog metadata, licensed/reviewed assets and teacher learning assignments
+separate. Default unapproved/unsafe assets and optional submissions closed.
+Mandatory in-app notifications use a PostgreSQL transactional outbox, current
+domain-owned audiences and deduplication; existing domain audit ledgers remain
+authoritative. External delivery and initial PDF distribution remain disabled.
+First implementation milestone is an official notice vertical slice plus in-app
+delivery. No new runtime capability, schema, migration or provider is activated
+by this decision. See ADR-P10-001 and
+[engineering analysis](../quality/PHASE10_ENGINEERING_ANALYSIS_20261106.md).
+Development work packages may proceed under D-023; this task authorizes a
+non-default analysis branch/draft PR, not a merge or production operation.
+
 ## D-P9-009 — Complete the manual school accounting workflow
 
 Under D-023 and the owner's explicit 2026-11-06 Phase 9 task, preserve the
