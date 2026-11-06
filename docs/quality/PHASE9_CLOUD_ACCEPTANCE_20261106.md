@@ -1,5 +1,14 @@
 # Phase 9 — Cloud integration and local acceptance, 6 November 2026
 
+**Post-acceptance update:** Phase 9 was merged into development `main` via
+[PR #108](https://github.com/Wilberry/myschoolboard/pull/108) on 6 November 2026,
+merge commit `a20108c347ae3772eb848cc28bd0f32edb2e88ad`.
+The `api.github.com` proxy restriction described below applied to the original
+Codex Cloud execution environment; PR integration was completed through the
+separately authorized GitHub connection. No production deployment or live
+financial processing was performed. The test evidence below is historical
+local acceptance evidence, not a newly executed post-merge test suite.
+
 ## Scope and history
 
 FEE-REQ-001 / T-FEE-001, roadmap Phase 9, D-023 and D-P9-009.
@@ -172,13 +181,13 @@ acceptance. All eleven feature flags remain OFF in `.env.example`.
   authorized publishing verified branch/commit details for a separate PR step if
   API access remains unavailable. Do not bypass this with a direct main push.
 
-**Local Phase 9 acceptance: PASS. Development PR integration: pending external
-GitHub workflow. Production deployment: not performed or authorized.**
-At the last remote verification, `main` remains
-`83676cf9dcae2d416df991956e3dfa411b8ac6a0`. No Phase 9 merge SHA exists yet.
-See the final verification addendum for committed implementation and published
-branch SHAs. No GitHub Actions, forced push, existing-data reset or production
-operation occurred.
+**Local Phase 9 acceptance: PASS. Development PR integration: COMPLETED via PR #108.**
+The normal merge commit is `a20108c347ae3772eb848cc28bd0f32edb2e88ad`.
+Pre-merge `main` was `83676cf9dcae2d416df991956e3dfa411b8ac6a0`.
+No production deployment or live financial processing was performed.
+See the final verification addendum for tested implementation and published
+branch SHAs. No GitHub Actions execution, force-push, existing-data reset or
+production operation occurred.
 
 ## Final verification addendum
 
@@ -194,6 +203,7 @@ implementation was in the working tree and is now preserved in `87e2bb5...`.
 It is not represented as a browser execution against a previously nonexistent
 commit. Subsequent evidence/PR-description commits change documentation only.
 
-The branch is ready for the normal development PR workflow on local acceptance.
-The remaining integration step is external GitHub PR creation/review/merge;
-no Phase 9 main merge has been performed, and no merge SHA is claimed.
+The branch passed the recorded local acceptance criteria. The normal GitHub
+PR workflow subsequently completed as PR #108, merging Phase 9 into development
+`main` at `a20108c347ae3772eb848cc28bd0f32edb2e88ad`.
+Remaining operational limitations above still apply; this was not a production release.
