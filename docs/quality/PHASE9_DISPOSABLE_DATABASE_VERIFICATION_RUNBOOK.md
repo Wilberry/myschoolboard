@@ -1,5 +1,23 @@
 # Phase 9 — Confirmed Disposable Database Verification Runbook
 
+## Cloud execution notes — 6 November 2026
+
+The live read-only psql preflight now passes discrete PGHOST/PGPORT/PGDATABASE/
+PGUSER/PGPASSWORD values after validating the URL and clearing inherited PG*
+options. Passing a URI as PGDATABASE previously selected a Unix socket; mocked
+tests now verify the actual discrete contract. Credentials never appear in argv.
+All eleven flags must be off for attestation; tests enable scoped flags only after
+live nonce verification. See the current checkpoint for container identity and
+actual results. Rust Prisma downloads remain blocked by the running proxy; use
+only the documented official in-process JS/WASM generation and explicit SQL
+execution where supported, and do not report Prisma CLI deploy as passed.
+`node scripts/verify-phase9-fresh-bootstrap.mjs` creates a brand-new unexposed
+tmpfs PostgreSQL container and applies/verifies all 58 exact migration checksums.
+It accepts no existing database URL or volume and never resets a database.
+Browser runner requires PHASE9_BROWSER_FIXTURE_FILE from the integration suite,
+local display, Chromium, Playwright and axe. Each retry uses a fresh synthetic
+fixture if financial decisions or terminal revocations have already occurred.
+
 **Branch:** `feature/phase9-fees-payments-foundation`  
 **Scope:** only LOCAL synthetic test PostgreSQL; no live banking, shared DB,
 production or Phase 8 verification worktree.  

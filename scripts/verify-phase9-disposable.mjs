@@ -11,8 +11,7 @@ import { assertLocalVerificationTarget } from "./verify-local.mjs";
  * Never creates or mutates a DB. Never prints passwords or the nonce.
  * Actual migrations and seed run ONLY after this read-only check passes.
  */
-const expectedTable =
-  'public."myschoolboard_disposable_verification_marker"';
+const expectedTable = 'public."myschoolboard_disposable_verification_marker"';
 const readOnlySql = `SELECT "nonce" FROM ${expectedTable}
   WHERE "id"='phase9-local'
     AND current_database()='myschoolboard_test'`;
@@ -26,6 +25,10 @@ export function assertPhase9Target(environment) {
   // even if an operator previously tested a feature in this terminal.
   for (const flag of [
     "PHASE9_FEE_WRITE_ENABLED",
+    "PHASE9_FINANCIAL_READ_ENABLED",
+    "PHASE9_ACCOUNT_RELEASE_ENABLED",
+    "PHASE9_RECEIPT_ENABLED",
+    "PHASE9_EVIDENCE_UPLOAD_ENABLED",
     "PHASE9_PAYMENT_EVIDENCE_ENABLED",
     "PHASE9_PAYMENT_REVIEW_ENABLED",
     "PHASE9_MANUAL_ALLOCATION_ENABLED",
@@ -34,12 +37,16 @@ export function assertPhase9Target(environment) {
     "PHASE9_EFFECTIVE_WAIVER_ENABLED",
   ]) {
     if (environment[flag] === "true") {
-      throw new Error("Phase 9 verification requires all finance writes disabled");
+      throw new Error(
+        "Phase 9 verification requires all finance writes disabled",
+      );
     }
   }
 
   if (!tokenPattern.test(environment.PHASE9_TEST_DATABASE_NONCE ?? "")) {
-    throw new Error("Phase 9 requires a 32-128 character lowercase hex disposable DB nonce");
+    throw new Error(
+      "Phase 9 requires a 32-128 character lowercase hex disposable DB nonce",
+    );
   }
 
   // Reject libpq/Prisma URI options that can redirect away from the host
@@ -57,7 +64,9 @@ export function assertPhase9Target(environment) {
     [...url.searchParams.keys()].length !== 1 ||
     url.searchParams.get("schema") !== "public"
   ) {
-    throw new Error("Phase 9 test database URI must contain only schema=public");
+    throw new Error(
+      "Phase 9 test database URI must contain only schema=public",
+    );
   }
 
   const connect = new URL(url.toString());
@@ -89,10 +98,14 @@ export function verifyPhase9DatabaseIdentity(environment, spawn = spawnSync) {
   // NOTE: no credential-bearing URI in argv, no shell, no SQL parameters.
   // The random expected nonce is compared ONLY in this process.
   const result = spawn(
-    "psql", ["-X", "-w", "-q", "-t", "-A", "-v", "ON_ERROR_STOP=1", "-c", readOnlySql],
+    "psql",
+    ["-X", "-w", "-q", "-t", "-A", "-v", "ON_ERROR_STOP=1", "-c", readOnlySql],
     {
-      env: cleanEnvironment, encoding: "utf8", shell: false,
-      timeout: 10_000, maxBuffer: 4096,
+      env: cleanEnvironment,
+      encoding: "utf8",
+      shell: false,
+      timeout: 10_000,
+      maxBuffer: 4096,
     },
   );
   if (result.error || result.signal || result.status !== 0) {
@@ -106,27 +119,39 @@ export function verifyPhase9DatabaseIdentity(environment, spawn = spawnSync) {
 
 /** The existing guarded runner retains its exact CI command order.
  * Do not enable shared/production DB or any Phase 9 finance-write flags. */
-export function runVerifiedPhase9Local(environment = process.env,
-  spawn = spawnSync) {
+export function runVerifiedPhase9Local(
+  environment = process.env,
+  spawn = spawnSync,
+) {
   verifyPhase9DatabaseIdentity(environment, spawn);
   const npm = process.platform === "win32" ? "npm.cmd" : "npm";
   const root = fileURLToPath(new URL("../", import.meta.url));
   const result = spawn(npm, ["run", "verify:local"], {
-    cwd: root, env: environment, shell: false, stdio: "inherit",
+    cwd: root,
+    env: environment,
+    shell: false,
+    stdio: "inherit",
   });
   if (result.error || result.signal || result.status !== 0) {
     throw new Error("Phase 9 cumulative verification failed");
   }
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
   try {
     const args = process.argv.slice(2);
     if (args.length === 1 && args[0] === "--help") {
-      console.info("Usage: npm run verify:phase9:preflight (read-only DB attestation) or npm run verify:phase9:local (attest, then existing local CI).");
+      console.info(
+        "Usage: npm run verify:phase9:preflight (read-only DB attestation) or npm run verify:phase9:local (attest, then existing local CI).",
+      );
     } else if (args.length === 1 && args[0] === "--preflight") {
       verifyPhase9DatabaseIdentity(process.env);
-      console.info("Phase 9 disposable database attestation passed (read-only).");
+      console.info(
+        "Phase 9 disposable database attestation passed (read-only).",
+      );
     } else if (args.length === 0) {
       runVerifiedPhase9Local();
     } else {
@@ -134,7 +159,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     }
   } catch (error) {
     // Do NOT expose the URL, password, nonce, database schema or raw psql stderr.
-    console.error(error instanceof Error ? error.message : "Phase 9 preflight failed");
+    console.error(
+      error instanceof Error ? error.message : "Phase 9 preflight failed",
+    );
     process.exitCode = 1;
   }
 }

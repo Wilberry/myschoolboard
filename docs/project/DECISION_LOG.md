@@ -1,5 +1,24 @@
 # Decision Log
 
+## D-P9-009 — Complete the manual school accounting workflow
+
+Under D-023 and the owner's explicit 2026-11-06 Phase 9 task, preserve the
+existing remote foundation and merge accepted Phase 8 main into a separate
+integration branch. Complete FEE-REQ-001 using truthful manually reconciled
+accounting: exact balances, independent decisions, immutable school receipts,
+explicit recipient publication and verified current relationships. Images support
+claims and do not prove receipt of funds. Source reversal is full, append-only,
+and does not transfer money; correction proposals remain advisory. No production
+release, live provider, refund, bank API or sensitive-data policy expansion is
+inferred. Owner/admin separation and existing waiver caps remain mandatory.
+All new reads/writes remain default OFF; local acceptance uses independently
+attested disposable PostgreSQL and isolated synthetic identities. Accepted main
+historical migrations plus the seven original Phase 9 migrations are preserved;
+new work uses forward migrations only. Normal development PR integration is
+authorized by the user once mandatory local checks pass; GitHub Actions must
+not be invoked. Actual integration status is reported separately from local results.
+See ADR-P9-009 and the Phase 9 cloud acceptance checkpoint.
+
 ## D-062 — Phase 8 development-integration scope for this cloud task
 
 The owner's 2026-11-06 task explicitly authorizes completing Phase 8, reconciling

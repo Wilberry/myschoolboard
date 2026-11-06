@@ -1,5 +1,7 @@
 # Documentation Index
 
+Current Phase 9 implementation and local results: [cloud acceptance](quality/PHASE9_CLOUD_ACCEPTANCE_20261106.md).
+
 This folder is the canonical documentation set for the MySchoolBoard project.
 
 ## Documentation map

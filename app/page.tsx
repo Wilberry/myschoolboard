@@ -163,6 +163,23 @@ async function HomeContent() {
                       Published report cards
                     </Link>
                   )}
+                  {(role === "SCHOOL_ADMIN" ||
+                    role === "SCHOOL_SUPER_ADMIN") && (
+                    <Link
+                      className="school-link"
+                      href={`/schools/${school.id}/finance`}
+                    >
+                      Fees and payments
+                    </Link>
+                  )}
+                  {(role === "STUDENT" || role === "PARENT") && (
+                    <Link
+                      className="school-link"
+                      href={`/schools/${school.id}/my-fees`}
+                    >
+                      School fee records
+                    </Link>
+                  )}
                   {canShowStudentLessonsLink(
                     school.id,
                     role,

@@ -1,5 +1,36 @@
 # Architecture Decision Records
 
+## ADR-P9-009 — Exact manual accounts, explicit releases and private evidence
+
+**Status:** implemented; local acceptance recorded in the Phase 9 cloud checkpoint.
+
+Keep the existing immutable school-locked foundation. Derive accounting from an
+exact NUMERIC view, with values serialized as minor-unit strings. Add append-only
+FeeAccountRelease versions and immutable FeeReceipt snapshots. SQL independently
+rechecks the real active actor, same-school source, replay key, reviewed claim,
+independent submitter/reviewer and reversal state. A current SQL predicate joins
+all recipient relationship and active enrollment facts for each result row.
+Withdrawal and identity revocation never restore previously revoked identities.
+Receipts retain historical snapshots and acquire a derived reversed status;
+no original charge, receipt or applied migration is rewritten.
+
+Private supporting images use a separately gated, bounded multipart endpoint,
+strict decoding and normalized single-frame PNG bytes via locked sharp. SQL owns
+immutable same-school audit metadata. Server-generated UUID filenames never use
+caller paths. Storage requires private ownership/modes outside public assets;
+downloads use no-follow opens, verify hash/size and recheck current authorization
+after I/O. An ambiguous transaction outcome preserves potentially committed files;
+it never deletes a file when commit status cannot be established. This is a
+single-node private-storage adapter; multi-node/object storage requires a later
+scoped adapter and retention/backup design before production deployment.
+
+The browser uses abort/epoch protection, synchronous concealment, periodic current
+authorization and an explicit fresh-read print lease. No-store applies to HTML,
+APIs, CSV and images. Real exported paper/PDF is outside session revocation.
+Administrative lists are bounded; report aggregation and per-obligation balances
+cover the entire ledger. All new flags default off. No bank settlement, provider
+certification, automatic image verification or actual refund is represented.
+
 ## ADR-047 — Immutable recipient release ledger and current relationship reader
 
 A new forward migration adds publication, withdrawal and guardian acknowledgment

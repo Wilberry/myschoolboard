@@ -1,5 +1,63 @@
 # Fees and Payments
 
+## Current Phase 9 implementation — 6 November 2026
+
+The existing Phase 9 foundation is preserved and reconciled with accepted Phases 1–8.
+This section supersedes the historical AUTHORED/UNVERIFIED delivery notes below;
+those notes describe the original checkpoints, not the current implementation.
+
+- Owner-only category/revision configuration and explicit enrolled-pupil charges;
+  original charges and all subsequent decisions remain immutable.
+- Separate submitting School Administrator and independently reviewing School
+  Super Admin; uploading evidence never establishes bank settlement or reduces debt.
+- Bounded PNG/JPEG uploads: declared/decoded format, size and pixel checks, fresh
+  PNG re-encoding with metadata removed, private owner-only filesystem permissions,
+  immutable tenant metadata, integrity checked downloads restricted to the current
+  school owner or original current submitting administrator. SVG, PDF, HTML, remote
+  URLs and arbitrary paths are rejected. This is image inspection/normalization,
+  not a claim of antivirus certification or fraud detection.
+- Verified manual claims are allocated once. Approved WAIVER proposals require an
+  explicit separate application. CORRECTION_PROPOSAL remains an advisory review;
+  no arbitrary repricing, refund or waiver reversal is silently inferred.
+- Exact PostgreSQL NUMERIC sums produce original charge, applied waiver, gross
+  allocations, approved full reversals, net allocations and remaining balance.
+  Pending, rejected and verified-but-unallocated claims do not reduce balance.
+- Owner-issued immutable receipts acknowledge independently reviewed manual
+  allocations; later approved reversals visibly invalidate their accounting effect.
+  Receipts never certify provider settlement or a bank refund.
+- Explicit append-only publication/withdrawal and four visibility policies:
+  STAFF_ONLY, GUARDIAN_ONLY, STUDENT_ONLY, STUDENT_AND_GUARDIAN. Actual current
+  verified identities, relationships, school, membership and enrollment authorize
+  every read. Older debt remains visible after promotion while the pupil retains
+  an active enrollment in this school. No teacher, foreign-school or unverified
+  recipient access is granted. Revocation takes effect on the next read.
+- Owner finance reports aggregate all obligations separately by period and currency;
+  CSV cells defend against formulas. Worklists show at most 200 recent records;
+  configuration/enrollment options at most 600. Financial totals are not limited
+  to those worklist sizes. Admins see submission targets and their own histories;
+  they cannot inspect owner reports or other administrators' evidence.
+- `/schools/:schoolId/finance` and `/my-fees` provide accessible forms, exact minor
+  unit amounts, approved receipts, balances and guarded printing. Blur, hidden
+  documents, page lifecycle, sign-out, stale requests and failed refresh conceal
+  records. Foreground access is rechecked every 10 seconds with a 5-second timeout;
+  printing requires a fresh authorized read. Already exported paper/PDF cannot be recalled.
+
+New GET routes: fee-accounts, fee-receipts, finance-reports (optional format=csv),
+finance-workspace, my-financial-records. New POST routes: fee-account-releases,
+fee-receipts, payment-evidence-attachments. Private image GET uses
+payment-evidence-attachments/:attachmentId. All are under
+`/api/schools/:schoolId/`, strictly validate parameters and use private no-store
+responses. No public verification link or provider callback is introduced.
+
+All eleven finance feature flags default OFF. New flags are
+PHASE9_FINANCIAL_READ_ENABLED, PHASE9_ACCOUNT_RELEASE_ENABLED,
+PHASE9_RECEIPT_ENABLED, PHASE9_EVIDENCE_UPLOAD_ENABLED. Uploads also require an
+absolute private PHASE9_EVIDENCE_STORAGE_DIR outside public/.next/.git with
+0700 directory and 0600 file permissions. Missing configuration fails closed.
+New forward migrations add account releases, exact balance view, school receipts
+and private attachment metadata; accepted main migration bytes are unchanged.
+See [current local acceptance](../quality/PHASE9_CLOUD_ACCEPTANCE_20261106.md).
+
 ## Phase 9 internal applied waivers (AUTHORED, NOT VERIFIED)
 
 - A separately authorized active same-school School Super Admin may

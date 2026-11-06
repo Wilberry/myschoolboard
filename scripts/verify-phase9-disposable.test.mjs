@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  assertPhase9Target, verifyPhase9DatabaseIdentity,
+  assertPhase9Target,
+  verifyPhase9DatabaseIdentity,
   runVerifiedPhase9Local,
 } from "./verify-phase9-disposable.mjs";
 
@@ -31,6 +32,10 @@ test("rejects wrong/missing DB target, unsafe libpq options and weak attestation
     { PHASE9_TEST_DATABASE_NONCE: "g".repeat(48) },
     { PHASE9_TEST_DATABASE_NONCE: "f".repeat(16) },
     { PHASE9_FEE_WRITE_ENABLED: "true" },
+    { PHASE9_ACCOUNT_RELEASE_ENABLED: "true" },
+    { PHASE9_RECEIPT_ENABLED: "true" },
+    { PHASE9_EVIDENCE_UPLOAD_ENABLED: "true" },
+    { PHASE9_FINANCIAL_READ_ENABLED: "true" },
     { PHASE9_PAYMENT_EVIDENCE_ENABLED: "true" },
     { PHASE9_MANUAL_REVERSAL_ENABLED: "true" },
     { PHASE9_EFFECTIVE_WAIVER_ENABLED: "true" },
@@ -38,22 +43,42 @@ test("rejects wrong/missing DB target, unsafe libpq options and weak attestation
     { TEST_DATABASE_DISPOSABLE: "0" },
     { DATABASE_URL: undefined },
     { TEST_DATABASE_URL: undefined },
-    { TEST_DATABASE_URL: uri + "&host=shared.example", DATABASE_URL: uri + "&host=shared.example" },
-    { TEST_DATABASE_URL: uri + "&schema=public", DATABASE_URL: uri + "&schema=public" },
+    {
+      TEST_DATABASE_URL: uri + "&host=shared.example",
+      DATABASE_URL: uri + "&host=shared.example",
+    },
+    {
+      TEST_DATABASE_URL: uri + "&schema=public",
+      DATABASE_URL: uri + "&schema=public",
+    },
     { TEST_DATABASE_URL: uri + "#fragment", DATABASE_URL: uri + "#fragment" },
-    { TEST_DATABASE_URL: uri.replace("synthetic_ci_password", ""), DATABASE_URL: uri.replace("synthetic_ci_password", "") },
-    { TEST_DATABASE_URL: uri.replace("localhost", "shared.example"), DATABASE_URL: uri.replace("localhost", "shared.example") },
+    {
+      TEST_DATABASE_URL: uri.replace("synthetic_ci_password", ""),
+      DATABASE_URL: uri.replace("synthetic_ci_password", ""),
+    },
+    {
+      TEST_DATABASE_URL: uri.replace("localhost", "shared.example"),
+      DATABASE_URL: uri.replace("localhost", "shared.example"),
+    },
   ];
   for (const changed of invalid) {
-    assert.throws(() => assertPhase9Target({ ...base, ...changed }), JSON.stringify(changed));
+    assert.throws(
+      () => assertPhase9Target({ ...base, ...changed }),
+      JSON.stringify(changed),
+    );
   }
 });
 
 test("read-only psql attests true DB marker without touching schema or exposing secrets", () => {
   const calls = [];
-  const env = { ...base, PGHOST: "shared.example", PGPORT: "5432",
-    PGSERVICE: "sneaky", PGOPTIONS: "-c default_transaction_read_only=off",
-    PGPASSWORD: "ignore-me" };
+  const env = {
+    ...base,
+    PGHOST: "shared.example",
+    PGPORT: "5432",
+    PGSERVICE: "sneaky",
+    PGOPTIONS: "-c default_transaction_read_only=off",
+    PGPASSWORD: "ignore-me",
+  };
   verifyPhase9DatabaseIdentity(env, (name, args, options) => {
     calls.push({ name, args, options });
     return { status: 0, stdout: nonce + "\n" };
@@ -66,17 +91,28 @@ test("read-only psql attests true DB marker without touching schema or exposing 
   assert.ok(args.includes("-w"));
   assert.ok(args.includes("ON_ERROR_STOP=1"));
   assert.ok(args.includes("-c"));
-  assert.equal(args.some(a => a.includes("synthetic_ci_password")), false);
-  assert.equal(args.some(a => a.includes(nonce)), false);
+  assert.equal(
+    args.some((a) => a.includes("synthetic_ci_password")),
+    false,
+  );
+  assert.equal(
+    args.some((a) => a.includes(nonce)),
+    false,
+  );
   assert.equal(options.env.PGDATABASE, "myschoolboard_test");
   assert.equal(options.env.PGDATABASE.includes("schema=public"), false);
   assert.equal(options.env.PGHOST, "localhost");
   assert.equal(options.env.PGPORT, "5434");
   assert.equal(options.env.PGSERVICE, undefined);
-  assert.equal(options.env.PGPASSWORD, new URL(base.TEST_DATABASE_URL).password);
+  assert.equal(
+    options.env.PGPASSWORD,
+    new URL(base.TEST_DATABASE_URL).password,
+  );
   assert.equal(options.env.PGUSER, "myschoolboard");
   assert.ok(options.env.PGOPTIONS.includes("default_transaction_read_only=on"));
-  assert.ok(args.join(" ").includes('myschoolboard_disposable_verification_marker'));
+  assert.ok(
+    args.join(" ").includes("myschoolboard_disposable_verification_marker"),
+  );
 });
 
 test("mismatched, missing, failed or interrupted psql identity never proceeds", () => {
@@ -102,12 +138,19 @@ test("cumulative npm runner starts only AFTER authenticated read-only DB check",
     if (name === "psql") return { status: 0, stdout: nonce + "\n" };
     return { status: 0 };
   });
-  assert.deepEqual(calls.map(c => c.name), ["psql", process.platform === "win32" ? "npm.cmd" : "npm"]);
+  assert.deepEqual(
+    calls.map((c) => c.name),
+    ["psql", process.platform === "win32" ? "npm.cmd" : "npm"],
+  );
   assert.deepEqual(calls[1].args, ["run", "verify:local"]);
   let count = 0;
-  assert.throws(() => runVerifiedPhase9Local(base, () => {
-    count++;
-    return { status: 0, stdout: "mismatch" };
-  }), /nonce mismatch/);
+  assert.throws(
+    () =>
+      runVerifiedPhase9Local(base, () => {
+        count++;
+        return { status: 0, stdout: "mismatch" };
+      }),
+    /nonce mismatch/,
+  );
   assert.equal(count, 1, "npm must not run after an invalid DB attestation");
 });

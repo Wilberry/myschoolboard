@@ -1,5 +1,20 @@
 # Acceptance Criteria
 
+## FEE-REQ-001 current manual-accounting acceptance — 6 November 2026
+
+The historical authored-only notes below are superseded for implemented manual
+school accounting by the current checkpoint. Required checks include actual
+PostgreSQL trigger/immutability/concurrency and tenant tests; independent review;
+no credit from an uploaded/pending/rejected/unallocated claim; no duplicated
+allocation, waiver, receipt or replay; exact balances and currency-separated
+reports; visible reversed receipt status; strict private image validation;
+explicit publication/withdrawal; verified current student/guardian access;
+revocation, stale-response/sign-out concealment, print privacy and accessibility.
+Provider settlement, live transfers and actual refunds are outside the accepted
+manual workflow and must never be claimed. Approved correction proposals remain
+advisory; applied waivers require a separate explicit event. Full execution
+results and integration status: [Phase 9 cloud acceptance](../quality/PHASE9_CLOUD_ACCEPTANCE_20261106.md).
+
 ## Phase 9 internal effective fee waiver application (AUTHORED; NOT TESTED)
 
 - A signed-in same-school active School Super Admin may apply

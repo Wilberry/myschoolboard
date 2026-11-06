@@ -1,5 +1,18 @@
 # Permissions Matrix
 
+## Phase 9 current financial access
+
+School Super Admin alone configures/charges, independently reviews claims,
+allocates, applies approved waivers, approves full reversals, issues receipts,
+controls publication and reads reports. School Admin submits reference/image
+claims and adjustment/reversal requests, and reads only their own evidence and
+original school charge submission targets. Reviewer must differ from the original
+submitter. Current verified students/guardians read only explicitly released
+accounts/receipts matching their active relationship and chosen visibility.
+No teacher, platform cross-tenant or unverified financial access is implied.
+Private bank images are never available to student/guardian recipients.
+Every endpoint and SQL projection rechecks active school and membership.
+
 ## Phase 9 internal applied waivers (AUTHORED, NOT VERIFIED)
 
 The current active same-school `SCHOOL_SUPER_ADMIN` alone may

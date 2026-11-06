@@ -30,7 +30,9 @@
     "verify:browser:phase3:fixtures": "node --import tsx scripts/prepare-phase3-browser-fixture.mjs",
     "verify:phase9:preflight": "node scripts/verify-phase9-disposable.mjs --preflight",
     "verify:phase9:local": "node scripts/verify-phase9-disposable.mjs",
-    "verify:phase9:static": "node --test scripts/verify-phase9-disposable.test.mjs scripts/phase9-verification-guard.test.mjs scripts/phase9-fee-configuration-guard.test.mjs scripts/phase9-payment-evidence-guard.test.mjs scripts/phase9-manual-allocation-guard.test.mjs scripts/phase9-manual-reversal-guard.test.mjs scripts/phase9-fee-adjustment-guard.test.mjs scripts/phase9-effective-waiver-guard.test.mjs"
+    "verify:phase9:static": "node --test scripts/verify-phase9-disposable.test.mjs scripts/phase9-verification-guard.test.mjs scripts/phase9-fee-configuration-guard.test.mjs scripts/phase9-payment-evidence-guard.test.mjs scripts/phase9-manual-allocation-guard.test.mjs scripts/phase9-manual-reversal-guard.test.mjs scripts/phase9-fee-adjustment-guard.test.mjs scripts/phase9-effective-waiver-guard.test.mjs",
+    "verify:phase9:browser": "node scripts/verify-phase9-browser.mjs",
+    "verify:phase9:empty-bootstrap": "node scripts/verify-phase9-fresh-bootstrap.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",
@@ -40,6 +42,7 @@
     "pg": "8.23.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "sharp": "0.35.5",
     "zod": "^4.6.7"
   },
   "devDependencies": {

@@ -2,16 +2,28 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const source = path => readFileSync(new URL(path, import.meta.url), "utf8");
+const source = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const schema = source("../prisma/schema.prisma");
-const sql = source("../prisma/migrations/20261016120000_phase9_fee_configuration_foundation/migration.sql");
+const sql = source(
+  "../prisma/migrations/20261016120000_phase9_fee_configuration_foundation/migration.sql",
+);
 const service = source("../src/modules/fees/fee-configuration-service.ts");
-const categories = source("../app/api/schools/[schoolId]/fee-categories/route.ts");
-const structures = source("../app/api/schools/[schoolId]/fee-structures/route.ts");
-const integration = source("../src/modules/fees/fee-configuration.integration.test.ts");
-const obligationSql = source("../prisma/migrations/20261016130000_phase9_fee_obligation_ledger/migration.sql");
+const categories = source(
+  "../app/api/schools/[schoolId]/fee-categories/route.ts",
+);
+const structures = source(
+  "../app/api/schools/[schoolId]/fee-structures/route.ts",
+);
+const integration = source(
+  "../src/modules/fees/fee-configuration.integration.test.ts",
+);
+const obligationSql = source(
+  "../prisma/migrations/20261016130000_phase9_fee_obligation_ledger/migration.sql",
+);
 const obligations = source("../src/modules/fees/fee-obligation-service.ts");
-const obligationRoute = source("../app/api/schools/[schoolId]/fee-obligations/route.ts");
+const obligationRoute = source(
+  "../app/api/schools/[schoolId]/fee-obligations/route.ts",
+);
 
 test("Phase 9 fee structures are school-scoped and append-only, not debt or payment", () => {
   for (const model of ["FeeCategory", "FeeStructureRevision"]) {
@@ -25,8 +37,14 @@ test("Phase 9 fee structures are school-scoped and append-only, not debt or paym
   assert.match(sql, /"amountMinor" BIGINT NOT NULL/);
   assert.match(sql, /"amountMinor">0/);
   assert.match(sql, /"currency" ~ '\^\[A-Z\]\{3\}\$'/);
-  assert.match(schema, /@@unique\(\[schoolId, categoryId, sessionId, termId, scope, scopeId, version\]/);
-  assert.match(sql, /"scope"='SCHOOL'[\s\S]*?"scope"='SECTION'[\s\S]*?"scope"='CLASS'/);
+  assert.match(
+    schema,
+    /@@unique\(\[schoolId, categoryId, sessionId, termId, scope, scopeId, version\]/,
+  );
+  assert.match(
+    sql,
+    /"scope"='SCHOOL'[\s\S]*?"scope"='SECTION'[\s\S]*?"scope"='CLASS'/,
+  );
   for (const name of [
     "FeeCategory_actor_fkey",
     "FeeStructureRevision_actor_fkey",
@@ -45,7 +63,10 @@ test("Phase 9 fee structures are school-scoped and append-only, not debt or paym
   assert.match(sql, /"version":=next_version/);
   assert.match(sql, /prevent_lesson_note_history_mutation/);
   assert.match(sql, /prevent_lesson_note_history_truncate/);
-  assert.doesNotMatch(schema.slice(schema.indexOf("model FeeCategory")), /model (PaymentRecord|Receipt) \{/);
+  assert.doesNotMatch(
+    schema.slice(schema.indexOf("model FeeCategory")),
+    /model (PaymentRecord|Receipt) \{/,
+  );
 });
 test("Fee configuration routes and service use session actor and cannot publish payments", () => {
   assert.match(service, /auth\.api\.getSession/);
@@ -72,7 +93,10 @@ test("Fee configuration routes and service use session actor and cannot publish 
 
 test("School-enrollment fee obligations preserve exact debt and cannot become a payment", () => {
   assert.match(schema, /model FeeObligation \{/);
-  assert.match(schema, /@@unique\(\[schoolId, studentId, sessionId, termId, categoryId\]/);
+  assert.match(
+    schema,
+    /@@unique\(\[schoolId, studentId, sessionId, termId, categoryId\]/,
+  );
   assert.match(schema, /@@unique\(\[schoolId, requestKey\]/);
   for (const fk of [
     "FeeObligation_student_fkey",
@@ -85,8 +109,11 @@ test("School-enrollment fee obligations preserve exact debt and cannot become a 
     assert.ok(schema.includes('map: "' + fk + '"'));
     assert.ok(obligationSql.includes('"' + fk + '"'));
   }
-  for (const name of ["FeeObligation_validate",
-    "FeeObligation_immutable", "FeeObligation_no_truncate"]) {
+  for (const name of [
+    "FeeObligation_validate",
+    "FeeObligation_immutable",
+    "FeeObligation_no_truncate",
+  ]) {
     assert.ok(obligationSql.includes('"' + name + '"'), name);
   }
   assert.match(obligationSql, /"School" school[\s\S]*?FOR UPDATE/);
@@ -95,7 +122,10 @@ test("School-enrollment fee obligations preserve exact debt and cannot become a 
   assert.match(obligationSql, /source_revision\."scope"='SCHOOL'/);
   assert.match(obligationSql, /source_revision\."scope"='SECTION'/);
   assert.match(obligationSql, /source_revision\."scope"='CLASS'/);
-  assert.match(obligationSql, /NEW\."amountMinor":=source_revision\."amountMinor"/);
+  assert.match(
+    obligationSql,
+    /NEW\."amountMinor":=source_revision\."amountMinor"/,
+  );
   assert.match(obligationSql, /NEW\."currency":=source_revision\."currency"/);
   assert.match(obligationSql, /newer\."version">revision\."version"/);
   assert.match(obligationSql, /"FeeObligation_student_category_period_key"/);
@@ -103,11 +133,20 @@ test("School-enrollment fee obligations preserve exact debt and cannot become a 
   assert.match(service, /PHASE9_FEE_WRITE_ENABLED/);
   assert.match(obligations, /requestKey: z\.string\(\)\.uuid\(\)/);
   assert.match(obligations, /replay: true/);
-  assert.match(obligations, /if \(allowed\.length !== 1\) throw new FeeError\("NOT_FOUND"\)/);
+  assert.match(
+    obligations,
+    /if \(allowed\.length !== 1\) throw new FeeError\("NOT_FOUND"\)/,
+  );
   assert.match(obligations, /m\."userId"=\$\{userId\}/);
-  assert.match(obligations, /BigInt|amountMinor: record\.amountMinor\.toString/);
+  assert.match(
+    obligations,
+    /BigInt|amountMinor: record\.amountMinor\.toString/,
+  );
   assert.match(obligationRoute, /"Cache-Control": "private, no-store"/);
-  assert.doesNotMatch(obligationRoute, /export async function (PATCH|PUT|DELETE)/);
+  assert.doesNotMatch(
+    obligationRoute,
+    /export async function (PATCH|PUT|DELETE)/,
+  );
   assert.match(integration, /safe replay never fabricates payment/);
   assert.match(integration, /default-off/);
 });
