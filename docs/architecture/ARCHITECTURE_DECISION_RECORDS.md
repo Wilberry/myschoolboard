@@ -1,5 +1,32 @@
 # Architecture Decision Records
 
+## ADR-P10-001 — Separate communication channels and domain-owned in-app delivery
+
+**Status:** selected for development design; not implemented or runtime-verified.
+**Decision:** D-P10-001; COM-REQ-001, LIB-REQ-001, AUD-REQ-001.
+Extend the current modular Next.js/PostgreSQL application with separate notice
+and class-announcement aggregates and explicit capabilities. Generic academic,
+report or child permissions do not authorize these channels. Keep immutable
+revisions/review/release/withdrawal and exact current tenant/identity/authority
+predicates. Library catalog metadata, rights evidence, quarantined assets,
+resource releases and teacher learning assignments remain distinct objects.
+Use an immutable DomainEvent plus a mutable leased OutboxDispatch projection,
+append-only attempts and uniquely keyed per-member/context in-app delivery.
+Atomically capture source transitions and events; reauthorize resolution, inbox,
+counts, navigation and files. Read receipts cannot acknowledge source records.
+Reuse source-specific audit ledgers; index them without rewriting history.
+Prefer local deterministic workers and a private storage interface over a new
+broker/provider dependency. PDF and external messaging stay disabled until their
+own verified controls exist. All changes will use forward additive migrations
+and default-off flags; none is authored/applied in this analysis.
+Consequences: audience adapters and SQL integrity tests are required per source;
+privacy and retries cannot be delegated to UI filtering or a frozen recipient
+list. Existing school-cleanup/DB-owner caveats remain explicit. Production storage,
+scanner, retention and delivery SLOs remain separate decisions, without blocking
+notices and mandatory in-app engineering.
+Full models, API contracts, boundaries, sequencing and executable acceptance:
+[Phase 10 engineering analysis](../quality/PHASE10_ENGINEERING_ANALYSIS_20261106.md).
+
 ## ADR-P9-009 — Exact manual accounts, explicit releases and private evidence
 
 **Status:** implemented; local acceptance recorded in the Phase 9 cloud checkpoint.

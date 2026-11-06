@@ -503,11 +503,11 @@ The matrix below links requirements to the canonical domains and expected roadma
 
 | RES-REQ-001 | Results and report cards | Teacher, HM, Principal, School Super Admin | Approve and publish report cards | ResultSheet, ReportCard | Results area | T-RES-001 | Phase 8 | Specified |
 | FEE-REQ-001 | Existing fee configuration, obligations, review/allocation, waiver/reversal foundation plus exact accounts, school receipts, private images and explicit recipient releases | Owner review/configuration/reports; Admin own submissions; current verified student/guardian published accounts only | School locks, strict input, exact minor units, immutable history, independent actors, idempotency and current tenant/identity authorization | Existing ledgers plus FeeAccountRelease, FeeReceipt, PaymentEvidenceAttachment and FeeAccountBalance view; 58 migrations verified | Private no-store staff/recipient pages and APIs; eleven default-OFF flags | T-FEE-001: 207 guards, 414 Vitest tests, 11 real Chromium scenarios, exact checksums/fresh bootstrap, accessibility/privacy/concurrency, build/lint/types/audit PASS; see PHASE9_CLOUD_ACCEPTANCE_20261106.md | Phase 9 | Locally accepted manual school accounting; PR pending GitHub API; no live provider, refund or production release |
-| COM-REQ-001 | Communication | School admin, Teacher, Parent | Notice board and class announcements | Notice, Announcement | Communication UI | T-COM-001 | Phase 10 | Specified |
-| LIB-REQ-001 | Library | Teacher, Student, Parent | Resource access | LibraryResource | Library portal | T-LIB-001 | Phase 10 | Specified |
+| COM-REQ-001 | Communication | School admin, Teacher, Parent | Notice board and class announcements | Notice, Announcement | Communication UI | T-COM-001 | Phase 10 | Specified; analyzed in PHASE10_ENGINEERING_ANALYSIS_20261106.md (P10-01–03); not implemented/accepted |
+| LIB-REQ-001 | Library | Teacher, Student, Parent | Resource access | LibraryResource | Library portal | T-LIB-001 | Phase 10 | Specified; analyzed in PHASE10_ENGINEERING_ANALYSIS_20261106.md (P10-04–06); not implemented/accepted |
 | SEC-REQ-001 | Security | All roles | Security and session controls | UserSession, AuditEvent | Auth and security | T-SEC-001 | Phase 1 | Specified |
 | DEL-REQ-001 | Trash and recovery | School admin, Platform Super Admin | Trash retention and restore | TrashRecord | Recovery screens | T-DEL-001 | Phase 11 | Specified |
-| AUD-REQ-001 | Audit and notifications | All roles | Audit and notifications | AuditLog, Notification | System operations | T-AUD-001 | Phase 10 | Specified |
+| AUD-REQ-001 | Audit and notifications | All roles | Audit and notifications | AuditLog, Notification | System operations | T-AUD-001 | Phase 10 | Existing domain audits partial; in-app notification foundation missing; analyzed in PHASE10_ENGINEERING_ANALYSIS_20261106.md (P10-02/07/08); not Phase 10 accepted |
 | SUB-REQ-001 | Subscription management | Platform Super Admin | Plans and entitlements | Subscription, Plan | Platform admin | T-SUB-001 | Phase 3 | Specified |
 | OPS-REQ-001 | Engineering operations | Engineering team | CI, migrations, monitoring | BuildConfig, Migration | DevOps and repos | T-OPS-001 | Phase 1 | Specified |
 
@@ -530,3 +530,5 @@ The matrix below links requirements to the canonical domains and expected roadma
 - Every requirement must attach to a specific module, workflow, and expected test coverage.
 - Deferred requirements remain in the matrix and must not be removed.
 - Implementation status must be recorded as verified, specified, proposed, resolved, or deferred according to actual evidence.
+
+Phase 10 analysis reference: [implementation gaps, design and planned verification](../quality/PHASE10_ENGINEERING_ANALYSIS_20261106.md). The named proposed models/routes/tests are design targets, not implementation evidence.
