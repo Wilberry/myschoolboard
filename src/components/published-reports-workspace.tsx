@@ -28,7 +28,8 @@ export function PublishedReportsWorkspace({
     [],
   );
   const load = useCallback(async () => {
-    if (document.visibilityState !== "visible") return false;
+    if (document.visibilityState !== "visible" || !document.hasFocus())
+      return false;
     const version = ++epoch.current;
     pending.current?.abort();
     const controller = new AbortController();
@@ -52,7 +53,8 @@ export function PublishedReportsWorkspace({
       if (
         version !== epoch.current ||
         controller.signal.aborted ||
-        document.visibilityState !== "visible"
+        document.visibilityState !== "visible" ||
+        !document.hasFocus()
       )
         return false;
       setReports(data.reports);

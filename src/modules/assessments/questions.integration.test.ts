@@ -4035,6 +4035,62 @@ describe("Phase 7 exact-assignment private question bank", () => {
         where: { schoolId: schoolA, publicationId },
       }),
     ).toBe(1);
+    for (const target of [
+      "school",
+      "guardian",
+      "student",
+      "enrollment",
+      "identity",
+    ] as const) {
+      const rollback = Symbol("rollback current-access predicate fixture");
+      await expect(
+        prisma.$transaction(async (tx) => {
+          if (target === "school")
+            await tx.school.update({
+              where: { id: schoolA },
+              data: { isActive: false },
+            });
+          if (target === "guardian")
+            await tx.membership.update({
+              where: { id: members["report-parent"] },
+              data: { isActive: false },
+            });
+          if (target === "student")
+            await tx.membership.update({
+              where: { id: members["report-student"] },
+              data: { isActive: false },
+            });
+          if (target === "enrollment")
+            await tx.studentEnrollment.updateMany({
+              where: {
+                schoolId: schoolA,
+                studentId: pupilId,
+                status: "ACTIVE",
+              },
+              data: { status: "ENDED", endedAt: new Date() },
+            });
+          if (target === "identity") {
+            const identity = await tx.studentAccountLink.findFirstOrThrow({
+              where: { schoolId: schoolA, studentId: pupilId },
+            });
+            await tx.studentAccountLinkRevocation.create({
+              data: {
+                schoolId: schoolA,
+                linkId: identity.id,
+                actorMembershipId: members.admin,
+                actorUserId: users.admin,
+                reason: "Synthetic transaction-isolated identity revocation",
+              },
+            });
+          }
+          const rows = await tx.$queryRaw<
+            Array<{ allowed: boolean }>
+          >`SELECT "can_read_published_report"(${schoolA},${publicationId},${pupilId},${users["report-student"]}) AS allowed`;
+          expect(rows[0].allowed).toBe(false);
+          throw rollback;
+        }),
+      ).rejects.toBe(rollback);
+    }
     await expect(
       prisma.reportPublication.update({
         where: { id: publicationId },

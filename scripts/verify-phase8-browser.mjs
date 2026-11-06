@@ -1,7 +1,7 @@
 import "dotenv/config";
 import assert from "node:assert/strict";
-import { readFile, writeFile } from "node:fs/promises";
-import { execFileSync } from "node:child_process";
+import { readFile, writeFile, mkdtemp } from "node:fs/promises";
+import { execFileSync, spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import pg from "pg";
 
@@ -38,6 +38,53 @@ const browser = await chromium.launch({
   headless: true,
   args: ["--no-sandbox"],
 });
+const nativeProcesses = [];
+let nativeTeacherPage;
+async function nativeActor(name) {
+  assert.ok(
+    process.env.DISPLAY,
+    "Native focus acceptance requires a local display",
+  );
+  const profile = await mkdtemp("/tmp/phase8-native-");
+  const child = spawn(
+    process.env.PHASE8_CHROMIUM ?? "/usr/bin/chromium",
+    [
+      "--no-sandbox",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--remote-debugging-port=0",
+      `--user-data-dir=${profile}`,
+      "about:blank",
+    ],
+    { stdio: "ignore", detached: true },
+  );
+  nativeProcesses.push(child);
+  let port;
+  for (let i = 0; i < 100; i++) {
+    try {
+      port = (await readFile(`${profile}/DevToolsActivePort`, "utf8")).split(
+        "\n",
+      )[0];
+      break;
+    } catch {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  }
+  assert.ok(port, "Native Chromium must expose its own loopback CDP endpoint");
+  const connected = await chromium.connectOverCDP(`http://127.0.0.1:${port}`, {
+    noDefaults: true,
+  });
+  const c = connected.contexts()[0];
+  const response = await c.request.post(`${base}/api/auth/sign-in/email`, {
+    data: {
+      email: `asm-${name}-${f.suffix}@example.test`,
+      password: f.password,
+    },
+    headers: { origin: base },
+  });
+  assert.equal(response.status(), 200);
+  return c;
+}
 const results = [];
 const contexts = [];
 const observations = {
@@ -181,7 +228,7 @@ try {
       [preparation, {}],
       [preparation, { RSC: "1" }],
       [
-        preparation + ".segments/_tree.segment.rsc",
+        preparation,
         {
           RSC: "1",
           "Next-Router-Prefetch": "1",
@@ -226,15 +273,43 @@ try {
     await loadPreparation();
   });
   await check("P8-BR-06", async () => {
-    await loadPreparation();
-    const tab = await teacher.newPage();
+    const c = await nativeActor("teacher");
+    nativeTeacherPage = await c.newPage();
+    await loadPreparation(nativeTeacherPage);
+    await nativeTeacherPage.evaluate(() => {
+      window.phase8FocusEvents = [];
+      for (const type of ["blur", "focus", "visibilitychange"])
+        addEventListener(type, () =>
+          window.phase8FocusEvents.push({
+            type,
+            visibility: document.visibilityState,
+            focused: document.hasFocus(),
+          }),
+        );
+    });
+    const tab = await c.newPage();
     await tab.goto("about:blank");
-    assert.equal(await visibleMarker(teacherPage), false);
-    await teacherPage.bringToFront();
-    await teacherPage
+    await tab.bringToFront();
+    await nativeTeacherPage
+      .getByText(marker, { exact: false })
+      .waitFor({ state: "hidden" });
+    const background = await nativeTeacherPage.evaluate(() => ({
+      visibility: document.visibilityState,
+      focused: document.hasFocus(),
+    }));
+    assert.equal(background.visibility, "hidden");
+    assert.equal(background.focused, false);
+    await nativeTeacherPage.bringToFront();
+    await nativeTeacherPage
       .getByText(marker, { exact: false })
       .waitFor({ state: "visible" });
+    const events = await nativeTeacherPage.evaluate(
+      () => window.phase8FocusEvents,
+    );
+    assert.ok(events.some((e) => e.type === "blur"));
+    assert.ok(events.some((e) => e.type === "focus"));
     await tab.close();
+    return { background, events };
   });
   await check("P8-BR-09-preparation", async () => {
     await loadPreparation();
@@ -323,7 +398,8 @@ try {
     return "Native Chromium PDF after explicit fresh-access Print command (window.print intercepted to capture headless output).";
   });
   await check("P8-BR-07", async () => {
-    await loadPreparation();
+    const page = nativeTeacherPage ?? teacherPage;
+    await loadPreparation(page);
     const start = Date.now();
     const revoked = await admin.request.post(
       `${base}/api/schools/${f.schoolA}/teacher-assignments/${f.assignmentId}/revoke`,
@@ -337,27 +413,40 @@ try {
     const denial = await teacher.request.get(base + prepApi);
     assert.equal(denial.status(), 404);
     const denialMs = Date.now() - start;
-    await teacherPage
+    await page
       .getByText(marker, { exact: false })
       .waitFor({ state: "hidden", timeout: 20000 });
     return { denialMs, concealmentMs: Date.now() - start };
   });
   await check("P8-BR-10-and-11", async () => {
-    const lifecycle = [];
-    await teacherPage.exposeFunction("phase8Lifecycle", (event) =>
-      lifecycle.push(event),
-    );
-    await teacherPage.evaluate(() => {
-      addEventListener("pageshow", (e) =>
-        window.phase8Lifecycle({ type: "pageshow", persisted: e.persisted }),
-      );
-      addEventListener("pagehide", (e) =>
-        window.phase8Lifecycle({ type: "pagehide", persisted: e.persisted }),
-      );
+    const page = nativeTeacherPage ?? teacherPage;
+    await page.addInitScript(() => {
+      for (const type of ["pagehide", "pageshow"])
+        addEventListener(type, (e) => {
+          const events = JSON.parse(
+            sessionStorage.getItem("phase8-lifecycle") ?? "[]",
+          );
+          events.push({ type, persisted: e.persisted });
+          sessionStorage.setItem("phase8-lifecycle", JSON.stringify(events));
+        });
     });
-    await teacherPage.goto(base + "/");
-    await teacherPage.goBack();
-    assert.equal(await visibleMarker(teacherPage), false);
+    await page.evaluate(() => {
+      sessionStorage.setItem("phase8-lifecycle", "[]");
+      addEventListener("pagehide", (e) => {
+        sessionStorage.setItem(
+          "phase8-lifecycle",
+          JSON.stringify([{ type: "pagehide", persisted: e.persisted }]),
+        );
+      });
+    });
+    await page.goto(base + "/");
+    await page.goBack();
+    assert.equal(await visibleMarker(page), false);
+    const lifecycle = await page.evaluate(() =>
+      JSON.parse(sessionStorage.getItem("phase8-lifecycle") ?? "[]"),
+    );
+    assert.ok(lifecycle.some((e) => e.type === "pagehide"));
+    assert.ok(lifecycle.some((e) => e.type === "pageshow"));
     const duplicate = await teacher.newPage();
     await duplicate.goto(base + preparation);
     assert.equal(await visibleMarker(duplicate), false);
@@ -440,6 +529,11 @@ try {
   );
   for (const c of contexts) await c.close().catch(() => {});
   await browser.close();
+  for (const child of nativeProcesses) {
+    try {
+      process.kill(-child.pid, "SIGTERM");
+    } catch {}
+  }
   await db.end();
 }
 if (results.some((r) => r.outcome === "FAIL")) process.exitCode = 1;
