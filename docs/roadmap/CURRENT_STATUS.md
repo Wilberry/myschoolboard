@@ -1,5 +1,17 @@
 # Project Status
 
+**Updated:** 6 November 2026
+
+**Status:** In development. MySchoolBoard has not yet launched.
+
+**Current focus:** Phase 8 is locally accepted and awaiting development-main
+integration. Phase 9 — Fees and Payments is also underway.
+
+**Progress:** The foundation for Phases 1–7 is in place. Some subscriptions,
+admissions, student examinations, and broader parent/student services are still
+being completed; Phase 8 acceptance does not mark those unrelated modules done.
+
+
 ## Phase 8 local acceptance — 6 November 2026
 
 **RES-REQ-001: implemented and locally accepted for development integration.**
@@ -29,8 +41,6 @@ superseded by this acceptance record, not retroactively changed to passes.
 **Remote main integration is pending**: the running environment denies
 `api.github.com`, preventing the established PR workflow. Main remains
 `aa74a0f0265fe113ad8cb4fe9440cd7f51a1b27d`. No production release is authorized.
-
-
 
 ## Phase 8 immutable private official-result composition evidence (AUTHORED; NOT RUNTIME VERIFIED)
 
