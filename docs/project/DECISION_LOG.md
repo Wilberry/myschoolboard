@@ -1,5 +1,12 @@
 # Decision Log
 
+## D-P11-001 — Protected-history lifecycle overlay
+
+**7 November 2026; implemented independent slice, not production release.**
+
+Select a closed never-submitted lesson draft adapter under D-023. Thirty-day school recovery and ninety-day platform custody use database time, immutable transitions and exact current source authority. School-owner removal ends school recovery, transferring to platform custody rather than silently erasing history. Platform recovery is metadata authorization, followed by currently authorized school restoration. Holds and expiry never weaken academic audit guards; protected history reaches explicit PURGE_BLOCKED pending an authorized disposition policy. No Phase 10 implementation is assumed. Physical purge and unsupported resource adapters are not implemented. See the Phase 11 checkpoint.
+
+
 ## D-P9-009 — Complete the manual school accounting workflow
 
 Under D-023 and the owner's explicit 2026-11-06 Phase 9 task, preserve the

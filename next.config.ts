@@ -16,6 +16,12 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   async headers() {
     return [
+      ...[
+        "/schools/:schoolId/trash",
+        "/schools/:schoolId/trash.segments/:path*",
+        "/platform/trash",
+        "/platform/trash.segments/:path*",
+      ].map((source) => ({ source, headers: privateSchoolRouteHeaders })),
       {
         source: "/schools/:schoolId/finance",
         headers: privateSchoolRouteHeaders,

@@ -1,5 +1,12 @@
 # Architecture Decision Records
 
+## ADR-P11-001 — SQL-controlled trash overlay and source-preserving recovery
+
+**7 November 2026; implemented independent slice, not production release.**
+
+TrashCase is a constrained lifecycle projection driven only by append-only TrashEvent transitions under school/source locks. Composite tenant FKs, partial unique open source, exact expected versions, UUID replay keys, DB-derived deadlines and deferred initial-audit evidence protect state. Existing original note/revision/event bytes remain intact. A new source freeze and final source-read filtering prevent trashed draft access or submission. Platform APIs expose no academic body or teacher reason; recovery authorization expires within 24 hours and original platform deadline. Phase 10 integration consumes committed event identities only after its own adapter exists. No physical deletion path is introduced; all flags default off. See docs/quality/PHASE11_TRASH_RECOVERY_CHECKPOINT_20261107.md.
+
+
 ## ADR-P9-009 — Exact manual accounts, explicit releases and private evidence
 
 **Status:** implemented; local acceptance recorded in the Phase 9 cloud checkpoint.

@@ -25,6 +25,7 @@ export function assertPhase9Target(environment) {
   // even if an operator previously tested a feature in this terminal.
   for (const flag of [
     "PHASE9_FEE_WRITE_ENABLED",
+    "PHASE11_TRASH_ENABLED",
     "PHASE9_FINANCIAL_READ_ENABLED",
     "PHASE9_ACCOUNT_RELEASE_ENABLED",
     "PHASE9_RECEIPT_ENABLED",

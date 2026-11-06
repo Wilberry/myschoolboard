@@ -259,6 +259,7 @@ model Verification {
 }
 
 model School {
+  trashCases TrashCase[]
   paymentEvidenceAttachments PaymentEvidenceAttachment[]
   feeAccountReleases FeeAccountRelease[]
   feeReceipts FeeReceipt[]
@@ -737,6 +738,7 @@ model TimetableEvent {
 }
 
 model LessonNote {
+  trashCases TrashCase[]
   kind LessonDocumentKind @default(LESSON_NOTE)
   weekStart Int?
   weekEnd Int?
@@ -2303,4 +2305,38 @@ model PaymentEvidenceAttachment {
  @@unique([schoolId,id])
  @@unique([schoolId,requestKey])
  @@unique([schoolId,evidenceId,sha256])
+}
+
+model TrashCase {
+ id String @id @db.Uuid
+ schoolId String
+ noteId String
+ state String @default("SCHOOL")
+ createdAt DateTime @default(now()) @db.Timestamptz
+ schoolExpiresAt DateTime @db.Timestamptz
+ platformEnteredAt DateTime? @db.Timestamptz
+ platformExpiresAt DateTime? @db.Timestamptz
+ recoveryExpiresAt DateTime? @db.Timestamptz
+ legalHold Boolean @default(false)
+ version Int @default(0)
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ note LessonNote @relation(fields:[schoolId,noteId],references:[schoolId,id],onDelete:NoAction)
+ events TrashEvent[]
+ @@unique([schoolId,id])
+ @@index([schoolId,state,createdAt,id],map:"TrashCase_school_queue")
+ @@index([state,schoolExpiresAt,platformExpiresAt],map:"TrashCase_expiry_queue")
+}
+model TrashEvent {
+ id String @id @db.Uuid
+ schoolId String
+ caseId String @db.Uuid
+ action String
+ actorUserId String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ version Int
+ createdAt DateTime @default(now()) @db.Timestamptz
+ trashCase TrashCase @relation(fields:[schoolId,caseId],references:[schoolId,id],onDelete:Cascade)
+ @@unique([schoolId,requestKey])
+ @@unique([schoolId,caseId,version])
 }

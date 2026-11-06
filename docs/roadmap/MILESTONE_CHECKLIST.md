@@ -1,5 +1,18 @@
 # Milestone Checklist
 
+## Phase 11 independent development — 7 November 2026
+
+**DEL-REQ-001: tested independent lifecycle slice, not full Phase 11 acceptance.**
+From accepted main `d4459d827e8529ea8daddb73f7e842d8c47c12ab`, branch
+`feature/phase11-trash-recovery` adds scoped never-submitted lesson draft trash,
+30/90-day custody, immutable evidence, authorized restoration, holds, metadata-only
+platform recovery and bounded expiry processing. Physical purge stays blocked for
+protected academic/audit history. Phase 10 adapters/notifications remain separate.
+Validation: 207 guards, 421 application tests, 7 Chromium scenarios, fresh 59-
+migration bootstrap/checksums, build/lint/types/format and zero-vulnerability audit.
+See [Phase 11 checkpoint](../quality/PHASE11_TRASH_RECOVERY_CHECKPOINT_20261107.md).
+
+
 ## Phase 9 manual-accounting acceptance — 6 November 2026
 
 **FEE-REQ-001: implemented and locally accepted for development PR integration.**

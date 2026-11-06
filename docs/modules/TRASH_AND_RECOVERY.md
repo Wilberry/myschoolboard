@@ -18,3 +18,7 @@
 - Recovery operations must be auditable.
 - Recovery must preserve tenant ownership and record lineage.
 - Expired objects must be purged through idempotent retention jobs.
+
+## Current independent implementation
+
+See [Phase 11 tested scope and policy boundaries](../quality/PHASE11_TRASH_RECOVERY_CHECKPOINT_20261107.md). Never-submitted lesson draft recovery is implemented; protected history is never physically erased, and source-specific Phase 10 adapters remain pending. Platform recovery authorization does not grant academic content access.

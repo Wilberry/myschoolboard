@@ -530,3 +530,7 @@ The matrix below links requirements to the canonical domains and expected roadma
 - Every requirement must attach to a specific module, workflow, and expected test coverage.
 - Deferred requirements remain in the matrix and must not be removed.
 - Implementation status must be recorded as verified, specified, proposed, resolved, or deferred according to actual evidence.
+
+### DEL-REQ-001 independent Phase 11 slice — 7 November 2026
+
+Implemented/locally verified: 30-day school trash, 90-day platform custody, current scoped restoration, holds and immutable lifecycle evidence for never-submitted lesson drafts only. Full requirement remains PARTIAL: physical purge of protected history and real Phase 10 adapters/notifications are outstanding. Evidence: [Phase 11 checkpoint](../quality/PHASE11_TRASH_RECOVERY_CHECKPOINT_20261107.md).
