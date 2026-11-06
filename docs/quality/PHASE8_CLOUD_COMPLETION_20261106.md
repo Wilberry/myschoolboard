@@ -1,7 +1,10 @@
 # Phase 8 cloud completion evidence — 6 November 2026
 
 **Outcome: Phase 8 implemented and locally accepted for development integration.**
-Remote PR/main integration remains pending; production deployment is out of scope.
+**Post-acceptance integration:** PR #106 was merged into development `main`
+on 6 November 2026 at `2e12f6098143816e529597ed97abcd268e00434c`.
+No production deployment occurred. The remainder records the original cloud
+acceptance run, including its then-pending remote integration.
 
 ## Source and history
 
@@ -170,10 +173,13 @@ for another run. Do not reactivate the old one.
   Rust CLI operations in this instance; BFCache persisted restoration and physical
   printer dialog were not exercised, with privacy-preserving conditional outcomes
   recorded. No production deployment or broad portal completion is claimed.
-- Remaining task: perform the established remote PR/main integration once current
-  task can reach api.github.com using its existing configured GitHub authentication.
-- Exact remote main at last read: aa74a0f0265fe113ad8cb4fe9440cd7f51a1b27d.
-  No PR or main merge has occurred. Saved environment domain changes are not
-  proof of runtime application. Do not bypass the PR workflow or force-push.
-- Exit gate: **local implementation/security acceptance PASS; remote integration
-  BLOCKED by environment network policy**, not by an unverified feature claim.
+- Post-acceptance integration: PR #106 used the established GitHub pull-request
+  workflow and merged without a force-push at
+  `2e12f6098143816e529597ed97abcd268e00434c` on 6 November 2026.
+  The previous `api.github.com` network restriction applied only to the cloud
+  runtime; integration was completed using the authorized GitHub connection.
+  The exact pre-merge `main` SHA was
+  `aa74a0f0265fe113ad8cb4fe9440cd7f51a1b27d`.
+- Exit gate: **local implementation/security acceptance PASS; remote development
+  integration COMPLETE**. No production deployment, genuine BFCache persisted
+  restoration or physical printer/OS dialog acceptance is claimed.
