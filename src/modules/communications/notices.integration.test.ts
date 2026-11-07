@@ -302,6 +302,17 @@ it("keeps default-off routes and real current role/tenant boundaries closed", as
     expect(
       (await call(POLICY, a, intent({ audience: "STAFF_ONLY" }))).status,
     ).toBe(404);
+  for (const a of ["foreign", "platform"])
+    expect((await call(WORKSPACE, a)).status).toBe(404);
+  for (const a of ["teacher", "student", "parent"]) {
+    const response = await call(WORKSPACE, a);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      notices: [],
+      policies: [],
+      deliveryIssues: [],
+    });
+  }
   for (const a of ["unrelated", "foreign", "platform"])
     expect((await call(FEED, a)).status).toBe(404);
   expect(
@@ -830,25 +841,38 @@ it("withdraws access and inbox counts immediately, retains immutable event evide
   ).toBe(0);
 });
 it("checks live school, enrollment and membership predicates; notification suppression is terminal", async () => {
-  const rollback = Symbol("rollback scope");
-  await expect(
-    prisma.$transaction(async (tx) => {
-      await tx.schoolClass.update({
-        where: { id: classId },
-        data: { isActive: false },
-      });
-      const row = await tx.$queryRaw<
-        Array<{ allowed: boolean }>
-      >`SELECT can_read_notice(${school},${releases.STUDENTS_AND_GUARDIANS}::uuid,${users.parent}) AS allowed`;
-      expect(row[0].allowed).toBe(false);
-      expect(
-        await tx.notificationSuppression.count({
-          where: { schoolId: school, reasonCode: "AUTHORITY_REVOKED" },
-        }),
-      ).toBeGreaterThan(0);
-      throw rollback;
-    }),
-  ).rejects.toBe(rollback);
+  for (const revokedScope of ["class", "school", "enrollment"] as const) {
+    const rollback = Symbol("rollback scope");
+    await expect(
+      prisma.$transaction(async (tx) => {
+        if (revokedScope === "class")
+          await tx.schoolClass.update({
+            where: { id: classId },
+            data: { isActive: false },
+          });
+        else if (revokedScope === "school")
+          await tx.school.update({
+            where: { id: school },
+            data: { isActive: false },
+          });
+        else
+          await tx.studentEnrollment.updateMany({
+            where: { schoolId: school, studentId: pupilId },
+            data: { status: "ENDED", endedAt: new Date() },
+          });
+        const row = await tx.$queryRaw<
+          Array<{ allowed: boolean }>
+        >`SELECT can_read_notice(${school},${releases.STUDENTS_AND_GUARDIANS}::uuid,${users.parent}) AS allowed`;
+        expect(row[0].allowed).toBe(false);
+        expect(
+          await tx.notificationSuppression.count({
+            where: { schoolId: school, reasonCode: "AUTHORITY_REVOKED" },
+          }),
+        ).toBeGreaterThan(0);
+        throw rollback;
+      }),
+    ).rejects.toBe(rollback);
+  }
   await prisma.membership.update({
     where: { id: members.teacher },
     data: { isActive: false },
