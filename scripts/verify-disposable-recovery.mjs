@@ -304,7 +304,11 @@ async function recovery() {
     `NODE_ENV=test\nTEST_DATABASE_DISPOSABLE=1\nALLOW_DEMO_SEED=1\nDATABASE_URL=postgresql://myschoolboard:${password}@localhost:5434/myschoolboard_test?schema=public\nTEST_DATABASE_URL=postgresql://myschoolboard:${password}@localhost:5434/myschoolboard_test?schema=public\nPHASE9_TEST_DATABASE_NONCE=${nonce}\nBETTER_AUTH_SECRET=${randomBytes(32).toString("hex")}\nBETTER_AUTH_URL=http://localhost:3002\nDEV_ADMIN_EMAIL=recovery@myschoolboard.test\nDEV_ADMIN_PASSWORD=Synthetic-recovery-password-42\nPATH=/workspace/shared/disposable-bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n`,
     { mode: 0o600, flag: "wx" },
   );
-  const relay = `const proxy=require('node:net').createServer(s=>{const u=require('node:net').connect(5432,'127.0.0.1');s.pipe(u);u.pipe(s);s.on('error',()=>u.destroy());u.on('error',()=>s.destroy());});proxy.listen(5434,'127.0.0.1',()=>import(${JSON.stringify(script)}).then(m=>m.fingerprintFromEnvironment()).then(r=>{console.log(JSON.stringify(r));proxy.close();}).catch(()=>{process.exitCode=1;proxy.close();}));`;
+  // The identity guard uses synchronous psql. Serve its TCP relay in a
+  // separate thread so that attestation cannot deadlock the relay event loop.
+  const relayWorker = `const {parentPort}=require('node:worker_threads');const proxy=require('node:net').createServer(s=>{const u=require('node:net').connect(5432,'127.0.0.1');s.pipe(u);u.pipe(s);s.on('error',()=>u.destroy());u.on('error',()=>s.destroy());});proxy.listen(5434,'127.0.0.1',()=>parentPort.postMessage('ready'));`;
+  const relay = `const {Worker}=require('node:worker_threads');const worker=new Worker(${JSON.stringify(relayWorker)},{eval:true});worker.once('message',()=>import(${JSON.stringify(script)}).then(m=>m.fingerprintFromEnvironment()).then(r=>console.log(JSON.stringify(r))).catch(()=>{console.error('Restored target fingerprint or identity verification failed');process.exitCode=1;}).finally(()=>worker.terminate()));worker.once('error',()=>{console.error('Restored target relay failed');process.exitCode=1;});`;
+
   const restored = JSON.parse(
     docker([
       "run",

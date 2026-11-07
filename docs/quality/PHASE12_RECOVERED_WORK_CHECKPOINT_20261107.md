@@ -45,3 +45,35 @@ No Actions, main merge, force-push, shared DB modification or deployment occurre
 
 Exit gate: recovered and committed independent improvements; incomplete overall
 Phase 12 acceptance and not production-ready.
+
+## Resumed verification and recovery remediation
+
+Preservation commit `938335609cfb0d90d1fc0354679ffcd18995f7dc` is confirmed
+published. Old stopped databases were left untouched. A new task-owned tmpfs
+PostgreSQL container
+`7e27dbbc2d23880be4e7cce3ea4bf06d2a2988259aac86685d24a77e76f563ad`
+was independently inspected (no existing mounts or host DB port), nonce-attested
+and bootstrapped from 58 migration files. Repeated local results: 207 Node guards,
+422 Vitest tests in 49 files, lint, types, format, production build and 58 exact
+migration checksums PASS. Strict full dependency audit PASS, zero vulnerabilities,
+after the same authorized retry of the sandbox-blocked network call.
+
+The recovery verifier's nonce-check deadlock is fixed: synchronous psql cannot
+share the TCP relay's blocked event loop, so the relay now runs in its own thread.
+Wrong-key and modified ciphertext rejection and actual restore proceed. The first
+retry correctly failed while the full suite was concurrently writing; the second,
+quiescent retry still FAILED strict schema equality. All restored table row hashes
+match. Diagnostic comparison found 287 function definitions and 326 index definitions
+match, and 453 constraints exist on each side; PostgreSQL reparses some CHECK
+expressions into equivalent flattened AND / array-cast forms during restore.
+The strict hash has NOT been weakened or declared passed. A reliable canonical
+constraint/trigger/schema comparison and expanded negative restore tests remain
+required. No source database reset or production recovery claim is made. Test
+artifacts/keys remain private outside Git; each attempt used a new empty target.
+
+The [acceptance matrix](PHASE12_ACCEPTANCE_MATRIX_20261107.md) covers all 18
+catalog requirements, prior-phase evidence limitations, Phase 10/11 integration
+contracts and outstanding release gates. Phase 11 `6ae1c1b` remains published,
+with its independent slice locally accepted and full DEL-REQ-001 PARTIAL. No Phase
+10/11 implementation was imported into this quality branch. Browser/performance,
+complete security/operations and integrated acceptance remain outstanding.
