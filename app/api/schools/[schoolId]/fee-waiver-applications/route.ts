@@ -1,3 +1,4 @@
+import { readBoundedJson } from "@/src/lib/request-json";
 import {
   applyApprovedFeeWaiver,
   listAppliedFeeWaivers,
@@ -80,7 +81,10 @@ export async function POST(
         { status: 400, headers },
       );
     const { schoolId } = await params;
-    const waiver = await applyApprovedFeeWaiver(schoolId, await request.json());
+    const waiver = await applyApprovedFeeWaiver(
+      schoolId,
+      await readBoundedJson(request),
+    );
     return Response.json(
       { waiver },
       {

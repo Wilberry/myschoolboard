@@ -1,3 +1,4 @@
+import { readBoundedJson } from "@/src/lib/request-json";
 import { releaseFeeAccount } from "@/src/modules/fees/financial-account-service";
 import {
   financialJson,
@@ -12,7 +13,7 @@ export async function POST(
     financialJson(request);
     const result = await releaseFeeAccount(
       (await params).schoolId,
-      await request.json(),
+      await readBoundedJson(request),
     );
     return Response.json(
       { release: result },

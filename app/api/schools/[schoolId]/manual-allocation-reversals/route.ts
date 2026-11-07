@@ -1,3 +1,4 @@
+import { readBoundedJson } from "@/src/lib/request-json";
 import {
   proposeManualAllocationReversal,
   listOwnManualAllocationReversals,
@@ -80,7 +81,7 @@ export async function POST(
     const { schoolId } = await params;
     const reversal = await proposeManualAllocationReversal(
       schoolId,
-      await request.json(),
+      await readBoundedJson(request),
     );
     return Response.json(
       { reversal },

@@ -1,3 +1,4 @@
+import { readBoundedJson } from "@/src/lib/request-json";
 import { decideFeeAdjustment } from "@/src/modules/fees/fee-adjustment-proposal-service";
 import { FeeError } from "@/src/modules/fees/fee-configuration-service";
 const headers = { "Cache-Control": "private, no-store" };
@@ -51,7 +52,10 @@ export async function POST(
         { status: 400, headers },
       );
     const { schoolId } = await params;
-    const decision = await decideFeeAdjustment(schoolId, await request.json());
+    const decision = await decideFeeAdjustment(
+      schoolId,
+      await readBoundedJson(request),
+    );
     return Response.json(
       { decision },
       { status: decision.replay ? 200 : 201, headers },
