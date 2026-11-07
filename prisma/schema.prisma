@@ -259,6 +259,19 @@ model Verification {
 }
 
 model School {
+ p10OutboxReplayEventRows OutboxReplayEvent[] @relation("P10School_OutboxReplayEvent")
+ p10NotificationSuppressionRows NotificationSuppression[] @relation("P10School_NotificationSuppression")
+ p10NotificationInteractionRows NotificationInteraction[] @relation("P10School_NotificationInteraction")
+ p10NotificationDeliveryRows NotificationDelivery[] @relation("P10School_NotificationDelivery")
+ p10OutboxAttemptEventRows OutboxAttemptEvent[] @relation("P10School_OutboxAttemptEvent")
+ p10OutboxDispatchRows OutboxDispatch[] @relation("P10School_OutboxDispatch")
+ p10DomainEventRows DomainEvent[] @relation("P10School_DomainEvent")
+ p10NoticeWithdrawalRows NoticeWithdrawal[] @relation("P10School_NoticeWithdrawal")
+ p10NoticeReleaseRows NoticeRelease[] @relation("P10School_NoticeRelease")
+ p10NoticeWorkflowEventRows NoticeWorkflowEvent[] @relation("P10School_NoticeWorkflowEvent")
+ p10NoticeRevisionRows NoticeRevision[] @relation("P10School_NoticeRevision")
+ notices Notice[] @relation("Phase10_Notice_0")
+ noticePolicies NoticePolicyRevision[] @relation("Phase10_NoticePolicyRevision_0")
   paymentEvidenceAttachments PaymentEvidenceAttachment[]
   feeAccountReleases FeeAccountRelease[]
   feeReceipts FeeReceipt[]
@@ -347,6 +360,8 @@ model School {
 }
 
 model Membership {
+ authoredNotices Notice[] @relation("Phase10_Notice_1")
+ noticeDeliveries NotificationDelivery[] @relation("Phase10_NotificationDelivery_2")
   paymentEvidenceAttachments PaymentEvidenceAttachment[]
   feeAccountReleases FeeAccountRelease[]
   feeReceipts FeeReceipt[]
@@ -2303,4 +2318,207 @@ model PaymentEvidenceAttachment {
  @@unique([schoolId,id])
  @@unique([schoolId,requestKey])
  @@unique([schoolId,evidenceId,sha256])
+}
+
+model Notice {
+ authorRole String?
+ id String @id @db.Uuid
+ schoolId String
+ authorUserId String
+ authorMembershipId String
+ currentRevision Int @default(0)
+ state String @default("DRAFT")
+ createdAt DateTime @db.Timestamptz(6) @default(dbgenerated("clock_timestamp()"))
+ school School @relation("Phase10_Notice_0", fields:[schoolId],references:[id],onDelete:Cascade)
+ author Membership @relation("Phase10_Notice_1", fields:[schoolId,authorMembershipId],references:[schoolId,id],onDelete:NoAction)
+ noticeRevisions NoticeRevision[] @relation("Phase10_NoticeRevision_0")
+ @@unique([schoolId,id])
+}
+
+model NoticeRevision {
+ school School @relation("P10School_NoticeRevision",fields:[schoolId],references:[id],onDelete:Cascade)
+ id String @id @db.Uuid
+ schoolId String
+ noticeId String @db.Uuid
+ revision Int
+ title String @db.VarChar(160)
+ body String
+ actorUserId String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @db.Timestamptz(6) @default(dbgenerated("clock_timestamp()"))
+ notice Notice @relation("Phase10_NoticeRevision_0", fields:[schoolId,noticeId],references:[schoolId,id],onDelete:Cascade)
+ workflowEvents NoticeWorkflowEvent[] @relation("Phase10_NoticeWorkflowEvent_0")
+ releases NoticeRelease? @relation("Phase10_NoticeRelease_0")
+ @@unique([schoolId,noticeId,revision])
+ @@unique([schoolId,requestKey])
+}
+
+model NoticeWorkflowEvent {
+ school School @relation("P10School_NoticeWorkflowEvent",fields:[schoolId],references:[id],onDelete:Cascade)
+ id String @id @db.Uuid
+ schoolId String
+ noticeId String @db.Uuid
+ revision Int
+ action String
+ actorUserId String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @db.Timestamptz(6) @default(dbgenerated("clock_timestamp()"))
+ revisionSource NoticeRevision @relation("Phase10_NoticeWorkflowEvent_0", fields:[schoolId,noticeId,revision],references:[schoolId,noticeId,revision],onDelete:Cascade)
+ @@unique([schoolId,requestKey])
+}
+
+model NoticePolicyRevision {
+ id String @id @db.Uuid
+ schoolId String
+ version Int
+ audience String
+ actorUserId String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @db.Timestamptz(6) @default(dbgenerated("clock_timestamp()"))
+ school School @relation("Phase10_NoticePolicyRevision_0", fields:[schoolId],references:[id],onDelete:Cascade)
+ releases NoticeRelease[] @relation("Phase10_NoticeRelease_1")
+ @@unique([schoolId,id])
+ @@unique([schoolId,version])
+ @@unique([schoolId,requestKey])
+}
+
+model NoticeRelease {
+ school School @relation("P10School_NoticeRelease",fields:[schoolId],references:[id],onDelete:Cascade)
+ id String @id @db.Uuid
+ schoolId String
+ noticeId String @db.Uuid
+ revision Int
+ policyId String @db.Uuid
+ ordinal Int
+ actorUserId String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @db.Timestamptz(6) @default(dbgenerated("clock_timestamp()"))
+ revisionSource NoticeRevision @relation("Phase10_NoticeRelease_0", fields:[schoolId,noticeId,revision],references:[schoolId,noticeId,revision],onDelete:Cascade)
+ policy NoticePolicyRevision @relation("Phase10_NoticeRelease_1", fields:[schoolId,policyId],references:[schoolId,id],onDelete:NoAction)
+ withdrawal NoticeWithdrawal? @relation("Phase10_NoticeWithdrawal_0")
+ domainEvents DomainEvent[] @relation("Phase10_DomainEvent_0")
+ deliveries NotificationDelivery[] @relation("Phase10_NotificationDelivery_1")
+ @@unique([schoolId,id])
+ @@unique([schoolId,requestKey])
+ @@unique([schoolId,noticeId,revision])
+ @@unique([schoolId,noticeId,ordinal])
+}
+
+model NoticeWithdrawal {
+ school School @relation("P10School_NoticeWithdrawal",fields:[schoolId],references:[id],onDelete:Cascade)
+ id String @id @db.Uuid
+ schoolId String
+ releaseId String @db.Uuid
+ actorUserId String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @db.Timestamptz(6) @default(dbgenerated("clock_timestamp()"))
+ release NoticeRelease @relation("Phase10_NoticeWithdrawal_0", fields:[schoolId,releaseId],references:[schoolId,id],onDelete:Cascade)
+ @@unique([schoolId,releaseId])
+ @@unique([schoolId,requestKey])
+}
+
+model DomainEvent {
+ school School @relation("P10School_DomainEvent",fields:[schoolId],references:[id],onDelete:Cascade)
+ replays OutboxReplayEvent[]
+ id String @id @db.Uuid
+ schoolId String
+ sourceId String @db.Uuid
+ kind String
+ releaseId String @db.Uuid
+ actorUserId String
+ schemaVersion Int @default(1)
+ createdAt DateTime @db.Timestamptz(6) @default(dbgenerated("clock_timestamp()"))
+ release NoticeRelease @relation("Phase10_DomainEvent_0", fields:[schoolId,releaseId],references:[schoolId,id],onDelete:Cascade)
+ dispatch OutboxDispatch[] @relation("Phase10_OutboxDispatch_0")
+ attempts OutboxAttemptEvent[] @relation("Phase10_OutboxAttemptEvent_0")
+ deliveries NotificationDelivery[] @relation("Phase10_NotificationDelivery_0")
+ @@unique([schoolId,id])
+ @@unique([schoolId,sourceId,kind])
+}
+
+model OutboxDispatch {
+ school School @relation("P10School_OutboxDispatch",fields:[schoolId],references:[id],onDelete:Cascade)
+ eventId String @id @db.Uuid
+ schoolId String
+ state String @default("PENDING")
+ leaseToken String? @db.Uuid
+ leaseExpiresAt DateTime? @db.Timestamptz(6)
+ nextAttemptAt DateTime @db.Timestamptz(6) @default(dbgenerated("clock_timestamp()"))
+ attempt Int @default(0)
+ failures Int @default(0)
+ cursorMembershipId String?
+ event DomainEvent @relation("Phase10_OutboxDispatch_0", fields:[schoolId,eventId],references:[schoolId,id],onDelete:Cascade)
+}
+
+model OutboxAttemptEvent {
+ school School @relation("P10School_OutboxAttemptEvent",fields:[schoolId],references:[id],onDelete:Cascade)
+ operatorUserId String?
+ id String @id @db.Uuid
+ schoolId String
+ eventId String @db.Uuid
+ attempt Int
+ outcome String
+ createdAt DateTime @db.Timestamptz(6) @default(dbgenerated("clock_timestamp()"))
+ event DomainEvent @relation("Phase10_OutboxAttemptEvent_0", fields:[schoolId,eventId],references:[schoolId,id],onDelete:Cascade)
+ @@unique([schoolId,eventId,attempt,outcome])
+}
+
+model NotificationDelivery {
+ school School @relation("P10School_NotificationDelivery",fields:[schoolId],references:[id],onDelete:Cascade)
+ id String @id @db.Uuid
+ schoolId String
+ eventId String @db.Uuid
+ releaseId String @db.Uuid
+ recipientMembershipId String
+ contextKey String @default("SCHOOL")
+ createdAt DateTime @db.Timestamptz(6) @default(dbgenerated("clock_timestamp()"))
+ event DomainEvent @relation("Phase10_NotificationDelivery_0", fields:[schoolId,eventId],references:[schoolId,id],onDelete:Cascade)
+ release NoticeRelease @relation("Phase10_NotificationDelivery_1", fields:[schoolId,releaseId],references:[schoolId,id],onDelete:Cascade)
+ recipient Membership @relation("Phase10_NotificationDelivery_2", fields:[schoolId,recipientMembershipId],references:[schoolId,id],onDelete:NoAction)
+ interactions NotificationInteraction[] @relation("Phase10_NotificationInteraction_0")
+ suppression NotificationSuppression[] @relation("Phase10_NotificationSuppression_0")
+ @@unique([schoolId,id])
+ @@unique([schoolId,eventId,recipientMembershipId,contextKey])
+}
+
+model NotificationInteraction {
+ school School @relation("P10School_NotificationInteraction",fields:[schoolId],references:[id],onDelete:Cascade)
+ id String @id @db.Uuid
+ schoolId String
+ deliveryId String @db.Uuid
+ actorUserId String
+ action String
+ requestKey String @db.Uuid
+ ordinal Int
+ createdAt DateTime @db.Timestamptz(6) @default(dbgenerated("clock_timestamp()"))
+ delivery NotificationDelivery @relation("Phase10_NotificationInteraction_0", fields:[schoolId,deliveryId],references:[schoolId,id],onDelete:Cascade)
+ @@unique([schoolId,requestKey])
+ @@unique([schoolId,deliveryId,ordinal])
+}
+
+model NotificationSuppression {
+ school School @relation("P10School_NotificationSuppression",fields:[schoolId],references:[id],onDelete:Cascade)
+ deliveryId String @id @db.Uuid
+ schoolId String
+ reasonCode String
+ createdAt DateTime @db.Timestamptz(6) @default(dbgenerated("clock_timestamp()"))
+ delivery NotificationDelivery @relation("Phase10_NotificationSuppression_0", fields:[schoolId,deliveryId],references:[schoolId,id],onDelete:Cascade)
+}
+
+model OutboxReplayEvent {
+ school School @relation("P10School_OutboxReplayEvent",fields:[schoolId],references:[id],onDelete:Cascade)
+ id String @id @db.Uuid
+ schoolId String
+ eventId String @db.Uuid
+ operatorUserId String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+ event DomainEvent @relation(fields:[schoolId,eventId],references:[schoolId,id],onDelete:Cascade)
+ @@unique([schoolId,requestKey])
 }

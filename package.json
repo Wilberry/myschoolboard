@@ -32,7 +32,9 @@
     "verify:phase9:local": "node scripts/verify-phase9-disposable.mjs",
     "verify:phase9:static": "node --test scripts/verify-phase9-disposable.test.mjs scripts/phase9-verification-guard.test.mjs scripts/phase9-fee-configuration-guard.test.mjs scripts/phase9-payment-evidence-guard.test.mjs scripts/phase9-manual-allocation-guard.test.mjs scripts/phase9-manual-reversal-guard.test.mjs scripts/phase9-fee-adjustment-guard.test.mjs scripts/phase9-effective-waiver-guard.test.mjs",
     "verify:phase9:browser": "node scripts/verify-phase9-browser.mjs",
-    "verify:phase9:empty-bootstrap": "node scripts/verify-phase9-fresh-bootstrap.mjs"
+    "verify:phase9:empty-bootstrap": "node scripts/verify-phase9-fresh-bootstrap.mjs",
+    "worker:phase10:once": "tsx scripts/run-phase10-inapp-worker.ts --once",
+    "worker:phase10": "tsx scripts/run-phase10-inapp-worker.ts --watch"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",

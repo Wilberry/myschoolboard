@@ -712,3 +712,30 @@ h1 {
 .finance-table td {
   font-variant-numeric: tabular-nums;
 }
+
+.communication-workspace textarea {
+  width: 100%;
+  min-height: 8rem;
+  font: inherit;
+  padding: 0.5rem;
+  border: 1px solid var(--muted);
+  color: var(--ink);
+  background: var(--white);
+}
+.communication-workspace :is(button, input, textarea, select, a):focus-visible {
+  outline: 3px solid var(--green);
+  outline-offset: 3px;
+}
+.notice-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+.communication-workspace a {
+  text-decoration: underline;
+}
+@media print {
+  .notice-release {
+    break-inside: avoid;
+  }
+}

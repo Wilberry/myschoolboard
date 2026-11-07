@@ -163,6 +163,12 @@ async function HomeContent() {
                       Published report cards
                     </Link>
                   )}
+                  <Link
+                    className="school-link"
+                    href={`/schools/${school.id}/notices`}
+                  >
+                    School notices and notifications
+                  </Link>
                   {(role === "SCHOOL_ADMIN" ||
                     role === "SCHOOL_SUPER_ADMIN") && (
                     <Link
