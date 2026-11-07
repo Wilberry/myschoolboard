@@ -1,5 +1,20 @@
 # Decision Log
 
+## D-P10-002: Separate class channel and atomic bounded in-app pages
+
+7 November 2026; development default under D-023 and ADR-P10-002. Class
+announcements derive one exact subject assignment or actual Form Teacher
+responsibility, require independent current section review, and release through
+the original author. Guardians and generic notice/report permissions cannot grant
+class content/inbox access. The class worker uses atomic database-only 100-member
+pages under school/outbox locks and SKIP LOCKED; no external I/O or long-running
+lease exists inside these transactions. Crash rolls back cursor, delivery and
+attempt together. Five bounded failures, immutable attempts, reasoned replay and
+terminal suppression protect recovery. Source events and outbox capture are atomic.
+Full Phase 10, existing-domain adapters and production acceptance remain partial.
+
+
+
 ## D-P10-001 — Isolated Phase 10 analysis and development architecture
 
 **Date:** 2026-11-06. **Status:** analysis/design decision, not implemented permission.

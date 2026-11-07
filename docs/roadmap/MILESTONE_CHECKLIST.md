@@ -1,5 +1,20 @@
 # Milestone Checklist
 
+## Phase 10 implementation checkpoint — 7 November 2026
+
+- [x] P10-01/02 official-notice and in-app workflow: actual local browser evidence.
+- [x] P10-03 separate class author/review/release/withdraw and class inbox implementation.
+- [x] Six class-browser workflows and tenant/guardian denials executed.
+- [ ] Complete class stress/revocation/printing browser expansion under P10-08.
+- [ ] P10-04/05 catalog, rights, quarantine/inspection and authorized assets.
+- [ ] P10-06 learning assignments and permitted submissions.
+- [ ] P10-07 existing-domain adapters and scoped audit inspection.
+- [ ] P10-08 cumulative acceptance, integration review and whole-phase acceptance.
+
+Evidence: [checkpoint](../quality/PHASE10_NOTICES_CLASS_ACCEPTANCE_20261107.md).
+
+
+
 ## Phase 10 engineering analysis — 6 November 2026
 
 **COM-REQ-001 / LIB-REQ-001 / AUD-REQ-001: analysis prepared; implementation and

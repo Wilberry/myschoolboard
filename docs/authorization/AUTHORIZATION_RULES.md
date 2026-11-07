@@ -317,3 +317,17 @@ Reviewing `LessonNote` SUBMITTED revisions now requires a currently active same-
 - The School Super Admin role is distinct from the Platform Super Admin role.
 - Form Teacher authority is distinct from subject-teacher authority.
 - Final report publication is a distinct authorized workflow from ordinary HMs or Principals’ approvals.
+
+
+## Phase 10 separate class channel
+
+ClassAnnouncement requires exact current subject teaching assignment or actual
+FormTeacherResponsibility in the pinned school/class/session/term. Independent
+current verified PRIMARY Head of Section or SECONDARY Principal review is
+required; only the current original author releases. School owner moderation may
+withdraw by opaque release metadata and operate delivery/replay, without reading
+academic class bodies merely by platform/school-owner role. Students require
+current verified binding and exact active enrollment. Parents are always denied
+class content, drafts, inbox, counts and interactions. Notice/report/finance
+visibility and generic child grants do not apply. Every read repeats current
+source/reviewer/identity checks; source history and restoration grant no access.

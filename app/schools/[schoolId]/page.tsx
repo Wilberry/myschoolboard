@@ -189,6 +189,31 @@ async function SchoolDetailContent({
             </Link>
           </p>
         )}
+        <p className="setup-navigation">
+          <Link
+            href={`/schools/${schoolId}/notices`}
+            className="secondary-link"
+          >
+            Official school notices and in-app alerts
+          </Link>
+        </p>
+        {[
+          "TEACHER",
+          "FORM_TEACHER",
+          "HEAD_OF_SECTION",
+          "PRINCIPAL",
+          "STUDENT",
+          "SCHOOL_SUPER_ADMIN",
+        ].includes(access.principal.membership?.role ?? "") && (
+          <p className="setup-navigation">
+            <Link
+              href={`/schools/${schoolId}/class-announcements`}
+              className="secondary-link"
+            >
+              Class announcements
+            </Link>
+          </p>
+        )}
         {access.principal.membership?.role === "STUDENT" && (
           <p className="setup-navigation">
             <Link

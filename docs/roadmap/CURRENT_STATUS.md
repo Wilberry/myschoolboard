@@ -1,5 +1,16 @@
 # Project Status
 
+## Phase 10 notices and class channel — 7 November 2026
+
+Independent development branch / draft PR #111: P10-01/P10-02 now have 12 actual
+authenticated native Chromium scenarios, including terminal revocation, retries,
+stale responses, sign-out, accessibility and printing. P10-03 adds a separate
+class channel and durable class inbox; six class Chromium scenarios passed.
+P10-04–08 remain incomplete; Phase 10 is not merge-ready.
+See [current checkpoint](../quality/PHASE10_NOTICES_CLASS_ACCEPTANCE_20261107.md).
+
+
+
 ## Phase 10 engineering analysis — 6 November 2026
 
 **COM-REQ-001 / LIB-REQ-001 / AUD-REQ-001: analysis prepared; implementation and

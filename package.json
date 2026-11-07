@@ -34,7 +34,9 @@
     "verify:phase9:browser": "node scripts/verify-phase9-browser.mjs",
     "verify:phase9:empty-bootstrap": "node scripts/verify-phase9-fresh-bootstrap.mjs",
     "worker:phase10:once": "tsx scripts/run-phase10-inapp-worker.ts --once",
-    "worker:phase10": "tsx scripts/run-phase10-inapp-worker.ts --watch"
+    "worker:phase10": "tsx scripts/run-phase10-inapp-worker.ts --watch",
+    "verify:phase10:browser": "node scripts/verify-phase10-browser.mjs",
+    "verify:phase10:class-browser": "node scripts/verify-phase10-class-browser.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",

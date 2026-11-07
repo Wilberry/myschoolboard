@@ -1,5 +1,18 @@
 # Requirements Traceability Matrix
 
+## Phase 10 implementation evidence — 7 November 2026
+
+COM-REQ-001 / AUD-REQ-001 remain PARTIAL overall. Official notice and in-app
+implementation now has actual authenticated 12-scenario Chromium evidence; the
+separate class channel has six Chromium scenarios plus real-session PostgreSQL
+role/scope/immutability/replay tests. New private routes/services/UI, four forward
+class migrations and exact 66-migration inventory preserve the accepted baseline.
+LIB-REQ-001 is not implemented by these changes. Packages P10-04–08 remain
+outstanding; no catalog/asset/assignment/adapter acceptance is inferred.
+See [current checkpoint](../quality/PHASE10_NOTICES_CLASS_ACCEPTANCE_20261107.md).
+
+
+
 ## Phase 8 local acceptance — 6 November 2026
 
 **RES-REQ-001: implemented and locally accepted for development integration.**

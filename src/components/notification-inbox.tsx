@@ -14,11 +14,17 @@ interface InboxView {
   nextCursor: string | null;
   unreadCount: string;
 }
-export function NotificationInbox({ schoolId }: { schoolId: string }) {
+export function NotificationInbox({
+  schoolId,
+  channel = "notice",
+}: {
+  schoolId: string;
+  channel?: "notice" | "class";
+}) {
   const [cursor, setCursor] = useState<string | undefined>();
   const root = `/api/schools/${encodeURIComponent(schoolId)}`;
   const { view, message, panel, load } = usePrivateCommunication<InboxView>(
-    `${root}/notifications${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`,
+    `${root}/${channel === "class" ? "class-notifications" : "notifications"}${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`,
   );
   const refresh = () => {
     void load();
@@ -54,10 +60,14 @@ export function NotificationInbox({ schoolId }: { schoolId: string }) {
                   {item.read ? "Read" : "Unread"} ·{" "}
                   {new Date(item.createdAt).toLocaleString("en-NG")}
                 </p>
-                <Link href={item.href}>Open school notice</Link>
+                <Link href={item.href}>
+                  {channel === "class"
+                    ? "Open class announcement"
+                    : "Open school notice"}
+                </Link>
                 <NoticeActionForm
                   title={item.read ? "Mark unread" : "Mark read"}
-                  endpoint={`${root}/notifications/${item.id}/state`}
+                  endpoint={`${root}/${channel === "class" ? "class-notifications" : "notifications"}/${item.id}/state`}
                   fields={[]}
                   onSaved={refresh}
                   build={() => ({ action: item.read ? "UNREAD" : "READ" })}

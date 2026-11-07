@@ -17,6 +17,9 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       ...[
+        "/schools/:schoolId/class-announcements",
+        "/schools/:schoolId/class-announcements/:path*",
+        "/schools/:schoolId/class-announcements.segments/:path*",
         "/schools/:schoolId/notices",
         "/schools/:schoolId/notices/:path*",
         "/schools/:schoolId/notices.segments/:path*",

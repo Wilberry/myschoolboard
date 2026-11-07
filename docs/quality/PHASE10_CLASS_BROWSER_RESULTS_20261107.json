@@ -1,0 +1,33 @@
+{
+  "sourceCommit": "77de805fdc3141d10710893c02305d1c9fb18dc7",
+  "sourceWorkingTreeDirty": true,
+  "outcome": "PASS",
+  "nativeChromium": true,
+  "checks": [
+    {
+      "name": "P10-CLASS-BR-01 exact subject author, section review and original author release",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-CLASS-BR-02 parent denial on content, management, inbox, foreign-school denial",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-CLASS-BR-03 class-only notification, explicit read and secure deep link",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-CLASS-BR-04 native focus, Back/Forward and accessible responsive recipient",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-CLASS-BR-05 actual Form Teacher responsibility and independent review",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-CLASS-BR-06 author withdrawal denies source and inbox without exposing history",
+      "outcome": "PASS"
+    }
+  ],
+  "limitations": ["Genuine persisted BFCache is not asserted."]
+}

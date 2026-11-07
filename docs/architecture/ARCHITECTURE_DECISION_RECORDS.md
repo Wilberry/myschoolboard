@@ -1,5 +1,22 @@
 # Architecture Decision Records
 
+## ADR-P10-002: Isolated class publication and database-only delivery pages
+
+Status: implemented development slice, 7 November 2026; D-P10-002 / D-023.
+Use separate immutable class aggregates and SQL audience predicates rather than
+reuse official notice permissions. Composite authority/context checks, independent
+verified section review and original-author release precede current enrolled-pupil
+reads. A class event and durable dispatch are committed together. Bounded pages
+use short database row locks, SKIP LOCKED and unique event/recipient delivery;
+crash before commit rolls the whole page back. This is safe without an external
+lease because all page work is local SQL and at most 100 membership rows. Do not
+add storage/provider I/O to that transaction. Failures, replay and read state
+append evidence; suppression is terminal and restricted to the changed school.
+Official notice leases remain unchanged. Queue throughput/load and broader
+Phase 10 integration remain mandatory P10-08 acceptance work.
+
+
+
 ## ADR-P10-001 — Separate communication channels and domain-owned in-app delivery
 
 **Status:** selected for development design; not implemented or runtime-verified.

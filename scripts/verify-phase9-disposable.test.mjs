@@ -34,6 +34,7 @@ test("rejects wrong/missing DB target, unsafe libpq options and weak attestation
     { PHASE9_FEE_WRITE_ENABLED: "true" },
     { PHASE10_NOTICES_ENABLED: "true" },
     { PHASE10_INAPP_ENABLED: "true" },
+    { PHASE10_CLASS_ANNOUNCEMENTS_ENABLED: "true" },
     { PHASE9_ACCOUNT_RELEASE_ENABLED: "true" },
     { PHASE9_RECEIPT_ENABLED: "true" },
     { PHASE9_EVIDENCE_UPLOAD_ENABLED: "true" },

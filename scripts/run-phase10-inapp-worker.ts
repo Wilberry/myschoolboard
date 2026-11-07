@@ -4,6 +4,7 @@ import { verifyPhase9DatabaseIdentity } from "./verify-phase9-disposable.mjs";
 import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
 import { deliverNoticeBatch } from "@/src/modules/notifications/service";
+import { deliverClassBatch } from "@/src/modules/notifications/class-inapp";
 // Local development worker: real authenticated operator, no external provider.
 verifyPhase9DatabaseIdentity(process.env);
 const school = z
@@ -18,6 +19,7 @@ if (args.length !== 1 || !["--once", "--watch"].includes(args[0]))
   throw Error("Use --once or --watch");
 process.env.PHASE10_NOTICES_ENABLED = "true";
 process.env.PHASE10_INAPP_ENABLED = "true";
+process.env.PHASE10_CLASS_ANNOUNCEMENTS_ENABLED = "true";
 let stopped = false;
 for (const signal of ["SIGINT", "SIGTERM"])
   process.on(signal, () => {
@@ -36,6 +38,15 @@ try {
           event: "inapp_batch_complete",
           processed: result.processed,
           delivered: result.delivered,
+        }),
+      );
+    const classResult = await deliverClassBatch(school, session.user.id);
+    if (classResult.processed)
+      console.info(
+        JSON.stringify({
+          event: "class_inapp_batch_complete",
+          processed: classResult.processed,
+          delivered: classResult.delivered,
         }),
       );
     if (args[0] === "--once") break;
