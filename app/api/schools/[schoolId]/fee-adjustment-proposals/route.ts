@@ -1,3 +1,4 @@
+import { readBoundedJson } from "@/src/lib/request-json";
 import {
   proposeFeeAdjustment,
   listFeeAdjustmentProposals,
@@ -76,7 +77,10 @@ export async function POST(
         { status: 400, headers },
       );
     const { schoolId } = await params;
-    const proposal = await proposeFeeAdjustment(schoolId, await request.json());
+    const proposal = await proposeFeeAdjustment(
+      schoolId,
+      await readBoundedJson(request),
+    );
     return Response.json(
       { proposal },
       { status: proposal.replay ? 200 : 201, headers },

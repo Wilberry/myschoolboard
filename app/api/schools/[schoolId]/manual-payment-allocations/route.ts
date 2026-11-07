@@ -1,3 +1,4 @@
+import { readBoundedJson } from "@/src/lib/request-json";
 import {
   allocateReviewedManualClaim,
   listManualAllocationPreview,
@@ -78,7 +79,7 @@ export async function POST(
     const { schoolId } = await params;
     const allocation = await allocateReviewedManualClaim(
       schoolId,
-      await request.json(),
+      await readBoundedJson(request),
     );
     return Response.json(
       { allocation },

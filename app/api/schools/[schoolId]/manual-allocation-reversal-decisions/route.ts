@@ -1,3 +1,4 @@
+import { readBoundedJson } from "@/src/lib/request-json";
 import { decideManualAllocationReversal } from "@/src/modules/fees/manual-allocation-reversal-service";
 import { FeeError } from "@/src/modules/fees/fee-configuration-service";
 
@@ -57,7 +58,7 @@ export async function POST(
     const { schoolId } = await params;
     const decision = await decideManualAllocationReversal(
       schoolId,
-      await request.json(),
+      await readBoundedJson(request),
     );
     return Response.json(
       { decision },

@@ -1,3 +1,4 @@
+import { readBoundedJson } from "@/src/lib/request-json";
 import {
   issueInternalFeeObligation,
   listOwnFeeObligations,
@@ -82,7 +83,7 @@ export async function POST(
     const { schoolId } = await params;
     const obligation = await issueInternalFeeObligation(
       schoolId,
-      await request.json(),
+      await readBoundedJson(request),
     );
     return Response.json(
       { obligation },

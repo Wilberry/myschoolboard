@@ -1,5 +1,14 @@
 # Project Status
 
+## Phase 12 independent quality work — 7 November 2026
+
+Phase 10/11 remain separate and are not assumed integrated. Recovered quality
+changes are preserved on `quality/phase12-production-readiness`; 207 guards and
+422 Vitest tests pass against a new nonce-attested disposable database. This is
+not production readiness or permission to merge. See the
+[acceptance matrix](../quality/PHASE12_ACCEPTANCE_MATRIX_20261107.md) and
+[recovered checkpoint](../quality/PHASE12_RECOVERED_WORK_CHECKPOINT_20261107.md).
+
 ## Current Phase 9 local acceptance — 6 November 2026
 
 **FEE-REQ-001: implemented, locally accepted, and merged into development `main` via PR #108.**

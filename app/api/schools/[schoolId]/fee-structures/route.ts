@@ -1,3 +1,4 @@
+import { readBoundedJson } from "@/src/lib/request-json";
 import {
   createInternalFeeStructureRevision,
   listOwnFeeConfiguration,
@@ -80,7 +81,7 @@ export async function POST(
       {
         revision: await createInternalFeeStructureRevision(
           schoolId,
-          await request.json(),
+          await readBoundedJson(request),
         ),
       },
       { status: 201, headers },

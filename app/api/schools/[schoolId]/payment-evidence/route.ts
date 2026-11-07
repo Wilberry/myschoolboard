@@ -1,3 +1,4 @@
+import { readBoundedJson } from "@/src/lib/request-json";
 import {
   submitInternalPaymentReference,
   listSchoolPaymentEvidence,
@@ -80,7 +81,7 @@ export async function POST(
     const { schoolId } = await params;
     const evidence = await submitInternalPaymentReference(
       schoolId,
-      await request.json(),
+      await readBoundedJson(request),
     );
     return Response.json(
       { evidence },
