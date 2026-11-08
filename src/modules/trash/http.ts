@@ -58,7 +58,7 @@ export function validateTrashRequest(request: Request, mutation = false) {
  */
 export async function readTrashMutation(request: Request): Promise<unknown> {
   const declared = request.headers.get("content-length");
-  if (declared !== null && (!/^\\d+$/.test(declared) || Number(declared) > 4096))
+  if (declared !== null && (!/^\d+$/.test(declared) || Number(declared) > 4096))
     throw new TrashError("INVALID_INPUT");
   const reader = request.body?.getReader();
   if (!reader) throw new TrashError("INVALID_INPUT");
