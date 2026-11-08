@@ -1,4 +1,9 @@
 import "dotenv/config";
+import { verifyPhase9DatabaseIdentity } from "@/scripts/verify-phase9-disposable.mjs";
+import {
+  deliverModuleBatch,
+  readModuleInbox,
+} from "@/src/modules/notifications/module-inapp";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
@@ -54,6 +59,7 @@ const secondaryAssignment = `review-assign-secondary-${suffix}`;
 const unknownAssignment = `review-assign-unknown-${suffix}`;
 const password = "synthetic-review-password-2026";
 const emails = {
+  owner: `review-owner-${suffix}@example.test`,
   teacher: `review-teacher-${suffix}@example.test`,
   head: `review-head-${suffix}@example.test`,
   principal: `review-principal-${suffix}@example.test`,
@@ -70,6 +76,12 @@ let primaryNoteId = "";
 let secondaryNoteId = "";
 let unknownNoteId = "";
 let headScopeId = "";
+async function deliverLessons() {
+  for (let i = 0; i < 100; i++) {
+    if (!(await deliverModuleBatch(schoolA, users.owner)).processed) return;
+  }
+  throw Error("Synthetic lesson queue exceeded bounded drain");
+}
 
 async function login(email: string) {
   const session = await auth.api.signInEmail({
@@ -168,6 +180,13 @@ async function decide(
 
 describe("section-scoped lesson note review and return", () => {
   beforeAll(async () => {
+    verifyPhase9DatabaseIdentity(process.env);
+    for (const flag of [
+      "PHASE10_INAPP_ENABLED",
+      "PHASE10_MODULE_INAPP_ENABLED",
+      "PHASE10_ACADEMIC_NOTIFICATIONS_ENABLED",
+    ])
+      vi.stubEnv(flag, "true");
     for (const [key, email] of Object.entries(emails)) {
       const user = await auth.api.signUpEmail({
         body: { email, name: `Synthetic ${key}`, password },
@@ -182,6 +201,7 @@ describe("section-scoped lesson note review and return", () => {
     });
     await prisma.membership.createMany({
       data: [
+        { userId: users.owner, schoolId: schoolA, role: "SCHOOL_SUPER_ADMIN" },
         {
           id: teacherMember,
           userId: users.teacher,
@@ -418,6 +438,7 @@ describe("section-scoped lesson note review and return", () => {
   }, 45_000);
 
   afterAll(async () => {
+    vi.unstubAllEnvs();
     await prisma.school.deleteMany({
       where: { id: { in: [schoolA, schoolB] } },
     });
@@ -471,6 +492,19 @@ describe("section-scoped lesson note review and return", () => {
       unknownAssignment,
       "Unclassified Fractions",
     );
+    await deliverLessons();
+    request("head", "GET", "/synthetic-inbox");
+    expect(
+      (await readModuleInbox(schoolA)).items.filter((item) =>
+        item.href.endsWith("/lesson-note-reviews"),
+      ),
+    ).toHaveLength(1);
+    request("principal", "GET", "/synthetic-inbox");
+    expect(
+      (await readModuleInbox(schoolA)).items.filter((item) =>
+        item.href.endsWith("/lesson-note-reviews"),
+      ),
+    ).toHaveLength(1);
 
     const head = await queue("head");
     expect(head.status).toBe(200);
@@ -754,6 +788,13 @@ describe("section-scoped lesson note review and return", () => {
       },
     );
     expect(released.status).toBe(201);
+    await deliverLessons();
+    request("pupilSecondary", "GET", "/synthetic-inbox");
+    const alerts = await readModuleInbox(schoolA);
+    expect(
+      alerts.items.filter((item) => item.href.endsWith("/my-lessons")),
+    ).toHaveLength(1);
+    expect(JSON.stringify(alerts)).not.toContain("Synthetic class-specific");
     const list = await pupilList("pupilSecondary");
     expect(list.status).toBe(200);
     expect(list.headers.get("cache-control")).toBe("private, no-store");
@@ -783,6 +824,12 @@ describe("section-scoped lesson note review and return", () => {
       { params: Promise.resolve({ schoolId: schoolA, linkId }) },
     );
     expect(revoke.status).toBe(201);
+    request("pupilSecondary", "GET", "/synthetic-inbox");
+    expect(
+      (await readModuleInbox(schoolA)).items.filter((item) =>
+        item.href.endsWith("/my-lessons"),
+      ),
+    ).toHaveLength(0);
     expect((await pupilList("pupilSecondary")).status).toBe(404);
     expect((await pupilDetail("pupilSecondary", secondaryNoteId)).status).toBe(
       404,

@@ -79,6 +79,7 @@ The Project Owner's [Standing Development Mandate](../project/STANDING_DEVELOPME
 - Objective: notices, announcements, portals, library, and notifications.
 - Requirements covered: COM-REQ-001, LIB-REQ-001, AUD-REQ-001
 - Dependencies: Phase 4, Phase 8
+- Status: partial development implementation with notice/class, catalog/private assets, learning assignments and initial source adapters; remaining P10-07 and cumulative P10-08 gates are open. See [source-adapter checkpoint](../quality/PHASE10_SOURCE_ADAPTER_CHECKPOINT_20261108.md).
 
 ## Phase 11 — Trash, recovery, and lifecycle management
 

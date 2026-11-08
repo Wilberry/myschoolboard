@@ -317,3 +317,66 @@ Reviewing `LessonNote` SUBMITTED revisions now requires a currently active same-
 - The School Super Admin role is distinct from the Platform Super Admin role.
 - Form Teacher authority is distinct from subject-teacher authority.
 - Final report publication is a distinct authorized workflow from ordinary HMs or Principals’ approvals.
+
+
+## Phase 10 separate class channel
+
+ClassAnnouncement requires exact current subject teaching assignment or actual
+FormTeacherResponsibility in the pinned school/class/session/term. Independent
+current verified PRIMARY Head of Section or SECONDARY Principal review is
+required; only the current original author releases. School owner moderation may
+withdraw by opaque release metadata and operate delivery/replay, without reading
+academic class bodies merely by platform/school-owner role. Students require
+current verified binding and exact active enrollment. Parents are always denied
+class content, drafts, inbox, counts and interactions. Notice/report/finance
+visibility and generic child grants do not apply. Every read repeats current
+source/reviewer/identity checks; source history and restoration grant no access.
+
+
+## Phase 10 learning tasks and pupil work
+
+LearningAssignment pins exact original teacher subject authority or explicitly
+allowed Form responsibility, class/session/term and current independently verified
+section reviewer. Only the original current author releases. Owner policy and
+withdrawal metadata do not grant arbitrary pupil-work or academic content reads.
+Current intended verified students append only their own immutable work; parents
+cannot impersonate a child. Original teacher feedback requires current exact
+authority and the pupil's current relationship. Approved image references intersect
+current task and asset rights; no automatic grade or raw pupil upload is enabled.
+
+
+## Phase 10 registered school audit inspection
+
+Only a current active same-school SCHOOL_SUPER_ADMIN in an active school may
+read the registered audit index. The projection is source ID/type, exact timestamp,
+action and recorded actor reference only. It grants no source body, pupil-work,
+financial-account or platform-security access. Administrators, generic reviewers,
+platform-only roles, pupils and guardians are denied. No guessed school or actor
+is substituted for unscoped authentication/security events.
+
+
+## Phase 10 report and financial in-app events
+
+Workflow inbox access does not grant academic or financial content. Report and
+receipt alerts call the unchanged source predicates and preserve their distinct
+visibility policies. Parent-first publication does not deliver to pupils; an actual
+current guardian acknowledgment creates the separate exact-pupil availability
+event. Notification READ cannot acknowledge a report. Owners receive only permitted
+acknowledgment workflow metadata. Financial account publication and receipt access
+remain independent of report/notice/library/class permissions. Pending payment
+evidence is only an independent owner review alert; a decision reaches its current
+authorized original submitter. No amount, reference or bank settlement claim is
+placed in notification content. Recipient membership is locked during delivery
+validation so concurrent revocation cannot evade terminal suppression.
+
+
+## Phase 10 account-security evidence
+
+Account security is independent of school membership and recipient relationships.
+A current authenticated account may read only its own minimal authentication and
+session evidence. Current Platform Super Admin authority is required for global
+security metadata, including failures without established identity; School Super
+Admin status does not grant it. Actor/subject/session references are server-derived.
+No attempted email, credential, cookie/token, IP, user agent, academic body or
+financial detail enters this ledger. Global audit authority grants no school
+academic access. See D-P10-008 and the authentication security checkpoint.

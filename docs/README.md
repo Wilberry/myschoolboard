@@ -1,5 +1,7 @@
 # Documentation Index
 
+Phase 10: [engineering analysis, architecture and next work packages](quality/PHASE10_ENGINEERING_ANALYSIS_20261106.md) — analysis only, not implementation acceptance.
+
 Current Phase 9 implementation and local results: [cloud acceptance](quality/PHASE9_CLOUD_ACCEPTANCE_20261106.md).
 
 This folder is the canonical documentation set for the MySchoolBoard project.

@@ -18,3 +18,14 @@ PostgreSQL triggers reject ordinary direct event updates, deletes, and truncatio
 
 - Avoid storing plaintext credentials, payment secrets, or tokens.
 - Logs must minimize exposure of sensitive data while retaining enough context for investigation.
+
+
+## Phase 10 implemented audit readers and account-security boundary
+
+The current school-owner audit index and separate account/platform security readers
+are described in the [authentication checkpoint](../quality/PHASE10_AUTHENTICATION_SECURITY_20261108.md).
+They supersede the historical no-reader statement for their registered sources.
+Unknown authentication failures belong to restricted platform metadata; personal
+account evidence is not a school disclosure capability. Security event/outbox
+capture is implemented; notification delivery and permission/credential-change
+coverage remain open. Whole AUD-REQ-001 and COM-REQ-001 remain partial.

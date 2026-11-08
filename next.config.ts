@@ -16,6 +16,26 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   async headers() {
     return [
+      ...[
+        "/schools/:schoolId/class-announcements",
+        "/schools/:schoolId/class-announcements/:path*",
+        "/schools/:schoolId/class-announcements.segments/:path*",
+        "/schools/:schoolId/library",
+        "/schools/:schoolId/library/:path*",
+        "/schools/:schoolId/library.segments/:path*",
+        "/schools/:schoolId/learning-assignments",
+        "/schools/:schoolId/audit",
+        "/schools/:schoolId/inbox",
+        "/schools/:schoolId/inbox/:path*",
+        "/schools/:schoolId/inbox.segments/:path*",
+        "/schools/:schoolId/audit/:path*",
+        "/schools/:schoolId/audit.segments/:path*",
+        "/schools/:schoolId/learning-assignments/:path*",
+        "/schools/:schoolId/learning-assignments.segments/:path*",
+        "/schools/:schoolId/notices",
+        "/schools/:schoolId/notices/:path*",
+        "/schools/:schoolId/notices.segments/:path*",
+      ].map((source) => ({ source, headers: privateSchoolRouteHeaders })),
       {
         source: "/schools/:schoolId/finance",
         headers: privateSchoolRouteHeaders,

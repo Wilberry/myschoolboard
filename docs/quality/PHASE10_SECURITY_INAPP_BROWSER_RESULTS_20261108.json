@@ -1,0 +1,31 @@
+{
+  "recordedAt": "2026-11-08T11:09:38.247Z",
+  "browser": "Authenticated native Chromium",
+  "checks": [
+    {
+      "name": "P10-SECURITY-BR-01 real UI authentication, private self evidence and school-owner global denial",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-SECURITY-BR-02 native hidden tab, Back/Forward, responsive axe and private printing",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-SECURITY-BR-05 account/platform delivery, actual read/unread, deep links and authenticated CLI",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-SECURITY-BR-03 platform metadata UI and still-signed-in current role revocation",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-SECURITY-BR-04 delayed private response, cross-tab sign-out and old-cookie replay denial",
+      "outcome": "PASS"
+    }
+  ],
+  "outcome": "PASS",
+  "limitations": [
+    "No persisted BFCache assertion",
+    "Other source adapters and cumulative phase acceptance remain separate checks"
+  ]
+}

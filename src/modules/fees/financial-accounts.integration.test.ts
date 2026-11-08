@@ -5,6 +5,16 @@ import { beforeAll, afterAll, describe, it, expect, vi } from "vitest";
 const context = vi.hoisted(() => ({ headers: new Headers() }));
 vi.mock("next/headers", () => ({ headers: async () => context.headers }));
 import { verifyPhase9DatabaseIdentity } from "@/scripts/verify-phase9-disposable.mjs";
+import {
+  deliverModuleBatch,
+  readModuleInbox,
+} from "@/src/modules/notifications/module-inapp";
+import {
+  createCatalogEntry,
+  reviewCatalogEntry,
+  releaseCatalogEntry,
+  readLibraryCatalog,
+} from "@/src/modules/learning-resources/catalog";
 import { prisma } from "@/src/lib/db";
 import { auth } from "@/src/lib/auth";
 import { env } from "@/src/lib/env";
@@ -779,6 +789,78 @@ describe("Phase 9 released financial accounts and school-issued receipts", () =>
         .status,
     ).toBe(400);
   });
+  it("delivers published financial updates only through the independent current account policy", async () => {
+    vi.stubEnv("PHASE10_INAPP_ENABLED", "true");
+    vi.stubEnv("PHASE10_MODULE_INAPP_ENABLED", "true");
+    vi.stubEnv("PHASE10_FINANCIAL_NOTIFICATIONS_ENABLED", "true");
+    for (let i = 0; i < 30; i++) {
+      if (!(await deliverModuleBatch(schoolA, actors.owner)).processed) break;
+      if (i === 29)
+        throw Error("Synthetic financial queue exceeded bounded drain");
+    }
+    for (const actor of ["student", "parent"]) {
+      context.headers = new Headers({ cookie: cookies[actor] });
+      const inbox = await readModuleInbox(schoolA);
+      expect(inbox.items.some((item) => item.href.endsWith("/my-fees"))).toBe(
+        true,
+      );
+      expect(JSON.stringify(inbox)).not.toContain(pupilId);
+      expect(JSON.stringify(inbox)).not.toContain(reference);
+    }
+    context.headers = new Headers({ cookie: cookies.unrelated });
+    // This unrelated fixture is a guardian with no currently eligible source.
+    await expect(readModuleInbox(schoolA)).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+    context.headers = new Headers({ cookie: cookies.foreign });
+    await expect(readModuleInbox(schoolA)).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+    vi.stubEnv("PHASE10_LIBRARY_ENABLED", "true");
+    context.headers = new Headers({ cookie: cookies.teacher });
+    const book = await createCatalogEntry(schoolA, {
+      kind: "PHYSICAL_BOOK",
+      title: "Synthetic permission intersection book",
+      author: "Synthetic author",
+      publisher: "Synthetic publisher",
+      isbn: null,
+      description: "Original fictional catalog metadata",
+      provenance: "Synthetic metadata solely for authorization verification",
+      requestKey: randomUUID(),
+      reason: "Synthetic separate catalog authority",
+    });
+    context.headers = new Headers({ cookie: cookies.owner });
+    await reviewCatalogEntry(schoolA, book.id, {
+      expectedRevision: 1,
+      action: "APPROVE",
+      requestKey: randomUUID(),
+      reason: "Synthetic independent catalog review",
+    });
+    const released = await releaseCatalogEntry(schoolA, book.id, {
+      expectedRevision: 1,
+      scope: "SCHOOL",
+      requestKey: randomUUID(),
+      reason: "Synthetic school catalog release",
+    });
+    context.headers = new Headers({ cookie: cookies.parent });
+    await expect(
+      readLibraryCatalog(schoolA, released.id),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    const source = await prisma.schoolSourceEvent.findFirstOrThrow({
+      where: {
+        schoolId: schoolA,
+        sourceType: "LibraryCatalogRelease",
+        sourceId: released.id,
+      },
+    });
+    expect(
+      (
+        await prisma.$queryRaw<
+          Array<{ allowed: boolean }>
+        >`SELECT can_read_module_notification(${schoolA},${source.id}::uuid,${actors.parent}) AS allowed`
+      )[0].allowed,
+    ).toBe(false);
+  }, 20000);
   it("applies approved waivers explicitly and reports exact amounts without currency mixing", async () => {
     const decisionId = await waiver("2000");
     await accepted(

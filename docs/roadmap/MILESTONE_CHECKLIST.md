@@ -1,5 +1,140 @@
 # Milestone Checklist
 
+## Phase 10 security in-app delivery — 8 November 2026
+
+- [x] Separate current-subject account and current-operator platform alert channels.
+- [x] Atomic retry/replay, 101-recipient paging, terminal suppression and actual role-lock race.
+- [x] Private read/unread/cursor APIs, accessible inbox UI and authenticated CLI.
+- [x] 207 guards, 512 tests, 83 exact/fresh migrations and five native Chromium workflows.
+- [ ] Remaining school operational and permission/credential-change adapters.
+- [ ] Full cumulative source/browser/privacy/load acceptance and integration review.
+
+
+## Phase 10 authentication evidence — 8 November 2026
+
+- [x] Actual transactional session capture, minimal immutable evidence and outbox.
+- [x] Email success/failure and logout intent/outcome hooks; unknown failures have no guessed tenant.
+- [x] Fail-closed audit/logout behavior, fixed safe diagnostics and cookie withholding.
+- [x] Current own-account/platform-only API/UI with exact scoped pagination.
+- [x] 207 guards, 504 Vitest tests, 82 exact/fresh migrations and four native Chromium workflows.
+- [ ] Security notification delivery and remaining permission/credential-change adapters.
+- [ ] Remaining operational notifications and cumulative P10-08 acceptance/review.
+
+
+## Phase 10 subscription boundaries — 8 November 2026
+
+- [x] Bounded database-clock expiry observation, uniqueness and concurrent workers.
+- [x] Transactional immutable source/outbox capture and platform-only evidence API.
+- [x] Suspended-school isolation and immediate platform-role revocation.
+- [x] Independently verified fresh 79-migration bootstrap and exact checksums.
+- [ ] School operational notification reader/delivery and authenticated UI acceptance.
+- [ ] Permission/authentication security coverage and remaining P10-08 gates.
+
+
+## Phase 10 module recovery — 8 November 2026
+
+- [x] Five injected failures after insert roll back delivery and cursor atomically.
+- [x] Cooldown, dead-letter, reasoned concurrent replay and immutable attempts.
+- [x] 101 eligible recipients, committed page recovery and no duplicate delivery.
+- [x] Forward membership insertion performance fix preserves revocation tests.
+- [x] Independent fresh 78-migration bootstrap and exact checksums.
+- [ ] Remaining operational/security adapters and cumulative acceptance.
+
+
+## Phase 10 academic source adapters — 8 November 2026
+
+- [x] Seven exact attendance/correction/lesson/result-review recipient contracts.
+- [x] Transactional correction capture; 38 source tables / 18 recipient contracts.
+- [x] 207 guards, 493 Vitest tests, 77 exact checksums and independent fresh bootstrap.
+- [x] Lint, TypeScript, formatting and production build.
+- [ ] Remaining lifecycle/subscription/permission/authentication source contracts.
+- [ ] Complete cumulative P10-08 browser, worker recovery/load and release review.
+
+
+## Phase 10 family-source notifications — 8 November 2026
+
+- [x] Six report/acknowledgment/financial contracts with source-owned visibility.
+- [x] Separate channel regions in private staff/pupil/guardian inbox.
+- [x] Actual recipient-revocation/delivery blocking test and forward SQL hardening.
+- [x] 207 guards, 492 Vitest tests, exact/fresh 76 migrations and three family Chromium workflows.
+- [ ] Remaining attendance/lesson/result-review/lifecycle/security source contracts.
+- [ ] Complete P10-08 retries/recovery/load/browser/privacy/integration review.
+
+
+## Phase 10 initial source adapters — 8 November 2026
+
+- [x] Minimal transactional event/outbox capture from 36 registered school ledgers.
+- [x] Five explicit learning/resource current-recipient contracts and private inbox.
+- [x] Atomic rollback, concurrent delivery/deduplication and terminal revocation tests.
+- [x] Fresh 75-migration bootstrap; 207 guards and 490 Vitest tests pass.
+- [x] Seven authenticated learning/module/audit Chromium workflows pass.
+- [ ] Remaining attendance/lesson/result/report/fee/operational/security adapters.
+- [ ] Module failure/replay/paging/load/recovery and full P10-08 acceptance.
+
+
+## Phase 10 audit inspection — 8 November 2026
+
+- [x] Owner-only private registered-ledger metadata inspection.
+- [x] Actual role revocation, tenant denial and >100-row cursor tests.
+- [x] Authenticated audit UI accessibility and cross-tab sign-out acceptance.
+- [ ] Remaining P10-07 source-event adapters, authentication and permission audit.
+- [ ] Full P10-08 cumulative acceptance and integration review.
+
+
+## Phase 10 learning checkpoint — 8 November 2026
+
+- [x] P10-06 policy/task/approved-image-reference/submission implementation.
+- [x] Eleven authenticated PostgreSQL tests and five native Chromium workflows.
+- [x] Fresh 73-migration bootstrap, preserving applied SQL with a forward correction.
+- [ ] Terminal learning revocation, delayed-response/sign-out/printing expansion.
+- [ ] P10-07 existing domain adapters and scoped audit inspection.
+- [ ] P10-08 cumulative acceptance and integration review.
+
+See the [checkpoint](../quality/PHASE10_LEARNING_CHECKPOINT_20261108.md).
+
+
+## Phase 10 catalog/asset checkpoint — 8 November 2026
+
+- [x] P10-04/05 local catalog/raster implementation and seven browser checks.
+- [x] Typed staff/pupil scope, independent rights, expiry, post-I/O revocation and integrity tests.
+- [x] Fresh 71-migration bootstrap and exact checksums.
+- [ ] P10-06 learning assignments/submissions.
+- [ ] P10-07 existing-module adapters/scoped audit inspection.
+- [ ] Full P10-08 integration/stress/operational acceptance and review.
+
+This is local evidence, not whole-phase or production acceptance.
+
+
+## Phase 10 implementation checkpoint — 7 November 2026
+
+- [x] P10-01/02 official-notice and in-app workflow: actual local browser evidence.
+- [x] P10-03 separate class author/review/release/withdraw and class inbox implementation.
+- [x] Six class-browser workflows and tenant/guardian denials executed.
+- [ ] Complete class stress/revocation/printing browser expansion under P10-08.
+- [ ] P10-04/05 catalog, rights, quarantine/inspection and authorized assets.
+- [ ] P10-06 learning assignments and permitted submissions.
+- [ ] P10-07 existing-domain adapters and scoped audit inspection.
+- [ ] P10-08 cumulative acceptance, integration review and whole-phase acceptance.
+
+Evidence: [checkpoint](../quality/PHASE10_NOTICES_CLASS_ACCEPTANCE_20261107.md).
+
+
+
+## Phase 10 engineering analysis — 6 November 2026
+
+**COM-REQ-001 / LIB-REQ-001 / AUD-REQ-001: analysis prepared; implementation and
+Phase 10 acceptance remain outstanding.** Verified starting main:
+`d4459d827e8529ea8daddb73f7e842d8c47c12ab`, including accepted Phases 8 and 9.
+The isolated analysis records actual implementation gaps, separate notice/class
+permissions, resource rights/quarantine/storage, transactional in-app notification
+and audit architecture, additive schema sequence and work packages P10-01–08.
+First safe implementation milestone: owner-published official notices plus
+current verified recipient access and deduplicated in-app delivery (P10-01/02).
+No runtime/schema/migration/dependency changes, database writes, external sends,
+main merge or deployment are part of this analysis. Historical Phase 9 acceptance
+below remains unchanged. See
+[Phase 10 analysis and verification](../quality/PHASE10_ENGINEERING_ANALYSIS_20261106.md).
+
 ## Phase 9 manual-accounting acceptance — 6 November 2026
 
 **FEE-REQ-001: implemented and locally accepted for development PR integration.**

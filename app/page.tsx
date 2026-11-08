@@ -96,6 +96,9 @@ async function HomeContent() {
         </Link>
         <div className="account-menu">
           <span className="account-name">{session.user.name}</span>
+          {process.env.PHASE10_AUTH_SECURITY_ENABLED === "true" && (
+            <Link href="/account/security">Account security</Link>
+          )}
           <SignOutButton />
         </div>
       </header>
@@ -163,6 +166,12 @@ async function HomeContent() {
                       Published report cards
                     </Link>
                   )}
+                  <Link
+                    className="school-link"
+                    href={`/schools/${school.id}/notices`}
+                  >
+                    School notices and notifications
+                  </Link>
                   {(role === "SCHOOL_ADMIN" ||
                     role === "SCHOOL_SUPER_ADMIN") && (
                     <Link

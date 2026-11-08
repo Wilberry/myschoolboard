@@ -1,0 +1,10 @@
+{
+  "migrationInventory": 83,
+  "additions": [
+    {
+      "name": "20261108040000_phase10_security_inapp",
+      "sha256": "9e7b75e29a835dbd067175d166234a0e3bcb172b677e86216632bc422b62662f"
+    }
+  ],
+  "priorAppliedMigrations": "unchanged"
+}

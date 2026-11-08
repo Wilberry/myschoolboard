@@ -1,0 +1,93 @@
+{
+  "base": "f432199786c94465f8010dd93d3b885d4d8bd581",
+  "files": [
+    {
+      "path": "app/api/schools/[schoolId]/module-delivery/replay/route.ts",
+      "sha256": "1c85f635ec1f484e2d2e555588520a75f32df696515838e48b4a8bcf1bc68872"
+    },
+    {
+      "path": "app/api/schools/[schoolId]/module-delivery/route.ts",
+      "sha256": "d12e9c9a8b3998f43722aa5f2c37ca446f80c1263a9e22b9118cefc2cdb63acd"
+    },
+    {
+      "path": "app/api/schools/[schoolId]/module-notifications/[deliveryId]/state/route.ts",
+      "sha256": "20835e7d7722a3a5d56c8524e099729055361b9c0d75dd18a92716c0fc4e063f"
+    },
+    {
+      "path": "app/api/schools/[schoolId]/module-notifications/route.ts",
+      "sha256": "667153dd50e86b482510d7f9e9b36cd84cfc621dc3328c9fc11a5d11fe6116a7"
+    },
+    {
+      "path": "prisma/migrations/20261108022000_phase10_source_event_capture/migration.sql",
+      "sha256": "aba719074340808f797520d452f1bb52175a3714c21e5d08a4cf88a0ef6fc869"
+    },
+    {
+      "path": "prisma/migrations/20261108023000_phase10_learning_resource_inapp/migration.sql",
+      "sha256": "b78c53b3bc2205b1b94a3460c1eb6be894b947fb25d88934b67f093fa9a7411c"
+    },
+    {
+      "path": "src/modules/notifications/module-inapp.ts",
+      "sha256": "607b123fdd220f26465e945d261eac856a471d91033908d9afe2871bfd4fe9fd"
+    },
+    {
+      "path": ".env.example",
+      "sha256": "4bc6f547bca465308f10d65559db1052fb6b13c549973a3d3b0879ecae85b435"
+    },
+    {
+      "path": "prisma/schema.prisma",
+      "sha256": "55b1d460e111c0df04cecb0d33d4e8370b0e3821e3b28fcfbc3b008fb6e8c5e9"
+    },
+    {
+      "path": "scripts/issue20-guardian-guard.test.mjs",
+      "sha256": "a5aff8a52db7ab1a5a633db204f3ee95d2a826f6f7d37aadceeb963c2fe71294"
+    },
+    {
+      "path": "scripts/launch-phase1-7-verification.mjs",
+      "sha256": "64d665bfa96750a110c7422d374a8ab42fdc018aedda0e3b01784fd095af991b"
+    },
+    {
+      "path": "scripts/launch-phase1-7-verification.test.mjs",
+      "sha256": "25356496cfb7e597ef9cdf00caeb3ae92abb8da31436282cd2dd160b71cb9d58"
+    },
+    {
+      "path": "scripts/phase3-subscriptions-guard.test.mjs",
+      "sha256": "b8358b6a6004b377440babc12a79b9bbdf3689045f9efa1d0b99c73773be8e79"
+    },
+    {
+      "path": "scripts/run-phase10-inapp-worker.ts",
+      "sha256": "5039495d048f04058b99354fd3e0db4e5b3acd2760fbce0f670d2c1c0ae0d90b"
+    },
+    {
+      "path": "scripts/verify-phase10-learning-browser.mjs",
+      "sha256": "bbc83e6b397aaa7d9a643c14355600c09c78e8e3c4b3fd06e237b378dd9c0edc"
+    },
+    {
+      "path": "scripts/verify-phase9-disposable.mjs",
+      "sha256": "1f212e82350d8a90cd25c8bd75a1b4e9a5800ab616ef42c9ff13939328e3065c"
+    },
+    {
+      "path": "scripts/verify-phase9-disposable.test.mjs",
+      "sha256": "ccc26e5ea923efdfd970bd24faffaf3013564c5666af28326d4273af51f8a622"
+    },
+    {
+      "path": "scripts/verify-phase9-fresh-bootstrap.mjs",
+      "sha256": "3957a0be4839ebc4f681e92ecc4b6fd7e35405b51cb1016efed99598967be5d3"
+    },
+    {
+      "path": "src/components/learning-assignment-workspace.tsx",
+      "sha256": "b418e94797cea4745d7742243450a7b00bb390f2adac1ef284d81ede23d9ade3"
+    },
+    {
+      "path": "src/components/library-workspace.tsx",
+      "sha256": "3a4d457f18668031f6d72ece60676baf8ff6f8671a6ba79cfbc214c112aa46da"
+    },
+    {
+      "path": "src/components/notification-inbox.tsx",
+      "sha256": "47d2eb0e537d9569787b5247261e797afe4397e77208a1acc16e6cb21f1b0dad"
+    },
+    {
+      "path": "src/modules/learning-assignments/assignments.integration.test.ts",
+      "sha256": "ccb53a875b0f06684ee3591e805f8c744792c62228b992f0d6c361b877109377"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "migrationInventory": 77,
+  "additions": [
+    {
+      "name": "20261108025000_phase10_academic_notifications",
+      "sha256": "a2aed5498834583bb34d13a29ee6e3d6185ba5f40b92e4cf96d7d0e5747d6555"
+    }
+  ],
+  "priorAppliedMigrations": "unchanged"
+}

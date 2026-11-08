@@ -1,5 +1,158 @@
 # Decision Log
 
+## D-P10-009: Separate account and platform-security notification channels
+
+**Date:** 2026-11-08. **Status:** development implementation, partial phase acceptance.
+
+Account security notifications resolve known facts only to the current subject;
+unknown-identity failures resolve only to current platform security operators.
+Personal and platform channels have separate private read/state APIs and UI. No
+school/guardian capability grants global security access. Alerts copy no identity,
+credential, source body or reason; local deep links reauthorize canonical records.
+
+The default-off worker commits bounded delivery/cursor/attempt pages atomically,
+uses SKIP LOCKED, current user shared locks and source/recipient deduplication,
+retains five failures/cooldown/reasoned replay, and appends terminal suppression on
+actual role revocation/deletion. Read/unread preserves immutable history. The local
+CLI attests its disposable database, authenticates through the explicit isolated
+app's real secure-cookie configuration and then checks current database authority.
+No external credential forwarding, redirect, anonymous worker or provider is enabled.
+See [executed acceptance](../quality/PHASE10_SECURITY_INAPP_20261108.md). Whole phase
+and production/integration gates remain partial.
+
+
+## D-P10-008: Account-security evidence and mandatory-audit failure policy
+
+**Date:** 2026-11-08. **Status:** development implementation, partial acceptance.
+
+Global account-security evidence is separate from school ledgers. Unknown
+credential/HTTP failures have no inferred identity or tenant and are restricted
+to current platform-security authority. Known account evidence derives its subject
+from actual server authentication or a Session database trigger, never caller
+identity fields. Source facts and one minimal outbox entry commit together; session
+facts have no inferred human actor, and database time/principal are enforced.
+
+The development hooks/readers/UI default off. Mandatory audit failure returns an
+error and withholds new credentials; a newly created session is compensated where
+possible. Logout success requires the actual session to be absent, because the
+current library catches database deletion errors. Fixed diagnostic categories
+replace raw adapter/credential logging without disabling error signals. Existing
+session token representation and production admission/provider policies are not
+changed. Evidence is immutable and survives account deletion; production retention,
+credential-change coverage and restricted notification delivery remain explicit
+open gates. See [executed evidence](../quality/PHASE10_AUTHENTICATION_SECURITY_20261108.md).
+
+
+## D-P10-007: Deterministic subscription-boundary observations
+
+**Date:** 2026-11-08. **Status:** development implementation, partial acceptance.
+
+Subscription expiry is an observation of the immutable persisted period end,
+not a mutation of entitlement, payment or school lifecycle. The non-production
+worker derives its actor from a current authenticated Platform Super Admin,
+uses database time and at most 100 locked due periods, and commits an immutable
+unique boundary event plus source envelope/outbox together. Restarts and
+concurrent operators cannot create duplicate logical boundaries.
+
+Until a separately reviewed inactive-school operational reader is implemented,
+school notification delivery stays pending and ordinary academic/financial
+inactive-school denials remain. Only current platform operators can inspect
+bounded school-scoped lifecycle/boundary metadata. Default-off capability;
+verified disposable local scheduler only, no external provider or production
+activation. This implements the safe interim contract in the Phase 10 analysis;
+it does not close P10-07/P10-08. See the
+[checkpoint](../quality/PHASE10_SUBSCRIPTION_BOUNDARIES_20261108.md).
+
+
+## D-P10-006: Independent family-source notification predicates
+
+8 November 2026, D-023, development implementation with actual PostgreSQL and
+Chromium evidence. Preserve parent-first report acknowledgment and independent
+financial publication as separate source predicates. The original parent-first
+publication never delivers to a pupil; the actual acknowledgment source supplies
+the exact-pupil availability event. Generic READ cannot acknowledge or settle
+anything. New inbox regions preserve channel boundaries. Shared recipient locks
+serialize delivery with membership revocation. Unknown contracts remain pending;
+whole Phase 10 and production acceptance are not inferred from these adapters.
+
+
+## D-P10-005: Preserve typed channels and register minimal school source contracts
+
+8 November 2026, D-023 / ADR-P10-005. Existing notice DomainEvent references an
+exact NoticeRelease; preserve that FK/history and the separate class channel.
+Add a versioned minimal SchoolSourceEvent/outbox beside them, captured atomically
+from explicit immutable school source tables. No history backfill or source
+payload copying occurs. Delivery requires a registered current source predicate,
+never a wildcard role or browser-supplied recipient. Unknown contracts remain
+pending; generic source capture alone cannot satisfy delivery acceptance. First
+registered adapters cover learning workflow and approved library resources.
+Tenant-local terminal suppression and existing private inbox mechanics preserve
+revocation/privacy. Unscoped auth events and Phase 11 sources require separate
+real contracts; no guessed school fan-out or fake lifecycle event is introduced.
+
+
+## D-P10-004: Explicit task policy and immutable pupil work
+
+8 November 2026, D-023 / ADR-P10-004. Keep learning tasks separate from class
+announcements, lesson/assessment authority and grades. Pin an owner-adopted policy,
+exact original teacher context, independent section review, UTC deadline and school
+timezone. Submission, Form tasks, approved-image references, late work and repeat
+work default off. Permit text and already approved task-resource references only;
+no raw pupil upload or automatic grade writes. Derive current pupil identity and
+intersect each reference with its original current rights predicate. Preserve
+immutable original work and teacher feedback; return permits an explicitly allowed
+new revision. Policy changes require a new task before release, not silent policy
+replacement on old published instructions. P10-07/08 remain separate acceptance.
+
+
+## D-P10-003: Separate catalog metadata, current typed rights and raster bytes
+
+8 November 2026, D-023 / ADR-P10-003. Catalog review is not asset permission.
+Independent owner rights attestations pin a reviewed catalog version/audience,
+source/license and expiry; owner-proposed assets still need another owner.
+Only bounded PNG/JPEG is inspected and normalized; other formats stay disabled.
+Quarantine/orphan bytes never have a public route. Downloads recheck current
+rights/scope after I/O; scoped staff need exact current teaching/Form Teacher/
+verified section relationships. Owners/curators cannot bypass inactive targets.
+Preserve ambiguous private orphans rather than delete potentially committed files.
+No production activation or irreversible retention decision is authorized.
+
+
+## D-P10-002: Separate class channel and atomic bounded in-app pages
+
+7 November 2026; development default under D-023 and ADR-P10-002. Class
+announcements derive one exact subject assignment or actual Form Teacher
+responsibility, require independent current section review, and release through
+the original author. Guardians and generic notice/report permissions cannot grant
+class content/inbox access. The class worker uses atomic database-only 100-member
+pages under school/outbox locks and SKIP LOCKED; no external I/O or long-running
+lease exists inside these transactions. Crash rolls back cursor, delivery and
+attempt together. Five bounded failures, immutable attempts, reasoned replay and
+terminal suppression protect recovery. Source events and outbox capture are atomic.
+Full Phase 10, existing-domain adapters and production acceptance remain partial.
+
+
+
+## D-P10-001 — Isolated Phase 10 analysis and development architecture
+
+**Date:** 2026-11-06. **Status:** analysis/design decision, not implemented permission.
+Under D-023 and the owner's explicit analysis-only task, start from verified main
+`d4459d827e8529ea8daddb73f7e842d8c47c12ab` and preserve accepted Phases 1–9.
+Select separate school-notice and class-announcement authorization aggregates;
+parents never receive class announcements. Use current verified relationships,
+exact teaching/Form Teacher authority, explicit review/release and withdrawal.
+Keep catalog metadata, licensed/reviewed assets and teacher learning assignments
+separate. Default unapproved/unsafe assets and optional submissions closed.
+Mandatory in-app notifications use a PostgreSQL transactional outbox, current
+domain-owned audiences and deduplication; existing domain audit ledgers remain
+authoritative. External delivery and initial PDF distribution remain disabled.
+First implementation milestone is an official notice vertical slice plus in-app
+delivery. No new runtime capability, schema, migration or provider is activated
+by this decision. See ADR-P10-001 and
+[engineering analysis](../quality/PHASE10_ENGINEERING_ANALYSIS_20261106.md).
+Development work packages may proceed under D-023; this task authorizes a
+non-default analysis branch/draft PR, not a merge or production operation.
+
 ## D-P9-009 — Complete the manual school accounting workflow
 
 Under D-023 and the owner's explicit 2026-11-06 Phase 9 task, preserve the

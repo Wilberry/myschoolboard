@@ -189,6 +189,79 @@ async function SchoolDetailContent({
             </Link>
           </p>
         )}
+        <p className="setup-navigation">
+          <Link
+            href={`/schools/${schoolId}/notices`}
+            className="secondary-link"
+          >
+            Official school notices and in-app alerts
+          </Link>
+        </p>
+        {[
+          "TEACHER",
+          "FORM_TEACHER",
+          "HEAD_OF_SECTION",
+          "PRINCIPAL",
+          "STUDENT",
+          "SCHOOL_SUPER_ADMIN",
+        ].includes(access.principal.membership?.role ?? "") && (
+          <p className="setup-navigation">
+            <Link
+              href={`/schools/${schoolId}/class-announcements`}
+              className="secondary-link"
+            >
+              Class announcements
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role !== "PARENT" && (
+          <p className="setup-navigation">
+            <Link
+              href={`/schools/${schoolId}/library`}
+              className="secondary-link"
+            >
+              Approved library catalog
+            </Link>
+          </p>
+        )}
+        {[
+          "TEACHER",
+          "FORM_TEACHER",
+          "HEAD_OF_SECTION",
+          "PRINCIPAL",
+          "STUDENT",
+          "SCHOOL_SUPER_ADMIN",
+        ].includes(access.principal.membership?.role ?? "") && (
+          <p className="setup-navigation">
+            <Link
+              href={`/schools/${schoolId}/learning-assignments`}
+              className="secondary-link"
+            >
+              Learning assignments and feedback
+            </Link>
+          </p>
+        )}
+        {process.env.PHASE10_INAPP_ENABLED === "true" && (
+          <p className="setup-navigation">
+            <Link
+              href={`/schools/${schoolId}/inbox`}
+              className="secondary-link"
+            >
+              In-app notifications
+            </Link>
+          </p>
+        )}
+        {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" &&
+          process.env.PHASE10_AUDIT_ENABLED === "true" && (
+            <p className="setup-navigation">
+              <Link
+                href={`/schools/${schoolId}/audit`}
+                className="secondary-link"
+              >
+                School audit evidence
+              </Link>
+            </p>
+          )}
         {access.principal.membership?.role === "STUDENT" && (
           <p className="setup-navigation">
             <Link

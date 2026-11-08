@@ -1,5 +1,127 @@
 # Requirements Traceability Matrix
 
+## Phase 10 security notification delivery — 8 November 2026
+
+Actual account-security outbox events now deliver to their current subject or,
+for unknown failures, current platform operators through a separate channel.
+Atomic 100-recipient pages, bounded failures/cooldown/reasoned replay, read/unread,
+terminal suppression, private APIs/UI and authenticated local CLI are verified.
+Actual checks: 207 guards, 512 Vitest tests, 83 exact/fresh migrations, static/build
+checks and five native Chromium workflows, including actual CLI role revocation.
+Remaining P10-07/P10-08 gates stay open. See the
+[delivery checkpoint](../quality/PHASE10_SECURITY_INAPP_20261108.md).
+
+
+## Phase 10 account-security evidence — 8 November 2026
+
+Actual session mutations capture immutable minimal evidence/outbox records;
+reviewed BetterAuth hooks cover email authentication and logout outcomes. Logout
+failure cannot falsely confirm revocation, failed mandatory audits withhold
+credentials, and raw router error logging is intercepted. Own-account and current
+platform-only readers/UI preserve school isolation. Actual checks: 207 guards,
+504 Vitest tests, 82 exact/fresh migrations, build/static checks and four native
+Chromium privacy/accessibility/security workflows. Source notification delivery,
+permission/credential-change coverage and remaining P10-08 gates stay open. See
+[authentication checkpoint](../quality/PHASE10_AUTHENTICATION_SECURITY_20261108.md).
+
+
+## Phase 10 subscription-boundary observations — 8 November 2026
+
+A current-platform-operator worker observes persisted expiry using database time,
+with bounded concurrent/idempotent capture and transactional immutable source and
+outbox records. Restricted platform metadata reads preserve inactive-school
+academic denials. School delivery remains pending until its operational reader
+exists. See the [boundary checkpoint](../quality/PHASE10_SUBSCRIPTION_BOUNDARIES_20261108.md).
+P10-07 and P10-08 remain partial.
+
+
+## Phase 10 module retry and paged recovery — 8 November 2026
+
+An actual 101-recipient fault-injection scenario exposed and fixed unnecessary
+membership-insert revocation rescans using a forward migration. The 21-test
+source suite passes, preserving terminal revocation and its real transaction
+race. Five failures, cooldown, dead-letter/concurrent reasoned replay, rollback
+and multi-page recovery are verified; all intended recipients receive once.
+See the [recovery checkpoint](../quality/PHASE10_MODULE_RECOVERY_20261108.md).
+P10-07/P10-08 remain partial.
+
+
+## Phase 10 academic notification adapters — 8 November 2026
+
+Attendance, corrections, lessons and result-sheet review add seven source-owned
+contracts (18 total), with current exact section/teacher/pupil authorization.
+Correction source capture brings the immutable envelope registry to 38 tables.
+Actual local checks: 207 guards, 493 Vitest tests, 77 exact migration checksums,
+independent fresh bootstrap, lint, TypeScript, formatting and production build.
+P10-07 operational/security adapters and P10-08 remain open. See the
+[academic checkpoint](../quality/PHASE10_ACADEMIC_NOTIFICATIONS_20261108.md).
+
+
+## Phase 10 report/financial alerts and unified inbox — 8 November 2026
+
+Six additional explicit report/acknowledgment/account/receipt/reconciliation source
+contracts preserve parent-first and independent financial visibility. A private
+unified inbox keeps channel authorization separate. Delivery validation locks the
+recipient membership against revocation; a forced real PostgreSQL race test passes.
+Actual evidence: 207 guards, 492 Vitest tests, exact 76 migrations/fresh bootstrap,
+three family Chromium workflows and scoped fee-versus-library denial. Eleven
+source contracts now exist; remaining P10-07/P10-08 gates stay open. See the
+[family checkpoint](../quality/PHASE10_REPORT_FINANCIAL_NOTIFICATIONS_20261108.md).
+
+
+## Phase 10 source capture and learning/resource adapters — 8 November 2026
+
+Thirty-six school ledgers capture minimal immutable source envelopes/outbox rows
+transactionally, without history backfill. Five explicit current-recipient
+contracts deliver task review/work/feedback, catalog and approved-asset updates;
+unknown source contracts stay pending. Actual local verification: 207 guards,
+490 Vitest tests, 75 exact migration checksums, fresh bootstrap and seven
+learning/audit Chromium workflows passed. P10-07 remains partial and P10-08 open.
+See the [source checkpoint](../quality/PHASE10_SOURCE_ADAPTER_CHECKPOINT_20261108.md).
+
+
+## Phase 10 registered audit inspection — 8 November 2026
+
+P10-07 now includes owner-only minimal metadata inspection across 33 registered
+school ledgers, with current tenant/role checks, exact bounded cursors and private
+UI. Actual PostgreSQL permission/revocation/pagination and Chromium accessibility/
+cross-tab sign-out checks pass. Notification source adapters and the complete
+security-audit pipeline remain outstanding; whole Phase 10 remains PARTIAL.
+See the [audit checkpoint](../quality/PHASE10_AUDIT_INSPECTION_20261108.md).
+
+
+## COM/LIB/SEC learning evidence — 8 November 2026
+
+P10-06 implements the selected separate learning workflow, explicit owner policy,
+independent review, current pupil submissions, immutable teacher feedback and
+approved-resource audience intersection. Eleven PostgreSQL and five native
+Chromium scenarios passed; full Phase 10 remains PARTIAL pending P10-07/P10-08.
+See the [checkpoint](../quality/PHASE10_LEARNING_CHECKPOINT_20261108.md).
+
+
+## LIB-REQ-001 catalog/raster evidence — 8 November 2026
+
+Implemented immutable physical/digital metadata, independent review, typed
+current audiences and separate private raster quarantine/inspection/rights/release.
+Seven authenticated Chromium checks and PostgreSQL/filesystem tests cover
+authorization, expiry, withdrawal, supersession and integrity. Learning assignments
+and full operational/adapter acceptance are outstanding. LIB/COM/AUD remain
+PARTIAL overall. See the [checkpoint](../quality/PHASE10_LIBRARY_ASSETS_CHECKPOINT_20261107.md).
+
+
+## Phase 10 implementation evidence — 7 November 2026
+
+COM-REQ-001 / AUD-REQ-001 remain PARTIAL overall. Official notice and in-app
+implementation now has actual authenticated 12-scenario Chromium evidence; the
+separate class channel has six Chromium scenarios plus real-session PostgreSQL
+role/scope/immutability/replay tests. New private routes/services/UI, four forward
+class migrations and exact 66-migration inventory preserve the accepted baseline.
+LIB-REQ-001 is not implemented by these changes. Packages P10-04–08 remain
+outstanding; no catalog/asset/assignment/adapter acceptance is inferred.
+See [current checkpoint](../quality/PHASE10_NOTICES_CLASS_ACCEPTANCE_20261107.md).
+
+
+
 ## Phase 8 local acceptance — 6 November 2026
 
 **RES-REQ-001: implemented and locally accepted for development integration.**
@@ -503,11 +625,11 @@ The matrix below links requirements to the canonical domains and expected roadma
 
 | RES-REQ-001 | Results and report cards | Teacher, HM, Principal, School Super Admin | Approve and publish report cards | ResultSheet, ReportCard | Results area | T-RES-001 | Phase 8 | Specified |
 | FEE-REQ-001 | Existing fee configuration, obligations, review/allocation, waiver/reversal foundation plus exact accounts, school receipts, private images and explicit recipient releases | Owner review/configuration/reports; Admin own submissions; current verified student/guardian published accounts only | School locks, strict input, exact minor units, immutable history, independent actors, idempotency and current tenant/identity authorization | Existing ledgers plus FeeAccountRelease, FeeReceipt, PaymentEvidenceAttachment and FeeAccountBalance view; 58 migrations verified | Private no-store staff/recipient pages and APIs; eleven default-OFF flags | T-FEE-001: 207 guards, 414 Vitest tests, 11 real Chromium scenarios, exact checksums/fresh bootstrap, accessibility/privacy/concurrency, build/lint/types/audit PASS; see PHASE9_CLOUD_ACCEPTANCE_20261106.md | Phase 9 | Locally accepted manual school accounting; PR pending GitHub API; no live provider, refund or production release |
-| COM-REQ-001 | Communication | School admin, Teacher, Parent | Notice board and class announcements | Notice, Announcement | Communication UI | T-COM-001 | Phase 10 | Specified |
-| LIB-REQ-001 | Library | Teacher, Student, Parent | Resource access | LibraryResource | Library portal | T-LIB-001 | Phase 10 | Specified |
+| COM-REQ-001 | Communication | School admin, Teacher, Parent | Notice board and class announcements | Notice, Announcement | Communication UI | T-COM-001 | Phase 10 | Partial: P10-01–03 implemented with authenticated browser evidence; full P10-07/08 and integration acceptance outstanding |
+| LIB-REQ-001 | Library | Teacher, Student, Parent | Resource access | LibraryResource | Library portal | T-LIB-001 | Phase 10 | Partial: P10-04–06 catalog, approved private assets and learning work implemented/tested; full cumulative acceptance outstanding |
 | SEC-REQ-001 | Security | All roles | Security and session controls | UserSession, AuditEvent | Auth and security | T-SEC-001 | Phase 1 | Specified |
 | DEL-REQ-001 | Trash and recovery | School admin, Platform Super Admin | Trash retention and restore | TrashRecord | Recovery screens | T-DEL-001 | Phase 11 | Specified |
-| AUD-REQ-001 | Audit and notifications | All roles | Audit and notifications | AuditLog, Notification | System operations | T-AUD-001 | Phase 10 | Specified |
+| AUD-REQ-001 | Audit and notifications | All roles | Audit and notifications | AuditLog, Notification | System operations | T-AUD-001 | Phase 10 | Partial: notice/class and learning/resource inboxes, registered audit inspection and transactional source capture; remaining source/security adapters and P10-08 outstanding |
 | SUB-REQ-001 | Subscription management | Platform Super Admin | Plans and entitlements | Subscription, Plan | Platform admin | T-SUB-001 | Phase 3 | Specified |
 | OPS-REQ-001 | Engineering operations | Engineering team | CI, migrations, monitoring | BuildConfig, Migration | DevOps and repos | T-OPS-001 | Phase 1 | Specified |
 
@@ -530,3 +652,5 @@ The matrix below links requirements to the canonical domains and expected roadma
 - Every requirement must attach to a specific module, workflow, and expected test coverage.
 - Deferred requirements remain in the matrix and must not be removed.
 - Implementation status must be recorded as verified, specified, proposed, resolved, or deferred according to actual evidence.
+
+Phase 10 analysis reference: [implementation gaps, design and planned verification](../quality/PHASE10_ENGINEERING_ANALYSIS_20261106.md). The named proposed models/routes/tests are design targets, not implementation evidence.

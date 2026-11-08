@@ -1,0 +1,61 @@
+{
+  "sourceCommit": "77de805fdc3141d10710893c02305d1c9fb18dc7",
+  "sourceWorkingTreeDirty": true,
+  "outcome": "PASS",
+  "nativeChromium": true,
+  "checks": [
+    {
+      "name": "P10-BR-01 administrator author, owner independent return/review/publication",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-BR-02 verified recipients, audience and cross-school isolation",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-BR-03 in-app delivery deduplication, explicit read/unread and deep link",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-BR-10 versioned student-only and guardian-only audiences",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-BR-11 audited dead-letter replay and idempotent recovery",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-BR-04 Back/Forward and native hidden tab conceal/recheck",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-BR-05 delayed response cannot redisclose after tab concealment",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-BR-06 responsive keyboard and axe WCAG A/AA",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-BR-12 private HTML and guarded native PDF printing",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-BR-07 withdrawal removes feed/inbox and denies historical deep link",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-BR-09 actual membership and enrollment revocation conceal foreground records",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-BR-08 actual cross-tab sign-out conceals and session denies",
+      "outcome": "PASS"
+    }
+  ],
+  "limitations": [
+    "Genuine persisted BFCache restoration is not asserted.",
+    "PDF rendering captures Chromium print output through the explicit fresh-check print action; no claim of physical paper revocation."
+  ],
+  "testedBuild": "Production build with class-announcement working tree; source HEAD 77de805"
+}

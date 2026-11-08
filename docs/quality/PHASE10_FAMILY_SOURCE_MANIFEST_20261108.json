@@ -1,0 +1,81 @@
+{
+  "base": "e70bc57b1aab5ef92b67af8e0f114cf9efa0b577",
+  "files": [
+    {
+      "path": "app/schools/[schoolId]/inbox/page.tsx",
+      "sha256": "2396f891cb7f778883b84bfcc194d005769854b0f896031e4b84464a15590345"
+    },
+    {
+      "path": "prisma/migrations/20261108024000_phase10_report_financial_inapp/migration.sql",
+      "sha256": "3c45a1570f31f7821b079ac6c9a36f53c21675a0279ce0e2c609934ca1a7ad6b"
+    },
+    {
+      "path": "scripts/verify-phase10-family-browser.mjs",
+      "sha256": "3913a146a311192dcb315eb09e065600442541798b67ded6910fbb3a7b856404"
+    },
+    {
+      "path": ".env.example",
+      "sha256": "cc5fe88da89f286822d15c96a0a97dc6d2942e8f738b8cd3166556e7f40ec7f6"
+    },
+    {
+      "path": "app/schools/[schoolId]/page.tsx",
+      "sha256": "30903fd8570d488ac51adfd1c60d693d2ef84ba76bbfebb9c4b014685d99f3c9"
+    },
+    {
+      "path": "next.config.ts",
+      "sha256": "e76fc25bda35d1f7b2c4ec6f7807778a08f0a21e6b9c106c3357f512fa17deea"
+    },
+    {
+      "path": "scripts/issue20-guardian-guard.test.mjs",
+      "sha256": "3d68f5489d7a3cc20f5269edea6f9017b1f955838cf8fee87e1ce95b65641f1b"
+    },
+    {
+      "path": "scripts/launch-phase1-7-verification.mjs",
+      "sha256": "8b4042fe915e7bcfcafbb0b363f9bb4f1203aae7557a3ee3155ad1f6513b21dd"
+    },
+    {
+      "path": "scripts/launch-phase1-7-verification.test.mjs",
+      "sha256": "dfdfcb4726374ef9d43bf34210ca85ba3fa65cf4e85fb566c333fa00dacadd42"
+    },
+    {
+      "path": "scripts/phase3-subscriptions-guard.test.mjs",
+      "sha256": "45194f9508c36693c884d9859ef9df8e121b8b9e65ae1d37d6d1d10caffc3b33"
+    },
+    {
+      "path": "scripts/run-phase10-inapp-worker.ts",
+      "sha256": "34292e7e4fe9b62d6638a8de92ad79abba302d375a336e2831be87c38fd92946"
+    },
+    {
+      "path": "scripts/verify-phase9-disposable.mjs",
+      "sha256": "9833a3a3fb570bb47745b25229603117df5287de267d26a03220901fa3e4f67b"
+    },
+    {
+      "path": "scripts/verify-phase9-disposable.test.mjs",
+      "sha256": "2caa2f86b88294a9fbef2b9f249fe8b6b18b44b4244c329425846322eeff3ca9"
+    },
+    {
+      "path": "scripts/verify-phase9-fresh-bootstrap.mjs",
+      "sha256": "10e3fbe49c35ece745dd0c619474d4a0628a07f2a319eeb5276564ebb148501b"
+    },
+    {
+      "path": "src/components/notification-inbox.tsx",
+      "sha256": "cd7fa43beba43f62decc67ce664a709afe052b453810fb35bf17c4fcd173f143"
+    },
+    {
+      "path": "src/modules/assessments/questions.integration.test.ts",
+      "sha256": "b2511d5b34c230d9ef667ffea7508f384d9033a93552c482af93856af312b373"
+    },
+    {
+      "path": "src/modules/fees/financial-accounts.integration.test.ts",
+      "sha256": "6d210e0d01f54a58aba4651a8cae6f6f4cd7000648d28d9214267fa2255f54cb"
+    },
+    {
+      "path": "src/modules/learning-assignments/assignments.integration.test.ts",
+      "sha256": "db9d3e3ba4183dc448c749b80400cc9b5afeec89ad46adbf7fae5cb2771ce420"
+    },
+    {
+      "path": "src/modules/notifications/module-inapp.ts",
+      "sha256": "ecb86c851c5e7119360e48d1559b1384bf2a3ad0a32711f42504bef4493c27d7"
+    }
+  ]
+}

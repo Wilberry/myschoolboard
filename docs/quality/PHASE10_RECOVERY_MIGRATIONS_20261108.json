@@ -1,0 +1,10 @@
+{
+  "migrationInventory": 78,
+  "additions": [
+    {
+      "name": "20261108030000_phase10_membership_insert_delivery_scan",
+      "sha256": "7504b53ae8394e768654d18f7ff1616ff3e92c84d4bfb2dae7bdfdfa4b6e7c7e"
+    }
+  ],
+  "priorAppliedMigrations": "unchanged"
+}

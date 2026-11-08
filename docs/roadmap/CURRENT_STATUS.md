@@ -1,5 +1,141 @@
 # Project Status
 
+## Phase 10 security notification delivery — 8 November 2026
+
+Actual account-security outbox events now deliver to their current subject or,
+for unknown failures, current platform operators through a separate channel.
+Atomic 100-recipient pages, bounded failures/cooldown/reasoned replay, read/unread,
+terminal suppression, private APIs/UI and authenticated local CLI are verified.
+Actual checks: 207 guards, 512 Vitest tests, 83 exact/fresh migrations, static/build
+checks and five native Chromium workflows, including actual CLI role revocation.
+Remaining P10-07/P10-08 gates stay open. See the
+[delivery checkpoint](../quality/PHASE10_SECURITY_INAPP_20261108.md).
+
+
+## Phase 10 account-security evidence — 8 November 2026
+
+Actual session mutations capture immutable minimal evidence/outbox records;
+reviewed BetterAuth hooks cover email authentication and logout outcomes. Logout
+failure cannot falsely confirm revocation, failed mandatory audits withhold
+credentials, and raw router error logging is intercepted. Own-account and current
+platform-only readers/UI preserve school isolation. Actual checks: 207 guards,
+504 Vitest tests, 82 exact/fresh migrations, build/static checks and four native
+Chromium privacy/accessibility/security workflows. Source notification delivery,
+permission/credential-change coverage and remaining P10-08 gates stay open. See
+[authentication checkpoint](../quality/PHASE10_AUTHENTICATION_SECURITY_20261108.md).
+
+
+## Phase 10 subscription-boundary observations — 8 November 2026
+
+A current-platform-operator worker observes persisted expiry using database time,
+with bounded concurrent/idempotent capture and transactional immutable source and
+outbox records. Restricted platform metadata reads preserve inactive-school
+academic denials. School delivery remains pending until its operational reader
+exists. See the [boundary checkpoint](../quality/PHASE10_SUBSCRIPTION_BOUNDARIES_20261108.md).
+P10-07 and P10-08 remain partial.
+
+
+## Phase 10 module retry and paged recovery — 8 November 2026
+
+An actual 101-recipient fault-injection scenario exposed and fixed unnecessary
+membership-insert revocation rescans using a forward migration. The 21-test
+source suite passes, preserving terminal revocation and its real transaction
+race. Five failures, cooldown, dead-letter/concurrent reasoned replay, rollback
+and multi-page recovery are verified; all intended recipients receive once.
+See the [recovery checkpoint](../quality/PHASE10_MODULE_RECOVERY_20261108.md).
+P10-07/P10-08 remain partial.
+
+
+## Phase 10 academic notification adapters — 8 November 2026
+
+Attendance, corrections, lessons and result-sheet review add seven source-owned
+contracts (18 total), with current exact section/teacher/pupil authorization.
+Correction source capture brings the immutable envelope registry to 38 tables.
+Actual local checks: 207 guards, 493 Vitest tests, 77 exact migration checksums,
+independent fresh bootstrap, lint, TypeScript, formatting and production build.
+P10-07 operational/security adapters and P10-08 remain open. See the
+[academic checkpoint](../quality/PHASE10_ACADEMIC_NOTIFICATIONS_20261108.md).
+
+
+## Phase 10 report/financial alerts and unified inbox — 8 November 2026
+
+Six additional explicit report/acknowledgment/account/receipt/reconciliation source
+contracts preserve parent-first and independent financial visibility. A private
+unified inbox keeps channel authorization separate. Delivery validation locks the
+recipient membership against revocation; a forced real PostgreSQL race test passes.
+Actual evidence: 207 guards, 492 Vitest tests, exact 76 migrations/fresh bootstrap,
+three family Chromium workflows and scoped fee-versus-library denial. Eleven
+source contracts now exist; remaining P10-07/P10-08 gates stay open. See the
+[family checkpoint](../quality/PHASE10_REPORT_FINANCIAL_NOTIFICATIONS_20261108.md).
+
+
+## Phase 10 source capture and learning/resource adapters — 8 November 2026
+
+Thirty-six school ledgers capture minimal immutable source envelopes/outbox rows
+transactionally, without history backfill. Five explicit current-recipient
+contracts deliver task review/work/feedback, catalog and approved-asset updates;
+unknown source contracts stay pending. Actual local verification: 207 guards,
+490 Vitest tests, 75 exact migration checksums, fresh bootstrap and seven
+learning/audit Chromium workflows passed. P10-07 remains partial and P10-08 open.
+See the [source checkpoint](../quality/PHASE10_SOURCE_ADAPTER_CHECKPOINT_20261108.md).
+
+
+## Phase 10 registered audit inspection — 8 November 2026
+
+P10-07 now includes owner-only minimal metadata inspection across 33 registered
+school ledgers, with current tenant/role checks, exact bounded cursors and private
+UI. Actual PostgreSQL permission/revocation/pagination and Chromium accessibility/
+cross-tab sign-out checks pass. Notification source adapters and the complete
+security-audit pipeline remain outstanding; whole Phase 10 remains PARTIAL.
+See the [audit checkpoint](../quality/PHASE10_AUDIT_INSPECTION_20261108.md).
+
+
+## Phase 10 learning assignments — 8 November 2026
+
+P10-06 now implements explicit owner policies, exact teacher/Form task authority,
+independent review, immutable release/withdrawal and current verified pupil work
+with immutable teacher feedback and policy-controlled resubmission. Eleven
+PostgreSQL tests and five authenticated native Chromium workflows pass. Fresh
+73-migration bootstrap passes. P10-07 and cumulative P10-08 remain outstanding;
+Phase 10 is not merge-ready. See the
+[learning checkpoint](../quality/PHASE10_LEARNING_CHECKPOINT_20261108.md).
+
+
+## Phase 10 catalog and raster assets — 8 November 2026
+
+P10-04/P10-05 implement versioned physical/digital catalog metadata, independent
+review, typed audiences, quarantine/inspection, independent rights, private raster
+delivery and withdrawal. Seven authenticated Chromium workflows passed.
+P10-06/P10-07 and full P10-08 remain outstanding; Phase 10 is not merge-ready.
+See the [catalog checkpoint](../quality/PHASE10_LIBRARY_ASSETS_CHECKPOINT_20261107.md).
+
+
+## Phase 10 notices and class channel — 7 November 2026
+
+Independent development branch / draft PR #111: P10-01/P10-02 now have 12 actual
+authenticated native Chromium scenarios, including terminal revocation, retries,
+stale responses, sign-out, accessibility and printing. P10-03 adds a separate
+class channel and durable class inbox; six class Chromium scenarios passed.
+P10-04–08 remain incomplete; Phase 10 is not merge-ready.
+See [current checkpoint](../quality/PHASE10_NOTICES_CLASS_ACCEPTANCE_20261107.md).
+
+
+
+## Phase 10 engineering analysis — 6 November 2026
+
+**COM-REQ-001 / LIB-REQ-001 / AUD-REQ-001: analysis prepared; implementation and
+Phase 10 acceptance remain outstanding.** Verified starting main:
+`d4459d827e8529ea8daddb73f7e842d8c47c12ab`, including accepted Phases 8 and 9.
+The isolated analysis records actual implementation gaps, separate notice/class
+permissions, resource rights/quarantine/storage, transactional in-app notification
+and audit architecture, additive schema sequence and work packages P10-01–08.
+First safe implementation milestone: owner-published official notices plus
+current verified recipient access and deduplicated in-app delivery (P10-01/02).
+No runtime/schema/migration/dependency changes, database writes, external sends,
+main merge or deployment are part of this analysis. Historical Phase 9 acceptance
+below remains unchanged. See
+[Phase 10 analysis and verification](../quality/PHASE10_ENGINEERING_ANALYSIS_20261106.md).
+
 ## Current Phase 9 local acceptance — 6 November 2026
 
 **FEE-REQ-001: implemented, locally accepted, and merged into development `main` via PR #108.**

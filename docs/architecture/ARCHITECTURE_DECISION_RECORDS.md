@@ -1,5 +1,164 @@
 # Architecture Decision Records
 
+## ADR-P10-009: Separate account and platform-security notification channels
+
+**Date:** 2026-11-08. **Status:** development implementation, partial phase acceptance.
+
+Account security notifications resolve known facts only to the current subject;
+unknown-identity failures resolve only to current platform security operators.
+Personal and platform channels have separate private read/state APIs and UI. No
+school/guardian capability grants global security access. Alerts copy no identity,
+credential, source body or reason; local deep links reauthorize canonical records.
+
+The default-off worker commits bounded delivery/cursor/attempt pages atomically,
+uses SKIP LOCKED, current user shared locks and source/recipient deduplication,
+retains five failures/cooldown/reasoned replay, and appends terminal suppression on
+actual role revocation/deletion. Read/unread preserves immutable history. The local
+CLI attests its disposable database, authenticates through the explicit isolated
+app's real secure-cookie configuration and then checks current database authority.
+No external credential forwarding, redirect, anonymous worker or provider is enabled.
+See [executed acceptance](../quality/PHASE10_SECURITY_INAPP_20261108.md). Whole phase
+and production/integration gates remain partial.
+
+
+## ADR-P10-008: Account-security evidence and mandatory-audit failure policy
+
+**Date:** 2026-11-08. **Status:** development implementation, partial acceptance.
+
+Global account-security evidence is separate from school ledgers. Unknown
+credential/HTTP failures have no inferred identity or tenant and are restricted
+to current platform-security authority. Known account evidence derives its subject
+from actual server authentication or a Session database trigger, never caller
+identity fields. Source facts and one minimal outbox entry commit together; session
+facts have no inferred human actor, and database time/principal are enforced.
+
+The development hooks/readers/UI default off. Mandatory audit failure returns an
+error and withholds new credentials; a newly created session is compensated where
+possible. Logout success requires the actual session to be absent, because the
+current library catches database deletion errors. Fixed diagnostic categories
+replace raw adapter/credential logging without disabling error signals. Existing
+session token representation and production admission/provider policies are not
+changed. Evidence is immutable and survives account deletion; production retention,
+credential-change coverage and restricted notification delivery remain explicit
+open gates. See [executed evidence](../quality/PHASE10_AUTHENTICATION_SECURITY_20261108.md).
+
+
+## ADR-P10-007: Deterministic subscription-boundary observations
+
+**Date:** 2026-11-08. **Status:** development implementation, partial acceptance.
+
+Subscription expiry is an observation of the immutable persisted period end,
+not a mutation of entitlement, payment or school lifecycle. The non-production
+worker derives its actor from a current authenticated Platform Super Admin,
+uses database time and at most 100 locked due periods, and commits an immutable
+unique boundary event plus source envelope/outbox together. Restarts and
+concurrent operators cannot create duplicate logical boundaries.
+
+Until a separately reviewed inactive-school operational reader is implemented,
+school notification delivery stays pending and ordinary academic/financial
+inactive-school denials remain. Only current platform operators can inspect
+bounded school-scoped lifecycle/boundary metadata. Default-off capability;
+verified disposable local scheduler only, no external provider or production
+activation. This implements the safe interim contract in the Phase 10 analysis;
+it does not close P10-07/P10-08. See the
+[checkpoint](../quality/PHASE10_SUBSCRIPTION_BOUNDARIES_20261108.md).
+
+
+## ADR-P10-006: Independent family-source notification predicates
+
+8 November 2026, D-023, development implementation with actual PostgreSQL and
+Chromium evidence. Preserve parent-first report acknowledgment and independent
+financial publication as separate source predicates. The original parent-first
+publication never delivers to a pupil; the actual acknowledgment source supplies
+the exact-pupil availability event. Generic READ cannot acknowledge or settle
+anything. New inbox regions preserve channel boundaries. Shared recipient locks
+serialize delivery with membership revocation. Unknown contracts remain pending;
+whole Phase 10 and production acceptance are not inferred from these adapters.
+
+
+## ADR-P10-005: Versioned school envelopes beside existing typed channels
+
+Development implementation / partial P10-07 acceptance, D-P10-005. Keep the
+existing notice-release FK and independent class event/outbox intact. New minimal
+school source envelopes and outbox entries commit in the source transaction;
+record source IDs/actions/actors/times without copying private payloads. Schema
+version and source table registry are explicit. Unknown recipient contracts stay
+pending. Five learning/resource contracts delegate to current source SQL helpers,
+with atomic bounded pages, idempotent interactions and tenant-local terminal
+suppression. Source capture is not full delivery, authentication audit, expiry
+scheduling or Phase 11 integration acceptance. No providers are activated.
+
+
+## ADR-P10-004: Independent learning tasks and policy-bound submissions
+
+Status: development implementation with eleven PostgreSQL and five Chromium checks;
+full-phase acceptance outstanding. D-P10-004. Owner-versioned policy pins school
+timezone and explicit default-off Form/submission/image/late/resubmission settings.
+An exact original teacher context, immutable revisions, independent current section
+review and explicit release precede current verified intended pupil access. Task
+resources intersect per-pupil asset rights. Immutable bounded own-work revisions
+and exact-current-teacher feedback never write grades. Author/identity/enrollment,
+withdrawal and original resource permissions remain current read predicates.
+A forward-only SQL correction qualifies attachment identity; applied history stays
+unchanged. No providers, pupil binary uploads or retention purge is activated.
+
+
+## ADR-P10-003: Private raster delivery after independent versioned rights
+
+Development slice, D-P10-003 / D-023, 8 November 2026. Keep catalog metadata
+and typed releases separate from quarantine/inspection, independent rights and
+explicit byte release. Pin rights to the exact catalog audience. Normalize bounded
+images only; no PDF/URL ingestion. Use private tenant UUID storage, no-follow/
+hash/size/mode/link verification and access checks before and after I/O. Twenty
+proposals per actor/school/hour is the tested development quota. Never serve
+quarantine, resurrect superseded bytes or purge ambiguous orphans. Production
+scanner/storage/recovery/retention and event integration remain separate gates.
+
+
+## ADR-P10-002: Isolated class publication and database-only delivery pages
+
+Status: implemented development slice, 7 November 2026; D-P10-002 / D-023.
+Use separate immutable class aggregates and SQL audience predicates rather than
+reuse official notice permissions. Composite authority/context checks, independent
+verified section review and original-author release precede current enrolled-pupil
+reads. A class event and durable dispatch are committed together. Bounded pages
+use short database row locks, SKIP LOCKED and unique event/recipient delivery;
+crash before commit rolls the whole page back. This is safe without an external
+lease because all page work is local SQL and at most 100 membership rows. Do not
+add storage/provider I/O to that transaction. Failures, replay and read state
+append evidence; suppression is terminal and restricted to the changed school.
+Official notice leases remain unchanged. Queue throughput/load and broader
+Phase 10 integration remain mandatory P10-08 acceptance work.
+
+
+
+## ADR-P10-001 — Separate communication channels and domain-owned in-app delivery
+
+**Status:** selected for development design; not implemented or runtime-verified.
+**Decision:** D-P10-001; COM-REQ-001, LIB-REQ-001, AUD-REQ-001.
+Extend the current modular Next.js/PostgreSQL application with separate notice
+and class-announcement aggregates and explicit capabilities. Generic academic,
+report or child permissions do not authorize these channels. Keep immutable
+revisions/review/release/withdrawal and exact current tenant/identity/authority
+predicates. Library catalog metadata, rights evidence, quarantined assets,
+resource releases and teacher learning assignments remain distinct objects.
+Use an immutable DomainEvent plus a mutable leased OutboxDispatch projection,
+append-only attempts and uniquely keyed per-member/context in-app delivery.
+Atomically capture source transitions and events; reauthorize resolution, inbox,
+counts, navigation and files. Read receipts cannot acknowledge source records.
+Reuse source-specific audit ledgers; index them without rewriting history.
+Prefer local deterministic workers and a private storage interface over a new
+broker/provider dependency. PDF and external messaging stay disabled until their
+own verified controls exist. All changes will use forward additive migrations
+and default-off flags; none is authored/applied in this analysis.
+Consequences: audience adapters and SQL integrity tests are required per source;
+privacy and retries cannot be delegated to UI filtering or a frozen recipient
+list. Existing school-cleanup/DB-owner caveats remain explicit. Production storage,
+scanner, retention and delivery SLOs remain separate decisions, without blocking
+notices and mandatory in-app engineering.
+Full models, API contracts, boundaries, sequencing and executable acceptance:
+[Phase 10 engineering analysis](../quality/PHASE10_ENGINEERING_ANALYSIS_20261106.md).
+
 ## ADR-P9-009 — Exact manual accounts, explicit releases and private evidence
 
 **Status:** implemented; local acceptance recorded in the Phase 9 cloud checkpoint.

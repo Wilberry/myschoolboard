@@ -1,6 +1,12 @@
 import "dotenv/config";
 import { randomUUID } from "node:crypto";
 import { beforeAll, afterAll, describe, expect, it, vi } from "vitest";
+import { verifyPhase9DatabaseIdentity } from "@/scripts/verify-phase9-disposable.mjs";
+import {
+  deliverModuleBatch,
+  readModuleInbox,
+  changeModuleNotification,
+} from "@/src/modules/notifications/module-inapp";
 
 const context = vi.hoisted(() => ({ headers: new Headers() }));
 vi.mock("next/headers", () => ({ headers: async () => context.headers }));
@@ -162,6 +168,7 @@ async function list(actor: string, schoolId = schoolA) {
 
 describe("Phase 7 exact-assignment private question bank", () => {
   beforeAll(async () => {
+    verifyPhase9DatabaseIdentity(process.env);
     for (const name of [
       "teacher",
       "other",
@@ -322,6 +329,7 @@ describe("Phase 7 exact-assignment private question bank", () => {
     });
   }, 45_000);
   afterAll(async () => {
+    vi.unstubAllEnvs();
     if (process.env.PHASE8_BROWSER_FIXTURE_FILE) {
       await prisma.$disconnect();
       return;
@@ -2450,6 +2458,27 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect(first.status).toBe(201);
     expect(first.headers.get("cache-control")).toBe("private, no-store");
     const firstId = (await first.json()).evidence.id;
+    const pendingSource = await prisma.schoolSourceEvent.findFirstOrThrow({
+      where: {
+        schoolId: schoolA,
+        sourceType: "ResultSheetEvidence",
+        sourceId: firstId,
+      },
+    });
+    for (const [actor, expected] of [
+      ["head", true],
+      ["principal", false],
+      ["teacher", false],
+      ["student", false],
+    ] as const) {
+      expect(
+        (
+          await prisma.$queryRaw<
+            Array<{ allowed: boolean }>
+          >`SELECT can_read_module_notification(${schoolA},${pendingSource.id}::uuid,${users[actor]}) AS allowed`
+        )[0].allowed,
+      ).toBe(expected);
+    }
     const firstRow = await prisma.resultSheetEvidence.findFirstOrThrow({
       where: { schoolId: schoolA, id: firstId },
     });
@@ -2527,6 +2556,31 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect((await decide("teacher", firstId, "APPROVED")).status).toBe(404);
     const approved = await decide("head", firstId, "APPROVED");
     expect(approved.status).toBe(201);
+    expect(
+      (
+        await prisma.$queryRaw<
+          Array<{ allowed: boolean }>
+        >`SELECT can_read_module_notification(${schoolA},${pendingSource.id}::uuid,${users.head}) AS allowed`
+      )[0].allowed,
+    ).toBe(false);
+    const resultReviewSource = await prisma.schoolSourceEvent.findFirstOrThrow({
+      where: {
+        schoolId: schoolA,
+        sourceType: "ResultSheetReview",
+        sourceId: (
+          await prisma.resultSheetReview.findFirstOrThrow({
+            where: { schoolId: schoolA, evidenceId: firstId },
+          })
+        ).id,
+      },
+    });
+    expect(
+      (
+        await prisma.$queryRaw<
+          Array<{ allowed: boolean }>
+        >`SELECT can_read_module_notification(${schoolA},${resultReviewSource.id}::uuid,${users.teacher}) AS allowed`
+      )[0].allowed,
+    ).toBe(true);
     expect((await approved.json()).status).toBe(
       "ACADEMIC_REVIEW_ONLY_NOT_PUBLISHED",
     );
@@ -3683,6 +3737,15 @@ describe("Phase 7 exact-assignment private question bank", () => {
     }
   });
   it("publishes only approved versions and gates verified recipients, acknowledgment, withdrawal and revocation", async () => {
+    vi.stubEnv("PHASE10_INAPP_ENABLED", "true");
+    vi.stubEnv("PHASE10_MODULE_INAPP_ENABLED", "true");
+    vi.stubEnv("PHASE10_REPORT_NOTIFICATIONS_ENABLED", "true");
+    async function deliverReports() {
+      for (let i = 0; i < 30; i++) {
+        if (!(await deliverModuleBatch(schoolA, users.super)).processed) return;
+      }
+      throw Error("Synthetic report event queue exceeded bounded drain");
+    }
     // The legacy CBT pupil has a TERMINALLY revoked account link. Preserve it;
     // create a new enrolled pupil and complete a genuinely new review cycle.
     const pupilId = `phase8-recipient-${suffix}`;
@@ -3920,6 +3983,24 @@ describe("Phase 7 exact-assignment private question bank", () => {
     );
     expect(published.status).toBe(201);
     const publicationId = (await published.json()).events[0].id;
+    await deliverReports();
+    req("report-student", schoolA, "GET");
+    expect((await readModuleInbox(schoolA)).items).toHaveLength(0);
+    req("report-parent", schoolA, "GET");
+    const reportAlert = (await readModuleInbox(schoolA)).items.find((item) =>
+      item.href.endsWith("/reports"),
+    );
+    expect(reportAlert).toBeTruthy();
+    expect(JSON.stringify(reportAlert)).not.toContain(pupilId);
+    await changeModuleNotification(schoolA, reportAlert!.id, {
+      action: "READ",
+      requestKey: randomUUID(),
+    });
+    expect(
+      await prisma.reportGuardianAcknowledgment.count({
+        where: { schoolId: schoolA, publicationId },
+      }),
+    ).toBe(0);
     expect(
       (
         await REPORT_PUBLISH(
@@ -4035,6 +4116,17 @@ describe("Phase 7 exact-assignment private question bank", () => {
         where: { schoolId: schoolA, publicationId },
       }),
     ).toBe(1);
+    await deliverReports();
+    req("report-student", schoolA, "GET");
+    const unlocked = (await readModuleInbox(schoolA)).items.filter((item) =>
+      item.href.endsWith("/reports"),
+    );
+    expect(unlocked).toHaveLength(1);
+    const disclosure = await prisma.moduleDelivery.findUniqueOrThrow({
+      where: { id: unlocked[0].id },
+      include: { event: true },
+    });
+    expect(disclosure.event.sourceType).toBe("ReportGuardianAcknowledgment");
     for (const target of [
       "school",
       "guardian",
