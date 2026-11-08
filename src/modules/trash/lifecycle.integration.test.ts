@@ -311,6 +311,20 @@ it("keeps feature default-off and enforces real tenant and role boundaries", asy
           method: "POST",
           headers: {
             "content-type": "application/json",
+            origin: new URL(env.BETTER_AUTH_URL).origin,
+          },
+          body: "x".repeat(4097),
+        }),
+      )
+    ).status,
+  ).toBe(400);
+  expect(
+    (
+      await PPOST(
+        new Request("http://localhost/api/platform/trash", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
             origin: "https://foreign.example",
           },
           body: JSON.stringify(
