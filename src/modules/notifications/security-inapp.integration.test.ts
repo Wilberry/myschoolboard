@@ -378,6 +378,24 @@ it("paginates personal alerts and rejects foreign cursors, spoofing and untruste
         )
       ).status,
     ).toBe(400);
+  const boundedBody = "{}";
+  for (const declaredLength of ["1", "3", "4097", "invalid"]) {
+    expect(
+      (
+        await deliverPOST(
+          new Request(url, {
+            method: "POST",
+            headers: {
+              origin: new URL(env.BETTER_AUTH_URL).origin,
+              "content-type": "application/json",
+              "content-length": declaredLength,
+            },
+            body: boundedBody,
+          }),
+        )
+      ).status,
+    ).toBe(400);
+  }
   for (const contentType of [
     "application/jsonp",
     "application/json-seq",
