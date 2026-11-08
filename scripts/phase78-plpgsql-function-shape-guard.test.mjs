@@ -25,7 +25,11 @@ test("Phase 7–8 SQL migration functions have paired bodies and valid declarati
       "utf8",
     );
     const begins = [...sql.matchAll(/\bCREATE (?:OR REPLACE )?FUNCTION\s+/gu)];
-    const ends = [...sql.matchAll(/\$\$ LANGUAGE plpgsql\b/gu)];
+    const ends = [
+      ...sql.matchAll(
+        /\$\$\s*(?:LANGUAGE (?:plpgsql|sql)(?:\s+(?:STABLE|IMMUTABLE|VOLATILE))*\s*)?;/giu,
+      ),
+    ];
     assert.equal(
       begins.length,
       ends.length,
@@ -43,9 +47,24 @@ test("Phase 7–8 SQL migration functions have paired bodies and valid declarati
       const nextStart = begins[index + 1]?.index ?? sql.length;
       const part = sql.slice(start, nextStart);
       const as = part.indexOf("AS $$");
-      const terminator = part.indexOf("$$ LANGUAGE plpgsql");
+      const terminator = part.indexOf("$$", as + "AS $$".length);
+      const language = part
+        .match(/\bLANGUAGE\s+(plpgsql|sql)\b/iu)?.[1]
+        .toLowerCase();
+      assert.ok(
+        language,
+        `${migration}: declared SQL function language required`,
+      );
       assert.ok(as > 0 && terminator > as, `${migration}: function boundary`);
       const definition = part.slice(as + "AS $$".length, terminator);
+      if (language === "sql") {
+        assert.match(
+          definition,
+          /^\s*SELECT\b/iu,
+          `${migration}: SQL expression body`,
+        );
+        continue;
+      }
       const bodyStart = definition.search(/^\s*BEGIN\b/mu);
       assert.ok(bodyStart >= 0, `${migration}: missing block BEGIN`);
       const declarationSection = definition.slice(0, bodyStart);

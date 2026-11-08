@@ -18,3 +18,16 @@
 - Recovery operations must be auditable.
 - Recovery must preserve tenant ownership and record lineage.
 - Expired objects must be purged through idempotent retention jobs.
+
+## Current independent implementation
+
+See [Phase 11 tested scope and policy boundaries](../quality/PHASE11_TRASH_RECOVERY_CHECKPOINT_20261107.md). Never-submitted lesson draft recovery is implemented; protected history is never physically erased, and source-specific Phase 10 adapters remain pending. Platform recovery authorization does not grant academic content access.
+
+
+## Independent lifecycle event contract
+
+Actual new lifecycle transitions also capture immutable version-1
+`TrashEventOutbox` metadata in the same transaction. No recipient is inferred and
+no history is backfilled. School/platform mutations require the exact trusted
+origin. See the [executed independent contract](../quality/PHASE11_LIFECYCLE_OUTBOX_20261108.md).
+Phase 10 delivery remains a separate integration gate.

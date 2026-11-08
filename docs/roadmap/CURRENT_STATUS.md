@@ -1,5 +1,29 @@
 # Project Status
 
+## Phase 11 independent source contract — 8 November 2026
+
+The published draft-trash slice is preserved. New actual lifecycle events now
+capture a minimal immutable version-1 outbox atomically, without Phase 10 imports
+or historical backfill. Forward upgrade preserves retained event history; separate
+fresh bootstrap verifies all 60 migrations. Capture failure rolls back lifecycle
+and source concealment together. Exact trusted origins protect school/platform
+mutations. Protected-history purge and real Phase 10 delivery remain open. See
+[outbox checkpoint](../quality/PHASE11_LIFECYCLE_OUTBOX_20261108.md).
+
+
+## Phase 11 independent development — 7 November 2026
+
+**DEL-REQ-001: tested independent lifecycle slice, not full Phase 11 acceptance.**
+From accepted main `d4459d827e8529ea8daddb73f7e842d8c47c12ab`, branch
+`feature/phase11-trash-recovery` adds scoped never-submitted lesson draft trash,
+30/90-day custody, immutable evidence, authorized restoration, holds, metadata-only
+platform recovery and bounded expiry processing. Physical purge stays blocked for
+protected academic/audit history. Phase 10 adapters/notifications remain separate.
+Validation: 207 guards, 421 application tests, 7 Chromium scenarios, fresh 59-
+migration bootstrap/checksums, build/lint/types/format and zero-vulnerability audit.
+See [Phase 11 checkpoint](../quality/PHASE11_TRASH_RECOVERY_CHECKPOINT_20261107.md).
+
+
 ## Current Phase 9 local acceptance — 6 November 2026
 
 **FEE-REQ-001: implemented, locally accepted, and merged into development `main` via PR #108.**

@@ -1,5 +1,16 @@
 # Requirements Traceability Matrix
 
+## Phase 11 independent source contract — 8 November 2026
+
+The published draft-trash slice is preserved. New actual lifecycle events now
+capture a minimal immutable version-1 outbox atomically, without Phase 10 imports
+or historical backfill. Forward upgrade preserves retained event history; separate
+fresh bootstrap verifies all 60 migrations. Capture failure rolls back lifecycle
+and source concealment together. Exact trusted origins protect school/platform
+mutations. Protected-history purge and real Phase 10 delivery remain open. See
+[outbox checkpoint](../quality/PHASE11_LIFECYCLE_OUTBOX_20261108.md).
+
+
 ## Phase 8 local acceptance — 6 November 2026
 
 **RES-REQ-001: implemented and locally accepted for development integration.**
@@ -530,3 +541,7 @@ The matrix below links requirements to the canonical domains and expected roadma
 - Every requirement must attach to a specific module, workflow, and expected test coverage.
 - Deferred requirements remain in the matrix and must not be removed.
 - Implementation status must be recorded as verified, specified, proposed, resolved, or deferred according to actual evidence.
+
+### DEL-REQ-001 independent Phase 11 slice — 7 November 2026
+
+Implemented/locally verified: 30-day school trash, 90-day platform custody, current scoped restoration, holds and immutable lifecycle evidence for never-submitted lesson drafts only. Full requirement remains PARTIAL: physical purge of protected history and real Phase 10 adapters/notifications are outstanding. Evidence: [Phase 11 checkpoint](../quality/PHASE11_TRASH_RECOVERY_CHECKPOINT_20261107.md).

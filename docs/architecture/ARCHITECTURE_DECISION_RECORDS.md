@@ -1,5 +1,32 @@
 # Architecture Decision Records
 
+## ADR-P11-002: Independent transactional lifecycle notification contract
+
+**Date:** 2026-11-08. **Status:** independent development slice, partial phase acceptance.
+
+Actual new TrashEvent transitions capture minimal immutable version-1 envelope
+metadata in the same transaction, without backfill, recipient inference, Phase 10
+imports or a delivery claim. Capture failure rolls back lifecycle state and source
+concealment. Current source/tenant/hold/recovery authority and protected-history
+purge blocking are unchanged. School/platform HTTP mutations require exact trusted
+origin; unexpected storage/capture failures are internal errors, not false conflicts.
+
+Phase 10 must register the real versioned source after integration and resolve
+current recipient/source authority; actor IDs are not recipient lists. Platform
+metadata authority grants no academic-body access. Evidence: retained 59-to-60
+history digest preserved, separate fresh 60 bootstrap/checksums, 207 guards,
+423 Vitest tests, nine lifecycle tests and seven real Chromium workflows. See the
+[checkpoint](../quality/PHASE11_LIFECYCLE_OUTBOX_20261108.md). Full Phase 11 and
+production retention/integration gates remain partial.
+
+
+## ADR-P11-001 — SQL-controlled trash overlay and source-preserving recovery
+
+**7 November 2026; implemented independent slice, not production release.**
+
+TrashCase is a constrained lifecycle projection driven only by append-only TrashEvent transitions under school/source locks. Composite tenant FKs, partial unique open source, exact expected versions, UUID replay keys, DB-derived deadlines and deferred initial-audit evidence protect state. Existing original note/revision/event bytes remain intact. A new source freeze and final source-read filtering prevent trashed draft access or submission. Platform APIs expose no academic body or teacher reason; recovery authorization expires within 24 hours and original platform deadline. Phase 10 integration consumes committed event identities only after its own adapter exists. No physical deletion path is introduced; all flags default off. See docs/quality/PHASE11_TRASH_RECOVERY_CHECKPOINT_20261107.md.
+
+
 ## ADR-P9-009 — Exact manual accounts, explicit releases and private evidence
 
 **Status:** implemented; local acceptance recorded in the Phase 9 cloud checkpoint.

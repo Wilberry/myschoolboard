@@ -305,7 +305,12 @@ async function changeOwnDraft(
       async (tx) => {
         const member = await teacherMembership(tx, schoolId, userId);
         const reference = await tx.lessonNote.findFirst({
-          where: { schoolId, id: noteId, teacherMembershipId: member.id },
+          where: {
+            schoolId,
+            id: noteId,
+            teacherMembershipId: member.id,
+            trashCases: { none: { state: { not: "RESTORED" } } },
+          },
           select: { assignmentId: true, termId: true },
         });
         if (!reference) throw new LessonNoteError("NOT_FOUND");
@@ -323,7 +328,12 @@ async function changeOwnDraft(
           WHERE "id" = ${noteId} AND "schoolId" = ${schoolId}
           FOR UPDATE`;
         const note = await tx.lessonNote.findFirst({
-          where: { schoolId, id: noteId, teacherMembershipId: member.id },
+          where: {
+            schoolId,
+            id: noteId,
+            teacherMembershipId: member.id,
+            trashCases: { none: { state: { not: "RESTORED" } } },
+          },
           select: { id: true, status: true, currentRevision: true },
         });
         if (!note) throw new LessonNoteError("NOT_FOUND");
@@ -441,6 +451,7 @@ export async function readOwnLessonNotes(schoolId: string, noteId?: string) {
   });
   if (!member) throw new LessonNoteError("FORBIDDEN");
   const where = {
+    trashCases: { none: { state: { not: "RESTORED" } } },
     schoolId,
     teacherMembershipId: member.id,
     teacherMembership: {

@@ -163,6 +163,14 @@ async function HomeContent() {
                       Published report cards
                     </Link>
                   )}
+                  {(role === "TEACHER" || role === "SCHOOL_SUPER_ADMIN") && (
+                    <Link
+                      className="school-link"
+                      href={`/schools/${school.id}/trash`}
+                    >
+                      Trash and recovery
+                    </Link>
+                  )}
                   {(role === "SCHOOL_ADMIN" ||
                     role === "SCHOOL_SUPER_ADMIN") && (
                     <Link
