@@ -18,18 +18,18 @@ test("requires a clean worktree without modifying it", () => {
   );
 });
 
-test("requires the expected complete 59-migration inventory", () => {
+test("requires the expected complete 60-migration inventory", () => {
   assert.doesNotThrow(() =>
-    assertExpectedMigrationCount(Array.from({ length: 59 })),
+    assertExpectedMigrationCount(Array.from({ length: 60 })),
   );
-  assert.throws(() => assertExpectedMigrationCount([]), /exactly 59/);
+  assert.throws(() => assertExpectedMigrationCount([]), /exactly 60/);
   assert.throws(
-    () => assertExpectedMigrationCount(Array.from({ length: 58 })),
-    /exactly 59/,
+    () => assertExpectedMigrationCount(Array.from({ length: 59 })),
+    /exactly 60/,
   );
   assert.throws(
-    () => assertExpectedMigrationCount(Array.from({ length: 60 })),
-    /exactly 59/,
+    () => assertExpectedMigrationCount(Array.from({ length: 61 })),
+    /exactly 60/,
   );
 });
 

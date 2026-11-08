@@ -1,5 +1,25 @@
 # Decision Log
 
+## D-P11-002: Independent transactional lifecycle notification contract
+
+**Date:** 2026-11-08. **Status:** independent development slice, partial phase acceptance.
+
+Actual new TrashEvent transitions capture minimal immutable version-1 envelope
+metadata in the same transaction, without backfill, recipient inference, Phase 10
+imports or a delivery claim. Capture failure rolls back lifecycle state and source
+concealment. Current source/tenant/hold/recovery authority and protected-history
+purge blocking are unchanged. School/platform HTTP mutations require exact trusted
+origin; unexpected storage/capture failures are internal errors, not false conflicts.
+
+Phase 10 must register the real versioned source after integration and resolve
+current recipient/source authority; actor IDs are not recipient lists. Platform
+metadata authority grants no academic-body access. Evidence: retained 59-to-60
+history digest preserved, separate fresh 60 bootstrap/checksums, 207 guards,
+423 Vitest tests, nine lifecycle tests and seven real Chromium workflows. See the
+[checkpoint](../quality/PHASE11_LIFECYCLE_OUTBOX_20261108.md). Full Phase 11 and
+production retention/integration gates remain partial.
+
+
 ## D-P11-001 — Protected-history lifecycle overlay
 
 **7 November 2026; implemented independent slice, not production release.**

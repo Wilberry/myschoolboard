@@ -2327,6 +2327,7 @@ model TrashCase {
  @@index([state,schoolExpiresAt,platformExpiresAt],map:"TrashCase_expiry_queue")
 }
 model TrashEvent {
+ outbox TrashEventOutbox?
  id String @id @db.Uuid
  schoolId String
  caseId String @db.Uuid
@@ -2339,4 +2340,18 @@ model TrashEvent {
  trashCase TrashCase @relation(fields:[schoolId,caseId],references:[schoolId,id],onDelete:Cascade)
  @@unique([schoolId,requestKey])
  @@unique([schoolId,caseId,version])
+}
+
+model TrashEventOutbox {
+ eventId String @id @db.Uuid
+ schoolId String
+ caseId String @db.Uuid
+ schemaVersion Int @default(1)
+ action String
+ sourceVersion Int
+ actorUserId String
+ occurredAt DateTime @db.Timestamptz
+ capturedAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ event TrashEvent @relation(fields:[eventId],references:[id],onDelete:Cascade)
+ @@index([schoolId,occurredAt(sort:Desc),eventId])
 }

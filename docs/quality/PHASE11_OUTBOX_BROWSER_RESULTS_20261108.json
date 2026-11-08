@@ -1,0 +1,33 @@
+{
+  "results": [
+    {
+      "name": "P11-BROWSER-TRASH-AND-ISOLATION",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P11-BROWSER-NATIVE-PRIVACY",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P11-BROWSER-RESTORE",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P11-BROWSER-PLATFORM-RECOVERY-AND-HOLD",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P11-BROWSER-HISTORY-ACCESSIBILITY",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P11-BROWSER-REVOKED-AUTHORITY",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P11-BROWSER-SIGNOUT",
+      "outcome": "PASS"
+    }
+  ],
+  "source": "6ae1c1b2e590c205d532951334ac55ad640a0772"
+}

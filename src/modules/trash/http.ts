@@ -1,5 +1,8 @@
+import { env } from "@/src/lib/env";
 import { TrashError } from "./service";
 export const trashHeaders = {
+  Vary: "Cookie",
+  "X-Content-Type-Options": "nosniff",
   "Cache-Control": "private, no-cache, no-store, max-age=0, must-revalidate",
 };
 export function trashFailure(e: unknown) {
@@ -38,6 +41,8 @@ export function trashFailure(e: unknown) {
 export function validateTrashRequest(request: Request, mutation = false) {
   if (
     new URL(request.url).search ||
+    (mutation &&
+      request.headers.get("origin") !== new URL(env.BETTER_AUTH_URL).origin) ||
     (mutation &&
       !request.headers
         .get("content-type")

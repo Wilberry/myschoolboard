@@ -1,5 +1,16 @@
 # Requirements Traceability Matrix
 
+## Phase 11 independent source contract — 8 November 2026
+
+The published draft-trash slice is preserved. New actual lifecycle events now
+capture a minimal immutable version-1 outbox atomically, without Phase 10 imports
+or historical backfill. Forward upgrade preserves retained event history; separate
+fresh bootstrap verifies all 60 migrations. Capture failure rolls back lifecycle
+and source concealment together. Exact trusted origins protect school/platform
+mutations. Protected-history purge and real Phase 10 delivery remain open. See
+[outbox checkpoint](../quality/PHASE11_LIFECYCLE_OUTBOX_20261108.md).
+
+
 ## Phase 8 local acceptance — 6 November 2026
 
 **RES-REQ-001: implemented and locally accepted for development integration.**

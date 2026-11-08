@@ -1,0 +1,10 @@
+{
+  "migrationInventory": 60,
+  "additions": [
+    {
+      "name": "20261108034000_phase11_lifecycle_outbox",
+      "sha256": "77af69183d15e6b8f3bb1e8cb0cfef48c74cf69ae9e5494c820b5e0a28c9cb1b"
+    }
+  ],
+  "priorAppliedMigrations": "unchanged"
+}

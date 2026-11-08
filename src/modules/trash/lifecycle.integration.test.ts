@@ -39,7 +39,10 @@ function req(body?: unknown) {
     method: body ? "POST" : "GET",
     ...(body
       ? {
-          headers: { "content-type": "application/json" },
+          headers: {
+            "content-type": "application/json",
+            origin: new URL(env.BETTER_AUTH_URL).origin,
+          },
           body: JSON.stringify(body),
         }
       : {}),
@@ -225,6 +228,45 @@ it("keeps feature default-off and enforces real tenant and role boundaries", asy
   expect(
     (await call("teacher", intent("TRASH", { noteId }), foreign)).status,
   ).toBe(404);
+  actor("teacher");
+  for (const origin of ["https://foreign.example", "null", ""]) {
+    const response = await POST(
+      new Request("http://localhost/api/trash", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...(origin ? { origin } : {}),
+        },
+        body: JSON.stringify(intent("TRASH", { noteId })),
+      }),
+      { params: Promise.resolve({ schoolId: school }) },
+    );
+    expect(response.status).toBe(400);
+  }
+  actor("platform");
+  expect(
+    (
+      await PPOST(
+        new Request("http://localhost/api/platform/trash", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            origin: "https://foreign.example",
+          },
+          body: JSON.stringify(
+            intent("HOLD", {
+              schoolId: school,
+              caseId: randomUUID(),
+              expectedVersion: 1,
+            }),
+          ),
+        }),
+      )
+    ).status,
+  ).toBe(400);
+  expect(
+    await prisma.trashCase.count({ where: { schoolId: school, noteId } }),
+  ).toBe(0);
   expect(
     (
       await call("teacher", {
@@ -441,6 +483,109 @@ it("checks exact database-clock 30/90-day boundaries without production clock ov
   expect((await expireTrashBatch(users.platform)).processed).toBe(0);
   await expect(expireTrashBatch(users.teacher)).rejects.toThrow();
 });
+it("captures one immutable minimal envelope per actual lifecycle event without foreign or invented sources", async () => {
+  const events = await prisma.trashEvent.findMany({
+    where: { schoolId: school },
+  });
+  expect(events.length).toBeGreaterThan(0);
+  for (const e of events) {
+    const outbox = await prisma.trashEventOutbox.findUniqueOrThrow({
+      where: { eventId: e.id },
+    });
+    expect(outbox).toMatchObject({
+      schoolId: e.schoolId,
+      caseId: e.caseId,
+      schemaVersion: 1,
+      action: e.action,
+      sourceVersion: e.version,
+      actorUserId: e.actorUserId,
+    });
+    const exact = await prisma.$queryRaw<
+      Array<{ exact: boolean }>
+    >`SELECT o."occurredAt"=e."createdAt" AS exact FROM "TrashEventOutbox" o JOIN "TrashEvent" e ON e."id"=o."eventId" WHERE e."id"=${e.id}::uuid`;
+    expect(exact[0].exact).toBe(true);
+    expect(Object.keys(outbox).sort()).toEqual([
+      "action",
+      "actorUserId",
+      "capturedAt",
+      "caseId",
+      "eventId",
+      "occurredAt",
+      "schemaVersion",
+      "schoolId",
+      "sourceVersion",
+    ]);
+  }
+  const e = events[0];
+  await expect(
+    prisma.trashEventOutbox.create({
+      data: {
+        eventId: randomUUID(),
+        schoolId: foreign,
+        caseId: e.caseId,
+        action: e.action,
+        sourceVersion: e.version,
+        actorUserId: e.actorUserId,
+        occurredAt: e.createdAt,
+      },
+    }),
+  ).rejects.toThrow();
+  await expect(
+    prisma.trashEventOutbox.update({
+      where: { eventId: e.id },
+      data: { schoolId: foreign },
+    }),
+  ).rejects.toThrow();
+  await expect(
+    prisma.trashEventOutbox.delete({ where: { eventId: e.id } }),
+  ).rejects.toThrow();
+  await expect(
+    prisma.$executeRaw`TRUNCATE "TrashEventOutbox"`,
+  ).rejects.toThrow();
+});
+it("rolls back trash state, source concealment and event when durable capture fails, then retries exactly once", async () => {
+  actor("teacher");
+  const note = await createLessonNote(school, {
+    termId: term,
+    assignmentId: assignment,
+    topic: "Synthetic atomic lifecycle capture",
+    objectives: "Verify all-or-nothing source transition",
+    content: "Original synthetic draft retained after failed outbox capture.",
+  });
+  const fn = "p11_outbox_fault_" + tag.replaceAll("-", "");
+  await prisma.$executeRawUnsafe(
+    `CREATE FUNCTION "${fn}"() RETURNS trigger AS $$ BEGIN IF NEW."schoolId"='${school}' THEN RAISE EXCEPTION 'Synthetic lifecycle capture failure';END IF;RETURN NEW;END; $$ LANGUAGE plpgsql`,
+  );
+  await prisma.$executeRawUnsafe(
+    `CREATE TRIGGER "${fn}" AFTER INSERT ON "TrashEventOutbox" FOR EACH ROW EXECUTE FUNCTION "${fn}"()`,
+  );
+  const body = intent("TRASH", { noteId: note.id });
+  try {
+    expect((await call("teacher", body)).status).toBe(500);
+    expect(
+      await prisma.trashCase.count({
+        where: { schoolId: school, noteId: note.id },
+      }),
+    ).toBe(0);
+    actor("teacher");
+    expect(await readOwnLessonNotes(school, note.id)).toBeTruthy();
+  } finally {
+    await prisma.$executeRawUnsafe(
+      `DROP TRIGGER "${fn}" ON "TrashEventOutbox"`,
+    );
+    await prisma.$executeRawUnsafe(`DROP FUNCTION "${fn}"()`);
+  }
+  expect((await call("teacher", body)).status).toBe(201);
+  expect((await call("teacher", body)).status).toBe(200);
+  const c = await prisma.trashCase.findFirstOrThrow({
+    where: { schoolId: school, noteId: note.id },
+  });
+  expect(await prisma.trashEvent.count({ where: { caseId: c.id } })).toBe(1);
+  expect(await prisma.trashEventOutbox.count({ where: { caseId: c.id } })).toBe(
+    1,
+  );
+});
+
 it("revocation denies restoration and hides school metadata without resurrecting old authority", async () => {
   await prisma.teacherClassSubjectAssignment.update({
     where: { id: assignment },

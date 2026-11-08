@@ -229,6 +229,11 @@ async function change(
                 { cause?: { originalCode?: string } } | undefined
             )?.cause?.originalCode ?? e.meta?.code;
           if (code === "23503") throw new TrashError("NOT_FOUND");
+          if (
+            e.code === "P2010" &&
+            !["23505", "23514", "40001", "40P01"].includes(String(code))
+          )
+            throw new TrashError("INTERNAL");
           throw new TrashError("CONFLICT");
         }
         if (e.code === "P2003") throw new TrashError("NOT_FOUND");

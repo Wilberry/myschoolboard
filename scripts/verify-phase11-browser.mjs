@@ -5,13 +5,44 @@ import { spawn, execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import pg from "pg";
 import { verifyPhase9DatabaseIdentity } from "./verify-phase9-disposable.mjs";
-verifyPhase9DatabaseIdentity(process.env);
+const docker = (args) =>
+  execFileSync("docker", ["--host=unix:///var/run/docker.sock", ...args], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+let identity;
+if (process.env.PHASE11_DISPOSABLE_IDENTITY_FILE) {
+  identity = JSON.parse(
+    await readFile(process.env.PHASE11_DISPOSABLE_IDENTITY_FILE, "utf8"),
+  );
+  assert.equal(identity.phase, "phase11");
+  assert.equal(identity.root, process.cwd());
+  assert.equal(identity.port, 3014);
+  const physical = JSON.parse(docker(["inspect", identity.id]))[0];
+  assert.equal(physical.Config.Labels["codex.task"], "phase11");
+  assert.ok(physical.State.Running);
+  assert.deepEqual(physical.Mounts, []);
+  assert.ok(physical.HostConfig.Tmpfs["/var/lib/postgresql/data"]);
+  assert.equal(
+    JSON.parse(docker(["inspect", identity.runner]))[0].HostConfig.NetworkMode,
+    "container:" + identity.id,
+  );
+  docker([
+    "exec",
+    identity.runner,
+    "node",
+    "scripts/verify-phase9-disposable.mjs",
+    "--preflight",
+  ]);
+} else verifyPhase9DatabaseIdentity(process.env);
 const path = process.env.PHASE11_BROWSER_FIXTURE_FILE;
 assert.match(path ?? "", /^\/tmp\/phase11-[\w-]+\.json$/);
 const f = JSON.parse(await readFile(path, "utf8"));
 assert.match(f.school, /^p11-school-/);
-const base = "http://localhost:3000";
-assert.equal(process.env.BETTER_AUTH_URL, base);
+const base = identity
+  ? `http://localhost:${identity.port}`
+  : "http://localhost:3000";
+if (!identity) assert.equal(process.env.BETTER_AUTH_URL, base);
 const root = `/api/schools/${f.school}/trash`;
 const require = createRequire(import.meta.url);
 const {
@@ -26,8 +57,10 @@ const browser = await chromium.launch({
   headless: true,
   args: ["--no-sandbox"],
 });
-const db = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL });
-await db.connect();
+const db = identity
+  ? null
+  : new pg.Client({ connectionString: process.env.TEST_DATABASE_URL });
+if (db) await db.connect();
 const contexts = [],
   children = [],
   results = [];
@@ -267,10 +300,22 @@ try {
       await form(teacher, "Move draft to school trash", { noteId: f.noteId })
     ).id;
     await teacher.page.bringToFront();
-    const changed = await db.query(
-      'UPDATE "TeacherClassSubjectAssignment" SET "status"=\'REVOKED\' WHERE "schoolId"=$1 AND "id"=(SELECT "assignmentId" FROM "LessonNote" WHERE "schoolId"=$1 AND "id"=$2)',
-      [f.school, f.noteId],
-    );
+    const changed = identity
+      ? JSON.parse(
+          docker([
+            "exec",
+            identity.runner,
+            "node",
+            "--import",
+            "tsx",
+            "scripts/revoke-phase11-browser-authority.ts",
+            path,
+          ]),
+        )
+      : await db.query(
+          'UPDATE "TeacherClassSubjectAssignment" SET "status"=\'REVOKED\' WHERE "schoolId"=$1 AND "id"=(SELECT "assignmentId" FROM "LessonNote" WHERE "schoolId"=$1 AND "id"=$2)',
+          [f.school, f.noteId],
+        );
     assert.equal(changed.rowCount, 1);
     assert.equal(
       (
@@ -296,7 +341,8 @@ try {
   });
 } finally {
   await writeFile(
-    "/tmp/phase11-browser-results.json",
+    process.env.PHASE11_BROWSER_RESULTS_FILE ??
+      "/tmp/phase11-browser-results.json",
     JSON.stringify(
       {
         results,
@@ -315,5 +361,5 @@ try {
     try {
       process.kill(-child.pid, "SIGTERM");
     } catch {}
-  await db.end();
+  if (db) await db.end();
 }

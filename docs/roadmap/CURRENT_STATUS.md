@@ -1,5 +1,16 @@
 # Project Status
 
+## Phase 11 independent source contract — 8 November 2026
+
+The published draft-trash slice is preserved. New actual lifecycle events now
+capture a minimal immutable version-1 outbox atomically, without Phase 10 imports
+or historical backfill. Forward upgrade preserves retained event history; separate
+fresh bootstrap verifies all 60 migrations. Capture failure rolls back lifecycle
+and source concealment together. Exact trusted origins protect school/platform
+mutations. Protected-history purge and real Phase 10 delivery remain open. See
+[outbox checkpoint](../quality/PHASE11_LIFECYCLE_OUTBOX_20261108.md).
+
+
 ## Phase 11 independent development — 7 November 2026
 
 **DEL-REQ-001: tested independent lifecycle slice, not full Phase 11 acceptance.**

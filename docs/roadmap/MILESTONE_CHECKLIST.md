@@ -1,5 +1,16 @@
 # Milestone Checklist
 
+## Phase 11 independent event capture — 8 November 2026
+
+- [x] Minimal immutable lifecycle envelope and atomic outbox capture.
+- [x] Retained 59-to-60 upgrade preserves original history without backfill.
+- [x] Separate fresh 60-migration PostgreSQL bootstrap and canonical checksums.
+- [x] Failure rollback, exact retry, tenant/forgery/history denial tests.
+- [x] Exact trusted-origin school/platform mutations and safe internal failures.
+- [ ] Real Phase 10 delivery and accepted integration contracts.
+- [ ] Protected-history disposition policy and full Phase 11 acceptance.
+
+
 ## Phase 11 independent development — 7 November 2026
 
 **DEL-REQ-001: tested independent lifecycle slice, not full Phase 11 acceptance.**
