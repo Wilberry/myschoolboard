@@ -1,5 +1,15 @@
 # Project Status
 
+## Phase 10 registered audit inspection — 8 November 2026
+
+P10-07 now includes owner-only minimal metadata inspection across 33 registered
+school ledgers, with current tenant/role checks, exact bounded cursors and private
+UI. Actual PostgreSQL permission/revocation/pagination and Chromium accessibility/
+cross-tab sign-out checks pass. Notification source adapters and the complete
+security-audit pipeline remain outstanding; whole Phase 10 remains PARTIAL.
+See the [audit checkpoint](../quality/PHASE10_AUDIT_INSPECTION_20261108.md).
+
+
 ## Phase 10 learning assignments — 8 November 2026
 
 P10-06 now implements explicit owner policies, exact teacher/Form task authority,

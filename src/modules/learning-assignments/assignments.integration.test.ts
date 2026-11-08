@@ -2,6 +2,7 @@ import "dotenv/config";
 import { randomUUID } from "node:crypto";
 import { writeFile, mkdtemp } from "node:fs/promises";
 import sharp from "sharp";
+import { readSchoolAudit } from "@/src/modules/audit/school-ledger";
 import {
   createCatalogEntry,
   reviewCatalogEntry,
@@ -777,5 +778,102 @@ it("intersects approved image rights with each pupil instead of widening the tas
     expectedSubmissionRevision: 0,
     text: "Independent authorized text only",
     requestKey: randomUUID(),
+  });
+});
+it("restricts registered audit metadata to the current school owner without source contents", async () => {
+  vi.stubEnv("PHASE10_AUDIT_ENABLED", "true");
+  actor("owner");
+  const all = await readSchoolAudit(school);
+  expect(all.events.length).toBeGreaterThan(0);
+  const tasks = await readSchoolAudit(school, "LearningAssignmentEvent");
+  expect(tasks.events.length).toBeGreaterThan(0);
+  for (const event of all.events) {
+    expect(Object.keys(event).sort()).toEqual([
+      "action",
+      "actorUserId",
+      "at",
+      "id",
+      "source",
+    ]);
+    expect(event.at).toMatch(/\.\d{6}Z$/);
+  }
+  expect(JSON.stringify(all)).not.toContain("Original pupil text");
+  for (const name of [
+    "admin",
+    "teacher",
+    "reviewer",
+    "student",
+    "parent",
+    "foreign",
+  ]) {
+    actor(name);
+    await expect(readSchoolAudit(school)).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  }
+  actor("owner");
+  await expect(readSchoolAudit(foreign)).rejects.toMatchObject({
+    code: "NOT_FOUND",
+  });
+  await expect(readSchoolAudit(school, "Account")).rejects.toMatchObject({
+    code: "INVALID_INPUT",
+  });
+  await expect(
+    readSchoolAudit(school, undefined, "invalid-cursor"),
+  ).rejects.toMatchObject({ code: "INVALID_INPUT" });
+});
+it("paginates immutable audit evidence without duplicates and rejects cross-filter cursors", async () => {
+  actor("owner");
+  for (let i = 0; i < 101; i++) await policy();
+  const first = await readSchoolAudit(school, "LearningAssignmentPolicy");
+  expect(first.events).toHaveLength(100);
+  expect(first.nextCursor).toBeTruthy();
+  const second = await readSchoolAudit(
+    school,
+    "LearningAssignmentPolicy",
+    first.nextCursor!,
+  );
+  const ids = [...first.events, ...second.events].map((e) => e.id);
+  expect(new Set(ids).size).toBe(ids.length);
+  expect(ids.length).toBe(
+    await prisma.learningAssignmentPolicy.count({
+      where: { schoolId: school },
+    }),
+  );
+  await expect(
+    readSchoolAudit(school, "LearningAssignmentEvent", first.nextCursor!),
+  ).rejects.toMatchObject({ code: "INVALID_INPUT" });
+}, 20000);
+it("revokes audit access immediately on actual owner role removal", async () => {
+  const email = `p10-task-audit-owner-${tag}@example.test`,
+    password = "Synthetic-learning-task-password-42";
+  const signed = await auth.api.signUpEmail({
+    body: { email, password, name: "Synthetic audit operator" },
+  });
+  users.auditOwner = signed.user.id;
+  const m = await prisma.membership.create({
+    data: {
+      schoolId: school,
+      userId: signed.user.id,
+      role: "SCHOOL_SUPER_ADMIN",
+    },
+  });
+  const login = await auth.api.signInEmail({
+    body: { email, password },
+    headers: new Headers({ origin: env.BETTER_AUTH_URL }),
+    returnHeaders: true,
+  });
+  cookies.auditOwner = login.headers
+    .getSetCookie()
+    .map((v) => v.split(";")[0])
+    .join("; ");
+  actor("auditOwner");
+  expect((await readSchoolAudit(school)).events.length).toBeGreaterThan(0);
+  await prisma.membership.update({
+    where: { id: m.id },
+    data: { role: "SCHOOL_ADMIN" },
+  });
+  await expect(readSchoolAudit(school)).rejects.toMatchObject({
+    code: "NOT_FOUND",
   });
 });

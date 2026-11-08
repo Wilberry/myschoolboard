@@ -241,6 +241,17 @@ async function SchoolDetailContent({
             </Link>
           </p>
         )}
+        {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" &&
+          process.env.PHASE10_AUDIT_ENABLED === "true" && (
+            <p className="setup-navigation">
+              <Link
+                href={`/schools/${schoolId}/audit`}
+                className="secondary-link"
+              >
+                School audit evidence
+              </Link>
+            </p>
+          )}
         {access.principal.membership?.role === "STUDENT" && (
           <p className="setup-navigation">
             <Link

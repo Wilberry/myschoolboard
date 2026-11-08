@@ -398,6 +398,61 @@ try {
       );
     },
   );
+  if (process.env.PHASE10_AUDIT_BROWSER_ENABLED === "true") {
+    await check(
+      "P10-AUDIT-BR-01 owner metadata UI, tenant denial, accessibility and cross-tab sign-out",
+      async () => {
+        const auditUrl = `${base}/schools/${f.school}/audit`;
+        for (const a of [teacher, student, parent, foreign])
+          assert.equal((await api(a, "/audit")).status(), 404);
+        const response = await api(owner, "/audit");
+        assert.equal(response.status(), 200);
+        assert.match(response.headers()["cache-control"], /private.*no-store/);
+        const evidence = await response.json();
+        assert.ok(evidence.events.length > 0);
+        for (const event of evidence.events)
+          assert.deepEqual(Object.keys(event).sort(), [
+            "action",
+            "actorUserId",
+            "at",
+            "id",
+            "source",
+          ]);
+        await open(owner, auditUrl);
+        await owner.page
+          .getByText("Source reference:", { exact: false })
+          .first()
+          .waitFor();
+        await owner.page.addScriptTag({
+          path:
+            process.env.AXE_MODULE ??
+            "/workspace/phase8-tools/node_modules/axe-core/axe.min.js",
+        });
+        const axe = await owner.page.evaluate(async () =>
+          window.axe.run(document, {
+            runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21aa"] },
+          }),
+        );
+        assert.deepEqual(
+          axe.violations.map((v) => v.id),
+          [],
+        );
+        const other = await owner.context.newPage();
+        await other.goto(auditUrl);
+        await other
+          .getByRole("button", { name: "Sign out", exact: true })
+          .click();
+        await owner.page.bringToFront();
+        await owner.page.waitForFunction(() =>
+          [...document.querySelectorAll("article")].every(
+            (el) => !el.checkVisibility(),
+          ),
+        );
+        assert.equal((await api(owner, "/audit")).status(), 401);
+        await other.close();
+      },
+    );
+  }
 } catch (e) {
   failure = e;
   console.error(e);

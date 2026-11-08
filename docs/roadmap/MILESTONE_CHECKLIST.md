@@ -1,5 +1,14 @@
 # Milestone Checklist
 
+## Phase 10 audit inspection — 8 November 2026
+
+- [x] Owner-only private registered-ledger metadata inspection.
+- [x] Actual role revocation, tenant denial and >100-row cursor tests.
+- [x] Authenticated audit UI accessibility and cross-tab sign-out acceptance.
+- [ ] Remaining P10-07 source-event adapters, authentication and permission audit.
+- [ ] Full P10-08 cumulative acceptance and integration review.
+
+
 ## Phase 10 learning checkpoint — 8 November 2026
 
 - [x] P10-06 policy/task/approved-image-reference/submission implementation.

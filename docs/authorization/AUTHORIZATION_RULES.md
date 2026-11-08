@@ -343,3 +343,13 @@ Current intended verified students append only their own immutable work; parents
 cannot impersonate a child. Original teacher feedback requires current exact
 authority and the pupil's current relationship. Approved image references intersect
 current task and asset rights; no automatic grade or raw pupil upload is enabled.
+
+
+## Phase 10 registered school audit inspection
+
+Only a current active same-school SCHOOL_SUPER_ADMIN in an active school may
+read the registered audit index. The projection is source ID/type, exact timestamp,
+action and recorded actor reference only. It grants no source body, pupil-work,
+financial-account or platform-security access. Administrators, generic reviewers,
+platform-only roles, pupils and guardians are denied. No guessed school or actor
+is substituted for unscoped authentication/security events.
