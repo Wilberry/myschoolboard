@@ -1,5 +1,26 @@
 # Decision Log
 
+## D-P10-009: Separate account and platform-security notification channels
+
+**Date:** 2026-11-08. **Status:** development implementation, partial phase acceptance.
+
+Account security notifications resolve known facts only to the current subject;
+unknown-identity failures resolve only to current platform security operators.
+Personal and platform channels have separate private read/state APIs and UI. No
+school/guardian capability grants global security access. Alerts copy no identity,
+credential, source body or reason; local deep links reauthorize canonical records.
+
+The default-off worker commits bounded delivery/cursor/attempt pages atomically,
+uses SKIP LOCKED, current user shared locks and source/recipient deduplication,
+retains five failures/cooldown/reasoned replay, and appends terminal suppression on
+actual role revocation/deletion. Read/unread preserves immutable history. The local
+CLI attests its disposable database, authenticates through the explicit isolated
+app's real secure-cookie configuration and then checks current database authority.
+No external credential forwarding, redirect, anonymous worker or provider is enabled.
+See [executed acceptance](../quality/PHASE10_SECURITY_INAPP_20261108.md). Whole phase
+and production/integration gates remain partial.
+
+
 ## D-P10-008: Account-security evidence and mandatory-audit failure policy
 
 **Date:** 2026-11-08. **Status:** development implementation, partial acceptance.

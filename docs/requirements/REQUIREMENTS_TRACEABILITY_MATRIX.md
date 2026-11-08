@@ -1,5 +1,17 @@
 # Requirements Traceability Matrix
 
+## Phase 10 security notification delivery — 8 November 2026
+
+Actual account-security outbox events now deliver to their current subject or,
+for unknown failures, current platform operators through a separate channel.
+Atomic 100-recipient pages, bounded failures/cooldown/reasoned replay, read/unread,
+terminal suppression, private APIs/UI and authenticated local CLI are verified.
+Actual checks: 207 guards, 512 Vitest tests, 83 exact/fresh migrations, static/build
+checks and five native Chromium workflows, including actual CLI role revocation.
+Remaining P10-07/P10-08 gates stay open. See the
+[delivery checkpoint](../quality/PHASE10_SECURITY_INAPP_20261108.md).
+
+
 ## Phase 10 account-security evidence — 8 November 2026
 
 Actual session mutations capture immutable minimal evidence/outbox records;

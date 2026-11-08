@@ -1,3 +1,4 @@
+import { SecurityNotificationInbox } from "@/src/components/security-notification-inbox";
 import { Suspense } from "react";
 import { headers } from "next/headers";
 import { redirect, notFound } from "next/navigation";
@@ -41,6 +42,9 @@ async function AuthorizedSecurityPage() {
       <div className="workspace-content">
         <h1>Platform security evidence</h1>
         <AccountSecurityWorkspace platform />
+        {process.env.PHASE10_SECURITY_INAPP_ENABLED === "true" && (
+          <SecurityNotificationInbox platform />
+        )}
       </div>
     </main>
   );

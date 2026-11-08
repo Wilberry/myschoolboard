@@ -41,7 +41,7 @@ try {
   assert.deepEqual(Object.keys(details.HostConfig.PortBindings ?? {}), []);
   assert.ok(details.HostConfig.Tmpfs["/var/lib/postgresql/data"]);
   let ready = false;
-  for (let i = 0; i < 82; i++) {
+  for (let i = 0; i < 83; i++) {
     try {
       docker([
         "exec",
@@ -99,7 +99,7 @@ try {
   )
     .filter((n) => /^\d/.test(n))
     .sort();
-  assert.equal(names.length, 82);
+  assert.equal(names.length, 83);
   for (const migration of names) {
     assert.match(migration, /^[A-Za-z0-9_]+$/);
     const sql = await readFile(
@@ -120,11 +120,11 @@ try {
       checksum,
     );
   }
-  assert.equal(psql('SELECT count(*) FROM "_prisma_migrations";').trim(), "82");
+  assert.equal(psql('SELECT count(*) FROM "_prisma_migrations";').trim(), "83");
   console.log(
     JSON.stringify({
       outcome: "PASS",
-      migrations: 82,
+      migrations: 83,
       container: name,
       id,
       storage: "new tmpfs",

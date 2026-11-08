@@ -1,5 +1,15 @@
 # Milestone Checklist
 
+## Phase 10 security in-app delivery — 8 November 2026
+
+- [x] Separate current-subject account and current-operator platform alert channels.
+- [x] Atomic retry/replay, 101-recipient paging, terminal suppression and actual role-lock race.
+- [x] Private read/unread/cursor APIs, accessible inbox UI and authenticated CLI.
+- [x] 207 guards, 512 tests, 83 exact/fresh migrations and five native Chromium workflows.
+- [ ] Remaining school operational and permission/credential-change adapters.
+- [ ] Full cumulative source/browser/privacy/load acceptance and integration review.
+
+
 ## Phase 10 authentication evidence — 8 November 2026
 
 - [x] Actual transactional session capture, minimal immutable evidence and outbox.

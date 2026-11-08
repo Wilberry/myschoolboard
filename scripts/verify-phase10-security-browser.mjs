@@ -44,8 +44,7 @@ const f = JSON.parse(
 );
 assert.match(f.school, /^p10-security-browser-/);
 assert.ok(process.env.DISPLAY);
-const base = "http://localhost:3001",
-  root = "/api/account";
+const base = "http://localhost:3001";
 const profile = await mkdtemp("/tmp/phase10-security-chromium-");
 const child = spawn(
   "/usr/bin/chromium",
@@ -71,6 +70,7 @@ async function actor(name, native = false) {
   const context = native ? browser.contexts()[0] : await browser.newContext();
   const page = await context.newPage();
   page.setDefaultTimeout(20000);
+  page.on("dialog", (dialog) => void dialog.accept());
   await page.bringToFront();
   await page.goto(base);
   await page.getByLabel("Email address", { exact: true }).fill(f.emails[name]);
@@ -225,6 +225,152 @@ try {
       assert.ok(!text.includes("Session started"));
     },
   );
+  let workerFile;
+  if (process.env.PHASE10_SECURITY_INBOX_ACCEPTANCE === "1") {
+    await check(
+      "P10-SECURITY-BR-05 account/platform delivery, actual read/unread, deep links and authenticated CLI",
+      async () => {
+        const current = await (await api(owner)).json();
+        const source = current.evidence.find(
+          (e) => e.kind === "AUTH_SUCCEEDED",
+        );
+        assert.ok(source);
+        const dispatch = async (eventId) =>
+          operator.context.request.post(
+            base + "/api/platform/security-delivery",
+            { headers: { origin: base }, data: { eventId } },
+          );
+        assert.equal((await dispatch(source.id)).status(), 200);
+        const repeated = await dispatch(source.id);
+        assert.equal(repeated.status(), 200);
+        assert.equal((await repeated.json()).processed, false);
+        const ownResponse = await api(
+          owner,
+          "/api/account/security-notifications",
+        );
+        assert.equal(ownResponse.status(), 200);
+        const own = await ownResponse.json();
+        assert.equal(own.items.length, 1);
+        assert.equal(own.items[0].href, "/account/security");
+        assert.ok(!JSON.stringify(own).includes(f.emails.owner));
+        assert.ok(!JSON.stringify(own).includes(f.users.owner));
+        await opened(owner);
+        const region = owner.page.getByRole("region", {
+          name: "Account security notifications",
+          exact: true,
+        });
+        await region
+          .getByText("Current security notifications loaded.", { exact: true })
+          .waitFor();
+        const article = region.getByRole("article", {
+          name: `Security notification ${own.items[0].id}`,
+          exact: true,
+        });
+        for (const [label, read] of [
+          ["Mark read", true],
+          ["Mark unread", false],
+        ]) {
+          const response = owner.page.waitForResponse(
+            (r) =>
+              r.request().method() === "POST" &&
+              r.url().endsWith(own.items[0].id + "/state"),
+          );
+          await article
+            .getByRole("button", { name: label, exact: true })
+            .click();
+          assert.equal((await response).status(), 201);
+          assert.equal(
+            (
+              await (
+                await api(owner, "/api/account/security-notifications")
+              ).json()
+            ).items.find((i) => i.id === own.items[0].id).read,
+            read,
+          );
+        }
+        await article
+          .getByRole("link", {
+            name: "Open current security records",
+            exact: true,
+          })
+          .click();
+        await owner.page.waitForURL(base + "/account/security");
+        let unknown;
+        for (let attempt = 0; attempt < 4; attempt++) {
+          unknown = await foreign.context.request.post(
+            base + "/api/auth/sign-in/email",
+            {
+              headers: { origin: base },
+              data: {
+                email: `unknown-${randomUUID()}@example.test`,
+                password: f.password,
+              },
+            },
+          );
+          if (unknown.status() !== 429) break;
+          const seconds = Number(unknown.headers()["retry-after"] ?? "11");
+          assert.ok(
+            Number.isFinite(seconds) && seconds >= 0 && seconds < 60,
+            "Bounded server retry window required",
+          );
+          await sleep(Math.max(1, seconds + 1) * 1000);
+        }
+        assert.equal(unknown.status(), 401);
+        const global = await (
+          await api(operator, "/api/platform/security-evidence")
+        ).json();
+        const failed = global.evidence.find(
+          (e) => e.kind === "AUTH_FAILED" && e.subjectUserId === null,
+        );
+        assert.ok(failed);
+        assert.equal((await dispatch(failed.id)).status(), 200);
+        const alerts = await (
+          await api(operator, "/api/platform/security-notifications")
+        ).json();
+        assert.ok(alerts.items.length);
+        assert.ok(alerts.items.every((i) => i.href === "/platform/security"));
+        assert.equal(
+          (await api(owner, "/api/platform/security-notifications")).status(),
+          404,
+        );
+        const personal = await (
+          await api(operator, "/api/account/security-notifications")
+        ).json();
+        assert.ok(
+          !personal.items.some((i) => alerts.items.some((a) => a.id === i.id)),
+        );
+        await opened(operator, "/platform/security");
+        await operator.page
+          .getByRole("region", {
+            name: "Platform security notifications",
+            exact: true,
+          })
+          .getByText("Current security notifications loaded.", { exact: true })
+          .waitFor();
+        await axe(operator);
+        workerFile = `/tmp/phase10-security-worker-${randomUUID()}.json`;
+        const cookie = (await operator.context.cookies())
+          .map((c) => c.name + "=" + c.value)
+          .join("; ");
+        await writeFile(
+          workerFile,
+          JSON.stringify({ cookie, userId: f.users.operator }),
+          { mode: 0o600, flag: "wx" },
+        );
+        docker(["cp", workerFile, identity.runner + ":" + workerFile]);
+        docker([
+          "exec",
+          identity.runner,
+          "node",
+          "--import",
+          "tsx",
+          "scripts/verify-phase10-security-worker-session.ts",
+          workerFile,
+          "--allowed",
+        ]);
+      },
+    );
+  }
   await check(
     "P10-SECURITY-BR-03 platform metadata UI and still-signed-in current role revocation",
     async () => {
@@ -257,6 +403,11 @@ try {
           { exact: true },
         )
         .waitFor();
+      await operator.page.waitForFunction(() =>
+        [...document.querySelectorAll("article")].every(
+          (el) => !el.checkVisibility(),
+        ),
+      );
       assert.equal(
         await operator.page
           .getByRole("article")
@@ -264,6 +415,24 @@ try {
           .count(),
         0,
       );
+      if (workerFile) {
+        assert.equal(
+          (
+            await api(operator, "/api/platform/security-notifications")
+          ).status(),
+          404,
+        );
+        docker([
+          "exec",
+          identity.runner,
+          "node",
+          "--import",
+          "tsx",
+          "scripts/verify-phase10-security-worker-session.ts",
+          workerFile,
+          "--denied",
+        ]);
+      }
       assert.equal((await api(operator)).status(), 200);
     },
   );
@@ -343,7 +512,7 @@ try {
           outcome: failure ? "FAIL" : "PASS",
           limitations: [
             "No persisted BFCache assertion",
-            "Security notification delivery and remaining cumulative phase acceptance are separate checks",
+            "Other source adapters and cumulative phase acceptance remain separate checks",
           ],
         },
         null,

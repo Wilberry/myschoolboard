@@ -201,6 +201,7 @@ enum SchoolConfigurationEventType {
 }
 
 model User {
+ @@index([platformRole,id])
   id            String       @id
   name          String
   email         String       @unique
@@ -3101,6 +3102,7 @@ model SubscriptionBoundaryEvent {
 
 // Deliberately no User FK: immutable account-security evidence survives deletion.
 model AuthSecurityEvidence {
+ deliveries SecurityDelivery[]
  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
  kind String
  subjectUserId String?
@@ -3114,7 +3116,51 @@ model AuthSecurityEvidence {
  @@index([recordedAt(sort:Desc),id])
 }
 model AuthSecurityOutbox {
+ failures Int @default(0)
+ cursorUserId String?
+ nextAttemptAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ attempts SecurityOutboxAttempt[]
+ @@index([state,nextAttemptAt,eventId],map:"AuthSecurityOutbox_due")
  eventId String @id @db.Uuid
  state String @default("PENDING")
  event AuthSecurityEvidence @relation(fields:[eventId],references:[id],onDelete:NoAction)
+}
+
+model SecurityDelivery {
+ id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+ eventId String @db.Uuid
+ recipientUserId String
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ event AuthSecurityEvidence @relation(fields:[eventId],references:[id],onDelete:NoAction)
+ suppression SecurityDeliverySuppression?
+ interactions SecurityDeliveryInteraction[]
+ @@unique([eventId,recipientUserId])
+ @@index([recipientUserId,createdAt(sort:Desc),id],map:"SecurityDelivery_user_time")
+}
+model SecurityDeliverySuppression {
+ deliveryId String @id @db.Uuid
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ delivery SecurityDelivery @relation(fields:[deliveryId],references:[id],onDelete:NoAction)
+}
+model SecurityDeliveryInteraction {
+ id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+ deliveryId String @db.Uuid
+ actorUserId String
+ requestKey String @db.Uuid
+ action String
+ ordinal BigInt @unique @default(autoincrement())
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ delivery SecurityDelivery @relation(fields:[deliveryId],references:[id],onDelete:NoAction)
+ @@unique([deliveryId,requestKey])
+ @@index([deliveryId,ordinal(sort:Desc)],map:"SecurityDeliveryInteraction_latest")
+}
+model SecurityOutboxAttempt {
+ id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+ eventId String @db.Uuid
+ actorUserId String
+ outcome String
+ reason String @db.VarChar(500)
+ requestKey String? @unique @db.Uuid
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ event AuthSecurityOutbox @relation(fields:[eventId],references:[eventId],onDelete:NoAction)
 }
