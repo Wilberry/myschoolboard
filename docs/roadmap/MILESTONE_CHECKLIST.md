@@ -1,5 +1,16 @@
 # Milestone Checklist
 
+## Phase 10 initial source adapters — 8 November 2026
+
+- [x] Minimal transactional event/outbox capture from 36 registered school ledgers.
+- [x] Five explicit learning/resource current-recipient contracts and private inbox.
+- [x] Atomic rollback, concurrent delivery/deduplication and terminal revocation tests.
+- [x] Fresh 75-migration bootstrap; 207 guards and 490 Vitest tests pass.
+- [x] Seven authenticated learning/module/audit Chromium workflows pass.
+- [ ] Remaining attendance/lesson/result/report/fee/operational/security adapters.
+- [ ] Module failure/replay/paging/load/recovery and full P10-08 acceptance.
+
+
 ## Phase 10 audit inspection — 8 November 2026
 
 - [x] Owner-only private registered-ledger metadata inspection.

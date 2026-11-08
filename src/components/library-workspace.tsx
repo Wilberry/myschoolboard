@@ -1,5 +1,6 @@
 "use client";
 import { LearningAssetUploadForm } from "./learning-asset-upload-form";
+import { NotificationInbox } from "./notification-inbox";
 import { NoticeActionForm } from "./notice-action-form";
 import { usePrivateCommunication } from "./use-private-communication";
 interface Metadata {
@@ -109,6 +110,7 @@ export function LibraryWorkspace({ schoolId }: { schoolId: string }) {
         {view && (
           <>
             <h2>Approved catalog</h2>
+            <NotificationInbox schoolId={schoolId} channel="module" />
             <p>
               Physical book records and digital resource records are distinct.
               Catalog approval does not grant permission to distribute a file.

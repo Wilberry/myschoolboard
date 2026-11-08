@@ -75,7 +75,7 @@ async function actor(name) {
   for (let attempt = 0; attempt < 4; attempt++) {
     signed = await context.request.post(base + "/api/auth/sign-in/email", {
       data: {
-        email: `p10-task-${name}-${f.tag}@example.test`,
+        email: f.emails?.[name] ?? `p10-task-${name}-${f.tag}@example.test`,
         password: f.password,
       },
       headers: { origin: base },
@@ -247,6 +247,66 @@ try {
       ).id;
     },
   );
+  if (process.env.PHASE10_MODULE_BROWSER_ENABLED === "true") {
+    await check(
+      "P10-MODULE-BR-01 actual task delivery, duplicate suppression and read/unread UI",
+      async () => {
+        async function drain() {
+          for (let i = 0; i < 100; i++) {
+            const response = await api(owner, "/module-delivery", {});
+            assert.equal(response.status(), 200);
+            if (!(await response.json()).processed) return;
+          }
+          throw Error("Synthetic browser module queue exceeded bounded drain");
+        }
+        await drain();
+        const response = await api(student, "/module-notifications");
+        assert.equal(response.status(), 200);
+        const inbox = await response.json();
+        const item = inbox.items.find((entry) => entry.href.endsWith(release));
+        assert.ok(item);
+        assert.equal(item.read, false);
+        await open(student);
+        await form(student, "Mark read", {}, `Notification ${item.id}`);
+        assert.equal(
+          (
+            await (await api(student, "/module-notifications")).json()
+          ).items.find((entry) => entry.id === item.id).read,
+          true,
+        );
+        await form(student, "Mark unread", {}, `Notification ${item.id}`);
+        await drain();
+        const repeated = await (
+          await api(student, "/module-notifications")
+        ).json();
+        assert.equal(
+          repeated.items.filter((entry) => entry.id === item.id).length,
+          1,
+        );
+        assert.equal(
+          repeated.items.find((entry) => entry.id === item.id).read,
+          false,
+        );
+        for (const actor of [parent, foreign])
+          assert.equal(
+            (await api(actor, "/module-notifications")).status(),
+            404,
+          );
+        await student.page
+          .getByRole("article", {
+            name: `Notification ${item.id}`,
+            exact: true,
+          })
+          .getByRole("link", {
+            name: "Open current school workflow",
+            exact: true,
+          })
+          .click();
+        await student.page.waitForURL(url + "?releaseId=" + release);
+        await current(student);
+      },
+    );
+  }
   await check(
     "P10-TASK-BR-02 verified pupil work, return, immutable resubmission and teacher acceptance",
     async () => {

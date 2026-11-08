@@ -259,6 +259,12 @@ model Verification {
 }
 
 model School {
+ moduleDeliveries ModuleDelivery[]
+ moduleInteractions ModuleDeliveryInteraction[]
+ moduleSuppressions ModuleDeliverySuppression[]
+ moduleAttempts ModuleOutboxAttempt[]
+ sourceEvents SchoolSourceEvent[]
+ sourceOutboxes SchoolSourceOutbox[]
  learningAssignments LearningAssignment[]
  learningAssignmentRevisions LearningAssignmentRevision[]
  learningAssignmentEvents LearningAssignmentEvent[]
@@ -385,6 +391,7 @@ model School {
 }
 
 model Membership {
+ moduleDeliveries ModuleDelivery[]
  classDeliveries ClassDelivery[]
  authoredNotices Notice[] @relation("Phase10_Notice_1")
  noticeDeliveries NotificationDelivery[] @relation("Phase10_NotificationDelivery_2")
@@ -2991,4 +2998,86 @@ model LearningSubmissionReview {
  submission LearningSubmissionRevision @relation(fields:[schoolId,submissionId],references:[schoolId,id],onDelete:NoAction)
  @@unique([schoolId,submissionId])
  @@unique([schoolId,requestKey])
+}
+
+model SchoolSourceEvent {
+ deliveries ModuleDelivery[]
+ id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+ schoolId String
+ sourceType String @db.VarChar(64)
+ sourceId String
+ schemaVersion Int @default(1)
+ action String @db.VarChar(64)
+ actorUserId String?
+ occurredAt DateTime @db.Timestamptz
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ dispatch SchoolSourceOutbox[]
+ @@unique([schoolId,id])
+ @@unique([schoolId,sourceType,sourceId])
+ @@index([schoolId,createdAt(sort:Desc),id],map:"SchoolSourceEvent_school_time")
+}
+model SchoolSourceOutbox {
+ attempts ModuleOutboxAttempt[]
+ schoolId String
+ eventId String @id @db.Uuid
+ state String @default("PENDING")
+ failures Int @default(0)
+ cursorMembershipId String?
+ nextAttemptAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ event SchoolSourceEvent @relation(fields:[schoolId,eventId],references:[schoolId,id],onDelete:NoAction)
+ @@unique([schoolId,eventId])
+ @@index([schoolId,state,nextAttemptAt,eventId],map:"SchoolSourceOutbox_due")
+}
+
+model ModuleDelivery {
+ id String @id @db.Uuid
+ schoolId String
+ eventId String @db.Uuid
+ recipientMembershipId String
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ event SchoolSourceEvent @relation(fields:[schoolId,eventId],references:[schoolId,id],onDelete:NoAction)
+ recipient Membership @relation(fields:[schoolId,recipientMembershipId],references:[schoolId,id],onDelete:NoAction)
+ interactions ModuleDeliveryInteraction[]
+ suppression ModuleDeliverySuppression?
+ @@unique([schoolId,id])
+ @@unique([schoolId,eventId,recipientMembershipId])
+ @@index([schoolId,recipientMembershipId,createdAt(sort:Desc),id(sort:Desc)],map:"ModuleDelivery_inbox")
+}
+model ModuleDeliveryInteraction {
+ @@index([schoolId,deliveryId,ordinal(sort:Desc)],map:"ModuleDeliveryInteraction_latest")
+ id String @id @db.Uuid
+ schoolId String
+ deliveryId String @db.Uuid
+ actorUserId String
+ action String
+ requestKey String @db.Uuid
+ ordinal BigInt @default(autoincrement())
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ delivery ModuleDelivery @relation(fields:[schoolId,deliveryId],references:[schoolId,id],onDelete:NoAction)
+ @@unique([schoolId,requestKey])
+}
+model ModuleDeliverySuppression {
+ @@unique([schoolId,deliveryId])
+ deliveryId String @id @db.Uuid
+ schoolId String
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ delivery ModuleDelivery @relation(fields:[schoolId,deliveryId],references:[schoolId,id],onDelete:NoAction)
+}
+model ModuleOutboxAttempt {
+ requestKey String? @db.Uuid
+ @@unique([schoolId,requestKey])
+ id String @id @db.Uuid
+ schoolId String
+ eventId String @db.Uuid
+ actorUserId String
+ outcome String
+ reason String @db.VarChar(500)
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ event SchoolSourceOutbox @relation(fields:[schoolId,eventId],references:[schoolId,eventId],onDelete:NoAction)
 }

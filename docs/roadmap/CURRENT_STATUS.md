@@ -1,5 +1,16 @@
 # Project Status
 
+## Phase 10 source capture and learning/resource adapters — 8 November 2026
+
+Thirty-six school ledgers capture minimal immutable source envelopes/outbox rows
+transactionally, without history backfill. Five explicit current-recipient
+contracts deliver task review/work/feedback, catalog and approved-asset updates;
+unknown source contracts stay pending. Actual local verification: 207 guards,
+490 Vitest tests, 75 exact migration checksums, fresh bootstrap and seven
+learning/audit Chromium workflows passed. P10-07 remains partial and P10-08 open.
+See the [source checkpoint](../quality/PHASE10_SOURCE_ADAPTER_CHECKPOINT_20261108.md).
+
+
 ## Phase 10 registered audit inspection — 8 November 2026
 
 P10-07 now includes owner-only minimal metadata inspection across 33 registered

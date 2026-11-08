@@ -1,5 +1,18 @@
 # Architecture Decision Records
 
+## ADR-P10-005: Versioned school envelopes beside existing typed channels
+
+Development implementation / partial P10-07 acceptance, D-P10-005. Keep the
+existing notice-release FK and independent class event/outbox intact. New minimal
+school source envelopes and outbox entries commit in the source transaction;
+record source IDs/actions/actors/times without copying private payloads. Schema
+version and source table registry are explicit. Unknown recipient contracts stay
+pending. Five learning/resource contracts delegate to current source SQL helpers,
+with atomic bounded pages, idempotent interactions and tenant-local terminal
+suppression. Source capture is not full delivery, authentication audit, expiry
+scheduling or Phase 11 integration acceptance. No providers are activated.
+
+
 ## ADR-P10-004: Independent learning tasks and policy-bound submissions
 
 Status: development implementation with eleven PostgreSQL and five Chromium checks;

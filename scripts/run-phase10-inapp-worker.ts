@@ -5,6 +5,7 @@ import { auth } from "@/src/lib/auth";
 import { prisma } from "@/src/lib/db";
 import { deliverNoticeBatch } from "@/src/modules/notifications/service";
 import { deliverClassBatch } from "@/src/modules/notifications/class-inapp";
+import { deliverModuleBatch } from "@/src/modules/notifications/module-inapp";
 // Local development worker: real authenticated operator, no external provider.
 verifyPhase9DatabaseIdentity(process.env);
 const school = z
@@ -20,6 +21,10 @@ if (args.length !== 1 || !["--once", "--watch"].includes(args[0]))
 process.env.PHASE10_NOTICES_ENABLED = "true";
 process.env.PHASE10_INAPP_ENABLED = "true";
 process.env.PHASE10_CLASS_ANNOUNCEMENTS_ENABLED = "true";
+process.env.PHASE10_LEARNING_ASSIGNMENTS_ENABLED = "true";
+process.env.PHASE10_LIBRARY_ENABLED = "true";
+process.env.PHASE10_ASSETS_ENABLED = "true";
+process.env.PHASE10_MODULE_INAPP_ENABLED = "true";
 let stopped = false;
 for (const signal of ["SIGINT", "SIGTERM"])
   process.on(signal, () => {
@@ -47,6 +52,15 @@ try {
           event: "class_inapp_batch_complete",
           processed: classResult.processed,
           delivered: classResult.delivered,
+        }),
+      );
+    const moduleResult = await deliverModuleBatch(school, session.user.id);
+    if (moduleResult.processed)
+      console.info(
+        JSON.stringify({
+          event: "module_inapp_batch_complete",
+          processed: moduleResult.processed,
+          delivered: moduleResult.delivered,
         }),
       );
     if (args[0] === "--once") break;

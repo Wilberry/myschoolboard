@@ -38,6 +38,7 @@ test("rejects wrong/missing DB target, unsafe libpq options and weak attestation
     { PHASE10_LIBRARY_ENABLED: "true" },
     { PHASE10_LEARNING_ASSIGNMENTS_ENABLED: "true" },
     { PHASE10_AUDIT_ENABLED: "true" },
+    { PHASE10_MODULE_INAPP_ENABLED: "true" },
     { PHASE10_ASSETS_ENABLED: "true" },
     { PHASE10_RASTER_INSPECTION_ENABLED: "true" },
     { PHASE9_ACCOUNT_RELEASE_ENABLED: "true" },

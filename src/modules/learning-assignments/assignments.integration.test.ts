@@ -4,6 +4,11 @@ import { writeFile, mkdtemp } from "node:fs/promises";
 import sharp from "sharp";
 import { readSchoolAudit } from "@/src/modules/audit/school-ledger";
 import {
+  deliverModuleBatch,
+  readModuleInbox,
+  changeModuleNotification,
+} from "@/src/modules/notifications/module-inapp";
+import {
   createCatalogEntry,
   reviewCatalogEntry,
   releaseCatalogEntry,
@@ -251,6 +256,49 @@ afterAll(async () => {
     verifyPhase9DatabaseIdentity(process.env);
     if (!/^\/tmp\/phase10-learning-[\w-]+\.json$/.test(fixture))
       throw Error("Private fixture path required");
+    // Terminal revocation tests remain terminal. Browser staging creates a new
+    // identity and relationship instead of reactivating the tested membership.
+    const email = `p10-task-browserstudent-${tag}@example.test`;
+    const fresh = await auth.api.signUpEmail({
+      body: {
+        email,
+        password: "Synthetic-learning-task-password-42",
+        name: "Synthetic fresh browser pupil",
+      },
+    });
+    const membership = await prisma.membership.create({
+      data: { schoolId: school, userId: fresh.user.id, role: "STUDENT" },
+    });
+    const student = await prisma.studentRecord.create({
+      data: {
+        schoolId: school,
+        admissionNumber: `${tag}-browser`,
+        givenName: "Synthetic",
+        familyName: "Fresh browser pupil",
+        status: "ENROLLED",
+      },
+    });
+    await prisma.studentEnrollment.create({
+      data: {
+        schoolId: school,
+        studentId: student.id,
+        classId: room,
+        sessionId: session,
+      },
+    });
+    actor("admin");
+    await attestStudentAccount(school, {
+      studentId: student.id,
+      studentMembershipId: membership.id,
+      identityVerified: true,
+      reason: "Independent synthetic fresh browser identity verification",
+    });
+    await attestGuardianStudentLink(school, {
+      studentId: student.id,
+      guardianMembershipId: members.parent,
+      relationshipVerified: true,
+      reason: "Independent synthetic fresh browser guardian relationship",
+    });
     await writeFile(
       fixture,
       JSON.stringify({
@@ -260,9 +308,10 @@ afterAll(async () => {
         assignment,
         responsibility,
         term,
-        users,
-        members,
-        pupil,
+        users: { ...users, student: fresh.user.id },
+        members: { ...members, student: membership.id },
+        pupil: student.id,
+        emails: { student: email },
         password: "Synthetic-learning-task-password-42",
       }),
       { mode: 0o600, flag: "wx" },
@@ -876,4 +925,188 @@ it("revokes audit access immediately on actual owner role removal", async () => 
   await expect(readSchoolAudit(school)).rejects.toMatchObject({
     code: "NOT_FOUND",
   });
+});
+it("captures minimal source events and one durable outbox entry under concurrent exact retry", async () => {
+  actor("owner");
+  const data = intent(settings);
+  const [a, b] = await Promise.all([adopt(school, data), adopt(school, data)]);
+  expect(a.id).toBe(b.id);
+  const events = await prisma.schoolSourceEvent.findMany({
+    where: {
+      schoolId: school,
+      sourceType: "LearningAssignmentPolicy",
+      sourceId: a.id,
+    },
+  });
+  expect(events).toHaveLength(1);
+  expect(events[0]).toMatchObject({
+    schoolId: school,
+    schemaVersion: 1,
+    actorUserId: users.owner,
+    action: "RECORDED",
+  });
+  expect(
+    await prisma.schoolSourceOutbox.count({
+      where: { schoolId: school, eventId: events[0].id, state: "PENDING" },
+    }),
+  ).toBe(1);
+  expect(Object.keys(events[0]).sort()).toEqual([
+    "action",
+    "actorUserId",
+    "createdAt",
+    "id",
+    "occurredAt",
+    "schemaVersion",
+    "schoolId",
+    "sourceId",
+    "sourceType",
+  ]);
+});
+it("rolls back source, envelope and outbox together without disabling integrity guards", async () => {
+  const id = randomUUID(),
+    request = randomUUID(),
+    rollback = Symbol("synthetic source rollback");
+  await expect(
+    prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`INSERT INTO "LearningAssignmentPolicy"("id","schoolId","version","timeZone","actorUserId","requestKey","reason") VALUES(${id}::uuid,${school},1,'UTC',${users.owner},${request}::uuid,'Synthetic atomic source rollback')`;
+      expect(
+        await tx.schoolSourceEvent.count({
+          where: { schoolId: school, sourceId: id },
+        }),
+      ).toBe(1);
+      expect(
+        await tx.schoolSourceOutbox.count({
+          where: { schoolId: school, event: { sourceId: id } },
+        }),
+      ).toBe(1);
+      throw rollback;
+    }),
+  ).rejects.toBe(rollback);
+  expect(
+    await prisma.learningAssignmentPolicy.count({
+      where: { schoolId: school, id },
+    }),
+  ).toBe(0);
+  expect(
+    await prisma.schoolSourceEvent.count({
+      where: { schoolId: school, sourceId: id },
+    }),
+  ).toBe(0);
+});
+it("denies invented envelopes and ordinary source-evidence rewriting", async () => {
+  await expect(
+    prisma.$executeRaw`INSERT INTO "SchoolSourceEvent"("schoolId","sourceType","sourceId","action","occurredAt") VALUES(${school},'LearningAssignmentPolicy','invented','RECORDED',clock_timestamp())`,
+  ).rejects.toThrow();
+  await expect(
+    prisma.$executeRaw`UPDATE "SchoolSourceEvent" SET "action"='FORGED' WHERE "schoolId"=${school}`,
+  ).rejects.toThrow();
+  await expect(
+    prisma.$executeRaw`TRUNCATE "SchoolSourceEvent" CASCADE`,
+  ).rejects.toThrow();
+});
+async function drainModules() {
+  for (let i = 0; i < 100; i++) {
+    const batch = await Promise.all([
+      deliverModuleBatch(school, users.owner),
+      deliverModuleBatch(school, users.owner),
+    ]);
+    if (!batch.some((item) => item.processed)) return;
+  }
+  throw Error("Synthetic module queue exceeded bounded drain");
+}
+it("delivers current task/resource updates concurrently without consuming unregistered source contracts", async () => {
+  vi.stubEnv("PHASE10_INAPP_ENABLED", "true");
+  vi.stubEnv("PHASE10_MODULE_INAPP_ENABLED", "true");
+  await policy({ allowTextSubmissions: true, allowResubmission: true });
+  const n = await published({ submissionsEnabled: true });
+  await drainModules();
+  actor("student");
+  const inbox = await readModuleInbox(school);
+  const item = inbox.items.find((i) => i.href.endsWith(n.releaseId));
+  expect(item).toBeTruthy();
+  const read = { action: "READ", requestKey: randomUUID() };
+  const decisions = await Promise.all([
+    changeModuleNotification(school, item!.id, read),
+    changeModuleNotification(school, item!.id, read),
+  ]);
+  expect(decisions.map((i) => i.replay).sort()).toEqual([false, true]);
+  expect(
+    (await readModuleInbox(school)).items.find((i) => i.id === item!.id)?.read,
+  ).toBe(true);
+  await changeModuleNotification(school, item!.id, {
+    action: "UNREAD",
+    requestKey: randomUUID(),
+  });
+  const work = await submit(school, n.releaseId, {
+    expectedSubmissionRevision: 0,
+    text: "Synthetic source-adapted pupil work",
+    requestKey: randomUUID(),
+  });
+  await drainModules();
+  actor("teacher");
+  expect(
+    (await readModuleInbox(school)).items.some((i) =>
+      i.href.endsWith(n.releaseId),
+    ),
+  ).toBe(true);
+  await review(school, work.id, intent({ action: "RETURN" }));
+  await drainModules();
+  actor("student");
+  expect(
+    (await readModuleInbox(school)).items.filter((i) =>
+      i.href.endsWith(n.releaseId),
+    ).length,
+  ).toBeGreaterThanOrEqual(2);
+  for (const who of ["parent", "foreign"]) {
+    actor(who);
+    await expect(readModuleInbox(school)).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+    await expect(
+      changeModuleNotification(school, item!.id, {
+        action: "READ",
+        requestKey: randomUUID(),
+      }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  }
+  expect(
+    await prisma.schoolSourceOutbox.count({
+      where: {
+        schoolId: school,
+        state: "PENDING",
+        event: { sourceType: "LearningAssignmentPolicy" },
+      },
+    }),
+  ).toBeGreaterThan(100);
+  const duplicates = await prisma.$queryRaw<
+    Array<{ count: string }>
+  >`SELECT count(*)::text AS count FROM (SELECT "eventId","recipientMembershipId" FROM "ModuleDelivery" WHERE "schoolId"=${school} GROUP BY "eventId","recipientMembershipId" HAVING count(*)>1) duplicate`;
+  expect(duplicates[0].count).toBe("0");
+}, 20000);
+it("terminally suppresses delivered task notifications on actual pupil membership revocation", async () => {
+  const n = await published();
+  await drainModules();
+  actor("student");
+  const item = (await readModuleInbox(school)).items.find((i) =>
+    i.href.endsWith(n.releaseId),
+  );
+  expect(item).toBeTruthy();
+  await prisma.membership.update({
+    where: { id: members.student },
+    data: { isActive: false },
+  });
+  await expect(readModuleInbox(school)).rejects.toMatchObject({
+    code: "NOT_FOUND",
+  });
+  expect(
+    await prisma.moduleDeliverySuppression.count({
+      where: { schoolId: school, deliveryId: item!.id },
+    }),
+  ).toBe(1);
+  await expect(
+    changeModuleNotification(school, item!.id, {
+      action: "READ",
+      requestKey: randomUUID(),
+    }),
+  ).rejects.toMatchObject({ code: "NOT_FOUND" });
 });

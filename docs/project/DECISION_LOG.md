@@ -1,5 +1,20 @@
 # Decision Log
 
+## D-P10-005: Preserve typed channels and register minimal school source contracts
+
+8 November 2026, D-023 / ADR-P10-005. Existing notice DomainEvent references an
+exact NoticeRelease; preserve that FK/history and the separate class channel.
+Add a versioned minimal SchoolSourceEvent/outbox beside them, captured atomically
+from explicit immutable school source tables. No history backfill or source
+payload copying occurs. Delivery requires a registered current source predicate,
+never a wildcard role or browser-supplied recipient. Unknown contracts remain
+pending; generic source capture alone cannot satisfy delivery acceptance. First
+registered adapters cover learning workflow and approved library resources.
+Tenant-local terminal suppression and existing private inbox mechanics preserve
+revocation/privacy. Unscoped auth events and Phase 11 sources require separate
+real contracts; no guessed school fan-out or fake lifecycle event is introduced.
+
+
 ## D-P10-004: Explicit task policy and immutable pupil work
 
 8 November 2026, D-023 / ADR-P10-004. Keep learning tasks separate from class

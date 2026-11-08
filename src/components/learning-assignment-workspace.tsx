@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { NotificationInbox } from "./notification-inbox";
 import { NoticeActionForm, type NoticeField } from "./notice-action-form";
 import { usePrivateCommunication } from "./use-private-communication";
 import {
@@ -144,6 +145,7 @@ export function LearningAssignmentWorkspace({
         {view && (
           <>
             <h2>Learning assignments</h2>
+            <NotificationInbox schoolId={schoolId} channel="module" />
             {!view.feed.length && !view.tasks.length && (
               <p>No current assignments in your authorized scope.</p>
             )}
