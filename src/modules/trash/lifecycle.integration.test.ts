@@ -283,6 +283,26 @@ it("keeps feature default-off and enforces real tenant and role boundaries", asy
     );
     expect(response.status).toBe(400);
   }
+  // A syntactically valid declared byte count must reach the ordinary
+  // authorization path; the length guard must not reject every request.
+  actor("other");
+  const validBody = JSON.stringify(intent("TRASH", { noteId }));
+  expect(
+    (
+      await POST(
+        new Request("http://localhost/api/trash", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json; charset=utf-8",
+            origin: new URL(env.BETTER_AUTH_URL).origin,
+            "content-length": String(Buffer.byteLength(validBody)),
+          },
+          body: validBody,
+        }),
+        { params: Promise.resolve({ schoolId: school }) },
+      )
+    ).status,
+  ).toBe(404);
   actor("platform");
   expect(
     (
