@@ -283,6 +283,28 @@ it("keeps feature default-off and enforces real tenant and role boundaries", asy
     );
     expect(response.status).toBe(400);
   }
+  // A misleading but syntactically valid length is not sufficient: the
+  // actual streamed byte count must match before any mutation occurs.
+  actor("teacher");
+  const mismatchedBody = JSON.stringify(intent("TRASH", { noteId }));
+  for (const declaredLength of [
+    String(Buffer.byteLength(mismatchedBody) - 1),
+    String(Buffer.byteLength(mismatchedBody) + 1),
+  ]) {
+    const response = await POST(
+      new Request("http://localhost/api/trash", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: new URL(env.BETTER_AUTH_URL).origin,
+          "content-length": declaredLength,
+        },
+        body: mismatchedBody,
+      }),
+      { params: Promise.resolve({ schoolId: school }) },
+    );
+    expect(response.status).toBe(400);
+  }
   // A syntactically valid declared byte count must reach the ordinary
   // authorization path; the length guard must not reject every request.
   actor("other");
