@@ -7,6 +7,7 @@ import {
   deliverModuleBatch,
   readModuleInbox,
   changeModuleNotification,
+  replayModuleDelivery,
 } from "@/src/modules/notifications/module-inapp";
 import {
   createCatalogEntry,
@@ -1207,3 +1208,177 @@ it("serializes delivery with an actual uncommitted recipient revocation", async 
       .isActive,
   ).toBe(false);
 }, 20000);
+
+it("recovers atomic module pages after five injected failures and concurrent replay across 100 recipients", async () => {
+  await drainModules();
+  const pageUsers = Array.from({ length: 101 }, (_, i) => ({
+    id: `${school}-page-user-${i}`,
+    name: "Synthetic module paging owner",
+    email: `p10-page-${i}-${tag}@example.test`,
+  }));
+  await prisma.user.createMany({ data: pageUsers });
+  for (const [i, user] of pageUsers.entries()) users[`page-${i}`] = user.id;
+  const pageMembers = pageUsers.map((user, i) => ({
+    id: `${school}-page-member-${String(i).padStart(3, "0")}`,
+    userId: user.id,
+    schoolId: school,
+    role: "SCHOOL_SUPER_ADMIN" as const,
+  }));
+  await prisma.membership.createMany({ data: pageMembers });
+  actor("teacher");
+  const entry = await createCatalogEntry(
+    school,
+    intent({
+      kind: "PHYSICAL_BOOK",
+      title: "Synthetic worker recovery catalog",
+      author: "Synthetic author",
+      publisher: "Synthetic publisher",
+      isbn: null,
+      description: "Synthetic pagination and fault recovery",
+      provenance: "Original synthetic catalog data for isolated verification",
+    }),
+  );
+  actor("owner");
+  await reviewCatalogEntry(
+    school,
+    entry.id,
+    intent({ expectedRevision: 1, action: "APPROVE" }),
+  );
+  const release = await releaseCatalogEntry(
+    school,
+    entry.id,
+    intent({ expectedRevision: 1, scope: "SCHOOL" }),
+  );
+  const source = await prisma.schoolSourceEvent.findFirstOrThrow({
+    where: {
+      schoolId: school,
+      sourceType: "LibraryCatalogRelease",
+      sourceId: release.id,
+    },
+  });
+  const fn = "p10_module_fault_" + tag.replaceAll("-", "");
+  await prisma.$executeRawUnsafe(
+    `CREATE FUNCTION "${fn}"() RETURNS trigger AS $$ BEGIN IF NEW."schoolId"='${school}' AND NEW."eventId"='${source.id}'::uuid THEN RAISE EXCEPTION 'Synthetic failure after delivery insert';END IF;RETURN NEW;END; $$ LANGUAGE plpgsql`,
+  );
+  await prisma.$executeRawUnsafe(
+    `CREATE TRIGGER "${fn}" AFTER INSERT ON "ModuleDelivery" FOR EACH ROW EXECUTE FUNCTION "${fn}"()`,
+  );
+  try {
+    for (let failure = 1; failure <= 5; failure++) {
+      expect(await deliverModuleBatch(school, users.owner)).toEqual({
+        processed: false,
+        delivered: 0,
+      });
+      const queued = await prisma.schoolSourceOutbox.findUniqueOrThrow({
+        where: { eventId: source.id },
+      });
+      expect(queued.failures).toBe(failure);
+      expect(queued.state).toBe(failure === 5 ? "DEAD_LETTER" : "RETRY_WAIT");
+      expect(queued.cursorMembershipId).toBe(null);
+      expect(
+        await prisma.moduleDelivery.count({ where: { eventId: source.id } }),
+      ).toBe(0);
+      // Retry cooldown must prevent immediate reprocessing; only this fixture's
+      // due timestamp is advanced below, never source or historical evidence.
+      expect(await deliverModuleBatch(school, users.owner)).toEqual({
+        processed: false,
+        delivered: 0,
+      });
+      expect(
+        (
+          await prisma.schoolSourceOutbox.findUniqueOrThrow({
+            where: { eventId: source.id },
+          })
+        ).failures,
+      ).toBe(failure);
+      if (failure < 5)
+        await prisma.$executeRaw`UPDATE "SchoolSourceOutbox" SET "nextAttemptAt"=clock_timestamp()-interval '1 second' WHERE "schoolId"=${school} AND "eventId"=${source.id}::uuid`;
+    }
+  } finally {
+    await prisma.$executeRawUnsafe(`DROP TRIGGER "${fn}" ON "ModuleDelivery"`);
+    await prisma.$executeRawUnsafe(`DROP FUNCTION "${fn}"()`);
+  }
+  expect(
+    await prisma.moduleOutboxAttempt.count({
+      where: { eventId: source.id, outcome: "FAILED" },
+    }),
+  ).toBe(5);
+  const replay = intent({ eventId: source.id });
+  for (const who of ["teacher", "student", "parent", "foreign"]) {
+    actor(who);
+    await expect(replayModuleDelivery(school, replay)).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  }
+  actor("owner");
+  const repeated = await Promise.all([
+    replayModuleDelivery(school, replay),
+    replayModuleDelivery(school, replay),
+  ]);
+  expect(repeated[0].id).toBe(repeated[1].id);
+  expect(repeated.map((r) => r.replay).sort()).toEqual([false, true]);
+  await expect(
+    replayModuleDelivery(school, {
+      ...replay,
+      reason: "Different replay intent must conflict",
+    }),
+  ).rejects.toMatchObject({ code: "CONFLICT" });
+  const page = await deliverModuleBatch(school, users.owner);
+  expect(page.processed).toBe(true);
+  const partial = await prisma.schoolSourceOutbox.findUniqueOrThrow({
+    where: { eventId: source.id },
+  });
+  expect(partial.state).toBe("PENDING");
+  expect(partial.cursorMembershipId).toBeTruthy();
+  const afterPage = await prisma.moduleDelivery.count({
+    where: { eventId: source.id },
+  });
+  expect(afterPage).toBeGreaterThan(0);
+  expect(afterPage).toBeLessThanOrEqual(100);
+  // Subsequent independently invoked workers resume the committed cursor.
+  await Promise.all([
+    deliverModuleBatch(school, users.owner),
+    deliverModuleBatch(school, users.owner),
+  ]);
+  await drainModules();
+  expect(
+    (
+      await prisma.schoolSourceOutbox.findUniqueOrThrow({
+        where: { eventId: source.id },
+      })
+    ).state,
+  ).toBe("DONE");
+  const deliveries = await prisma.moduleDelivery.findMany({
+    where: { eventId: source.id },
+    select: { recipientMembershipId: true },
+  });
+  expect(new Set(deliveries.map((d) => d.recipientMembershipId)).size).toBe(
+    deliveries.length,
+  );
+  expect(
+    pageMembers.every((m) =>
+      deliveries.some((d) => d.recipientMembershipId === m.id),
+    ),
+  ).toBe(true);
+  expect(
+    deliveries.some((d) => d.recipientMembershipId === members.student),
+  ).toBe(false);
+  expect(
+    await prisma.moduleOutboxAttempt.count({
+      where: { eventId: source.id, outcome: "REPLAY" },
+    }),
+  ).toBe(1);
+  expect(
+    await prisma.moduleOutboxAttempt.count({
+      where: { eventId: source.id, outcome: "PAGE" },
+    }),
+  ).toBe(1);
+  const before = deliveries.length;
+  await drainModules();
+  expect(
+    await prisma.moduleDelivery.count({ where: { eventId: source.id } }),
+  ).toBe(before);
+  await expect(
+    prisma.$executeRaw`UPDATE "ModuleOutboxAttempt" SET "reason"='Rewritten recovery evidence' WHERE "schoolId"=${school} AND "eventId"=${source.id}::uuid`,
+  ).rejects.toThrow();
+}, 30000);

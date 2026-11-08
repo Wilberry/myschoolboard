@@ -1,5 +1,16 @@
 # Requirements Traceability Matrix
 
+## Phase 10 module retry and paged recovery — 8 November 2026
+
+An actual 101-recipient fault-injection scenario exposed and fixed unnecessary
+membership-insert revocation rescans using a forward migration. The 21-test
+source suite passes, preserving terminal revocation and its real transaction
+race. Five failures, cooldown, dead-letter/concurrent reasoned replay, rollback
+and multi-page recovery are verified; all intended recipients receive once.
+See the [recovery checkpoint](../quality/PHASE10_MODULE_RECOVERY_20261108.md).
+P10-07/P10-08 remain partial.
+
+
 ## Phase 10 academic notification adapters — 8 November 2026
 
 Attendance, corrections, lessons and result-sheet review add seven source-owned

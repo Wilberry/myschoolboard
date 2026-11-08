@@ -1,5 +1,15 @@
 # Milestone Checklist
 
+## Phase 10 module recovery — 8 November 2026
+
+- [x] Five injected failures after insert roll back delivery and cursor atomically.
+- [x] Cooldown, dead-letter, reasoned concurrent replay and immutable attempts.
+- [x] 101 eligible recipients, committed page recovery and no duplicate delivery.
+- [x] Forward membership insertion performance fix preserves revocation tests.
+- [x] Independent fresh 78-migration bootstrap and exact checksums.
+- [ ] Remaining operational/security adapters and cumulative acceptance.
+
+
 ## Phase 10 academic source adapters — 8 November 2026
 
 - [x] Seven exact attendance/correction/lesson/result-review recipient contracts.
