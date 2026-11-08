@@ -45,8 +45,9 @@ async function input(request: Request) {
   if (
     new URL(request.url).search ||
     request.headers.get("origin") !== new URL(env.BETTER_AUTH_URL).origin ||
-    request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !==
-      "application/json"
+    !/^application\/json(?:\s*;\s*charset\s*=\s*(?:"utf-8"|utf-8))?\s*$/i.test(
+      request.headers.get("content-type") ?? "",
+    )
   )
     throw new NoticeError("INVALID_INPUT");
   const length = request.headers.get("content-length");
