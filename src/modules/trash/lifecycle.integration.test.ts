@@ -243,6 +243,27 @@ it("keeps feature default-off and enforces real tenant and role boundaries", asy
     );
     expect(response.status).toBe(400);
   }
+  // Reject JSON lookalike media types before any state-changing service call.
+  actor("teacher");
+  for (const contentType of [
+    "application/jsonp",
+    "application/json-seq",
+    "application/json; charset=iso-8859-1",
+    "text/plain",
+  ]) {
+    const response = await POST(
+      new Request("http://localhost/api/trash", {
+        method: "POST",
+        headers: {
+          "content-type": contentType,
+          origin: new URL(env.BETTER_AUTH_URL).origin,
+        },
+        body: JSON.stringify(intent("TRASH", { noteId })),
+      }),
+      { params: Promise.resolve({ schoolId: school }) },
+    );
+    expect(response.status).toBe(400);
+  }
   actor("platform");
   expect(
     (
