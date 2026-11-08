@@ -1,5 +1,19 @@
 # Decision Log
 
+## D-P10-004: Explicit task policy and immutable pupil work
+
+8 November 2026, D-023 / ADR-P10-004. Keep learning tasks separate from class
+announcements, lesson/assessment authority and grades. Pin an owner-adopted policy,
+exact original teacher context, independent section review, UTC deadline and school
+timezone. Submission, Form tasks, approved-image references, late work and repeat
+work default off. Permit text and already approved task-resource references only;
+no raw pupil upload or automatic grade writes. Derive current pupil identity and
+intersect each reference with its original current rights predicate. Preserve
+immutable original work and teacher feedback; return permits an explicitly allowed
+new revision. Policy changes require a new task before release, not silent policy
+replacement on old published instructions. P10-07/08 remain separate acceptance.
+
+
 ## D-P10-003: Separate catalog metadata, current typed rights and raster bytes
 
 8 November 2026, D-023 / ADR-P10-003. Catalog review is not asset permission.

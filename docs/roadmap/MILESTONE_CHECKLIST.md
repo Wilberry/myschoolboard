@@ -1,5 +1,17 @@
 # Milestone Checklist
 
+## Phase 10 learning checkpoint — 8 November 2026
+
+- [x] P10-06 policy/task/approved-image-reference/submission implementation.
+- [x] Eleven authenticated PostgreSQL tests and five native Chromium workflows.
+- [x] Fresh 73-migration bootstrap, preserving applied SQL with a forward correction.
+- [ ] Terminal learning revocation, delayed-response/sign-out/printing expansion.
+- [ ] P10-07 existing domain adapters and scoped audit inspection.
+- [ ] P10-08 cumulative acceptance and integration review.
+
+See the [checkpoint](../quality/PHASE10_LEARNING_CHECKPOINT_20261108.md).
+
+
 ## Phase 10 catalog/asset checkpoint — 8 November 2026
 
 - [x] P10-04/05 local catalog/raster implementation and seven browser checks.

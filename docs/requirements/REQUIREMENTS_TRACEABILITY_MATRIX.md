@@ -1,5 +1,14 @@
 # Requirements Traceability Matrix
 
+## COM/LIB/SEC learning evidence — 8 November 2026
+
+P10-06 implements the selected separate learning workflow, explicit owner policy,
+independent review, current pupil submissions, immutable teacher feedback and
+approved-resource audience intersection. Eleven PostgreSQL and five native
+Chromium scenarios passed; full Phase 10 remains PARTIAL pending P10-07/P10-08.
+See the [checkpoint](../quality/PHASE10_LEARNING_CHECKPOINT_20261108.md).
+
+
 ## LIB-REQ-001 catalog/raster evidence — 8 November 2026
 
 Implemented immutable physical/digital metadata, independent review, typed

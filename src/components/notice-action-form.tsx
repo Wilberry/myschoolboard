@@ -6,6 +6,8 @@ export interface NoticeField {
   type?: "text" | "textarea" | "select" | "datetime-local";
   options?: Array<{ value: string; label: string }>;
   value?: string;
+  multiple?: boolean;
+  values?: string[];
   required?: boolean;
   maxLength?: number;
 }
@@ -76,7 +78,12 @@ export function NoticeActionForm({
         <label key={f.name}>
           {f.label}
           {f.type === "select" ? (
-            <select name={f.name} defaultValue="" required={f.required ?? true}>
+            <select
+              name={f.name}
+              defaultValue={f.multiple ? (f.values ?? []) : (f.value ?? "")}
+              multiple={f.multiple}
+              required={f.required ?? true}
+            >
               <option value="">Select an option</option>
               {f.options?.map((o) => (
                 <option value={o.value} key={o.value}>
@@ -96,6 +103,7 @@ export function NoticeActionForm({
             <input
               name={f.name}
               type={f.type ?? "text"}
+              step={f.type === "datetime-local" ? "any" : undefined}
               required={f.required ?? true}
               maxLength={f.maxLength ?? (f.name === "reason" ? 500 : 160)}
               defaultValue={f.value}

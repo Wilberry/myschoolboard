@@ -1,0 +1,31 @@
+{
+  "recordedAt": "2026-11-08T01:55:36.536Z",
+  "browser": "Authenticated native Chromium",
+  "checks": [
+    {
+      "name": "P10-TASK-BR-01 owner opt-in, exact teacher, independent review and release",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-TASK-BR-02 verified pupil work, return, immutable resubmission and teacher acceptance",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-TASK-BR-03 guardian, foreign-school and identity-forgery denial",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-TASK-BR-04 native hidden tab, Back/Forward, responsive accessibility",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-TASK-BR-05 withdrawal revokes task and submitted-work access",
+      "outcome": "PASS"
+    }
+  ],
+  "outcome": "PASS",
+  "limitations": [
+    "No persisted BFCache assertion",
+    "Terminal identity/enrollment revocation and approved asset intersection remain separate acceptance work"
+  ]
+}

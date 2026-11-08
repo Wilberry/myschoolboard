@@ -37,7 +37,8 @@
     "worker:phase10": "tsx scripts/run-phase10-inapp-worker.ts --watch",
     "verify:phase10:browser": "node scripts/verify-phase10-browser.mjs",
     "verify:phase10:class-browser": "node scripts/verify-phase10-class-browser.mjs",
-    "verify:phase10:library-browser": "node scripts/verify-phase10-library-browser.mjs"
+    "verify:phase10:library-browser": "node scripts/verify-phase10-library-browser.mjs",
+    "verify:phase10:learning-browser": "node scripts/verify-phase10-learning-browser.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",

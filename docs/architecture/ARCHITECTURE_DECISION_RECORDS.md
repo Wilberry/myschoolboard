@@ -1,5 +1,19 @@
 # Architecture Decision Records
 
+## ADR-P10-004: Independent learning tasks and policy-bound submissions
+
+Status: development implementation with eleven PostgreSQL and five Chromium checks;
+full-phase acceptance outstanding. D-P10-004. Owner-versioned policy pins school
+timezone and explicit default-off Form/submission/image/late/resubmission settings.
+An exact original teacher context, immutable revisions, independent current section
+review and explicit release precede current verified intended pupil access. Task
+resources intersect per-pupil asset rights. Immutable bounded own-work revisions
+and exact-current-teacher feedback never write grades. Author/identity/enrollment,
+withdrawal and original resource permissions remain current read predicates.
+A forward-only SQL correction qualifies attachment identity; applied history stays
+unchanged. No providers, pupil binary uploads or retention purge is activated.
+
+
 ## ADR-P10-003: Private raster delivery after independent versioned rights
 
 Development slice, D-P10-003 / D-023, 8 November 2026. Keep catalog metadata

@@ -1,5 +1,16 @@
 # Project Status
 
+## Phase 10 learning assignments — 8 November 2026
+
+P10-06 now implements explicit owner policies, exact teacher/Form task authority,
+independent review, immutable release/withdrawal and current verified pupil work
+with immutable teacher feedback and policy-controlled resubmission. Eleven
+PostgreSQL tests and five authenticated native Chromium workflows pass. Fresh
+73-migration bootstrap passes. P10-07 and cumulative P10-08 remain outstanding;
+Phase 10 is not merge-ready. See the
+[learning checkpoint](../quality/PHASE10_LEARNING_CHECKPOINT_20261108.md).
+
+
 ## Phase 10 catalog and raster assets — 8 November 2026
 
 P10-04/P10-05 implement versioned physical/digital catalog metadata, independent

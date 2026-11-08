@@ -259,6 +259,13 @@ model Verification {
 }
 
 model School {
+ learningAssignments LearningAssignment[]
+ learningAssignmentRevisions LearningAssignmentRevision[]
+ learningAssignmentEvents LearningAssignmentEvent[]
+ learningAssignmentPolicies LearningAssignmentPolicy[]
+ learningAssignmentResources LearningAssignmentResource[]
+ learningSubmissionRevisions LearningSubmissionRevision[]
+ learningSubmissionReviews LearningSubmissionReview[]
  privateLearningAssets PrivateLearningAsset[]
  learningAssetInspections LearningAssetInspection[]
  learningAssetRights LearningAssetRights[]
@@ -880,6 +887,7 @@ model StudentRecord {
 }
 
 model StudentEnrollment {
+ learningSubmissions LearningSubmissionRevision[]
   id         String                  @id @default(cuid())
   schoolId   String
   studentId  String
@@ -2819,6 +2827,7 @@ model LearningAssetRights {
  @@unique([schoolId,requestKey])
 }
 model LearningAssetRelease {
+ learningTaskRefs LearningAssignmentResource[]
  @@index([schoolId,rightsId,createdAt(sort:Desc),id(sort:Desc)],map:"LearningAssetRelease_current")
  id String @id @db.Uuid
  schoolId String
@@ -2847,5 +2856,139 @@ model LearningAssetWithdrawal {
  school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
  release LearningAssetRelease @relation(fields:[schoolId,releaseId],references:[schoolId,id],onDelete:NoAction)
  @@unique([schoolId,releaseId])
+ @@unique([schoolId,requestKey])
+}
+
+model LearningAssignment {
+ policyId String @db.Uuid
+ policy LearningAssignmentPolicy @relation(fields:[schoolId,policyId],references:[schoolId,id],onDelete:NoAction)
+ id String @id @db.Uuid
+ schoolId String
+ authorUserId String
+ authorMembershipId String
+ classId String
+ sessionId String
+ termId String
+ subjectId String?
+ assignmentId String?
+ formResponsibilityId String?
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ revisions LearningAssignmentRevision[]
+ @@unique([schoolId,id])
+ @@unique([schoolId,requestKey])
+ @@index([schoolId,classId,sessionId,termId],map:"LearningAssignment_scope")
+}
+model LearningAssignmentRevision {
+ dueAt DateTime @db.Timestamptz
+ submissionsEnabled Boolean @default(false)
+ imageReferencesEnabled Boolean @default(false)
+ resources LearningAssignmentResource[]
+ id String @id @db.Uuid
+ schoolId String
+ taskId String @db.Uuid
+ revision Int
+ title String @db.VarChar(160)
+ body String
+ actorUserId String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ announcement LearningAssignment @relation(fields:[schoolId,taskId],references:[schoolId,id],onDelete:NoAction)
+ events LearningAssignmentEvent[]
+ @@unique([schoolId,taskId,revision])
+ @@unique([schoolId,requestKey])
+}
+model LearningAssignmentEvent {
+ submissions LearningSubmissionRevision[]
+ id String @id @db.Uuid
+ schoolId String
+ taskId String @db.Uuid
+ revision Int
+ action String
+ targetReleaseId String? @db.Uuid
+ actorUserId String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ ordinal BigInt @default(autoincrement())
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ source LearningAssignmentRevision @relation(fields:[schoolId,taskId,revision],references:[schoolId,taskId,revision],onDelete:NoAction)
+ targetRelease LearningAssignmentEvent? @relation("LearningWithdrawal",fields:[schoolId,targetReleaseId],references:[schoolId,id],onDelete:NoAction)
+ withdrawals LearningAssignmentEvent[] @relation("LearningWithdrawal")
+ @@unique([schoolId,id])
+ @@unique([schoolId,requestKey])
+ @@index([schoolId,action,ordinal(sort:Desc)],map:"LearningAssignmentEvent_feed")
+}
+
+
+model LearningAssignmentPolicy {
+ id String @id @db.Uuid
+ schoolId String
+ version Int
+ timeZone String @db.VarChar(64)
+ allowFormTasks Boolean @default(false)
+ allowTextSubmissions Boolean @default(false)
+ allowImageReferences Boolean @default(false)
+ allowLateSubmissions Boolean @default(false)
+ allowResubmission Boolean @default(false)
+ actorUserId String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ tasks LearningAssignment[]
+ @@unique([schoolId,id])
+ @@unique([schoolId,version])
+ @@unique([schoolId,requestKey])
+}
+model LearningAssignmentResource {
+ id String @id @db.Uuid
+ schoolId String
+ taskId String @db.Uuid
+ revision Int
+ assetReleaseId String @db.Uuid
+ actorUserId String
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ source LearningAssignmentRevision @relation(fields:[schoolId,taskId,revision],references:[schoolId,taskId,revision],onDelete:NoAction)
+ asset LearningAssetRelease @relation(fields:[schoolId,assetReleaseId],references:[schoolId,id],onDelete:NoAction)
+ @@unique([schoolId,taskId,revision,assetReleaseId])
+}
+model LearningSubmissionRevision {
+ id String @id @db.Uuid
+ schoolId String
+ releaseId String @db.Uuid
+ studentId String
+ enrollmentId String
+ revision Int
+ text String
+ assetReleaseIds String[] @default([]) @db.Uuid
+ actorUserId String
+ requestKey String @db.Uuid
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ release LearningAssignmentEvent @relation(fields:[schoolId,releaseId],references:[schoolId,id],onDelete:NoAction)
+ enrollment StudentEnrollment @relation(fields:[schoolId,enrollmentId,studentId],references:[schoolId,id,studentId],onDelete:NoAction)
+ reviews LearningSubmissionReview[]
+ @@unique([schoolId,id])
+ @@unique([schoolId,releaseId,studentId,revision])
+ @@unique([schoolId,requestKey])
+ @@index([schoolId,releaseId,studentId,revision(sort:Desc)],map:"LearningSubmissionRevision_own")
+}
+model LearningSubmissionReview {
+ id String @id @db.Uuid
+ schoolId String
+ submissionId String @db.Uuid
+ action String
+ actorUserId String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ submission LearningSubmissionRevision @relation(fields:[schoolId,submissionId],references:[schoolId,id],onDelete:NoAction)
+ @@unique([schoolId,submissionId])
  @@unique([schoolId,requestKey])
 }

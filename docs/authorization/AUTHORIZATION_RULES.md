@@ -331,3 +331,15 @@ current verified binding and exact active enrollment. Parents are always denied
 class content, drafts, inbox, counts and interactions. Notice/report/finance
 visibility and generic child grants do not apply. Every read repeats current
 source/reviewer/identity checks; source history and restoration grant no access.
+
+
+## Phase 10 learning tasks and pupil work
+
+LearningAssignment pins exact original teacher subject authority or explicitly
+allowed Form responsibility, class/session/term and current independently verified
+section reviewer. Only the original current author releases. Owner policy and
+withdrawal metadata do not grant arbitrary pupil-work or academic content reads.
+Current intended verified students append only their own immutable work; parents
+cannot impersonate a child. Original teacher feedback requires current exact
+authority and the pupil's current relationship. Approved image references intersect
+current task and asset rights; no automatic grade or raw pupil upload is enabled.
