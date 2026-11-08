@@ -100,3 +100,18 @@ and release gates remain separate. No main merge, provider send, deployment,
 database reset, migration rewrite, force push or GitHub Actions run occurred.
 
 Exit gate: verified development slice; **whole Phase 10 remains PARTIAL**.
+
+## Subsequent HTTP boundary corrections (9 November 2026; unverified)
+
+The module inbox now rejects an explicitly empty cursor rather than silently
+treating it as an absent cursor (`8131609`). Security notification mutation
+requests require an exact supported UTF-8 JSON media type, rather than accepting
+arbitrary declared charsets or JSON-lookalike media types (`cf09df6`).
+The security worker's bounded JSON reader now rejects mismatches between
+declared Content-Length and actual streamed bytes (`c4c4640`). Associated
+integration regressions were added (`245dfe0`, `00017a1`).
+
+These are published source changes, **not passing local test evidence**.
+Earlier verification counts above must not be attributed to these later commits.
+Run affected security/module integration tests, static checks and cumulative
+P10-08 acceptance before closing the phase. PR #111 remains draft.
