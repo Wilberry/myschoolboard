@@ -6,6 +6,7 @@ import {
   trashHeaders,
   trashFailure,
   validateTrashRequest,
+  readTrashMutation,
 } from "@/src/modules/trash/http";
 type Context = { params: Promise<{ schoolId: string }> };
 export async function GET(request: Request, { params }: Context) {
@@ -23,7 +24,7 @@ export async function POST(request: Request, { params }: Context) {
     validateTrashRequest(request, true);
     const result = await changeSchoolTrash(
       (await params).schoolId,
-      await request.json(),
+      await readTrashMutation(request),
     );
     return Response.json(
       { result },
