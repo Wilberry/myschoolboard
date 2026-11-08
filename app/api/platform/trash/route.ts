@@ -6,6 +6,7 @@ import {
   trashHeaders,
   trashFailure,
   validateTrashRequest,
+  readTrashMutation,
 } from "@/src/modules/trash/http";
 export async function GET(request: Request) {
   try {
@@ -18,7 +19,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     validateTrashRequest(request, true);
-    const result = await changePlatformTrash(await request.json());
+    const result = await changePlatformTrash(await readTrashMutation(request));
     return Response.json(
       { result },
       { status: result.replay ? 200 : 201, headers: trashHeaders },
