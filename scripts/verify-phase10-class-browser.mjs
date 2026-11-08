@@ -186,11 +186,6 @@ const intent = (extra = {}) => ({
   requestKey: randomUUID(),
   ...extra,
 });
-async function feed(a) {
-  const r = await api(a, "/my-notices");
-  assert.equal(r.status(), 200);
-  return (await r.json()).notices;
-}
 
 try {
   let port;

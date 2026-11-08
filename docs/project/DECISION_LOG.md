@@ -1,5 +1,18 @@
 # Decision Log
 
+## D-P10-003: Separate catalog metadata, current typed rights and raster bytes
+
+8 November 2026, D-023 / ADR-P10-003. Catalog review is not asset permission.
+Independent owner rights attestations pin a reviewed catalog version/audience,
+source/license and expiry; owner-proposed assets still need another owner.
+Only bounded PNG/JPEG is inspected and normalized; other formats stay disabled.
+Quarantine/orphan bytes never have a public route. Downloads recheck current
+rights/scope after I/O; scoped staff need exact current teaching/Form Teacher/
+verified section relationships. Owners/curators cannot bypass inactive targets.
+Preserve ambiguous private orphans rather than delete potentially committed files.
+No production activation or irreversible retention decision is authorized.
+
+
 ## D-P10-002: Separate class channel and atomic bounded in-app pages
 
 7 November 2026; development default under D-023 and ADR-P10-002. Class

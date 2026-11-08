@@ -214,6 +214,16 @@ async function SchoolDetailContent({
             </Link>
           </p>
         )}
+        {access.principal.membership?.role !== "PARENT" && (
+          <p className="setup-navigation">
+            <Link
+              href={`/schools/${schoolId}/library`}
+              className="secondary-link"
+            >
+              Approved library catalog
+            </Link>
+          </p>
+        )}
         {access.principal.membership?.role === "STUDENT" && (
           <p className="setup-navigation">
             <Link

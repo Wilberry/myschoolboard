@@ -485,3 +485,19 @@ it("stages only explicitly requested private synthetic browser fixtures", async 
     { mode: 0o600, flag: "wx" },
   );
 });
+
+it("rejects unknown class worker request fields with a private 400 response", async () => {
+  actor("owner");
+  const { POST } =
+    await import("@/app/api/schools/[schoolId]/class-delivery/route");
+  const response = await POST(
+    new Request("http://localhost:3001/api/schools/" + s + "/class-delivery", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ actorUserId: users.owner }),
+    }),
+    { params: Promise.resolve({ schoolId: s }) },
+  );
+  expect(response.status).toBe(400);
+  expect(response.headers.get("cache-control")).toContain("no-store");
+});

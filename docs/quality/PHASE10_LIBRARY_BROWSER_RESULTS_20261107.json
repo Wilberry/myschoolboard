@@ -1,0 +1,39 @@
+{
+  "sourceCommit": "66f0a7df0e2c776948c95ce7501726a03994153f",
+  "sourceWorkingTreeDirty": true,
+  "outcome": "PASS",
+  "nativeChromium": true,
+  "checks": [
+    {
+      "name": "P10-LIB-BR-01 independent catalog review, explicit typed publication and metadata-only access",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-LIB-BR-02 private upload, clean inspection and independent rights before explicit asset release",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-LIB-BR-03 current authorized download, private headers and guardian/foreign byte denials",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-LIB-BR-04 private history, native tab concealment and responsive accessibility",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-LIB-BR-05 explicit asset withdrawal removes downloads without removing catalog metadata",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-LIB-BR-06 catalog withdrawal removes metadata and denies old catalog URL",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-LIB-BR-07 unrelated staff cannot read class-scoped metadata or licensed bytes",
+      "outcome": "PASS"
+    }
+  ],
+  "limitations": [
+    "No claim of persisted BFCache or physical withdrawal of already downloaded bytes."
+  ]
+}

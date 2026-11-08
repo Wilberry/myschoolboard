@@ -3,9 +3,11 @@ import { useRef, useState, type FormEvent } from "react";
 export interface NoticeField {
   name: string;
   label: string;
-  type?: "text" | "textarea" | "select";
+  type?: "text" | "textarea" | "select" | "datetime-local";
   options?: Array<{ value: string; label: string }>;
   value?: string;
+  required?: boolean;
+  maxLength?: number;
 }
 export function NoticeActionForm({
   title,
@@ -74,7 +76,7 @@ export function NoticeActionForm({
         <label key={f.name}>
           {f.label}
           {f.type === "select" ? (
-            <select name={f.name} defaultValue="" required>
+            <select name={f.name} defaultValue="" required={f.required ?? true}>
               <option value="">Select an option</option>
               {f.options?.map((o) => (
                 <option value={o.value} key={o.value}>
@@ -85,17 +87,17 @@ export function NoticeActionForm({
           ) : f.type === "textarea" ? (
             <textarea
               name={f.name}
-              required
-              maxLength={20000}
+              required={f.required ?? true}
+              maxLength={f.maxLength ?? 20000}
               rows={5}
               defaultValue={f.value}
             />
           ) : (
             <input
               name={f.name}
-              type="text"
-              required
-              maxLength={f.name === "reason" ? 500 : 160}
+              type={f.type ?? "text"}
+              required={f.required ?? true}
+              maxLength={f.maxLength ?? (f.name === "reason" ? 500 : 160)}
               defaultValue={f.value}
             />
           )}

@@ -1,5 +1,17 @@
 # Milestone Checklist
 
+## Phase 10 catalog/asset checkpoint — 8 November 2026
+
+- [x] P10-04/05 local catalog/raster implementation and seven browser checks.
+- [x] Typed staff/pupil scope, independent rights, expiry, post-I/O revocation and integrity tests.
+- [x] Fresh 71-migration bootstrap and exact checksums.
+- [ ] P10-06 learning assignments/submissions.
+- [ ] P10-07 existing-module adapters/scoped audit inspection.
+- [ ] Full P10-08 integration/stress/operational acceptance and review.
+
+This is local evidence, not whole-phase or production acceptance.
+
+
 ## Phase 10 implementation checkpoint — 7 November 2026
 
 - [x] P10-01/02 official-notice and in-app workflow: actual local browser evidence.

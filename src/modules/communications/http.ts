@@ -11,27 +11,31 @@ export function noticeFailure(e: unknown) {
         ? e.code
         : "INTERNAL";
   const status =
-    code === "INVALID_INPUT"
-      ? 400
-      : code === "UNAUTHENTICATED"
-        ? 401
-        : code === "NOT_FOUND"
-          ? 404
-          : code === "CONFLICT"
-            ? 409
-            : 500;
+    code === "RATE_LIMITED"
+      ? 429
+      : code === "INVALID_INPUT"
+        ? 400
+        : code === "UNAUTHENTICATED"
+          ? 401
+          : code === "NOT_FOUND"
+            ? 404
+            : code === "CONFLICT"
+              ? 409
+              : 500;
   return Response.json(
     {
       error:
-        status === 400
-          ? "Invalid request"
-          : status === 401
-            ? "Unauthorized"
-            : status === 404
-              ? "Not found"
-              : status === 409
-                ? "Conflict"
-                : "Request failed",
+        status === 429
+          ? "Request limit reached"
+          : status === 400
+            ? "Invalid request"
+            : status === 401
+              ? "Unauthorized"
+              : status === 404
+                ? "Not found"
+                : status === 409
+                  ? "Conflict"
+                  : "Request failed",
     },
     { status, headers: noticeHeaders },
   );

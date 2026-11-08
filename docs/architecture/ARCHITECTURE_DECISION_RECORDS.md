@@ -1,5 +1,17 @@
 # Architecture Decision Records
 
+## ADR-P10-003: Private raster delivery after independent versioned rights
+
+Development slice, D-P10-003 / D-023, 8 November 2026. Keep catalog metadata
+and typed releases separate from quarantine/inspection, independent rights and
+explicit byte release. Pin rights to the exact catalog audience. Normalize bounded
+images only; no PDF/URL ingestion. Use private tenant UUID storage, no-follow/
+hash/size/mode/link verification and access checks before and after I/O. Twenty
+proposals per actor/school/hour is the tested development quota. Never serve
+quarantine, resurrect superseded bytes or purge ambiguous orphans. Production
+scanner/storage/recovery/retention and event integration remain separate gates.
+
+
 ## ADR-P10-002: Isolated class publication and database-only delivery pages
 
 Status: implemented development slice, 7 November 2026; D-P10-002 / D-023.

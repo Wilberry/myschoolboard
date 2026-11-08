@@ -1,5 +1,15 @@
 # Requirements Traceability Matrix
 
+## LIB-REQ-001 catalog/raster evidence — 8 November 2026
+
+Implemented immutable physical/digital metadata, independent review, typed
+current audiences and separate private raster quarantine/inspection/rights/release.
+Seven authenticated Chromium checks and PostgreSQL/filesystem tests cover
+authorization, expiry, withdrawal, supersession and integrity. Learning assignments
+and full operational/adapter acceptance are outstanding. LIB/COM/AUD remain
+PARTIAL overall. See the [checkpoint](../quality/PHASE10_LIBRARY_ASSETS_CHECKPOINT_20261107.md).
+
+
 ## Phase 10 implementation evidence — 7 November 2026
 
 COM-REQ-001 / AUD-REQ-001 remain PARTIAL overall. Official notice and in-app

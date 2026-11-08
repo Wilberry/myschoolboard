@@ -11,7 +11,8 @@ export class NoticeError extends Error {
       | "UNAUTHENTICATED"
       | "NOT_FOUND"
       | "CONFLICT"
-      | "INTERNAL",
+      | "INTERNAL"
+      | "RATE_LIMITED",
   ) {
     super(code);
   }

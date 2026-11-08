@@ -1,5 +1,14 @@
 # Project Status
 
+## Phase 10 catalog and raster assets — 8 November 2026
+
+P10-04/P10-05 implement versioned physical/digital catalog metadata, independent
+review, typed audiences, quarantine/inspection, independent rights, private raster
+delivery and withdrawal. Seven authenticated Chromium workflows passed.
+P10-06/P10-07 and full P10-08 remain outstanding; Phase 10 is not merge-ready.
+See the [catalog checkpoint](../quality/PHASE10_LIBRARY_ASSETS_CHECKPOINT_20261107.md).
+
+
 ## Phase 10 notices and class channel — 7 November 2026
 
 Independent development branch / draft PR #111: P10-01/P10-02 now have 12 actual

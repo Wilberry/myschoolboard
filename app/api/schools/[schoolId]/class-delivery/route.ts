@@ -11,9 +11,13 @@ export async function POST(
   { params }: { params: Promise<{ schoolId: string }> },
 ) {
   try {
-    z.object({})
-      .strict()
-      .parse(await noticeJson(r));
+    if (
+      !z
+        .object({})
+        .strict()
+        .safeParse(await noticeJson(r)).success
+    )
+      throw new NoticeError("INVALID_INPUT");
     return Response.json(await runClassDelivery((await params).schoolId), {
       headers: noticeHeaders,
     });

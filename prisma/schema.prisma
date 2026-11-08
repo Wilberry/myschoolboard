@@ -259,6 +259,16 @@ model Verification {
 }
 
 model School {
+ privateLearningAssets PrivateLearningAsset[]
+ learningAssetInspections LearningAssetInspection[]
+ learningAssetRights LearningAssetRights[]
+ learningAssetReleases LearningAssetRelease[]
+ learningAssetWithdrawals LearningAssetWithdrawal[]
+ libraryCatalogEntries LibraryCatalogEntry[]
+ libraryCatalogRevisions LibraryCatalogRevision[]
+ libraryCatalogReviews LibraryCatalogReview[]
+ libraryCatalogReleases LibraryCatalogRelease[]
+ libraryCatalogWithdrawals LibraryCatalogWithdrawal[]
  classOutboxes ClassOutbox[]
  classDeliveries ClassDelivery[]
  classDeliveryInteractions ClassDeliveryInteraction[]
@@ -2656,4 +2666,186 @@ model ClassOutboxAttempt {
  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
  school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
  event ClassOutbox @relation(fields:[schoolId,eventId],references:[schoolId,eventId],onDelete:NoAction)
+}
+
+model LibraryCatalogEntry {
+ id String @id @db.Uuid
+ schoolId String
+ curatorUserId String
+ curatorMembershipId String
+ kind String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ revisions LibraryCatalogRevision[]
+ @@unique([schoolId,id])
+ @@unique([schoolId,requestKey])
+}
+model LibraryCatalogRevision {
+ assets PrivateLearningAsset[]
+ id String @id @db.Uuid
+ schoolId String
+ entryId String @db.Uuid
+ revision Int
+ title String @db.VarChar(160)
+ author String @db.VarChar(160)
+ publisher String @db.VarChar(160)
+ isbn String? @db.VarChar(32)
+ description String
+ provenance String @db.VarChar(1000)
+ actorUserId String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ entry LibraryCatalogEntry @relation(fields:[schoolId,entryId],references:[schoolId,id],onDelete:NoAction)
+ reviews LibraryCatalogReview[]
+ releases LibraryCatalogRelease[]
+ @@unique([schoolId,entryId,revision])
+ @@unique([schoolId,requestKey])
+}
+model LibraryCatalogReview {
+ id String @id @db.Uuid
+ schoolId String
+ entryId String @db.Uuid
+ revision Int
+ action String
+ actorUserId String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ source LibraryCatalogRevision @relation(fields:[schoolId,entryId,revision],references:[schoolId,entryId,revision],onDelete:NoAction)
+ @@unique([schoolId,entryId,revision])
+ @@unique([schoolId,id])
+ @@unique([schoolId,requestKey])
+}
+model LibraryCatalogRelease {
+ assetRights LearningAssetRights[]
+ id String @id @db.Uuid
+ schoolId String
+ entryId String @db.Uuid
+ revision Int
+ scope String
+ sectionId String?
+ classId String?
+ studentId String?
+ actorUserId String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ ordinal BigInt @default(autoincrement())
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ source LibraryCatalogRevision @relation(fields:[schoolId,entryId,revision],references:[schoolId,entryId,revision],onDelete:NoAction)
+ withdrawals LibraryCatalogWithdrawal[]
+ @@unique([schoolId,id])
+ @@unique([schoolId,requestKey])
+ @@unique([schoolId,entryId,revision])
+ @@index([schoolId,scope,ordinal(sort:Desc)],map:"LibraryCatalogRelease_feed")
+}
+model LibraryCatalogWithdrawal {
+ id String @id @db.Uuid
+ schoolId String
+ releaseId String @db.Uuid
+ actorUserId String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ release LibraryCatalogRelease @relation(fields:[schoolId,releaseId],references:[schoolId,id],onDelete:NoAction)
+ @@unique([schoolId,releaseId])
+ @@unique([schoolId,requestKey])
+}
+
+model PrivateLearningAsset {
+ id String @id @db.Uuid
+ schoolId String
+ entryId String @db.Uuid
+ revision Int
+ proposerUserId String
+ requestKey String @db.Uuid
+ quarantineBlobId String @db.Uuid
+ inputMime String
+ inputSha256 String @db.VarChar(64)
+ inputBytes Int
+ reason String @db.VarChar(500)
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ source LibraryCatalogRevision @relation(fields:[schoolId,entryId,revision],references:[schoolId,entryId,revision],onDelete:NoAction)
+ inspections LearningAssetInspection[]
+ rights LearningAssetRights[]
+ releases LearningAssetRelease[]
+ @@unique([schoolId,id])
+ @@unique([schoolId,requestKey])
+ @@index([schoolId,proposerUserId,createdAt],map:"PrivateLearningAsset_quota")
+}
+model LearningAssetInspection {
+ id String @id @db.Uuid
+ schoolId String
+ assetId String @db.Uuid
+ verdict String
+ profile String
+ blobId String? @db.Uuid
+ sha256 String? @db.VarChar(64)
+ bytes Int?
+ width Int?
+ height Int?
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ asset PrivateLearningAsset @relation(fields:[schoolId,assetId],references:[schoolId,id],onDelete:NoAction)
+ @@unique([schoolId,id])
+ @@unique([schoolId,assetId,verdict])
+}
+model LearningAssetRights {
+ @@index([schoolId,catalogReleaseId,id],map:"LearningAssetRights_catalog_context")
+ id String @id @db.Uuid
+ schoolId String
+ assetId String @db.Uuid
+ catalogReleaseId String @db.Uuid
+ basis String
+ sourceLicense String @db.VarChar(1000)
+ permittedUse String
+ expiresAt DateTime? @db.Timestamptz
+ actorUserId String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ asset PrivateLearningAsset @relation(fields:[schoolId,assetId],references:[schoolId,id],onDelete:NoAction)
+ catalogRelease LibraryCatalogRelease @relation(fields:[schoolId,catalogReleaseId],references:[schoolId,id],onDelete:NoAction)
+ releases LearningAssetRelease[]
+ @@unique([schoolId,id])
+ @@unique([schoolId,requestKey])
+}
+model LearningAssetRelease {
+ @@index([schoolId,rightsId,createdAt(sort:Desc),id(sort:Desc)],map:"LearningAssetRelease_current")
+ id String @id @db.Uuid
+ schoolId String
+ assetId String @db.Uuid
+ rightsId String @db.Uuid
+ actorUserId String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ asset PrivateLearningAsset @relation(fields:[schoolId,assetId],references:[schoolId,id],onDelete:NoAction)
+ rights LearningAssetRights @relation(fields:[schoolId,rightsId],references:[schoolId,id],onDelete:NoAction)
+ withdrawals LearningAssetWithdrawal[]
+ @@unique([schoolId,id])
+ @@unique([schoolId,requestKey])
+ @@unique([schoolId,assetId,rightsId])
+}
+model LearningAssetWithdrawal {
+ id String @id @db.Uuid
+ schoolId String
+ releaseId String @db.Uuid
+ actorUserId String
+ requestKey String @db.Uuid
+ reason String @db.VarChar(500)
+ createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ release LearningAssetRelease @relation(fields:[schoolId,releaseId],references:[schoolId,id],onDelete:NoAction)
+ @@unique([schoolId,releaseId])
+ @@unique([schoolId,requestKey])
 }
