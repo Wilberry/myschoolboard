@@ -1,5 +1,15 @@
 # Milestone Checklist
 
+## Phase 10 subscription boundaries — 8 November 2026
+
+- [x] Bounded database-clock expiry observation, uniqueness and concurrent workers.
+- [x] Transactional immutable source/outbox capture and platform-only evidence API.
+- [x] Suspended-school isolation and immediate platform-role revocation.
+- [x] Independently verified fresh 79-migration bootstrap and exact checksums.
+- [ ] School operational notification reader/delivery and authenticated UI acceptance.
+- [ ] Permission/authentication security coverage and remaining P10-08 gates.
+
+
 ## Phase 10 module recovery — 8 November 2026
 
 - [x] Five injected failures after insert roll back delivery and cursor atomically.

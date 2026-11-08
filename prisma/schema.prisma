@@ -259,6 +259,7 @@ model Verification {
 }
 
 model School {
+ subscriptionBoundaries SubscriptionBoundaryEvent[]
  moduleDeliveries ModuleDelivery[]
  moduleInteractions ModuleDeliveryInteraction[]
  moduleSuppressions ModuleDeliverySuppression[]
@@ -1978,6 +1979,8 @@ model PlatformPlanRevision {
  * feature quotas and payment/renewal policies is a later reviewed milestone.
  */
 model SchoolSubscriptionPeriod {
+ boundaries SubscriptionBoundaryEvent[]
+ @@index([endsAt,schoolId,id])
   id             String               @id @default(cuid())
   schoolId       String
   planRevisionId String
@@ -3080,4 +3083,18 @@ model ModuleOutboxAttempt {
  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
  school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
  event SchoolSourceOutbox @relation(fields:[schoolId,eventId],references:[schoolId,eventId],onDelete:NoAction)
+}
+
+model SubscriptionBoundaryEvent {
+ id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+ schoolId String
+ periodId String
+ kind String
+ boundaryAt DateTime @db.Timestamptz
+ actorUserId String
+ occurredAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ school School @relation(fields:[schoolId],references:[id],onDelete:Cascade)
+ period SchoolSubscriptionPeriod @relation(fields:[schoolId,periodId],references:[schoolId,id],onDelete:NoAction,map:"SubscriptionBoundaryEvent_period_fkey")
+ @@unique([schoolId,id])
+ @@unique([schoolId,periodId,kind])
 }

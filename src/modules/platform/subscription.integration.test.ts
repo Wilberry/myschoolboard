@@ -1,4 +1,7 @@
 import "dotenv/config";
+import { verifyPhase9DatabaseIdentity } from "@/scripts/verify-phase9-disposable.mjs";
+import * as boundaryRoute from "@/app/api/platform/notification-boundaries/route";
+import { captureSubscriptionBoundariesForActor } from "@/src/modules/notifications/subscription-boundaries";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
@@ -21,6 +24,7 @@ const userEmail = `school-subs-${uid}@example.test`;
 const code = `test-plan-${uid.slice(0, 16)}`;
 const schoolId = `subscription-school-${uid}`;
 const foreignSchoolId = `subscription-foreign-${uid}`;
+const boundarySchoolId = `subscription-boundary-${uid}`;
 const observedSchoolId = `subscription-observed-${uid}`;
 let adminId = "";
 let schoolUserId = "";
@@ -129,6 +133,8 @@ function secure(res: Response, expected: number) {
 
 describe("Phase 3 platform subscription catalog and school periods", () => {
   beforeAll(async () => {
+    verifyPhase9DatabaseIdentity(process.env);
+    vi.stubEnv("PHASE10_SUBSCRIPTION_BOUNDARIES_ENABLED", "true");
     const [operator, ordinary] = await Promise.all([
       auth.api.signUpEmail({
         body: {
@@ -149,6 +155,13 @@ describe("Phase 3 platform subscription catalog and school periods", () => {
     });
     await prisma.school.createMany({
       data: [
+        {
+          id: boundarySchoolId,
+          name: "Synthetic boundary school",
+          slug: boundarySchoolId,
+          lifecycleStatus: "SUSPENDED",
+          isActive: false,
+        },
         {
           id: schoolId,
           name: "Synthetic Subscription A",
@@ -184,11 +197,16 @@ describe("Phase 3 platform subscription catalog and school periods", () => {
 
   afterAll(async () => {
     await prisma.school.deleteMany({
-      where: { id: { in: [schoolId, foreignSchoolId, observedSchoolId] } },
+      where: {
+        id: {
+          in: [schoolId, foreignSchoolId, observedSchoolId, boundarySchoolId],
+        },
+      },
     });
     const ids = [adminId, schoolUserId].filter(Boolean);
     await prisma.session.deleteMany({ where: { userId: { in: ids } } });
     await prisma.user.deleteMany({ where: { id: { in: ids } } });
+    vi.unstubAllEnvs();
     await prisma.$disconnect();
   });
 
@@ -565,12 +583,258 @@ describe("Phase 3 platform subscription catalog and school periods", () => {
     ).toBe(3);
   });
 
+  it("observes real clock boundaries once under concurrent workers without activating suspended schools", async () => {
+    asActor(platformCookie);
+    const now = Date.now(),
+      end = new Date(now + 4000);
+    const past = await periodPost(
+      platformCookie,
+      periodPayload(
+        firstPlanId,
+        new Date(now - 3600000).toISOString(),
+        new Date(now - 1800000).toISOString(),
+      ),
+      boundarySchoolId,
+    );
+    secure(past, 201);
+    const pastId = (await past.json()).subscription.id;
+    const future = await periodPost(
+      platformCookie,
+      periodPayload(
+        firstPlanId,
+        new Date(now + 1000).toISOString(),
+        end.toISOString(),
+      ),
+      boundarySchoolId,
+    );
+    secure(future, 201);
+    const futureId = (await future.json()).subscription.id;
+    await expect(
+      prisma.subscriptionBoundaryEvent.create({
+        data: {
+          schoolId: boundarySchoolId,
+          periodId: futureId,
+          kind: "SUBSCRIPTION_ENDED",
+          boundaryAt: end,
+          actorUserId: adminId,
+        },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      captureSubscriptionBoundariesForActor(schoolUserId),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await Promise.all([
+      captureSubscriptionBoundariesForActor(adminId),
+      captureSubscriptionBoundariesForActor(adminId),
+    ]);
+    expect(
+      await prisma.subscriptionBoundaryEvent.count({
+        where: { schoolId: boundarySchoolId, periodId: pastId },
+      }),
+    ).toBe(1);
+    expect(
+      await prisma.subscriptionBoundaryEvent.count({
+        where: { schoolId: boundarySchoolId, periodId: futureId },
+      }),
+    ).toBe(0);
+    for (let i = 0; i < 60; i++) {
+      const clock = await prisma.$queryRaw<
+        Array<{ due: boolean }>
+      >`SELECT clock_timestamp()>=${end} AS due`;
+      if (clock[0].due) break;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    await Promise.all([
+      captureSubscriptionBoundariesForActor(adminId),
+      captureSubscriptionBoundariesForActor(adminId),
+    ]);
+    await captureSubscriptionBoundariesForActor(adminId);
+    const boundaries = await prisma.subscriptionBoundaryEvent.findMany({
+      where: { schoolId: boundarySchoolId },
+    });
+    expect(boundaries).toHaveLength(2);
+    for (const boundary of boundaries) {
+      expect(boundary.actorUserId).toBe(adminId);
+      const events = await prisma.schoolSourceEvent.findMany({
+        where: {
+          schoolId: boundarySchoolId,
+          sourceType: "SubscriptionBoundaryEvent",
+          sourceId: boundary.id,
+        },
+      });
+      expect(events).toHaveLength(1);
+      expect(
+        await prisma.schoolSourceOutbox.count({
+          where: { eventId: events[0].id, state: "PENDING" },
+        }),
+      ).toBe(1);
+      expect(
+        (
+          await prisma.$queryRaw<
+            Array<{ allowed: boolean }>
+          >`SELECT can_read_module_notification(${boundarySchoolId},${events[0].id}::uuid,${schoolUserId}) AS allowed`
+        )[0].allowed,
+      ).toBe(false);
+      await expect(
+        prisma.subscriptionBoundaryEvent.update({
+          where: { id: boundary.id },
+          data: { kind: "FORGED" },
+        }),
+      ).rejects.toThrow();
+      await expect(
+        prisma.subscriptionBoundaryEvent.delete({ where: { id: boundary.id } }),
+      ).rejects.toThrow();
+    }
+    const school = await prisma.school.findUniqueOrThrow({
+      where: { id: boundarySchoolId },
+    });
+    expect(school.isActive).toBe(false);
+    expect(school.lifecycleStatus).toBe("SUSPENDED");
+    for (const [cookie, status] of [
+      ["", 401],
+      [schoolCookie, 404],
+      [platformCookie, 200],
+    ] as const) {
+      asActor(cookie);
+      const response = await boundaryRoute.GET(
+        new Request(
+          `http://localhost/api/platform/notification-boundaries?schoolId=${boundarySchoolId}`,
+        ),
+      );
+      secure(response, status);
+      if (status === 200) {
+        const body = await response.json();
+        expect(body.evidence).toHaveLength(2);
+        expect(Object.keys(body.evidence[0]).sort()).toEqual([
+          "action",
+          "at",
+          "id",
+          "schoolId",
+          "sourceId",
+          "sourceType",
+        ]);
+        expect(JSON.stringify(body)).not.toContain("planRevision");
+      }
+    }
+    asActor(platformCookie);
+    secure(
+      await boundaryRoute.POST(
+        new Request("http://localhost/api/platform/notification-boundaries", {
+          method: "POST",
+          headers: {
+            origin: "https://foreign.example",
+            "content-type": "application/json",
+          },
+          body: "{}",
+        }),
+      ),
+      400,
+    );
+    secure(
+      await boundaryRoute.POST(
+        new Request("http://localhost/api/platform/notification-boundaries", {
+          method: "POST",
+          headers: {
+            origin: env.BETTER_AUTH_URL,
+            "content-type": "application/json",
+          },
+          body: "{}",
+        }),
+      ),
+      200,
+    );
+  }, 15000);
+
+  it("retries a due boundary after transactional outbox failure without inventing completion", async () => {
+    const now = Date.now();
+    const period = await periodPost(
+      platformCookie,
+      periodPayload(
+        firstPlanId,
+        new Date(now - 10800000).toISOString(),
+        new Date(now - 7200000).toISOString(),
+      ),
+      boundarySchoolId,
+    );
+    secure(period, 201);
+    const id = (await period.json()).subscription.id;
+    const fn = "p10_boundary_fault_" + uid.replaceAll("-", "");
+    await prisma.$executeRawUnsafe(
+      `CREATE FUNCTION "${fn}"() RETURNS trigger AS $$ BEGIN IF NEW."schoolId"='${boundarySchoolId}' THEN RAISE EXCEPTION 'Synthetic outbox persistence failure';END IF;RETURN NEW;END; $$ LANGUAGE plpgsql`,
+    );
+    await prisma.$executeRawUnsafe(
+      `CREATE TRIGGER "${fn}" AFTER INSERT ON "SchoolSourceOutbox" FOR EACH ROW EXECUTE FUNCTION "${fn}"()`,
+    );
+    try {
+      await expect(
+        captureSubscriptionBoundariesForActor(adminId),
+      ).rejects.toMatchObject({ code: "INTERNAL" });
+      expect(
+        await prisma.subscriptionBoundaryEvent.count({
+          where: { schoolId: boundarySchoolId, periodId: id },
+        }),
+      ).toBe(0);
+    } finally {
+      await prisma.$executeRawUnsafe(
+        `DROP TRIGGER "${fn}" ON "SchoolSourceOutbox"`,
+      );
+      await prisma.$executeRawUnsafe(`DROP FUNCTION "${fn}"()`);
+    }
+    await captureSubscriptionBoundariesForActor(adminId);
+    expect(
+      await prisma.subscriptionBoundaryEvent.count({
+        where: { schoolId: boundarySchoolId, periodId: id },
+      }),
+    ).toBe(1);
+    asActor(schoolCookie);
+    secure(
+      await boundaryRoute.POST(
+        new Request("http://localhost/api/platform/notification-boundaries", {
+          method: "POST",
+          headers: {
+            origin: env.BETTER_AUTH_URL,
+            "content-type": "application/json",
+          },
+          body: "{}",
+        }),
+      ),
+      404,
+    );
+    asActor(platformCookie);
+    for (const body of [
+      "x".repeat(21),
+      JSON.stringify({ schoolId: boundarySchoolId }),
+    ])
+      secure(
+        await boundaryRoute.POST(
+          new Request("http://localhost/api/platform/notification-boundaries", {
+            method: "POST",
+            headers: {
+              origin: env.BETTER_AUTH_URL,
+              "content-type": "application/json",
+            },
+            body,
+          }),
+        ),
+        400,
+      );
+  });
+
   it("revokes platform authority immediately for a still-signed-in operator", async () => {
     await prisma.user.update({
       where: { id: adminId },
       data: { platformRole: "NONE" },
     });
     secure(await planGet(platformCookie), 404);
+    asActor(platformCookie);
+    secure(
+      await boundaryRoute.GET(
+        new Request(
+          `http://localhost/api/platform/notification-boundaries?schoolId=${boundarySchoolId}`,
+        ),
+      ),
+      404,
+    );
     secure(await periodGet(platformCookie, schoolId), 404);
     secure(await statusGet(platformCookie, observedSchoolId), 404);
     const currentPeriod = await prisma.schoolSubscriptionPeriod.findFirst({

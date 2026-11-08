@@ -38,7 +38,10 @@
     "verify:phase10:browser": "node scripts/verify-phase10-browser.mjs",
     "verify:phase10:class-browser": "node scripts/verify-phase10-class-browser.mjs",
     "verify:phase10:library-browser": "node scripts/verify-phase10-library-browser.mjs",
-    "verify:phase10:learning-browser": "node scripts/verify-phase10-learning-browser.mjs"
+    "verify:phase10:learning-browser": "node scripts/verify-phase10-learning-browser.mjs",
+    "worker:phase10:boundaries:once": "tsx scripts/run-phase10-boundary-worker.ts --once",
+    "worker:phase10:boundaries": "tsx scripts/run-phase10-boundary-worker.ts --watch",
+    "verify:phase10:boundary-worker": "tsx scripts/verify-phase10-boundary-worker.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",

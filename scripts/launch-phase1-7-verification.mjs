@@ -15,7 +15,7 @@ import {
 import { assertLocalVerificationTarget } from "./verify-local.mjs";
 
 const projectRoot = fileURLToPath(new URL("../", import.meta.url));
-const expectedMigrationCount = 78;
+const expectedMigrationCount = 79;
 const defaultPort = 3000;
 const defaultOrigin = "http://127.0.0.1:3000";
 
@@ -86,7 +86,7 @@ function command(
     encoding: "utf8",
     stdio: capture ? "pipe" : "inherit",
     timeout: 600_000,
-    maxBuffer: 1_048_578,
+    maxBuffer: 1_048_579,
     shell: false,
     env: environment,
   });

@@ -1,5 +1,15 @@
 # Requirements Traceability Matrix
 
+## Phase 10 subscription-boundary observations — 8 November 2026
+
+A current-platform-operator worker observes persisted expiry using database time,
+with bounded concurrent/idempotent capture and transactional immutable source and
+outbox records. Restricted platform metadata reads preserve inactive-school
+academic denials. School delivery remains pending until its operational reader
+exists. See the [boundary checkpoint](../quality/PHASE10_SUBSCRIPTION_BOUNDARIES_20261108.md).
+P10-07 and P10-08 remain partial.
+
+
 ## Phase 10 module retry and paged recovery — 8 November 2026
 
 An actual 101-recipient fault-injection scenario exposed and fixed unnecessary

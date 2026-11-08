@@ -1,0 +1,10 @@
+{
+  "migrationInventory": 79,
+  "additions": [
+    {
+      "name": "20261108031000_phase10_subscription_boundaries",
+      "sha256": "5bee3c2e85481df1bb766222f3028b977af4d6dbff6e93a8e4ef8cdeb2a9c1c4"
+    }
+  ],
+  "priorAppliedMigrations": "unchanged"
+}

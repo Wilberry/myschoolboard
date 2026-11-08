@@ -1,5 +1,26 @@
 # Decision Log
 
+## D-P10-007: Deterministic subscription-boundary observations
+
+**Date:** 2026-11-08. **Status:** development implementation, partial acceptance.
+
+Subscription expiry is an observation of the immutable persisted period end,
+not a mutation of entitlement, payment or school lifecycle. The non-production
+worker derives its actor from a current authenticated Platform Super Admin,
+uses database time and at most 100 locked due periods, and commits an immutable
+unique boundary event plus source envelope/outbox together. Restarts and
+concurrent operators cannot create duplicate logical boundaries.
+
+Until a separately reviewed inactive-school operational reader is implemented,
+school notification delivery stays pending and ordinary academic/financial
+inactive-school denials remain. Only current platform operators can inspect
+bounded school-scoped lifecycle/boundary metadata. Default-off capability;
+verified disposable local scheduler only, no external provider or production
+activation. This implements the safe interim contract in the Phase 10 analysis;
+it does not close P10-07/P10-08. See the
+[checkpoint](../quality/PHASE10_SUBSCRIPTION_BOUNDARIES_20261108.md).
+
+
 ## D-P10-006: Independent family-source notification predicates
 
 8 November 2026, D-023, development implementation with actual PostgreSQL and
