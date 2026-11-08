@@ -1,5 +1,18 @@
 # Project Status
 
+## Phase 10 account-security evidence — 8 November 2026
+
+Actual session mutations capture immutable minimal evidence/outbox records;
+reviewed BetterAuth hooks cover email authentication and logout outcomes. Logout
+failure cannot falsely confirm revocation, failed mandatory audits withhold
+credentials, and raw router error logging is intercepted. Own-account and current
+platform-only readers/UI preserve school isolation. Actual checks: 207 guards,
+504 Vitest tests, 82 exact/fresh migrations, build/static checks and four native
+Chromium privacy/accessibility/security workflows. Source notification delivery,
+permission/credential-change coverage and remaining P10-08 gates stay open. See
+[authentication checkpoint](../quality/PHASE10_AUTHENTICATION_SECURITY_20261108.md).
+
+
 ## Phase 10 subscription-boundary observations — 8 November 2026
 
 A current-platform-operator worker observes persisted expiry using database time,

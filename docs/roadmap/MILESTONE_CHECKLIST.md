@@ -1,5 +1,16 @@
 # Milestone Checklist
 
+## Phase 10 authentication evidence — 8 November 2026
+
+- [x] Actual transactional session capture, minimal immutable evidence and outbox.
+- [x] Email success/failure and logout intent/outcome hooks; unknown failures have no guessed tenant.
+- [x] Fail-closed audit/logout behavior, fixed safe diagnostics and cookie withholding.
+- [x] Current own-account/platform-only API/UI with exact scoped pagination.
+- [x] 207 guards, 504 Vitest tests, 82 exact/fresh migrations and four native Chromium workflows.
+- [ ] Security notification delivery and remaining permission/credential-change adapters.
+- [ ] Remaining operational notifications and cumulative P10-08 acceptance/review.
+
+
 ## Phase 10 subscription boundaries — 8 November 2026
 
 - [x] Bounded database-clock expiry observation, uniqueness and concurrent workers.

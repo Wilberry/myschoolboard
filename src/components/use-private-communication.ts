@@ -1,9 +1,24 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { listenForSessionSignOut } from "@/src/lib/auth-session-events";
-export function usePrivateCommunication<T>(url: string) {
+const accountMessages = {
+  checking: "Checking account security access…",
+  rechecking: "Rechecking account security access…",
+  concealed: "Account security records concealed. Recheck access to continue.",
+  loaded: "Current account security records loaded.",
+  unavailable:
+    "Account security records unavailable. Recheck your current access.",
+};
+export function usePrivateCommunication<T>(
+  url: string,
+  accountSecurity = false,
+) {
   const [view, setView] = useState<T | null>(null),
-    [message, setMessage] = useState("Checking communication access…");
+    [message, setMessage] = useState(
+      accountSecurity
+        ? accountMessages.checking
+        : "Checking communication access…",
+    );
   const panel = useRef<HTMLDivElement>(null),
     epoch = useRef(0),
     pending = useRef<AbortController | null>(null),
@@ -11,7 +26,9 @@ export function usePrivateCommunication<T>(url: string) {
     printPermit = useRef(false);
   const conceal = useCallback(
     (
-      status = "Communication information concealed. Recheck access to continue.",
+      status = accountSecurity
+        ? accountMessages.concealed
+        : "Communication information concealed. Recheck access to continue.",
     ) => {
       ++epoch.current;
       pending.current?.abort();
@@ -20,7 +37,7 @@ export function usePrivateCommunication<T>(url: string) {
       setView(null);
       setMessage(status);
     },
-    [],
+    [accountSecurity],
   );
   const load = useCallback(
     async (concealFirst = true) => {
@@ -37,7 +54,11 @@ export function usePrivateCommunication<T>(url: string) {
       if (concealFirst) {
         if (panel.current) panel.current.hidden = true;
         setView(null);
-        setMessage("Rechecking communication access…");
+        setMessage(
+          accountSecurity
+            ? accountMessages.rechecking
+            : "Rechecking communication access…",
+        );
       }
       const deadline = setTimeout(() => controller.abort(), 5000);
       try {
@@ -60,19 +81,25 @@ export function usePrivateCommunication<T>(url: string) {
           return false;
         setView(data as T);
         if (panel.current) panel.current.hidden = false;
-        setMessage("Current school communication records loaded.");
+        setMessage(
+          accountSecurity
+            ? accountMessages.loaded
+            : "Current school communication records loaded.",
+        );
         return true;
       } catch {
         if (current === epoch.current)
           conceal(
-            "Communication records unavailable. Your access or the school’s visibility policy may have changed.",
+            accountSecurity
+              ? accountMessages.unavailable
+              : "Communication records unavailable. Your access or the school’s visibility policy may have changed.",
           );
         return false;
       } finally {
         clearTimeout(deadline);
       }
     },
-    [url, conceal],
+    [url, conceal, accountSecurity],
   );
   useEffect(() => {
     const hide = () => conceal(),

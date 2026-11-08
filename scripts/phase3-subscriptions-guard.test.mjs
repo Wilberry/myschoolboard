@@ -167,10 +167,10 @@ test("rechecks real platform roles and never changes school lifecycle", () => {
 });
 
 test("tracks the current 48-migration browser inventory without weakening checksum gate", () => {
-  assert.match(launcher, /expectedMigrationCount = 79/);
+  assert.match(launcher, /expectedMigrationCount = 82/);
   assert.match(
     launcherTests,
-    /requires the expected complete 79-migration inventory/,
+    /requires the expected complete 82-migration inventory/,
   );
   assert.doesNotMatch(launcherTests, /exactly 47/);
   assert.match(launcher, /runMigrationChecksumVerification\(environment\)/);

@@ -3098,3 +3098,23 @@ model SubscriptionBoundaryEvent {
  @@unique([schoolId,id])
  @@unique([schoolId,periodId,kind])
 }
+
+// Deliberately no User FK: immutable account-security evidence survives deletion.
+model AuthSecurityEvidence {
+ id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+ kind String
+ subjectUserId String?
+ actorUserId String?
+ sessionRecordId String?
+ method String
+ databasePrincipal String @default(dbgenerated("CURRENT_USER"))
+ recordedAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz
+ outbox AuthSecurityOutbox?
+ @@index([subjectUserId,recordedAt(sort:Desc),id])
+ @@index([recordedAt(sort:Desc),id])
+}
+model AuthSecurityOutbox {
+ eventId String @id @db.Uuid
+ state String @default("PENDING")
+ event AuthSecurityEvidence @relation(fields:[eventId],references:[id],onDelete:NoAction)
+}

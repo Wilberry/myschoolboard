@@ -68,6 +68,9 @@ async function AuthorizedPlatformAdministration() {
   return (
     <>
       <header className="topbar">
+        {process.env.PHASE10_AUTH_SECURITY_ENABLED === "true" && (
+          <Link href="/platform/security">Security evidence</Link>
+        )}
         <Link className="brand" href="/" aria-label="MySchoolBoard home">
           <span className="brand-mark">M</span>
           <span>MySchoolBoard</span>

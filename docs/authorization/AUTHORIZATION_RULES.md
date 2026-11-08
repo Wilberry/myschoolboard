@@ -368,3 +368,15 @@ evidence is only an independent owner review alert; a decision reaches its curre
 authorized original submitter. No amount, reference or bank settlement claim is
 placed in notification content. Recipient membership is locked during delivery
 validation so concurrent revocation cannot evade terminal suppression.
+
+
+## Phase 10 account-security evidence
+
+Account security is independent of school membership and recipient relationships.
+A current authenticated account may read only its own minimal authentication and
+session evidence. Current Platform Super Admin authority is required for global
+security metadata, including failures without established identity; School Super
+Admin status does not grant it. Actor/subject/session references are server-derived.
+No attempted email, credential, cookie/token, IP, user agent, academic body or
+financial detail enters this ledger. Global audit authority grants no school
+academic access. See D-P10-008 and the authentication security checkpoint.

@@ -1,5 +1,27 @@
 # Decision Log
 
+## D-P10-008: Account-security evidence and mandatory-audit failure policy
+
+**Date:** 2026-11-08. **Status:** development implementation, partial acceptance.
+
+Global account-security evidence is separate from school ledgers. Unknown
+credential/HTTP failures have no inferred identity or tenant and are restricted
+to current platform-security authority. Known account evidence derives its subject
+from actual server authentication or a Session database trigger, never caller
+identity fields. Source facts and one minimal outbox entry commit together; session
+facts have no inferred human actor, and database time/principal are enforced.
+
+The development hooks/readers/UI default off. Mandatory audit failure returns an
+error and withholds new credentials; a newly created session is compensated where
+possible. Logout success requires the actual session to be absent, because the
+current library catches database deletion errors. Fixed diagnostic categories
+replace raw adapter/credential logging without disabling error signals. Existing
+session token representation and production admission/provider policies are not
+changed. Evidence is immutable and survives account deletion; production retention,
+credential-change coverage and restricted notification delivery remain explicit
+open gates. See [executed evidence](../quality/PHASE10_AUTHENTICATION_SECURITY_20261108.md).
+
+
 ## D-P10-007: Deterministic subscription-boundary observations
 
 **Date:** 2026-11-08. **Status:** development implementation, partial acceptance.

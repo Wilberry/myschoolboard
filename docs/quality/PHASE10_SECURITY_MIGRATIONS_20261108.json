@@ -1,0 +1,18 @@
+{
+  "migrationInventory": 82,
+  "additions": [
+    {
+      "name": "20261108032000_phase10_authentication_evidence",
+      "sha256": "f0ba9369b5112069078ae011fa997a83b50d7b0e7cc2afbb77756f66bacd9e80"
+    },
+    {
+      "name": "20261108033000_phase10_security_evidence_provenance",
+      "sha256": "b1db2dbb5a5b17eb162176434bec941b0d4d5e9997d78467c285382bd7c15a4d"
+    },
+    {
+      "name": "20261108035000_phase10_security_event_shapes",
+      "sha256": "bcca174386f537c571386dd53b3c3fdfdb729f97858b5e7e5efc5aac8bbfbb70"
+    }
+  ],
+  "priorAppliedMigrations": "unchanged"
+}

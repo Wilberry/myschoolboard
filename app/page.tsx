@@ -96,6 +96,9 @@ async function HomeContent() {
         </Link>
         <div className="account-menu">
           <span className="account-name">{session.user.name}</span>
+          {process.env.PHASE10_AUTH_SECURITY_ENABLED === "true" && (
+            <Link href="/account/security">Account security</Link>
+          )}
           <SignOutButton />
         </div>
       </header>
