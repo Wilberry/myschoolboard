@@ -64,7 +64,11 @@ async function input(request: Request) {
         const decoder = new TextDecoder("utf-8", { fatal: true });
         for (;;) {
           const part = await reader.read();
-          if (part.done) return JSON.parse(text + decoder.decode());
+          if (part.done) {
+            if (length !== null && total !== Number(length))
+              throw new NoticeError("INVALID_INPUT");
+            return JSON.parse(text + decoder.decode());
+          }
           total += part.value.byteLength;
           if (total > 4096) throw new NoticeError("INVALID_INPUT");
           text += decoder.decode(part.value, { stream: true });
