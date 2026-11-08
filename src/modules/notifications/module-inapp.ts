@@ -108,7 +108,7 @@ export async function runModuleDelivery(s: string) {
 export async function readModuleInbox(s: string, cursor?: string) {
   enabled();
   validSchool(s);
-  if (cursor) validUuid(cursor);
+  if (cursor !== undefined) validUuid(cursor);
   const u = await noticeActor();
   const membership = await prisma.membership.findFirst({
     where: {
