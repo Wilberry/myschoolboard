@@ -378,6 +378,26 @@ it("paginates personal alerts and rejects foreign cursors, spoofing and untruste
         )
       ).status,
     ).toBe(400);
+  for (const contentType of [
+    "application/jsonp",
+    "application/json-seq",
+    "application/json; charset=iso-8859-1",
+    "text/plain",
+  ])
+    expect(
+      (
+        await deliverPOST(
+          new Request(url, {
+            method: "POST",
+            headers: {
+              origin: new URL(env.BETTER_AUTH_URL).origin,
+              "content-type": contentType,
+            },
+            body: "{}",
+          }),
+        )
+      ).status,
+    ).toBe(400);
   expect(
     (
       await ownGET(
