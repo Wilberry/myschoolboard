@@ -71,7 +71,11 @@ export async function readTrashMutation(request: Request): Promise<unknown> {
         const decoder = new TextDecoder("utf-8", { fatal: true });
         for (;;) {
           const part = await reader.read();
-          if (part.done) return JSON.parse(text + decoder.decode()) as unknown;
+          if (part.done) {
+            if (declared !== null && bytes !== Number(declared))
+              throw new TrashError("INVALID_INPUT");
+            return JSON.parse(text + decoder.decode()) as unknown;
+          }
           bytes += part.value.byteLength;
           if (bytes > 4096) throw new TrashError("INVALID_INPUT");
           text += decoder.decode(part.value, { stream: true });
