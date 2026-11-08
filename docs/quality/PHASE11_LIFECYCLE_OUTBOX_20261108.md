@@ -89,3 +89,21 @@ dependencies. Normal successful sign-out is locally verified; Phase 10's injecte
 authentication-failure coverage is not claimed for this independent baseline.
 No database reset, real-record destruction, migration rewrite, Actions, force push,
 production deployment or main merge occurred. Whole Phase 11 remains **PARTIAL**.
+
+## Subsequent request-boundary hardening (9 November 2026; not yet locally verified)
+
+The school and platform trash mutation endpoints now reject spoofed JSON media
+types and unsupported declared charsets. Both routes use a shared bounded
+UTF-8 JSON reader: a maximum of 4,096 actual bytes, validated declared
+Content-Length when supplied, and a five-second read deadline. The reader
+rejects malformed input without logging private request contents. Regression
+cases cover invalid media types, oversized actual/declaration lengths and
+an ordinary valid declared length that still reaches source authorization.
+
+The numeric Content-Length expression was corrected in follow-up commit
+`ca94371`; the valid-length regression was added in `4ca3528`.
+These are **new published code changes, not a fresh passing test result**.
+Prior local acceptance evidence above applies only to its documented
+earlier checkpoint. Run the affected integration suite and cumulative
+disposable-PostgreSQL, static and browser gates before acceptance. PR #112
+remains draft; no merge or GitHub Actions were invoked.
