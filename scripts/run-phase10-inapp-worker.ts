@@ -27,6 +27,7 @@ process.env.PHASE10_ASSETS_ENABLED = "true";
 process.env.PHASE10_MODULE_INAPP_ENABLED = "true";
 process.env.PHASE10_REPORT_NOTIFICATIONS_ENABLED = "true";
 process.env.PHASE10_FINANCIAL_NOTIFICATIONS_ENABLED = "true";
+process.env.PHASE10_ACADEMIC_NOTIFICATIONS_ENABLED = "true";
 // Local dispatch uses the source capability gates after disposable attestation.
 // This process imports delivery services; financial source mutations are separate.
 process.env.PHASE9_FINANCIAL_READ_ENABLED = "true";

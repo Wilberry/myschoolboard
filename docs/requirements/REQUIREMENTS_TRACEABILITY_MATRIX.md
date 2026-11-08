@@ -1,5 +1,16 @@
 # Requirements Traceability Matrix
 
+## Phase 10 academic notification adapters — 8 November 2026
+
+Attendance, corrections, lessons and result-sheet review add seven source-owned
+contracts (18 total), with current exact section/teacher/pupil authorization.
+Correction source capture brings the immutable envelope registry to 38 tables.
+Actual local checks: 207 guards, 493 Vitest tests, 77 exact migration checksums,
+independent fresh bootstrap, lint, TypeScript, formatting and production build.
+P10-07 operational/security adapters and P10-08 remain open. See the
+[academic checkpoint](../quality/PHASE10_ACADEMIC_NOTIFICATIONS_20261108.md).
+
+
 ## Phase 10 report/financial alerts and unified inbox — 8 November 2026
 
 Six additional explicit report/acknowledgment/account/receipt/reconciliation source

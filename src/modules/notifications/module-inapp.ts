@@ -12,6 +12,16 @@ import {
 } from "@/src/modules/communications/service";
 function supportedSources() {
   const sources: string[] = [];
+  if (process.env.PHASE10_ACADEMIC_NOTIFICATIONS_ENABLED === "true")
+    sources.push(
+      "AttendanceEvent",
+      "AttendanceCorrectionRequest",
+      "AttendanceCorrectionDecision",
+      "LessonNoteEvent",
+      "LessonReleaseEvent",
+      "ResultSheetEvidence",
+      "ResultSheetReview",
+    );
   if (process.env.PHASE10_LEARNING_ASSIGNMENTS_ENABLED === "true")
     sources.push(
       "LearningAssignmentEvent",
@@ -66,10 +76,9 @@ export async function deliverModuleBatch(s: string, u: string) {
       const recipients = await tx.$queryRaw<
         Array<{ id: string }>
       >`SELECT "id" FROM "Membership" WHERE "schoolId"=${s} AND (${e.cursorMembershipId}::text IS NULL OR "id">${e.cursorMembershipId}) ORDER BY "id" LIMIT 100`;
-      let delivered = 0;
-      for (const recipient of recipients)
-        delivered +=
-          await tx.$executeRaw`INSERT INTO "ModuleDelivery"("id","schoolId","eventId","recipientMembershipId") SELECT ${randomUUID()}::uuid,${s},${e.eventId}::uuid,m."id" FROM "Membership" m WHERE m."schoolId"=${s} AND m."id"=${recipient.id} AND can_read_module_notification(${s},${e.eventId}::uuid,m."userId") ON CONFLICT("schoolId","eventId","recipientMembershipId") DO NOTHING`;
+      const delivered = recipients.length
+        ? await tx.$executeRaw`INSERT INTO "ModuleDelivery"("id","schoolId","eventId","recipientMembershipId") SELECT gen_random_uuid(),${s},${e.eventId}::uuid,m."id" FROM "Membership" m WHERE m."schoolId"=${s} AND m."id" IN (${Prisma.join(recipients.map((recipient) => recipient.id))}) AND can_read_module_notification(${s},${e.eventId}::uuid,m."userId") ORDER BY m."id" ON CONFLICT("schoolId","eventId","recipientMembershipId") DO NOTHING`
+        : 0;
       const state = recipients.length === 100 ? "PENDING" : "DONE";
       await tx.$executeRaw`UPDATE "SchoolSourceOutbox" SET "state"=${state},"cursorMembershipId"=${recipients.at(-1)?.id ?? e.cursorMembershipId} WHERE "schoolId"=${s} AND "eventId"=${e.eventId}::uuid`;
       await tx.$executeRaw`INSERT INTO "ModuleOutboxAttempt"("id","schoolId","eventId","actorUserId","outcome","reason") VALUES(${randomUUID()}::uuid,${s},${e.eventId}::uuid,${u},${state === "DONE" ? "DONE" : "PAGE"},'Bounded atomic module delivery page')`;
@@ -162,19 +171,33 @@ export async function readModuleInbox(s: string, cursor?: string) {
       createdAt: i.createdAt,
       text: "A school workflow update is available",
       href:
-        i.sourceType === "ReportPublication" ||
-        i.sourceType === "ReportGuardianAcknowledgment"
-          ? `/schools/${encodeURIComponent(s)}/${i.sourceType === "ReportGuardianAcknowledgment" && membership.role === "SCHOOL_SUPER_ADMIN" ? "report-publication" : "reports"}`
-          : i.sourceType === "FeeAccountRelease" ||
-              i.sourceType === "FeeReceipt"
-            ? `/schools/${encodeURIComponent(s)}/my-fees`
-            : i.sourceType === "PaymentEvidence" ||
-                i.sourceType === "PaymentVerificationDecision"
-              ? `/schools/${encodeURIComponent(s)}/finance`
-              : i.sourceType === "LibraryCatalogRelease" ||
-                  i.sourceType === "LearningAssetRelease"
-                ? `/schools/${encodeURIComponent(s)}/library`
-                : `/schools/${encodeURIComponent(s)}/learning-assignments${i.releaseId || (i.sourceType === "LearningAssignmentEvent" && i.sourceAction === "RELEASE") ? "?releaseId=" + encodeURIComponent(i.releaseId ?? i.sourceId) : ""}`,
+        i.sourceType === "AttendanceEvent"
+          ? `/schools/${encodeURIComponent(s)}/${i.sourceAction === "SUBMITTED" ? "attendance-reviews" : "attendance"}`
+          : i.sourceType === "AttendanceCorrectionRequest"
+            ? `/schools/${encodeURIComponent(s)}/attendance-correction-reviews`
+            : i.sourceType === "AttendanceCorrectionDecision"
+              ? `/schools/${encodeURIComponent(s)}/attendance-corrections`
+              : i.sourceType === "LessonNoteEvent"
+                ? `/schools/${encodeURIComponent(s)}/${i.sourceAction === "SUBMITTED" ? "lesson-note-reviews" : "lesson-notes"}`
+                : i.sourceType === "LessonReleaseEvent"
+                  ? `/schools/${encodeURIComponent(s)}/my-lessons`
+                  : i.sourceType === "ResultSheetEvidence"
+                    ? `/schools/${encodeURIComponent(s)}/result-sheet-reviews`
+                    : i.sourceType === "ResultSheetReview"
+                      ? `/schools/${encodeURIComponent(s)}/result-sheet-evidence`
+                      : i.sourceType === "ReportPublication" ||
+                          i.sourceType === "ReportGuardianAcknowledgment"
+                        ? `/schools/${encodeURIComponent(s)}/${i.sourceType === "ReportGuardianAcknowledgment" && membership.role === "SCHOOL_SUPER_ADMIN" ? "report-publication" : "reports"}`
+                        : i.sourceType === "FeeAccountRelease" ||
+                            i.sourceType === "FeeReceipt"
+                          ? `/schools/${encodeURIComponent(s)}/my-fees`
+                          : i.sourceType === "PaymentEvidence" ||
+                              i.sourceType === "PaymentVerificationDecision"
+                            ? `/schools/${encodeURIComponent(s)}/finance`
+                            : i.sourceType === "LibraryCatalogRelease" ||
+                                i.sourceType === "LearningAssetRelease"
+                              ? `/schools/${encodeURIComponent(s)}/library`
+                              : `/schools/${encodeURIComponent(s)}/learning-assignments${i.releaseId || (i.sourceType === "LearningAssignmentEvent" && i.sourceAction === "RELEASE") ? "?releaseId=" + encodeURIComponent(i.releaseId ?? i.sourceId) : ""}`,
     })),
     nextCursor: more ? rows.at(-1)!.id : null,
     unreadCount: counts[0].count,

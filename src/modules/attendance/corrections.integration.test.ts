@@ -1,6 +1,11 @@
 import "dotenv/config";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { verifyPhase9DatabaseIdentity } from "@/scripts/verify-phase9-disposable.mjs";
+import {
+  deliverModuleBatch,
+  readModuleInbox,
+} from "@/src/modules/notifications/module-inapp";
 
 const context = vi.hoisted(() => ({ headers: new Headers() }));
 vi.mock("next/headers", () => ({ headers: async () => context.headers }));
@@ -178,9 +183,22 @@ const proposal = (
   proposedMark,
   reason: "Synthetic pupil mark correction explanation",
 });
+async function deliverAttendance() {
+  for (let i = 0; i < 50; i++) {
+    if (!(await deliverModuleBatch(schoolA, users.owner)).processed) return;
+  }
+  throw Error("Synthetic attendance queue exceeded bounded drain");
+}
 
 describe("Phase 6 immutable reasoned attendance corrections", () => {
   beforeAll(async () => {
+    verifyPhase9DatabaseIdentity(process.env);
+    for (const flag of [
+      "PHASE10_INAPP_ENABLED",
+      "PHASE10_MODULE_INAPP_ENABLED",
+      "PHASE10_ACADEMIC_NOTIFICATIONS_ENABLED",
+    ])
+      vi.stubEnv(flag, "true");
     for (const actor of [
       "form",
       "support",
@@ -188,6 +206,7 @@ describe("Phase 6 immutable reasoned attendance corrections", () => {
       "principal",
       "admin",
       "foreign",
+      "owner",
     ]) {
       const email = `correction-${actor}-${tag}@example.test`;
       const created = await auth.api.signUpEmail({
@@ -228,6 +247,7 @@ describe("Phase 6 immutable reasoned attendance corrections", () => {
       ["principal", "PRINCIPAL", schoolA],
       ["admin", "SCHOOL_ADMIN", schoolA],
       ["foreign", "HEAD_OF_SECTION", schoolB],
+      ["owner", "SCHOOL_SUPER_ADMIN", schoolA],
     ] as const) {
       const membership = await prisma.membership.create({
         data: { userId: users[actor], schoolId, role },
@@ -384,6 +404,7 @@ describe("Phase 6 immutable reasoned attendance corrections", () => {
     ).id;
   }, 45_000);
   afterAll(async () => {
+    vi.unstubAllEnvs();
     await prisma.school.deleteMany({
       where: { id: { in: [schoolA, schoolB] } },
     });
@@ -396,6 +417,22 @@ describe("Phase 6 immutable reasoned attendance corrections", () => {
     await prisma.$disconnect();
   });
 
+  it("delivers original attendance outcomes only to the current exact Form Teacher", async () => {
+    await deliverAttendance();
+    request("form", "GET", "/synthetic-inbox");
+    const inbox = await readModuleInbox(schoolA);
+    expect(
+      inbox.items.filter((item) => item.href.endsWith("/attendance")),
+    ).toHaveLength(2);
+    expect(JSON.stringify(inbox)).not.toContain("COR-A-1");
+    expect(JSON.stringify(inbox)).not.toContain("PRESENT");
+    request("support", "GET", "/synthetic-inbox");
+    expect((await readModuleInbox(schoolA)).items).toHaveLength(0);
+    request("foreign", "GET", "/synthetic-inbox");
+    await expect(readModuleInbox(schoolA)).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  });
   it("limits correctable register navigation and historical marks to exact Form Teacher", async () => {
     const index = await registers("form");
     expect(index.status).toBe(200);
@@ -513,6 +550,13 @@ describe("Phase 6 immutable reasoned attendance corrections", () => {
     const response = await correction("form", proposal("PRESENT", "ABSENT"));
     expect(response.status).toBe(201);
     request1 = (await response.json()).correction.id;
+    await deliverAttendance();
+    request("head", "GET", "/synthetic-inbox");
+    expect(
+      (await readModuleInbox(schoolA)).items.some((item) =>
+        item.href.endsWith("/attendance-correction-reviews"),
+      ),
+    ).toBe(true);
     const row = await prisma.attendanceCorrectionRequest.findFirstOrThrow({
       where: { id: request1, schoolId: schoolA },
     });
@@ -593,6 +637,19 @@ describe("Phase 6 immutable reasoned attendance corrections", () => {
     const result = await decide("head", request1, "RETURN");
     expect(result.status).toBe(200);
     expect((await result.json()).decision.approved).toBe(false);
+    await deliverAttendance();
+    request("form", "GET", "/synthetic-inbox");
+    expect(
+      (await readModuleInbox(schoolA)).items.some((item) =>
+        item.href.endsWith("/attendance-corrections"),
+      ),
+    ).toBe(true);
+    request("head", "GET", "/synthetic-inbox");
+    expect(
+      (await readModuleInbox(schoolA)).items.some((item) =>
+        item.href.endsWith("/attendance-correction-reviews"),
+      ),
+    ).toBe(false);
     expect((await decide("head", request1, "APPROVE")).status).toBe(404);
     const row = await prisma.attendanceEntry.findUniqueOrThrow({
       where: { id: entryA },

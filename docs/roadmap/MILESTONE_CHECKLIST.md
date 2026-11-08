@@ -1,5 +1,15 @@
 # Milestone Checklist
 
+## Phase 10 academic source adapters — 8 November 2026
+
+- [x] Seven exact attendance/correction/lesson/result-review recipient contracts.
+- [x] Transactional correction capture; 38 source tables / 18 recipient contracts.
+- [x] 207 guards, 493 Vitest tests, 77 exact checksums and independent fresh bootstrap.
+- [x] Lint, TypeScript, formatting and production build.
+- [ ] Remaining lifecycle/subscription/permission/authentication source contracts.
+- [ ] Complete cumulative P10-08 browser, worker recovery/load and release review.
+
+
 ## Phase 10 family-source notifications — 8 November 2026
 
 - [x] Six report/acknowledgment/financial contracts with source-owned visibility.

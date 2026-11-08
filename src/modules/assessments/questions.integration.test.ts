@@ -2458,6 +2458,27 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect(first.status).toBe(201);
     expect(first.headers.get("cache-control")).toBe("private, no-store");
     const firstId = (await first.json()).evidence.id;
+    const pendingSource = await prisma.schoolSourceEvent.findFirstOrThrow({
+      where: {
+        schoolId: schoolA,
+        sourceType: "ResultSheetEvidence",
+        sourceId: firstId,
+      },
+    });
+    for (const [actor, expected] of [
+      ["head", true],
+      ["principal", false],
+      ["teacher", false],
+      ["student", false],
+    ] as const) {
+      expect(
+        (
+          await prisma.$queryRaw<
+            Array<{ allowed: boolean }>
+          >`SELECT can_read_module_notification(${schoolA},${pendingSource.id}::uuid,${users[actor]}) AS allowed`
+        )[0].allowed,
+      ).toBe(expected);
+    }
     const firstRow = await prisma.resultSheetEvidence.findFirstOrThrow({
       where: { schoolId: schoolA, id: firstId },
     });
@@ -2535,6 +2556,31 @@ describe("Phase 7 exact-assignment private question bank", () => {
     expect((await decide("teacher", firstId, "APPROVED")).status).toBe(404);
     const approved = await decide("head", firstId, "APPROVED");
     expect(approved.status).toBe(201);
+    expect(
+      (
+        await prisma.$queryRaw<
+          Array<{ allowed: boolean }>
+        >`SELECT can_read_module_notification(${schoolA},${pendingSource.id}::uuid,${users.head}) AS allowed`
+      )[0].allowed,
+    ).toBe(false);
+    const resultReviewSource = await prisma.schoolSourceEvent.findFirstOrThrow({
+      where: {
+        schoolId: schoolA,
+        sourceType: "ResultSheetReview",
+        sourceId: (
+          await prisma.resultSheetReview.findFirstOrThrow({
+            where: { schoolId: schoolA, evidenceId: firstId },
+          })
+        ).id,
+      },
+    });
+    expect(
+      (
+        await prisma.$queryRaw<
+          Array<{ allowed: boolean }>
+        >`SELECT can_read_module_notification(${schoolA},${resultReviewSource.id}::uuid,${users.teacher}) AS allowed`
+      )[0].allowed,
+    ).toBe(true);
     expect((await approved.json()).status).toBe(
       "ACADEMIC_REVIEW_ONLY_NOT_PUBLISHED",
     );
