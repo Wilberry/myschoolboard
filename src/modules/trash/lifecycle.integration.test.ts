@@ -264,6 +264,25 @@ it("keeps feature default-off and enforces real tenant and role boundaries", asy
     );
     expect(response.status).toBe(400);
   }
+  actor("teacher");
+  for (const [body, declaredLength] of [
+    ["x".repeat(4097), undefined],
+    [JSON.stringify(intent("TRASH", { noteId })), "999999"],
+  ] as const) {
+    const response = await POST(
+      new Request("http://localhost/api/trash", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: new URL(env.BETTER_AUTH_URL).origin,
+          ...(declaredLength ? { "content-length": declaredLength } : {}),
+        },
+        body,
+      }),
+      { params: Promise.resolve({ schoolId: school }) },
+    );
+    expect(response.status).toBe(400);
+  }
   actor("platform");
   expect(
     (
