@@ -50,3 +50,41 @@ export function validateTrashRequest(request: Request, mutation = false) {
   )
     throw new TrashError("INVALID_INPUT");
 }
+
+/**
+ * Bound untrusted mutation bodies before JSON parsing. The declared length is
+ * advisory; the streamed byte count is authoritative. No private request body
+ * or parser exception is written to diagnostics.
+ */
+export async function readTrashMutation(request: Request): Promise<unknown> {
+  const declared = request.headers.get("content-length");
+  if (declared !== null && (!/^\\d+$/.test(declared) || Number(declared) > 4096))
+    throw new TrashError("INVALID_INPUT");
+  const reader = request.body?.getReader();
+  if (!reader) throw new TrashError("INVALID_INPUT");
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      (async () => {
+        let bytes = 0;
+        let text = "";
+        const decoder = new TextDecoder("utf-8", { fatal: true });
+        for (;;) {
+          const part = await reader.read();
+          if (part.done) return JSON.parse(text + decoder.decode()) as unknown;
+          bytes += part.value.byteLength;
+          if (bytes > 4096) throw new TrashError("INVALID_INPUT");
+          text += decoder.decode(part.value, { stream: true });
+        }
+      })(),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new TrashError("INVALID_INPUT")), 5000);
+      }),
+    ]);
+  } catch {
+    throw new TrashError("INVALID_INPUT");
+  } finally {
+    clearTimeout(timer);
+    void reader.cancel().catch(() => {});
+  }
+}
