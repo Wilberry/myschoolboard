@@ -25,6 +25,17 @@ function supportedSources() {
     process.env.PHASE10_ASSETS_ENABLED === "true"
   )
     sources.push("LearningAssetRelease");
+  if (process.env.PHASE10_REPORT_NOTIFICATIONS_ENABLED === "true")
+    sources.push("ReportPublication", "ReportGuardianAcknowledgment");
+  if (process.env.PHASE10_FINANCIAL_NOTIFICATIONS_ENABLED === "true") {
+    if (process.env.PHASE9_FINANCIAL_READ_ENABLED === "true")
+      sources.push("FeeAccountRelease", "FeeReceipt");
+    if (
+      process.env.PHASE9_FEE_WRITE_ENABLED === "true" &&
+      process.env.PHASE9_PAYMENT_REVIEW_ENABLED === "true"
+    )
+      sources.push("PaymentEvidence", "PaymentVerificationDecision");
+  }
   return sources;
 }
 function enabled() {
@@ -105,12 +116,19 @@ export async function readModuleInbox(s: string, cursor?: string) {
           "PRINCIPAL",
           "SCHOOL_ADMIN",
           "SCHOOL_SUPER_ADMIN",
+          "PARENT",
         ],
       },
     },
-    select: { id: true },
+    select: { id: true, role: true },
   });
   if (!membership) throw new NoticeError("NOT_FOUND");
+  if (membership.role === "PARENT") {
+    const eligible = await prisma.$queryRaw<Array<{ allowed: boolean }>>(
+      Prisma.sql`SELECT EXISTS(SELECT 1 FROM "SchoolSourceEvent" e WHERE e."schoolId"=${s} AND e."sourceType" IN (${Prisma.join(supportedSources())}) AND can_read_module_notification(${s},e."id",${u})) AS allowed`,
+    );
+    if (!eligible[0]?.allowed) throw new NoticeError("NOT_FOUND");
+  }
   const common = Prisma.sql`FROM "ModuleDelivery" d JOIN "SchoolSourceEvent" e ON e."schoolId"=d."schoolId" AND e."id"=d."eventId" JOIN "Membership" m ON m."schoolId"=d."schoolId" AND m."id"=d."recipientMembershipId" AND m."userId"=${u} LEFT JOIN LATERAL(SELECT i."action" FROM "ModuleDeliveryInteraction" i WHERE i."schoolId"=d."schoolId" AND i."deliveryId"=d."id" ORDER BY i."ordinal" DESC LIMIT 1) i ON true WHERE d."schoolId"=${s} AND e."sourceType" IN (${Prisma.join(supportedSources())}) AND can_read_module_notification(d."schoolId",d."eventId",${u}) AND NOT EXISTS(SELECT 1 FROM "ModuleDeliverySuppression" x WHERE x."deliveryId"=d."id")`;
   if (cursor) {
     const found = await prisma.$queryRaw<Array<{ id: string }>>(
@@ -142,12 +160,21 @@ export async function readModuleInbox(s: string, cursor?: string) {
       id: i.id,
       read: i.action === "READ",
       createdAt: i.createdAt,
-      text: "A learning or resource workflow update is available",
+      text: "A school workflow update is available",
       href:
-        i.sourceType === "LibraryCatalogRelease" ||
-        i.sourceType === "LearningAssetRelease"
-          ? `/schools/${encodeURIComponent(s)}/library`
-          : `/schools/${encodeURIComponent(s)}/learning-assignments${i.releaseId || (i.sourceType === "LearningAssignmentEvent" && i.sourceAction === "RELEASE") ? "?releaseId=" + encodeURIComponent(i.releaseId ?? i.sourceId) : ""}`,
+        i.sourceType === "ReportPublication" ||
+        i.sourceType === "ReportGuardianAcknowledgment"
+          ? `/schools/${encodeURIComponent(s)}/${i.sourceType === "ReportGuardianAcknowledgment" && membership.role === "SCHOOL_SUPER_ADMIN" ? "report-publication" : "reports"}`
+          : i.sourceType === "FeeAccountRelease" ||
+              i.sourceType === "FeeReceipt"
+            ? `/schools/${encodeURIComponent(s)}/my-fees`
+            : i.sourceType === "PaymentEvidence" ||
+                i.sourceType === "PaymentVerificationDecision"
+              ? `/schools/${encodeURIComponent(s)}/finance`
+              : i.sourceType === "LibraryCatalogRelease" ||
+                  i.sourceType === "LearningAssetRelease"
+                ? `/schools/${encodeURIComponent(s)}/library`
+                : `/schools/${encodeURIComponent(s)}/learning-assignments${i.releaseId || (i.sourceType === "LearningAssignmentEvent" && i.sourceAction === "RELEASE") ? "?releaseId=" + encodeURIComponent(i.releaseId ?? i.sourceId) : ""}`,
     })),
     nextCursor: more ? rows.at(-1)!.id : null,
     unreadCount: counts[0].count,

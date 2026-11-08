@@ -80,13 +80,13 @@ test("guardian links are admin-only, private and cannot grant content access", (
   assert.doesNotMatch(revokeRoute, /export async function GET/);
 });
 
-test("guarded browser runner requires the current 75 exact migrations", () => {
+test("guarded browser runner requires the current 76 exact migrations", () => {
   const migrations = readdirSync(
     new URL("../prisma/migrations/", import.meta.url),
     { withFileTypes: true },
   ).filter((entry) => entry.isDirectory());
-  assert.equal(migrations.length, 75);
-  assert.match(browserLauncher, /expectedMigrationCount = 75/);
+  assert.equal(migrations.length, 76);
+  assert.match(browserLauncher, /expectedMigrationCount = 76/);
   assert.match(
     browserLauncher,
     /runMigrationChecksumVerification\(environment\)/,

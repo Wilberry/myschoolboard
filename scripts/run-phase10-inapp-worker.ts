@@ -25,6 +25,13 @@ process.env.PHASE10_LEARNING_ASSIGNMENTS_ENABLED = "true";
 process.env.PHASE10_LIBRARY_ENABLED = "true";
 process.env.PHASE10_ASSETS_ENABLED = "true";
 process.env.PHASE10_MODULE_INAPP_ENABLED = "true";
+process.env.PHASE10_REPORT_NOTIFICATIONS_ENABLED = "true";
+process.env.PHASE10_FINANCIAL_NOTIFICATIONS_ENABLED = "true";
+// Local dispatch uses the source capability gates after disposable attestation.
+// This process imports delivery services; financial source mutations are separate.
+process.env.PHASE9_FINANCIAL_READ_ENABLED = "true";
+process.env.PHASE9_FEE_WRITE_ENABLED = "true";
+process.env.PHASE9_PAYMENT_REVIEW_ENABLED = "true";
 let stopped = false;
 for (const signal of ["SIGINT", "SIGTERM"])
   process.on(signal, () => {

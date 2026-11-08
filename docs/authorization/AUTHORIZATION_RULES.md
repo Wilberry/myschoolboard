@@ -353,3 +353,18 @@ action and recorded actor reference only. It grants no source body, pupil-work,
 financial-account or platform-security access. Administrators, generic reviewers,
 platform-only roles, pupils and guardians are denied. No guessed school or actor
 is substituted for unscoped authentication/security events.
+
+
+## Phase 10 report and financial in-app events
+
+Workflow inbox access does not grant academic or financial content. Report and
+receipt alerts call the unchanged source predicates and preserve their distinct
+visibility policies. Parent-first publication does not deliver to pupils; an actual
+current guardian acknowledgment creates the separate exact-pupil availability
+event. Notification READ cannot acknowledge a report. Owners receive only permitted
+acknowledgment workflow metadata. Financial account publication and receipt access
+remain independent of report/notice/library/class permissions. Pending payment
+evidence is only an independent owner review alert; a decision reaches its current
+authorized original submitter. No amount, reference or bank settlement claim is
+placed in notification content. Recipient membership is locked during delivery
+validation so concurrent revocation cannot evade terminal suppression.

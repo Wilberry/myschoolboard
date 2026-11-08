@@ -1110,3 +1110,100 @@ it("terminally suppresses delivered task notifications on actual pupil membershi
     }),
   ).rejects.toMatchObject({ code: "NOT_FOUND" });
 });
+it("serializes delivery with an actual uncommitted recipient revocation", async () => {
+  const email = `p10-task-racer-${tag}@example.test`,
+    password = "Synthetic-learning-task-password-42";
+  const registered = await auth.api.signUpEmail({
+    body: { email, password, name: "Synthetic revocation race pupil" },
+  });
+  users.racer = registered.user.id;
+  const member = await prisma.membership.create({
+    data: { schoolId: school, userId: users.racer, role: "STUDENT" },
+  });
+  const child = await prisma.studentRecord.create({
+    data: {
+      schoolId: school,
+      admissionNumber: `${tag}-race`,
+      givenName: "Synthetic",
+      familyName: "Race pupil",
+      status: "ENROLLED",
+    },
+  });
+  await prisma.studentEnrollment.create({
+    data: {
+      schoolId: school,
+      studentId: child.id,
+      classId: room,
+      sessionId: session,
+    },
+  });
+  actor("admin");
+  await attestStudentAccount(school, {
+    studentId: child.id,
+    studentMembershipId: member.id,
+    identityVerified: true,
+    reason: "Independent synthetic race pupil identity",
+  });
+  const n = await published();
+  let unlock!: () => void,
+    locked!: () => void,
+    backend = 0;
+  const gate = new Promise<void>((resolve) => {
+    unlock = resolve;
+  });
+  const ready = new Promise<void>((resolve) => {
+    locked = resolve;
+  });
+  const holder = prisma.$transaction(
+    async (tx) => {
+      backend = (
+        await tx.$queryRaw<
+          Array<{ pid: number }>
+        >`SELECT pg_backend_pid() AS pid`
+      )[0].pid;
+      await tx.membership.update({
+        where: { id: member.id },
+        data: { isActive: false },
+      });
+      locked();
+      await gate;
+    },
+    { timeout: 15000 },
+  );
+  await Promise.race([
+    ready,
+    holder.then(() => {
+      throw Error("Expected a live synthetic revocation lock");
+    }),
+  ]);
+  const worker = drainModules();
+  let observed = false;
+  try {
+    for (let i = 0; i < 200; i++) {
+      observed = (
+        await prisma.$queryRaw<
+          Array<{ blocked: boolean }>
+        >`SELECT EXISTS(SELECT 1 FROM pg_stat_activity activity WHERE activity.datname=current_database() AND activity.pid<>${backend} AND ${backend}=ANY(pg_blocking_pids(activity.pid))) AS blocked`
+      )[0].blocked;
+      if (observed) break;
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+  } finally {
+    unlock();
+    await Promise.all([holder, worker]);
+  }
+  expect(observed).toBe(true);
+  expect(
+    await prisma.moduleDelivery.count({
+      where: {
+        schoolId: school,
+        recipientMembershipId: member.id,
+        event: { sourceId: n.releaseId },
+      },
+    }),
+  ).toBe(0);
+  expect(
+    (await prisma.membership.findUniqueOrThrow({ where: { id: member.id } }))
+      .isActive,
+  ).toBe(false);
+}, 20000);

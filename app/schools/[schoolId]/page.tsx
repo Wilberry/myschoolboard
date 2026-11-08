@@ -241,6 +241,16 @@ async function SchoolDetailContent({
             </Link>
           </p>
         )}
+        {process.env.PHASE10_INAPP_ENABLED === "true" && (
+          <p className="setup-navigation">
+            <Link
+              href={`/schools/${schoolId}/inbox`}
+              className="secondary-link"
+            >
+              In-app notifications
+            </Link>
+          </p>
+        )}
         {access.principal.membership?.role === "SCHOOL_SUPER_ADMIN" &&
           process.env.PHASE10_AUDIT_ENABLED === "true" && (
             <p className="setup-navigation">

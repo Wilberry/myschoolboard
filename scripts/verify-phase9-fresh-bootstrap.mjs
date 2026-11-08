@@ -99,7 +99,7 @@ try {
   )
     .filter((n) => /^\d/.test(n))
     .sort();
-  assert.equal(names.length, 75);
+  assert.equal(names.length, 76);
   for (const migration of names) {
     assert.match(migration, /^[A-Za-z0-9_]+$/);
     const sql = await readFile(
@@ -120,11 +120,11 @@ try {
       checksum,
     );
   }
-  assert.equal(psql('SELECT count(*) FROM "_prisma_migrations";').trim(), "75");
+  assert.equal(psql('SELECT count(*) FROM "_prisma_migrations";').trim(), "76");
   console.log(
     JSON.stringify({
       outcome: "PASS",
-      migrations: 75,
+      migrations: 76,
       container: name,
       id,
       storage: "new tmpfs",

@@ -1,5 +1,17 @@
 # Decision Log
 
+## D-P10-006: Independent family-source notification predicates
+
+8 November 2026, D-023, development implementation with actual PostgreSQL and
+Chromium evidence. Preserve parent-first report acknowledgment and independent
+financial publication as separate source predicates. The original parent-first
+publication never delivers to a pupil; the actual acknowledgment source supplies
+the exact-pupil availability event. Generic READ cannot acknowledge or settle
+anything. New inbox regions preserve channel boundaries. Shared recipient locks
+serialize delivery with membership revocation. Unknown contracts remain pending;
+whole Phase 10 and production acceptance are not inferred from these adapters.
+
+
 ## D-P10-005: Preserve typed channels and register minimal school source contracts
 
 8 November 2026, D-023 / ADR-P10-005. Existing notice DomainEvent references an

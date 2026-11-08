@@ -17,9 +17,11 @@ interface InboxView {
 export function NotificationInbox({
   schoolId,
   channel = "notice",
+  heading,
 }: {
   schoolId: string;
   channel?: "notice" | "class" | "module";
+  heading?: string;
 }) {
   const [cursor, setCursor] = useState<string | undefined>();
   const root = `/api/schools/${encodeURIComponent(schoolId)}`;
@@ -32,9 +34,9 @@ export function NotificationInbox({
   return (
     <section
       className="finance-controls"
-      aria-label="In-app notification inbox"
+      aria-label={heading ?? "In-app notification inbox"}
     >
-      <h2>In-app notifications</h2>
+      <h2>{heading ?? "In-app notifications"}</h2>
       <p>
         Reading a notification does not acknowledge or approve any school
         record.

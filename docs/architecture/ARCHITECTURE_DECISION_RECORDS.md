@@ -1,5 +1,17 @@
 # Architecture Decision Records
 
+## ADR-P10-006: Independent family-source notification predicates
+
+8 November 2026, D-023, development implementation with actual PostgreSQL and
+Chromium evidence. Preserve parent-first report acknowledgment and independent
+financial publication as separate source predicates. The original parent-first
+publication never delivers to a pupil; the actual acknowledgment source supplies
+the exact-pupil availability event. Generic READ cannot acknowledge or settle
+anything. New inbox regions preserve channel boundaries. Shared recipient locks
+serialize delivery with membership revocation. Unknown contracts remain pending;
+whole Phase 10 and production acceptance are not inferred from these adapters.
+
+
 ## ADR-P10-005: Versioned school envelopes beside existing typed channels
 
 Development implementation / partial P10-07 acceptance, D-P10-005. Keep the

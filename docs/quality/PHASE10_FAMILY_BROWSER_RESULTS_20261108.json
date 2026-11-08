@@ -1,0 +1,23 @@
+{
+  "recordedAt": "2026-11-08T03:05:47.576Z",
+  "browser": "Authenticated native Chromium",
+  "checks": [
+    {
+      "name": "P10-FAMILY-BR-01 parent-first notification, explicit acknowledgment and pupil-only unlock",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-FAMILY-BR-02 native guardian tab/history, responsive accessibility and report withdrawal",
+      "outcome": "PASS"
+    },
+    {
+      "name": "P10-FAMILY-BR-03 pending evidence, independent review, guardian-only receipt and withdrawal",
+      "outcome": "PASS"
+    }
+  ],
+  "outcome": "PASS",
+  "limitations": [
+    "No persisted BFCache assertion",
+    "Report/fee source setup uses authenticated browser-context API requests; new inbox/read and report acknowledgment use actual UI"
+  ]
+}

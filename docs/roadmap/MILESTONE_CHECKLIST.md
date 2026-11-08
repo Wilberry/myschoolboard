@@ -1,5 +1,15 @@
 # Milestone Checklist
 
+## Phase 10 family-source notifications — 8 November 2026
+
+- [x] Six report/acknowledgment/financial contracts with source-owned visibility.
+- [x] Separate channel regions in private staff/pupil/guardian inbox.
+- [x] Actual recipient-revocation/delivery blocking test and forward SQL hardening.
+- [x] 207 guards, 492 Vitest tests, exact/fresh 76 migrations and three family Chromium workflows.
+- [ ] Remaining attendance/lesson/result-review/lifecycle/security source contracts.
+- [ ] Complete P10-08 retries/recovery/load/browser/privacy/integration review.
+
+
 ## Phase 10 initial source adapters — 8 November 2026
 
 - [x] Minimal transactional event/outbox capture from 36 registered school ledgers.

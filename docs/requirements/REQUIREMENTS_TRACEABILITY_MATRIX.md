@@ -1,5 +1,17 @@
 # Requirements Traceability Matrix
 
+## Phase 10 report/financial alerts and unified inbox — 8 November 2026
+
+Six additional explicit report/acknowledgment/account/receipt/reconciliation source
+contracts preserve parent-first and independent financial visibility. A private
+unified inbox keeps channel authorization separate. Delivery validation locks the
+recipient membership against revocation; a forced real PostgreSQL race test passes.
+Actual evidence: 207 guards, 492 Vitest tests, exact 76 migrations/fresh bootstrap,
+three family Chromium workflows and scoped fee-versus-library denial. Eleven
+source contracts now exist; remaining P10-07/P10-08 gates stay open. See the
+[family checkpoint](../quality/PHASE10_REPORT_FINANCIAL_NOTIFICATIONS_20261108.md).
+
+
 ## Phase 10 source capture and learning/resource adapters — 8 November 2026
 
 Thirty-six school ledgers capture minimal immutable source envelopes/outbox rows
