@@ -44,10 +44,9 @@ export function validateTrashRequest(request: Request, mutation = false) {
     (mutation &&
       request.headers.get("origin") !== new URL(env.BETTER_AUTH_URL).origin) ||
     (mutation &&
-      !request.headers
-        .get("content-type")
-        ?.toLowerCase()
-        .startsWith("application/json"))
+      !/^application\/json(?:\s*;\s*charset\s*=\s*(?:"utf-8"|utf-8))?\s*$/i.test(
+        request.headers.get("content-type") ?? "",
+      ))
   )
     throw new TrashError("INVALID_INPUT");
 }
